@@ -3,11 +3,44 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Language Learning Platform</title>
     <link rel="stylesheet" href="{% static 'home.css' %}">
   </head>
   <body>
-    <h1>Landing OK</h1>
-    <p class="badge">Rendered from app-level template: home/templates/home/index.html</p>
+    <header>
+      <h1>Language Learning Platform</h1>
+    </header>
+    
+    <main>
+      <section class="hero">
+        <div class="hero-content">
+          <h2>Welcome to Your Journey</h2>
+          <p>Embark on an exciting adventure to master new languages. Our platform makes learning engaging, effective, and enjoyable for learners at the beginner level.</p>
+        </div>
+        <div class="hero-image">
+          <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80" alt="Students learning together">
+        </div>
+      </section>
+      
+      <section class="features">
+        <div class="feature-card">
+          <h3>Interactive Lessons</h3>
+          <p>Engage with dynamic content designed to help you learn naturally and effectively.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Track Progress</h3>
+          <p>Monitor your achievements and celebrate milestones as you advance through your learning journey.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Adaptive Learning</h3>
+          <p>Experience personalized lessons that adapt to your pace and learning style.</p>
+        </div>
+      </section>
+    </main>
+    
+    <footer>
+      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+    </footer>
   </body>
 </html>
