@@ -9,7 +9,24 @@
   </head>
   <body>
     <header>
-      <h1>Language Learning Platform</h1>
+      <nav class="navbar">
+        <div class="nav-brand">
+          <h1>Language Learning Platform</h1>
+        </div>
+        <button class="nav-toggle" aria-label="Toggle navigation">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="#" class="nav-link active">Home</a></li>
+          <li class="nav-item"><a href="#" class="nav-link">Courses</a></li>
+          <li class="nav-item"><a href="#" class="nav-link">Lessons</a></li>
+          <li class="nav-item"><a href="#" class="nav-link">My Progress</a></li>
+          <li class="nav-item"><a href="#" class="nav-link">Login</a></li>
+          <li class="nav-item"><a href="#" class="nav-link nav-button">Sign Up</a></li>
+        </ul>
+      </nav>
     </header>
     
     <main>
@@ -42,5 +59,24 @@
     <footer>
       <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
     </footer>
+
+    <script>
+      // Mobile menu toggle
+      const navToggle = document.querySelector('.nav-toggle');
+      const navMenu = document.querySelector('.nav-menu');
+      
+      navToggle.addEventListener('click', () => {
+        navMenu.classList.toggle('active');
+        navToggle.classList.toggle('active');
+      });
+
+      // Close menu when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+          navMenu.classList.remove('active');
+          navToggle.classList.remove('active');
+        }
+      });
+    </script>
   </body>
 </html>
