@@ -1,0 +1,70 @@
+# =========================
+# Django + Python Defaults
+# =========================
+
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local settings or secrets
+*.env
+*.ini
+*.cfg
+*.local
+*.secret
+secrets.json
+
+# SQLite database (optional)
+db.sqlite3
+db.sqlite3-journal
+
+# Logs and coverage reports
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+*.tmp
+*.swp
+
+# Django collected static files (don’t track generated assets)
+staticfiles/
+static_root/
+static_collected/
+
+# Media uploads (user-generated content)
+media/
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.bak
+*.tmp
+~$*
+
+# pytest / test cache
+.pytest_cache/
+.tox/
+.mypy_cache
