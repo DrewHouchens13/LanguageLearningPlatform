@@ -15,14 +15,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: AI Code Review
-        if: ${{ secrets.OPENAI_API_KEY }}
+        if: ${{ secrets.OPENAI_API_KEY != '' }}   # run only if the secret exists
         uses: anc95/ChatGPT-CodeReview@main
         env:
-          GITHUB_TOKEN: ${{ secret.GITHUB_TOKEN }}
-          OPENAI_API_KEY: ${{ secret.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_API_ENDPOINT: https://api.openai.com/v1
-          # Use OPENAI_MODEL secret if set; otherwise fall back to gpt-4o-mini
-          MODEL: ${{ secrets.OPENAI_MODEL != '' && secrets.OPENAI_MODEL || 'gpt-4o-mini' }}
+          MODEL: gpt-5            # or gpt-4o-mini if you prefer; keep it simple for now
           PROMPT: |
             Please review the Python/Django code changes and provide feedback on:
               1) Code quality and Django best practices
