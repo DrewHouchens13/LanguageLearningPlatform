@@ -3,15 +3,37 @@ name: Run Django Tests with Coverage
 on:
   push:
     branches: ["**"]
+    paths:
+      - "**/*.py"
+      - "pyproject.toml"
+      - "requirements*.txt"
+      - "pytest.ini"
+      - ".github/workflows/coverage.yml"
   pull_request:
     branches: ["**"]
+    paths:
+      - "**/*.py"
+      - "pyproject.toml"
+      - "requirements*.txt"
+      - "pytest.ini"
+      - ".github/workflows/coverage.yml"
 
 permissions:
   contents: read
 
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tests:
+    name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]  # add "3.11" if you want multiple versions
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,13 +41,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
+          cache: pip
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pytest pytest-cov pytest-django
+          # Ensure Django exists even if not listed (keeps CI happy for student repos)
           python - <<'PY'
           try:
               import django  # noqa: F401
@@ -34,9 +58,16 @@ jobs:
               os.system("pip install 'Django>=4.2,<6.0'")
           PY
 
+      # Quick migration check to catch model/DB drift (common in Django assignments)
+      - name: Check for missing migrations
+        run: |
+          python manage.py makemigrations --check --dry-run
+        continue-on-error: true  # don't fail the assignment; just surface in logs
+
       - name: Run tests (prints coverage to console)
         run: |
           set -e
+          # Your pytest.ini already has: --cov=. --cov-report=term --cov-report=xml
           pytest || {
             code=$?
             if [ "$code" -eq 5 ]; then
@@ -47,10 +78,19 @@ jobs:
             fi
           }
 
-      - name: Upload coverage.xml (optional)
+      - name: Upload coverage.xml (artifact; optional)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-xml
+          name: coverage-${{ matrix.python-version }}
           path: coverage.xml
           if-no-files-found: ignore
+
+      # Optional: publish to Codecov if your professor/org provides a token
+      - name: Upload to Codecov (optional)
+        if: ${{ secrets.CODECOV_TOKEN != '' }}
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          fail_ci_if_error: false
