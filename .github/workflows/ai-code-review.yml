@@ -57,7 +57,3 @@ jobs:
           max_completion_tokens: "8000"
           top_p: "1"
           temperature: "0.7"
-
-      # Nice summary line in the job log
-      - name: Summarize
-        run: echo "AI review posted to PR #${{ github.event.pull_request.number || 'N/A (manual run)' }}"
