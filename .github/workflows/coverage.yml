@@ -38,7 +38,7 @@ jobs:
       run: |
         # Update this to match YOUR Django settings module
         # Format: your_project_name.settings
-        echo "DJANGO_SETTINGS_MODULE=LanguageLearningPlatform.settings" >> $GITHUB_ENV
+        echo "DJANGO_SETTINGS_MODULE=config.settings" >> $GITHUB_ENV
       continue-on-error: true
 
     - name: Run tests with coverage
