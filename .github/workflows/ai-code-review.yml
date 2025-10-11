@@ -2,30 +2,36 @@ name: AI Code Review
 
 on:
   pull_request:
-    branches:
-      - main
-      - develop
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
-  ai-code-review:
-    name: AI Code Review with OpenAI
+  review:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
+      # Nice explicit message when the secret isn't set
+      - name: Skip AI review (no OPENAI key)
+        if: ${{ secrets.OPENAI_API_KEY == '' }}
+        run: echo "Skipping AI Code Review: OPENAI_API_KEY not configured."
+
       - name: Get changed files
+        if: ${{ secrets.OPENAI_API_KEY != '' }}
         id: changed-files
         uses: tj-actions/changed-files@v41
+        with:
+          fetch_depth: 0
         continue-on-error: true
-        
+
       - name: AI Code Review with OpenAI
+        if: ${{ secrets.OPENAI_API_KEY != '' }}
         uses: anc95/ChatGPT-CodeReview@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -34,13 +40,11 @@ jobs:
           MODEL: gpt-4
           PROMPT: |
             Please review the following Python/Django code changes and provide feedback on:
-            1. Code quality and Django best practices
-            2. Potential bugs or issues
-            3. Security concerns (especially for web applications)
-            4. Performance considerations
-            5. Suggestions for improvement
+              1. Code quality and Django best practices
+              2. Potential bugs or issues
+              3. Security concerns (especially for web applications)
+              4. Performance considerations
+              5. Suggestions for improvement
           top_p: 1
           temperature: 1
           max_tokens: 10000
-          MAX_PATCH_LENGTH: 10000
-        continue-on-error: true
