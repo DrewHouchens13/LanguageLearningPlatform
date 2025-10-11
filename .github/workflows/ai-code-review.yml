@@ -29,6 +29,3 @@ jobs:
               3) Security concerns
               4) Performance considerations
               5) Suggestions for improvement
-          top_p: "1"
-          temperature: "1"
-          max_tokens: "10000"
