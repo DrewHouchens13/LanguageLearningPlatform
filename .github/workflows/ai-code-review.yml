@@ -17,7 +17,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Nice explicit message when the secret isn't set
       - name: Skip AI review (no OPENAI key)
         if: ${{ secrets.OPENAI_API_KEY == '' }}
         run: echo "Skipping AI Code Review: OPENAI_API_KEY not configured."
@@ -42,7 +41,7 @@ jobs:
             Please review the following Python/Django code changes and provide feedback on:
               1. Code quality and Django best practices
               2. Potential bugs or issues
-              3. Security concerns (especially for web applications)
+              3. Security concerns
               4. Performance considerations
               5. Suggestions for improvement
           top_p: 1
