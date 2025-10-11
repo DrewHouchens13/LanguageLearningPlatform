@@ -2,7 +2,6 @@ name: AI Code Review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
@@ -14,15 +13,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Skip AI review (no OPENAI key)
-        if: ${{ secrets.OPENAI_API_KEY == '' }}
-        run: echo "Skipping AI Code Review: OPENAI_API_KEY not configured."
-
-      - name: AI Code Review with OpenAI
-        if: ${{ secrets.OPENAI_API_KEY != '' }}
+      # Runs only if the secret exists. If it's missing, the step is skipped and the job stays green.
+      - name: AI Code Review
+        if: ${{ secrets.OPENAI_API_KEY }}
         uses: anc95/ChatGPT-CodeReview@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -30,12 +24,12 @@ jobs:
           OPENAI_API_ENDPOINT: https://api.openai.com/v1
           MODEL: gpt-4
           PROMPT: |
-            Please review the following Python/Django code changes and provide feedback on:
-              1. Code quality and Django best practices
-              2. Potential bugs or issues
-              3. Security concerns (especially for web apps)
-              4. Performance considerations
-              5. Suggestions for improvement
+            Please review the Python/Django code changes and provide feedback on:
+              1) Code quality and Django best practices
+              2) Potential bugs/issues
+              3) Security concerns
+              4) Performance considerations
+              5) Suggestions for improvement
           top_p: "1"
           temperature: "1"
           max_tokens: "10000"
