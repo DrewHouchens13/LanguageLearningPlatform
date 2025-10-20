@@ -9,24 +9,29 @@
   </head>
   <body>
     <header>
-      <nav class="navbar">
-        <div class="nav-brand">
-          <h1>Language Learning Platform</h1>
-        </div>
-        <button class="nav-toggle" aria-label="Toggle navigation">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-        <ul class="nav-menu">
-          <li class="nav-item"><a href="#" class="nav-link active">Home</a></li>
-          <li class="nav-item"><a href="#" class="nav-link">Courses</a></li>
-          <li class="nav-item"><a href="#" class="nav-link">Lessons</a></li>
-          <li class="nav-item"><a href="#" class="nav-link">My Progress</a></li>
-          <li class="nav-item"><a href="#" class="nav-link">Login</a></li>
-          <li class="nav-item"><a href="#" class="nav-link nav-button">Sign Up</a></li>
-        </ul>
-      </nav>
+<nav class="navbar">
+  <div class="nav-brand">
+    <h1>Language Learning Platform</h1>
+  </div>
+  <button class="nav-toggle" aria-label="Toggle navigation">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  <ul class="nav-menu">
+    <li class="nav-item"><a href="/" class="nav-link active">Home</a></li>
+    <li class="nav-item"><a href="#" class="nav-link">Courses</a></li>
+    <li class="nav-item"><a href="#" class="nav-link">Lessons</a></li>
+    
+    {% if user.is_authenticated %}
+      <li class="nav-item"><a href="{% url 'dashboard:dashboard' %}" class="nav-link">Dashboard</a></li>
+      <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link">Logout</a></li>
+    {% else %}
+      <li class="nav-item"><a href="{% url 'login' %}" class="nav-link">Login</a></li>
+      <li class="nav-item"><a href="#" class="nav-link nav-button">Sign Up</a></li>
+    {% endif %}
+  </ul>
+</nav>
     </header>
     
     <main>

@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "home",
+    'dashboard',
 ]
 
 MIDDLEWARE = [
@@ -134,3 +135,6 @@ CSRF_TRUSTED_ORIGINS = [
     "https://editor-jmanchester-20.devedu.io",
     "https://*.devedu.io",
 ]
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/'
