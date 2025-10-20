@@ -118,6 +118,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -146,6 +149,7 @@ USE_TZ = True
 # For DevEDU development environment
 if os.environ.get('DEVEDU_ENVIRONMENT'):
     STATIC_URL = '/proxy/8000/static/'
+    FORCE_SCRIPT_NAME = '/proxy/8000'  # Tell Django it's running under /proxy/8000/
 else:
     # For local development and production (Render)
     STATIC_URL = '/static/'
@@ -176,6 +180,29 @@ CSRF_TRUSTED_ORIGINS = [
 # Add Render hostname to CSRF trusted origins
 if RENDER_EXTERNAL_HOSTNAME:
     CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
+
+
+# =============================================================================
+# AUTHENTICATION SETTINGS
+# =============================================================================
+
+# Login/Logout redirect URLs
+LOGIN_URL = 'login'  # Where to redirect if login is required
+LOGIN_REDIRECT_URL = 'landing'  # Where to redirect after successful login
+LOGOUT_REDIRECT_URL = 'landing'  # Where to redirect after logout
+
+# Email backend (for development - prints emails to console)
+# In production, configure a real email backend for sending actual emails
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Session settings
+SESSION_COOKIE_AGE = 86400  # Session expires after 1 day (86400 seconds)
+SESSION_SAVE_EVERY_REQUEST = True  # Update session on every request to extend expiry
+
+
+# =============================================================================
+# SECURITY SETTINGS (Production Only)
+# =============================================================================
 
 # Security settings for production
 if not DEBUG:

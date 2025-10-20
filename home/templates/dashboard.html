@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Language Learning Platform</title>
+    <title>Dashboard - Language Learning Platform</title>
     <link rel="stylesheet" href="{% static 'home/styles.css' %}">
   </head>
   <body>
@@ -19,21 +19,16 @@
           <span></span>
         </button>
         <ul class="nav-menu">
-          <li class="nav-item"><a href="{% url 'landing' %}" class="nav-link active">Home</a></li>
+          <li class="nav-item"><a href="{% url 'landing' %}" class="nav-link">Home</a></li>
           <li class="nav-item"><a href="#" class="nav-link">Courses</a></li>
           <li class="nav-item"><a href="#" class="nav-link">Lessons</a></li>
           <li class="nav-item"><a href="#" class="nav-link">My Progress</a></li>
-          {% if user.is_authenticated %}
-            <li class="nav-item"><a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a></li>
-            <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link nav-button">Logout</a></li>
-          {% else %}
-            <li class="nav-item"><a href="{% url 'login' %}" class="nav-link">Login</a></li>
-            <li class="nav-item"><a href="{% url 'login' %}" class="nav-link nav-button">Sign Up</a></li>
-          {% endif %}
+          <li class="nav-item"><a href="{% url 'dashboard' %}" class="nav-link active">Dashboard</a></li>
+          <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link nav-button">Logout</a></li>
         </ul>
       </nav>
     </header>
-
+    
     <main>
       <!-- Django Messages -->
       {% if messages %}
@@ -45,33 +40,36 @@
           {% endfor %}
         </div>
       {% endif %}
-
+      
       <section class="hero">
         <div class="hero-content">
-          <h2>Welcome to Your Journey</h2>
-          <p>Embark on an exciting adventure to master new languages. Our platform makes learning engaging, effective, and enjoyable for learners at the beginner level.</p>
+          <h2>Welcome, {{ user.first_name }}! 👋</h2>
+          <p>This is your personal dashboard. Here you can track your progress, manage your courses, and continue your language learning journey.</p>
+          <p><strong>Email:</strong> {{ user.email }}</p>
+          <p><strong>Username:</strong> {{ user.username }}</p>
+          <p><strong>Member since:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
         </div>
         <div class="hero-image">
-          <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80" alt="Students learning together">
+          <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80" alt="Dashboard">
         </div>
       </section>
-
+      
       <section class="features">
         <div class="feature-card">
-          <h3>Interactive Lessons</h3>
-          <p>Engage with dynamic content designed to help you learn naturally and effectively.</p>
+          <h3>Your Courses</h3>
+          <p>View and manage all your enrolled courses in one place.</p>
         </div>
         <div class="feature-card">
-          <h3>Track Progress</h3>
-          <p>Monitor your achievements and celebrate milestones as you advance through your learning journey.</p>
+          <h3>Learning Progress</h3>
+          <p>Track your achievements and see how far you've come.</p>
         </div>
         <div class="feature-card">
-          <h3>Adaptive Learning</h3>
-          <p>Experience personalized lessons that adapt to your pace and learning style.</p>
+          <h3>Study Schedule</h3>
+          <p>Stay on track with your personalized study plan.</p>
         </div>
       </section>
     </main>
-
+    
     <footer>
       <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
     </footer>
@@ -80,7 +78,7 @@
       // Mobile menu toggle
       const navToggle = document.querySelector('.nav-toggle');
       const navMenu = document.querySelector('.nav-menu');
-
+      
       navToggle.addEventListener('click', () => {
         navMenu.classList.toggle('active');
         navToggle.classList.toggle('active');
