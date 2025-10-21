@@ -46,8 +46,9 @@ jobs:
             fi
           }
 
-      - name: Create test summary with passed count
+      - name: Parse test results and coverage
         if: github.event_name == 'pull_request'
+        id: test-results
         run: |
           # Parse pytest.xml to extract test results
           TOTAL=$(grep -oP 'tests="\K[0-9]+' pytest.xml | head -1)
@@ -57,31 +58,39 @@ jobs:
           PASSED=$((TOTAL - SKIPPED - FAILURES - ERRORS))
           TIME=$(grep -oP 'time="\K[0-9.]+' pytest.xml | head -1)
           
-          # Create summary comment
-          cat >> $GITHUB_STEP_SUMMARY << EOF
-          ## 🧪 Test Results
+          # Parse coverage.xml to get coverage percentage
+          COVERAGE=$(python3 -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); root = tree.getroot(); print(round(float(root.attrib['line-rate']) * 100, 1))")
           
-          | Tests | Passed | Skipped | Failures | Errors | Time |
-          |-------|--------|---------|----------|--------|------|
-          | $TOTAL | $PASSED ✅ | $SKIPPED 💤 | $FAILURES ❌ | $ERRORS 🔥 | ${TIME}s ⏱️ |
-          EOF
-          
-          echo "PASSED_TESTS=$PASSED" >> $GITHUB_ENV
-          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
+          # Set outputs
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "passed=$PASSED" >> $GITHUB_OUTPUT
+          echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
+          echo "failures=$FAILURES" >> $GITHUB_OUTPUT
+          echo "errors=$ERRORS" >> $GITHUB_OUTPUT
+          echo "time=$TIME" >> $GITHUB_OUTPUT
+          echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
 
-      - name: Coverage comment on PR
+      - name: Post test results comment (updates on each commit)
         if: github.event_name == 'pull_request'
-        uses: MishaKav/pytest-coverage-comment@main
+        uses: marocchino/sticky-pull-request-comment@v2
         with:
-          pytest-coverage-path: coverage.xml
-          junitxml-path: pytest.xml
-          title: Test Coverage Report
-          badge-title: Coverage
-          hide-badge: false
-          hide-report: false
-          report-only-changed-files: false
-          hide-comment: false
-          remove-link-from-badge: false
+          header: pytest-coverage
+          message: |
+            ## 🧪 Test Results
+            
+            | Tests | Passed | Skipped | Failures | Errors | Time |
+            |-------|--------|---------|----------|--------|------|
+            | ${{ steps.test-results.outputs.total }} | ${{ steps.test-results.outputs.passed }} ✅ | ${{ steps.test-results.outputs.skipped }} 💤 | ${{ steps.test-results.outputs.failures }} ❌ | ${{ steps.test-results.outputs.errors }} 🔥 | ${{ steps.test-results.outputs.time }}s ⏱️ |
+            
+            ## 📊 Coverage: ${{ steps.test-results.outputs.coverage }}%
+            
+            <details>
+            <summary>View Details</summary>
+            
+            **Commit:** `${{ github.event.pull_request.head.sha }}`  
+            **Run:** [View Full Report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
+            </details>
 
       - name: Upload coverage artifacts
         if: always()
