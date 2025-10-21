@@ -114,3 +114,38 @@ def logout_view(request):
 def dashboard(request):
     """Example of a protected view that requires login"""
     return render(request, 'dashboard.html')
+
+
+def progress_view(request):
+    """Progress dashboard - shows stats for logged-in users, CTA for guests"""
+    if request.user.is_authenticated:
+        # Get or create user progress record
+        from .models import UserProgress
+        user_progress, created = UserProgress.objects.get_or_create(user=request.user)
+        
+        # Get weekly stats
+        weekly_stats = user_progress.get_weekly_stats()
+        
+        # Prepare context for authenticated users
+        context = {
+            'weekly_minutes': weekly_stats['weekly_minutes'],
+            'weekly_lessons': weekly_stats['weekly_lessons'],
+            'weekly_accuracy': weekly_stats['weekly_accuracy'],
+            'total_minutes': user_progress.total_minutes_studied,
+            'total_lessons': user_progress.total_lessons_completed,
+            'total_quizzes': user_progress.total_quizzes_taken,
+            'overall_accuracy': user_progress.overall_quiz_accuracy,
+        }
+    else:
+        # Context for guest users (all None/empty)
+        context = {
+            'weekly_minutes': None,
+            'weekly_lessons': None,
+            'weekly_accuracy': None,
+            'total_minutes': None,
+            'total_lessons': None,
+            'total_quizzes': None,
+            'overall_accuracy': None,
+        }
+    
+    return render(request, 'progress.html', context)
