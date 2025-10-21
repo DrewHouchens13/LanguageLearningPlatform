@@ -46,6 +46,29 @@ jobs:
             fi
           }
 
+      - name: Create test summary with passed count
+        if: github.event_name == 'pull_request'
+        run: |
+          # Parse pytest.xml to extract test results
+          TOTAL=$(grep -oP 'tests="\K[0-9]+' pytest.xml | head -1)
+          SKIPPED=$(grep -oP 'skipped="\K[0-9]+' pytest.xml | head -1 || echo "0")
+          FAILURES=$(grep -oP 'failures="\K[0-9]+' pytest.xml | head -1 || echo "0")
+          ERRORS=$(grep -oP 'errors="\K[0-9]+' pytest.xml | head -1 || echo "0")
+          PASSED=$((TOTAL - SKIPPED - FAILURES - ERRORS))
+          TIME=$(grep -oP 'time="\K[0-9.]+' pytest.xml | head -1)
+          
+          # Create summary comment
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## 🧪 Test Results
+          
+          | Tests | Passed | Skipped | Failures | Errors | Time |
+          |-------|--------|---------|----------|--------|------|
+          | $TOTAL | $PASSED ✅ | $SKIPPED 💤 | $FAILURES ❌ | $ERRORS 🔥 | ${TIME}s ⏱️ |
+          EOF
+          
+          echo "PASSED_TESTS=$PASSED" >> $GITHUB_ENV
+          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
+
       - name: Coverage comment on PR
         if: github.event_name == 'pull_request'
         uses: MishaKav/pytest-coverage-comment@main
