@@ -14,15 +14,16 @@ from .views import landing, login_view, signup_view, logout_view, dashboard, pro
 class TestUserProgressModel(TestCase):
     """Test UserProgress model functionality"""
 
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         """Create test user and progress record"""
-        self.user = User.objects.create_user(
+        cls.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
             password='testpass123'
         )
-        self.progress = UserProgress.objects.create(
-            user=self.user,
+        cls.progress = UserProgress.objects.create(
+            user=cls.user,
             total_minutes_studied=120,
             total_lessons_completed=5,
             total_quizzes_taken=3,
@@ -82,7 +83,12 @@ class TestUserProgressModel(TestCase):
         self.assertEqual(accuracy, 76.7)
 
     def test_calculate_quiz_accuracy_zero_total_questions(self):
-        """Test calculate_quiz_accuracy handles division by zero"""
+        """Test calculate_quiz_accuracy handles division by zero
+        
+        Edge case: Ensures the method correctly returns 0.0 when total_questions
+        is 0, preventing ZeroDivisionError. This is handled in the model's
+        calculate_quiz_accuracy method.
+        """
         QuizResult.objects.create(
             user=self.user,
             quiz_id='quiz1',
@@ -152,9 +158,10 @@ class TestUserProgressModel(TestCase):
 class TestLessonCompletionModel(TestCase):
     """Test LessonCompletion model functionality"""
 
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         """Create test user"""
-        self.user = User.objects.create_user(
+        cls.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
             password='testpass123'
@@ -228,9 +235,10 @@ class TestLessonCompletionModel(TestCase):
 class TestQuizResultModel(TestCase):
     """Test QuizResult model functionality"""
 
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         """Create test user"""
-        self.user = User.objects.create_user(
+        cls.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
             password='testpass123'
@@ -468,16 +476,20 @@ class TestSignupView(TestCase):
 class TestLoginView(TestCase):
     """Test user login functionality"""
 
-    def setUp(self):
-        """Create test user and initialize client"""
-        self.client = Client()
-        self.login_url = '/login/'
-        self.user = User.objects.create_user(
+    @classmethod
+    def setUpTestData(cls):
+        """Create test user"""
+        cls.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
             password='testpass123',
             first_name='Test'
         )
+    
+    def setUp(self):
+        """Initialize test client"""
+        self.client = Client()
+        self.login_url = '/login/'
 
     def test_login_get_request(self):
         """Test GET request renders login.html"""
@@ -545,15 +557,19 @@ class TestLoginView(TestCase):
 class TestLogoutView(TestCase):
     """Test user logout functionality"""
 
-    def setUp(self):
-        """Create test user and initialize client"""
-        self.client = Client()
-        self.logout_url = '/logout/'
-        self.user = User.objects.create_user(
+    @classmethod
+    def setUpTestData(cls):
+        """Create test user"""
+        cls.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
             password='testpass123'
         )
+    
+    def setUp(self):
+        """Initialize test client"""
+        self.client = Client()
+        self.logout_url = '/logout/'
 
     def test_logout_successful(self):
         """Test logout successfully logs out user"""
@@ -585,15 +601,19 @@ class TestLogoutView(TestCase):
 class TestProgressView(TestCase):
     """Test progress dashboard view"""
 
-    def setUp(self):
-        """Create test user and initialize client"""
-        self.client = Client()
-        self.progress_url = '/progress/'
-        self.user = User.objects.create_user(
+    @classmethod
+    def setUpTestData(cls):
+        """Create test user"""
+        cls.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
             password='testpass123'
         )
+    
+    def setUp(self):
+        """Initialize test client"""
+        self.client = Client()
+        self.progress_url = '/progress/'
 
     def test_progress_view_authenticated_user(self):
         """Test authenticated user sees their progress data"""
@@ -695,15 +715,19 @@ class TestProgressView(TestCase):
 class TestDashboardView(TestCase):
     """Test dashboard view"""
 
-    def setUp(self):
-        """Create test user and initialize client"""
-        self.client = Client()
-        self.dashboard_url = '/dashboard/'
-        self.user = User.objects.create_user(
+    @classmethod
+    def setUpTestData(cls):
+        """Create test user"""
+        cls.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
             password='testpass123'
         )
+    
+    def setUp(self):
+        """Initialize test client"""
+        self.client = Client()
+        self.dashboard_url = '/dashboard/'
 
     def test_dashboard_requires_authentication(self):
         """Test dashboard redirects to login if not authenticated"""
