@@ -1,0 +1,470 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Language Learning Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .logout-btn {
+            float: right;
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .stat-icon {
+            font-size: 24px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #888;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #fbbf24;
+            transition: width 0.3s ease;
+        }
+
+        .xp-text {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quest-item {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .quest-item.completed {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+
+        .quest-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .quest-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .quest-completed .quest-title {
+            color: #16a34a;
+        }
+
+        .xp-reward {
+            font-size: 14px;
+            font-weight: 700;
+            color: #8b5cf6;
+        }
+
+        .quest-progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .quest-progress-fill {
+            height: 100%;
+            background: #3b82f6;
+            transition: width 0.3s ease;
+        }
+
+        .quest-item.completed .quest-progress-fill {
+            background: #22c55e;
+        }
+
+        .lesson-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .lesson-item:hover {
+            background: #f3f4f6;
+        }
+
+        .lesson-info h4 {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .lesson-date {
+            font-size: 14px;
+            color: #888;
+        }
+
+        .lesson-score {
+            text-align: right;
+        }
+
+        .score-value {
+            font-weight: 700;
+            font-size: 18px;
+            color: #3b82f6;
+        }
+
+        .score-percent {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .cta-card {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border-radius: 12px;
+            padding: 32px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .cta-content h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .cta-content p {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .cta-button {
+            background: white;
+            color: #3b82f6;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .weekly-stat {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #eff6ff 0%, #f3e8ff 100%);
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .weekly-stat .emoji {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .weekly-minutes {
+            font-size: 32px;
+            font-weight: bold;
+            color: #3b82f6;
+        }
+
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-card {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="{% url 'home:landing' %}" class="logout-btn">← Back to Home</a>
+            <h1>¡Hola, <span id="userName">{{ user.username }}</span>! 👋</h1>
+            <p>Keep up your amazing progress!</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-icon">🏆</span>
+                    <span class="stat-label">LEVEL</span>
+                </div>
+                <div class="stat-value" id="userLevel">-</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="xpProgress"></div>
+                </div>
+                <div class="xp-text" id="xpText">Loading...</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-icon">🔥</span>
+                    <span class="stat-label">STREAK</span>
+                </div>
+                <div class="stat-value"><span id="streakDays">-</span> days</div>
+                <div class="xp-text" id="freezeStatus">Loading...</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-icon">📚</span>
+                    <span class="stat-label">UNITS</span>
+                </div>
+                <div class="stat-value" id="unitsCompleted">-</div>
+                <div class="xp-text">Completed</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-icon">🎯</span>
+                    <span class="stat-label">ACCURACY</span>
+                </div>
+                <div class="stat-value"><span id="quizAccuracy">-</span>%</div>
+                <div class="xp-text">Avg quiz score</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-grid">
+            <!-- Daily Quests -->
+            <div class="card">
+                <h2 class="card-title">
+                    <span>🎯</span>
+                    Daily Quests
+                </h2>
+                <div id="questsContainer">
+                    <p style="color: #888;">Loading quests...</p>
+                </div>
+            </div>
+
+            <!-- Weekly Progress -->
+            <div class="card">
+                <h2 class="card-title">
+                    <span>📈</span>
+                    This Week
+                </h2>
+                <div>
+                    <p style="color: #888; margin-bottom: 8px;">Minutes Learned</p>
+                    <div class="weekly-minutes" id="weeklyMinutes">-</div>
+                    <div class="weekly-stat">
+                        <div class="emoji">🎯</div>
+                        <p style="font-weight: 600; color: #333;">You're on fire!</p>
+                        <p style="font-size: 14px; color: #888; margin-top: 4px;" id="streakMessage">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Lessons -->
+        <div class="card" style="margin-bottom: 30px;">
+            <h2 class="card-title">
+                <span>📖</span>
+                Recent Lessons
+            </h2>
+            <div id="lessonsContainer">
+                <p style="color: #888;">Loading lessons...</p>
+            </div>
+        </div>
+
+        <!-- CTA Card -->
+        <div class="cta-card">
+            <div class="cta-content">
+                <h2>Ready to continue?</h2>
+                <p>Your next lesson: Days of the Week</p>
+            </div>
+            <button class="cta-button">Start Lesson →</button>
+        </div>
+    </div>
+
+    <script>
+        // Fetch user progress data
+        async function loadDashboard() {
+            try {
+                const response = await fetch("{% url 'dashboard:get_progress' %}");
+                const data = await response.json();
+                
+                // Update stats
+                document.getElementById('userName').textContent = data.name;
+                document.getElementById('userLevel').textContent = data.level;
+                document.getElementById('streakDays').textContent = data.streak;
+                document.getElementById('unitsCompleted').textContent = data.unitsCompleted;
+                document.getElementById('quizAccuracy').textContent = data.avgQuizAccuracy;
+                document.getElementById('weeklyMinutes').textContent = data.weeklyMinutes;
+                
+                // Update XP progress
+                const xpPercent = (data.xp / data.xpToNextLevel) * 100;
+                document.getElementById('xpProgress').style.width = xpPercent + '%';
+                document.getElementById('xpText').textContent = `${data.xp} / ${data.xpToNextLevel} XP`;
+                
+                // Update freeze status
+                document.getElementById('freezeStatus').textContent = 
+                    data.streakFreezeAvailable ? '❄️ Freeze available' : 'No freeze available';
+                
+                document.getElementById('streakMessage').textContent = 
+                    `${data.streak} day streak maintained`;
+                
+                // Render daily quests
+                const questsHtml = data.dailyQuests.map(quest => `
+                    <div class="quest-item ${quest.completed ? 'completed' : ''}">
+                        <div class="quest-header">
+                            <span class="quest-title">${quest.title}</span>
+                            <span class="xp-reward">+${quest.xpReward} XP</span>
+                        </div>
+                        <div class="quest-progress-bar">
+                            <div class="quest-progress-fill" style="width: ${(quest.progress / quest.total) * 100}%"></div>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('questsContainer').innerHTML = questsHtml;
+                
+                // Render recent lessons
+                const lessonsHtml = data.recentLessons.map(lesson => `
+                    <div class="lesson-item">
+                        <div class="lesson-info">
+                            <h4>${lesson.title}</h4>
+                            <div class="lesson-date">${lesson.date}</div>
+                        </div>
+                        <div class="lesson-score">
+                            <div class="score-value">${lesson.score}/${lesson.total}</div>
+                            <div class="score-percent">${Math.round((lesson.score / lesson.total) * 100)}%</div>
+                        </div>
+                    </div>
+                `).join('');
+                document.getElementById('lessonsContainer').innerHTML = lessonsHtml;
+                
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+        
+        // Load dashboard on page load
+        loadDashboard();
+    </script>
+</body>
+</html>

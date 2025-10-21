@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "home",
+    'dashboard',
 ]
 
 MIDDLEWARE = [
@@ -178,44 +179,6 @@ CSRF_TRUSTED_ORIGINS = [
     "https://editor-jmanchester-20.devedu.io",
     "https://*.devedu.io",
 ]
-
-# Add Render hostname to CSRF trusted origins
-if RENDER_EXTERNAL_HOSTNAME:
-    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
-
-
-# =============================================================================
-# AUTHENTICATION SETTINGS
-# =============================================================================
-
-# Login/Logout redirect URLs
-LOGIN_URL = 'login'  # Where to redirect if login is required
-LOGIN_REDIRECT_URL = 'landing'  # Where to redirect after successful login
-LOGOUT_REDIRECT_URL = 'landing'  # Where to redirect after logout
-
-# Email backend (for development - prints emails to console)
-# In production, configure a real email backend for sending actual emails
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-# Session settings
-SESSION_COOKIE_AGE = 86400  # Session expires after 1 day (86400 seconds)
-SESSION_SAVE_EVERY_REQUEST = True  # Update session on every request to extend expiry
-
-
-# =============================================================================
-# SECURITY SETTINGS (Production Only)
-# =============================================================================
-
-# Security settings for production
-if not DEBUG:
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    X_FRAME_OPTIONS = 'DENY'
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    # Trust the X-Forwarded-Proto header from Render's proxy
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/'
