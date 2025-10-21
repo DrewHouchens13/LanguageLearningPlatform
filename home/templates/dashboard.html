@@ -1,0 +1,96 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Language Learning Platform</title>
+    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+  </head>
+  <body>
+    <header>
+      <nav class="navbar">
+        <div class="nav-brand">
+          <h1>Language Learning Platform</h1>
+        </div>
+        <button class="nav-toggle" aria-label="Toggle navigation">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="{% url 'landing' %}" class="nav-link">Home</a></li>
+          <li class="nav-item"><a href="#" class="nav-link">Courses</a></li>
+          <li class="nav-item"><a href="#" class="nav-link">Lessons</a></li>
+          <li class="nav-item"><a href="{% url 'progress' %}" class="nav-link">My Progress</a></li>
+          <li class="nav-item"><a href="{% url 'dashboard' %}" class="nav-link active">Dashboard</a></li>
+          <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link nav-button">Logout</a></li>
+        </ul>
+      </nav>
+    </header>
+    
+    <main>
+      <!-- Django Messages -->
+      {% if messages %}
+        <div class="page-messages">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+      
+      <section class="hero">
+        <div class="hero-content">
+          <h2>Welcome, {{ user.first_name }}! 👋</h2>
+          <p>This is your personal dashboard. Here you can track your progress, manage your courses, and continue your language learning journey.</p>
+          <p><strong>Email:</strong> {{ user.email }}</p>
+          <p><strong>Username:</strong> {{ user.username }}</p>
+          <p><strong>Member since:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
+        </div>
+        <div class="hero-image">
+          <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80" alt="Dashboard">
+        </div>
+      </section>
+      
+      <section class="features">
+        <div class="feature-card">
+          <h3>Your Courses</h3>
+          <p>View and manage all your enrolled courses in one place.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Learning Progress</h3>
+          <p>Track your achievements and see how far you've come.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Study Schedule</h3>
+          <p>Stay on track with your personalized study plan.</p>
+        </div>
+      </section>
+    </main>
+    
+    <footer>
+      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+    </footer>
+
+    <script>
+      // Mobile menu toggle
+      const navToggle = document.querySelector('.nav-toggle');
+      const navMenu = document.querySelector('.nav-menu');
+      
+      navToggle.addEventListener('click', () => {
+        navMenu.classList.toggle('active');
+        navToggle.classList.toggle('active');
+      });
+
+      // Close menu when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+          navMenu.classList.remove('active');
+          navToggle.classList.remove('active');
+        }
+      });
+    </script>
+  </body>
+</html>
