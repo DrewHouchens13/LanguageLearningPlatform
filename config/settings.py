@@ -33,6 +33,8 @@ ALLOWED_HOSTS = [
     "[::1]",
     "editor-jmanchester-20.devedu.io",  # your DevEdu editor host
     ".devedu.io",                       # any other DevEdu subdomain if needed
+    "languagelearningplatform.org",     # Custom domain
+    "www.languagelearningplatform.org", # Custom domain with www
 ]
 
 # Add Render.com host if RENDER environment variable exists
@@ -215,3 +217,5 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+    # Trust the X-Forwarded-Proto header from Render's proxy
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
