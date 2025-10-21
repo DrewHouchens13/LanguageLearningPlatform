@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write  # Allow posting coverage comments on PRs
 
 jobs:
   tests:
@@ -32,10 +33,10 @@ jobs:
             django-cors-headers pyzbar opencv-python numpy python-dotenv openai
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run tests (prints coverage to console)
+      - name: Run tests with coverage
         run: |
           set -e
-          pytest || {
+          pytest --cov=. --cov-report=xml --cov-report=term-missing --junitxml=pytest.xml || {
             code=$?
             if [ "$code" -eq 5 ]; then
               echo "No tests collected (pytest exit code 5). Treating as success for CI coverage requirement."
@@ -45,10 +46,49 @@ jobs:
             fi
           }
 
-      - name: Upload coverage.xml (optional)
+      - name: Create test summary with passed count
+        if: github.event_name == 'pull_request'
+        run: |
+          # Parse pytest.xml to extract test results
+          TOTAL=$(grep -oP 'tests="\K[0-9]+' pytest.xml | head -1)
+          SKIPPED=$(grep -oP 'skipped="\K[0-9]+' pytest.xml | head -1 || echo "0")
+          FAILURES=$(grep -oP 'failures="\K[0-9]+' pytest.xml | head -1 || echo "0")
+          ERRORS=$(grep -oP 'errors="\K[0-9]+' pytest.xml | head -1 || echo "0")
+          PASSED=$((TOTAL - SKIPPED - FAILURES - ERRORS))
+          TIME=$(grep -oP 'time="\K[0-9.]+' pytest.xml | head -1)
+          
+          # Create summary comment
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## 🧪 Test Results
+          
+          | Tests | Passed | Skipped | Failures | Errors | Time |
+          |-------|--------|---------|----------|--------|------|
+          | $TOTAL | $PASSED ✅ | $SKIPPED 💤 | $FAILURES ❌ | $ERRORS 🔥 | ${TIME}s ⏱️ |
+          EOF
+          
+          echo "PASSED_TESTS=$PASSED" >> $GITHUB_ENV
+          echo "TOTAL_TESTS=$TOTAL" >> $GITHUB_ENV
+
+      - name: Coverage comment on PR
+        if: github.event_name == 'pull_request'
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-coverage-path: coverage.xml
+          junitxml-path: pytest.xml
+          title: Test Coverage Report
+          badge-title: Coverage
+          hide-badge: false
+          hide-report: false
+          report-only-changed-files: false
+          hide-comment: false
+          remove-link-from-badge: false
+
+      - name: Upload coverage artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-xml
-          path: coverage.xml
+          name: coverage-reports
+          path: |
+            coverage.xml
+            pytest.xml
           if-no-files-found: ignore
