@@ -107,7 +107,9 @@ def signup_view(request):
 def logout_view(request):
     logout(request)
     messages.success(request, 'You have been successfully logged out.')
-    return redirect('landing')
+    # Use relative redirect to work with proxy prefix
+    from django.http import HttpResponseRedirect
+    return HttpResponseRedirect('../')
 
 
 @login_required
