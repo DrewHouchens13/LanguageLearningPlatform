@@ -115,8 +115,13 @@ def signup_view(request):
 def logout_view(request):
     logout(request)
     messages.success(request, 'You have been successfully logged out.')
-    # Use named URL redirect - FORCE_SCRIPT_NAME will handle proxy prefix
-    return redirect('landing')
+    # Use absolute redirect to avoid double prefix issue in admin
+    # Build absolute URL using request scheme and host
+    from django.urls import reverse
+    from django.http import HttpResponseRedirect
+    landing_url = reverse('landing')
+    absolute_url = request.build_absolute_uri(landing_url)
+    return HttpResponseRedirect(absolute_url)
 
 
 @login_required

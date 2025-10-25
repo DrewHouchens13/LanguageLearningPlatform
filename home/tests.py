@@ -695,13 +695,14 @@ class TestLogoutView(TestCase):
         # Log in first
         self.client.force_login(self.user)
         self.assertTrue(self.user.is_authenticated)
-        
+
         # Logout
         response = self.client.get(self.logout_url)
-        
-        # Should redirect to landing page
-        self.assertRedirects(response, reverse('landing'))
-        
+
+        # Should redirect to landing page (absolute URL now)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.endswith(reverse('landing')))
+
         # User should not be authenticated
         response = self.client.get(reverse('landing'))
         self.assertFalse(response.wsgi_request.user.is_authenticated)
@@ -710,7 +711,9 @@ class TestLogoutView(TestCase):
         """Test logout redirects to landing page"""
         self.client.force_login(self.user)
         response = self.client.get(self.logout_url)
-        self.assertRedirects(response, reverse('landing'))
+        # Logout now uses absolute URL redirect to avoid double prefix in admin
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.endswith(reverse('landing')))
 
 
 # ============================================================================
