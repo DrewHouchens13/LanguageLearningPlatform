@@ -159,3 +159,11 @@ class QuizResultAdmin(admin.ModelAdmin):
     list_filter = ('completed_at',)
     readonly_fields = ('completed_at',)
     actions = [delete_selected_quizzes]
+
+
+# Configure admin site_url for proxy environments
+# The admin logout redirects to site_url, which defaults to '/'
+# When FORCE_SCRIPT_NAME is set (e.g., /proxy/8000), we need to update site_url
+from django.conf import settings
+if hasattr(settings, 'FORCE_SCRIPT_NAME') and settings.FORCE_SCRIPT_NAME:
+    admin.site.site_url = f"{settings.FORCE_SCRIPT_NAME}/"
