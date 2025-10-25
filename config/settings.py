@@ -175,6 +175,10 @@ if IS_DEVEDU:
     # Set FORCE_SCRIPT_NAME to make Django generate URLs with proxy prefix
     FORCE_SCRIPT_NAME = proxy_prefix
     USE_X_FORWARDED_HOST = True
+    USE_X_FORWARDED_PORT = True
+    # Disable CSRF for DevEDU (development only - not for production!)
+    CSRF_COOKIE_SECURE = False
+    CSRF_COOKIE_SAMESITE = 'Lax'
 else:
     # For local development and production (Render)
     STATIC_URL = '/static/'
@@ -211,6 +215,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CSRF_TRUSTED_ORIGINS = [
     "https://*.devedu.io",  # Allow all DevEDU subdomains by default
+    "http://*.devedu.io",   # Also allow HTTP for development
 ]
 
 # Add development proxy origins if IS_DEVEDU is set
@@ -218,6 +223,9 @@ if IS_DEVEDU:
     devedu_host = os.environ.get('DEVEDU_HOST', '')
     if devedu_host:
         CSRF_TRUSTED_ORIGINS.append(f'https://{devedu_host}')
+        CSRF_TRUSTED_ORIGINS.append(f'http://{devedu_host}')
+    # Set CSRF cookie path to root so it works with proxy prefix
+    CSRF_COOKIE_PATH = '/'
 
 # Add Render hostname to CSRF trusted origins
 if RENDER_EXTERNAL_HOSTNAME:
