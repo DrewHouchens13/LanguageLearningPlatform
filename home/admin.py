@@ -1,5 +1,106 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
+from django.contrib import messages
 from .models import UserProgress, LessonCompletion, QuizResult
+
+
+# Custom actions for User admin
+def reset_password_to_default(modeladmin, request, queryset):
+    """Reset selected users' passwords to 'password123'"""
+    count = 0
+    for user in queryset:
+        user.set_password('password123')
+        user.save()
+        count += 1
+    messages.success(request, f'Successfully reset passwords for {count} user(s) to "password123"')
+reset_password_to_default.short_description = "Reset password to 'password123'"
+
+
+def make_staff_admin(modeladmin, request, queryset):
+    """Make selected users staff and superuser (admin)"""
+    count = queryset.update(is_staff=True, is_superuser=True)
+    messages.success(request, f'Successfully made {count} user(s) administrators')
+make_staff_admin.short_description = "Make selected users administrators"
+
+
+def remove_admin_privileges(modeladmin, request, queryset):
+    """Remove admin privileges from selected users"""
+    count = queryset.update(is_staff=False, is_superuser=False)
+    messages.success(request, f'Successfully removed admin privileges from {count} user(s)')
+remove_admin_privileges.short_description = "Remove admin privileges"
+
+
+def reset_user_progress(modeladmin, request, queryset):
+    """Reset all progress data for selected users"""
+    count = 0
+    for user in queryset:
+        # Delete all lesson completions
+        user.lesson_completions.all().delete()
+        # Delete all quiz results
+        user.quiz_results.all().delete()
+        # Reset user progress stats
+        if hasattr(user, 'progress'):
+            user.progress.total_minutes_studied = 0
+            user.progress.total_lessons_completed = 0
+            user.progress.total_quizzes_taken = 0
+            user.progress.overall_quiz_accuracy = 0.0
+            user.progress.save()
+        count += 1
+    messages.success(request, f'Successfully reset all progress for {count} user(s)')
+reset_user_progress.short_description = "Reset all user progress"
+
+
+# Unregister the default User admin and register custom one
+admin.site.unregister(User)
+
+
+@admin.register(User)
+class CustomUserAdmin(BaseUserAdmin):
+    """Enhanced User admin with custom actions"""
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser', 'date_joined', 'last_login')
+    list_filter = ('is_staff', 'is_superuser', 'is_active', 'date_joined')
+    search_fields = ('username', 'email', 'first_name', 'last_name')
+    ordering = ('-date_joined',)
+
+    actions = [reset_password_to_default, make_staff_admin, remove_admin_privileges, reset_user_progress]
+
+    fieldsets = BaseUserAdmin.fieldsets + (
+        ('Progress Information', {
+            'fields': ('get_progress_info',),
+            'classes': ('collapse',),
+        }),
+    )
+
+    readonly_fields = BaseUserAdmin.readonly_fields + ('get_progress_info',)
+
+    def get_progress_info(self, obj):
+        """Display user progress information in admin"""
+        if hasattr(obj, 'progress'):
+            progress = obj.progress
+            return f"""
+            Total Minutes: {progress.total_minutes_studied}
+            Total Lessons: {progress.total_lessons_completed}
+            Total Quizzes: {progress.total_quizzes_taken}
+            Quiz Accuracy: {progress.overall_quiz_accuracy}%
+            Lesson Completions: {obj.lesson_completions.count()}
+            Quiz Results: {obj.quiz_results.count()}
+            """
+        return "No progress data yet"
+    get_progress_info.short_description = "User Progress Summary"
+
+
+# Custom actions for UserProgress admin
+def reset_progress_stats(modeladmin, request, queryset):
+    """Reset progress statistics to zero"""
+    count = queryset.update(
+        total_minutes_studied=0,
+        total_lessons_completed=0,
+        total_quizzes_taken=0,
+        overall_quiz_accuracy=0.0
+    )
+    messages.success(request, f'Successfully reset {count} user progress record(s)')
+reset_progress_stats.short_description = "Reset progress statistics"
 
 
 @admin.register(UserProgress)
@@ -8,6 +109,29 @@ class UserProgressAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'user__email')
     list_filter = ('created_at', 'updated_at')
     readonly_fields = ('created_at', 'updated_at')
+    actions = [reset_progress_stats]
+
+    fieldsets = (
+        ('User', {
+            'fields': ('user',)
+        }),
+        ('Progress Statistics', {
+            'fields': ('total_minutes_studied', 'total_lessons_completed', 'total_quizzes_taken', 'overall_quiz_accuracy')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+# Custom actions for LessonCompletion admin
+def delete_selected_lessons(modeladmin, request, queryset):
+    """Delete selected lesson completions"""
+    count = queryset.count()
+    queryset.delete()
+    messages.success(request, f'Successfully deleted {count} lesson completion(s)')
+delete_selected_lessons.short_description = "Delete selected lesson completions"
 
 
 @admin.register(LessonCompletion)
@@ -16,6 +140,16 @@ class LessonCompletionAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'lesson_title', 'lesson_id')
     list_filter = ('completed_at',)
     readonly_fields = ('completed_at',)
+    actions = [delete_selected_lessons]
+
+
+# Custom actions for QuizResult admin
+def delete_selected_quizzes(modeladmin, request, queryset):
+    """Delete selected quiz results"""
+    count = queryset.count()
+    queryset.delete()
+    messages.success(request, f'Successfully deleted {count} quiz result(s)')
+delete_selected_quizzes.short_description = "Delete selected quiz results"
 
 
 @admin.register(QuizResult)
@@ -24,3 +158,4 @@ class QuizResultAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'quiz_title', 'quiz_id')
     list_filter = ('completed_at',)
     readonly_fields = ('completed_at',)
+    actions = [delete_selected_quizzes]

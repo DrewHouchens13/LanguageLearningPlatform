@@ -775,3 +775,208 @@ class TestURLRouting(TestCase):
         for name, expected_path in urls.items():
             with self.subTest(url_name=name):
                 self.assertEqual(reverse(name), expected_path)
+
+
+# ============================================================================
+# ADMIN TESTS
+# ============================================================================
+
+class TestAdminCustomActions(TestCase):
+    """Test custom admin actions for user management"""
+
+    def setUp(self):
+        """Create test users and admin user"""
+        self.admin_user = User.objects.create_superuser(
+            username='admin',
+            email='admin@example.com',
+            password='adminpass123'
+        )
+        self.test_user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='oldpassword123'
+        )
+        self.test_user2 = User.objects.create_user(
+            username='testuser2',
+            email='test2@example.com',
+            password='oldpassword123'
+        )
+
+    def test_reset_password_to_default_action(self):
+        """Test admin action to reset user password"""
+        from home.admin import reset_password_to_default
+        from django.contrib.admin.sites import AdminSite
+        from django.http import HttpRequest
+        from django.contrib.auth.admin import UserAdmin
+        from django.contrib.messages.storage.fallback import FallbackStorage
+
+        # Create mock request and queryset
+        request = HttpRequest()
+        # Setup messages framework
+        setattr(request, 'session', {})
+        setattr(request, '_messages', FallbackStorage(request))
+        queryset = User.objects.filter(username='testuser')
+
+        # Execute the action
+        reset_password_to_default(UserAdmin(User, AdminSite()), request, queryset)
+
+        # Verify password was changed
+        self.test_user.refresh_from_db()
+        self.assertTrue(self.test_user.check_password('password123'))
+
+    def test_make_staff_admin_action(self):
+        """Test admin action to make user an administrator"""
+        from home.admin import make_staff_admin
+        from django.contrib.admin.sites import AdminSite
+        from django.http import HttpRequest
+        from django.contrib.auth.admin import UserAdmin
+        from django.contrib.messages.storage.fallback import FallbackStorage
+
+        # Verify user is not admin initially
+        self.assertFalse(self.test_user.is_staff)
+        self.assertFalse(self.test_user.is_superuser)
+
+        request = HttpRequest()
+        # Setup messages framework
+        setattr(request, 'session', {})
+        setattr(request, '_messages', FallbackStorage(request))
+        queryset = User.objects.filter(username='testuser')
+
+        # Execute the action
+        make_staff_admin(UserAdmin(User, AdminSite()), request, queryset)
+
+        # Verify user is now admin
+        self.test_user.refresh_from_db()
+        self.assertTrue(self.test_user.is_staff)
+        self.assertTrue(self.test_user.is_superuser)
+
+    def test_remove_admin_privileges_action(self):
+        """Test admin action to remove admin privileges"""
+        from home.admin import remove_admin_privileges
+        from django.contrib.admin.sites import AdminSite
+        from django.http import HttpRequest
+        from django.contrib.auth.admin import UserAdmin
+        from django.contrib.messages.storage.fallback import FallbackStorage
+
+        # Make user admin first
+        self.test_user.is_staff = True
+        self.test_user.is_superuser = True
+        self.test_user.save()
+
+        request = HttpRequest()
+        # Setup messages framework
+        setattr(request, 'session', {})
+        setattr(request, '_messages', FallbackStorage(request))
+        queryset = User.objects.filter(username='testuser')
+
+        # Execute the action
+        remove_admin_privileges(UserAdmin(User, AdminSite()), request, queryset)
+
+        # Verify admin privileges removed
+        self.test_user.refresh_from_db()
+        self.assertFalse(self.test_user.is_staff)
+        self.assertFalse(self.test_user.is_superuser)
+
+    def test_reset_user_progress_action(self):
+        """Test admin action to reset user progress"""
+        from home.admin import reset_user_progress
+        from django.contrib.admin.sites import AdminSite
+        from django.http import HttpRequest
+        from django.contrib.auth.admin import UserAdmin
+        from django.contrib.messages.storage.fallback import FallbackStorage
+
+        # Create progress data for user
+        progress = UserProgress.objects.create(
+            user=self.test_user,
+            total_minutes_studied=100,
+            total_lessons_completed=10,
+            total_quizzes_taken=5,
+            overall_quiz_accuracy=85.0
+        )
+        LessonCompletion.objects.create(
+            user=self.test_user,
+            lesson_id='lesson1',
+            duration_minutes=30
+        )
+        QuizResult.objects.create(
+            user=self.test_user,
+            quiz_id='quiz1',
+            score=8,
+            total_questions=10
+        )
+
+        request = HttpRequest()
+        # Setup messages framework
+        setattr(request, 'session', {})
+        setattr(request, '_messages', FallbackStorage(request))
+        queryset = User.objects.filter(username='testuser')
+
+        # Execute the action
+        reset_user_progress(UserAdmin(User, AdminSite()), request, queryset)
+
+        # Verify progress was reset
+        progress.refresh_from_db()
+        self.assertEqual(progress.total_minutes_studied, 0)
+        self.assertEqual(progress.total_lessons_completed, 0)
+        self.assertEqual(progress.total_quizzes_taken, 0)
+        self.assertEqual(progress.overall_quiz_accuracy, 0.0)
+
+        # Verify lesson completions and quiz results deleted
+        self.assertEqual(self.test_user.lesson_completions.count(), 0)
+        self.assertEqual(self.test_user.quiz_results.count(), 0)
+
+    def test_reset_progress_stats_action(self):
+        """Test admin action to reset UserProgress statistics"""
+        from home.admin import reset_progress_stats
+        from django.contrib.admin.sites import AdminSite
+        from django.http import HttpRequest
+        from home.admin import UserProgressAdmin
+        from django.contrib.messages.storage.fallback import FallbackStorage
+
+        # Create progress data
+        progress = UserProgress.objects.create(
+            user=self.test_user,
+            total_minutes_studied=100,
+            total_lessons_completed=10,
+            total_quizzes_taken=5,
+            overall_quiz_accuracy=85.0
+        )
+
+        request = HttpRequest()
+        # Setup messages framework
+        setattr(request, 'session', {})
+        setattr(request, '_messages', FallbackStorage(request))
+        queryset = UserProgress.objects.filter(user=self.test_user)
+
+        # Execute the action
+        reset_progress_stats(UserProgressAdmin(UserProgress, AdminSite()), request, queryset)
+
+        # Verify stats were reset
+        progress.refresh_from_db()
+        self.assertEqual(progress.total_minutes_studied, 0)
+        self.assertEqual(progress.total_lessons_completed, 0)
+        self.assertEqual(progress.total_quizzes_taken, 0)
+        self.assertEqual(progress.overall_quiz_accuracy, 0.0)
+
+    def test_admin_page_accessible_for_superuser(self):
+        """Test that admin page is accessible for superuser"""
+        self.client.login(username='admin', password='adminpass123')
+        response = self.client.get('/admin/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_admin_page_not_accessible_for_regular_user(self):
+        """Test that admin page is not accessible for regular user"""
+        self.client.login(username='testuser', password='oldpassword123')
+        response = self.client.get('/admin/')
+        # Should redirect to login page
+        self.assertEqual(response.status_code, 302)
+
+    def test_admin_user_list_display(self):
+        """Test custom user admin list display"""
+        from home.admin import CustomUserAdmin
+        from django.contrib.admin.sites import AdminSite
+
+        admin = CustomUserAdmin(User, AdminSite())
+
+        expected_fields = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser', 'date_joined', 'last_login')
+        self.assertEqual(admin.list_display, expected_fields)

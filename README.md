@@ -69,6 +69,31 @@ An interactive web application that helps users incorporate AI into their langua
    - Home: http://localhost:8000/
    - Admin Panel: http://localhost:8000/admin/
 
+## Admin Panel
+
+The platform includes a comprehensive Django admin interface for managing users and progress.
+
+### Creating an Admin Account
+
+**Local Development:**
+```bash
+python manage.py createsuperuser
+```
+
+**Production (Render):**
+1. Go to [Render Dashboard](https://dashboard.render.com/)
+2. Select your service → Shell tab
+3. Run: `python manage.py createsuperuser`
+
+### Admin Features
+
+- **User Management**: View all users, reset passwords, promote/demote administrators
+- **Progress Management**: View and reset user progress, lesson completions, quiz results
+- **Bulk Actions**: Perform operations on multiple users at once
+- **Search & Filter**: Find users and data quickly
+
+📖 **See [ADMIN_GUIDE.md](ADMIN_GUIDE.md) for complete administrator documentation**
+
 ## Deployment to Render
 
 **📖 See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment instructions.**
