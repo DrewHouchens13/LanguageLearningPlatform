@@ -2,20 +2,26 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.utils.crypto import get_random_string
 from .models import UserProgress, LessonCompletion, QuizResult
+import secrets
+import string
 
 
 # Custom actions for User admin
 def reset_password_to_default(modeladmin, request, queryset):
     """
-    Reset selected users' passwords to a secure random password.
+    Reset selected users' passwords to a cryptographically secure random password.
     The new password will be displayed once - admin must communicate it to users.
+
+    Uses Python's secrets module for cryptographically strong randomness,
+    which is recommended for security-sensitive applications like password generation.
     """
     reset_info = []
     for user in queryset:
-        # Generate a secure random password (12 characters with letters and digits)
-        new_password = get_random_string(length=12, allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
+        # Generate a cryptographically secure random password (16 characters)
+        # Using secrets.choice() for each character ensures cryptographic randomness
+        alphabet = string.ascii_letters + string.digits + '!@#$%^&*'
+        new_password = ''.join(secrets.choice(alphabet) for _ in range(16))
         user.set_password(new_password)
         user.save()
         reset_info.append(f"{user.username}: {new_password}")

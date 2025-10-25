@@ -12,6 +12,11 @@ from django.views.decorators.http import require_http_methods
 import logging
 
 # Configure logger for security events
+# Note: IP address logging is standard security practice for:
+# - Detecting brute force attacks
+# - Identifying suspicious login patterns
+# - Security incident investigation and forensics
+# IP addresses are not considered PII in security logging context
 logger = logging.getLogger(__name__)
 
 

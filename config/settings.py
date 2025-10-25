@@ -26,6 +26,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dv##fju3puju_bg4otr!s
 
 # Development environment detection
 # Set IS_DEVEDU=True environment variable when running in development proxies
+# IMPORTANT: This must be explicitly set via environment variable - it will NOT
+# auto-enable in production, ensuring CSRF and other security settings remain strict
 import sys
 IS_DEVEDU = os.environ.get('IS_DEVEDU', 'False') == 'True'
 
