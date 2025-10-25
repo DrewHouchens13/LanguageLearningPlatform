@@ -40,11 +40,22 @@ Language Learning Platform - Django 5.2.7 web application for tracking language 
 - `/dashboard/` - Protected view (@login_required)
 - `/admin/` - Django admin interface (superuser only)
 
-**Admin Interface** (home/admin.py):
+**Admin Interface** (home/admin.py, home/templates/admin/base_site.html):
 - Custom User admin with bulk actions: reset passwords, make/remove admins, reset progress
+- **Unified Navigation**: Admin panel uses same purple gradient navigation as main site
+- **Staff-Only Admin Button**: Admin link appears in navigation only for staff users
+- **Custom Logout**: Admin logout redirects properly in proxy environments
 - Enhanced UserProgress, LessonCompletion, and QuizResult admin
 - Progress information displayed in User detail view
 - Full search and filter capabilities for all models
+
+**Security Features** (home/views.py):
+- **Login Attempt Logging**: All authentication events logged with IP addresses for security monitoring
+- **Open Redirect Prevention**: Login redirects validated with `url_has_allowed_host_and_scheme()`
+- **Password Validation**: Django's built-in validators (min 8 chars, not common, not numeric only)
+- **Email Validation**: Format validation before account creation
+- **Secure Password Reset**: Admin password reset generates secure 12-character random passwords
+- **Generic Error Messages**: Prevents user enumeration during login
 
 ## Development Commands
 
@@ -110,26 +121,31 @@ python manage.py createsuperuser
 
 ### DevEDU Environment
 ```bash
-# Run server in DevEDU (auto-detects environment, no flags needed)
+# Set environment variables for DevEDU proxy
+export IS_DEVEDU=True
+export STATIC_URL_PREFIX=/proxy/8000
+
+# Run server in DevEDU
 python manage.py runserver 0.0.0.0:8000
 
 # Access via DevEDU proxy URL
 # https://editor-jmanchester-20.devedu.io/proxy/8000/
 
-# Auto-detection based on:
-# - /home/student/ directory path
-# - devedu.io in hostname
-# - Automatically sets STATIC_URL to /proxy/8000/static/
+# Configuration:
+# - IS_DEVEDU=True enables proxy support
+# - Sets FORCE_SCRIPT_NAME to /proxy/8000 (handles all URL generation)
+# - Sets STATIC_URL to /proxy/8000/static/
+# - Relaxes CSRF settings for development
 ```
 
 ## Key Implementation Details
 
 **Settings Behavior** (config/settings.py):
-- Lines 27-33: Auto-detects DevEDU environment (checks /home/student/ path, hostname)
-- Lines 36-41: Auto-enables DEBUG for pytest/test runs and DevEDU to avoid SSL redirect issues
-- Lines 166-171: DevEDU environment auto-configures `/proxy/8000/static/` for STATIC_URL
-- Lines 178-195: Tests use simple StaticFilesStorage, production uses WhiteNoiseCompressedManifest
-- Lines 235-246: Security headers only enabled when DEBUG=False
+- Lines 30: IS_DEVEDU environment variable controls proxy configuration
+- Lines 35-39: Auto-enables DEBUG for pytest/test runs to avoid SSL redirect issues
+- Lines 172-178: DevEDU environment uses FORCE_SCRIPT_NAME for proxy URL handling
+- Lines 192-209: Tests use simple StaticFilesStorage, production uses WhiteNoiseCompressedManifest
+- Lines 258-270: Security headers only enabled when DEBUG=False
 
 **User Progress Calculation**:
 - Weekly stats query lessons/quizzes from last 7 days using `completed_at__gte`
@@ -322,18 +338,35 @@ I made some changes to the views file and added stuff. It might work but I'm not
 
 ## Security Considerations
 
+### Implemented Security Features
+- **Login Attempt Logging**: All authentication events logged with IP addresses (see home/views.py:55-88)
+- **Open Redirect Prevention**: Login redirects validated with `url_has_allowed_host_and_scheme()` (home/views.py:74-78)
+- **Password Validation**: Django's built-in validators enforce strong passwords (home/views.py:120-125)
+- **Email Validation**: Format validation before account creation (home/views.py:107-109)
+- **Secure Password Reset**: Admin generates 12-char random passwords (home/admin.py:18)
+- **Generic Error Messages**: Prevents user enumeration during login
+- **CSRF Protection**: Django's built-in CSRF protection on all forms
+- **Input Sanitization**: User input stripped of whitespace, validated before processing
+
+### Best Practices to Follow
 - Never commit secrets or API keys to the repository
 - Use environment variables for sensitive data (.env for local, Render dashboard for production)
 - Validate all user input in forms
-- Use Django's built-in CSRF protection
 - Use Django's authentication system for user management
 - Sanitize any user-generated content displayed in templates
 - Keep dependencies updated (check for security vulnerabilities with `pip list --outdated`)
 - Use HTTPS in production (Render provides this automatically)
 - Set secure cookie settings when DEBUG=False
+- Monitor login attempt logs for suspicious activity
 
 ## Performance Notes
 
+### Implemented Optimizations
+- **Database Query Optimization**: `get_weekly_stats()` reuses queryset to avoid duplicate queries (home/models.py:45-49)
+- **Static File Compression**: WhiteNoise with CompressedManifestStaticFilesStorage in production
+- **Connection Pooling**: PostgreSQL connection max_age=600 for connection reuse
+
+### Best Practices to Follow
 - Use `select_related()` and `prefetch_related()` for database query optimization
 - Consider caching for frequently accessed data
 - Be mindful of N+1 query problems
@@ -402,10 +435,11 @@ If you're stuck:
 - Quiz accuracy = (sum of correct answers / sum of total questions) * 100
 
 ### Static Files Handling
-- Development: Django serves static files
+- Development: Django serves static files (DEBUG=True only)
 - Production: WhiteNoise with compression and caching
-- DevEDU: Auto-detects and uses proxy path `/proxy/8000/static/` (no configuration needed)
+- DevEDU: Uses IS_DEVEDU env var, sets FORCE_SCRIPT_NAME to `/proxy/8000` for all URLs
 - Tests: Simplified storage backend for speed
+- **Security**: Static file serving via Django disabled in production (WhiteNoise handles it)
 
 ### Database Configuration
 - Automatic switching between SQLite (dev) and PostgreSQL (prod)
@@ -413,18 +447,51 @@ If you're stuck:
 - Migrations applied automatically on Render deployment via build.sh
 
 ### Admin Interface
-- Django admin at `/admin/` with enhanced user management
+- Django admin at `/admin/` with enhanced user management and unified navigation
+- **Unified UI**: Admin panel uses same purple gradient navigation as main site (no Django header)
+- **Staff-Only Access**: Admin button visible only to staff users in navigation bar
 - Custom admin actions for bulk operations (see home/admin.py)
 - **Creating admin**: `python manage.py createsuperuser` (local) or via Render Shell (production)
 - **Admin capabilities**:
-  - Reset user passwords to "password123"
+  - Reset user passwords (generates secure 12-char random passwords)
   - Make users administrators or remove admin privileges
   - Reset user progress (deletes lessons, quizzes, resets stats)
   - View user progress summary in User detail page
   - Search/filter all users, progress, lessons, and quizzes
+- **Security**: Login attempts logged with IP addresses for monitoring
 - See [ADMIN_GUIDE.md](ADMIN_GUIDE.md) for complete admin documentation
 
 ---
 
-**Last Updated**: October 2025
+**Last Updated**: December 2025
 **Maintained By**: Development Team
+
+## Recent Updates (December 2025)
+
+### Admin Panel Enhancements
+- Added unified navigation across admin and main site (purple gradient header)
+- Staff-only admin button in navigation bar
+- Custom logout handler for proxy environment compatibility
+- Secure random password generation for admin password resets
+
+### Security Improvements
+- Login attempt logging with IP addresses for security monitoring
+- Open redirect prevention in login flow
+- Django password validators (min 8 chars, complexity requirements)
+- Email format validation
+- Generic error messages to prevent user enumeration
+
+### Performance Optimizations
+- Eliminated duplicate database queries in weekly stats calculation
+- Optimized queryset reuse in UserProgress.get_weekly_stats()
+
+### DevEDU Support
+- Simplified proxy configuration using IS_DEVEDU environment variable
+- FORCE_SCRIPT_NAME handles all URL generation in proxy environments
+- Proper CSRF configuration for development proxies
+
+### Code Quality
+- Comprehensive docstrings for all view functions
+- Module-level documentation in config/urls.py
+- Enhanced security comments and warnings
+- Template comments explaining customizations
