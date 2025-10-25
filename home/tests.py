@@ -465,12 +465,20 @@ class TestSignupView(TestCase):
         self.assertRedirects(response, reverse('landing'))
 
     def test_signup_exception_handling(self):
-        """Test signup handles general exceptions gracefully"""
-        from unittest.mock import patch
+        """
+        Test signup handles unexpected exceptions gracefully.
 
-        # Mock User.objects.create_user to raise a generic exception
+        When user creation fails due to an unexpected error,
+        the view should handle it gracefully, display an error message,
+        and ensure no partial user data is created.
+        """
+        from unittest.mock import patch
+        from django.db import DatabaseError
+
+        # Mock User.objects.create_user to raise a database error
+        # (simulates database connection issues or constraint violations)
         with patch('home.views.User.objects.create_user') as mock_create:
-            mock_create.side_effect = Exception('Unexpected error')
+            mock_create.side_effect = DatabaseError('Database connection lost')
 
             data = {
                 'name': 'John Doe',
@@ -480,12 +488,16 @@ class TestSignupView(TestCase):
             }
             response = self.client.post(self.signup_url, data)
 
-            # Should render login page with error
+            # Should render login page with error (not crash)
             self.assertEqual(response.status_code, 200)
             self.assertTemplateUsed(response, 'login.html')
 
-            # User should not be created
+            # User should not be created (database transaction rolled back)
             self.assertFalse(User.objects.filter(email='john@example.com').exists())
+
+            # Verify error message was set (check messages framework)
+            messages = list(response.context['messages'])
+            self.assertTrue(any('error occurred' in str(m).lower() for m in messages))
 
 
 class TestLoginView(TestCase):
@@ -1054,11 +1066,17 @@ class TestAdminCustomActions(TestCase):
         self.assertEqual(progress_info, "No progress data yet")
 
     def test_delete_selected_lessons_action(self):
-        """Test delete_selected_lessons admin action"""
+        """
+        Test delete_selected_lessons admin action.
+
+        Verifies that the bulk delete action removes lesson completions
+        and displays a success message to the admin user.
+        """
         from home.admin import delete_selected_lessons, LessonCompletionAdmin
         from django.contrib.admin.sites import AdminSite
         from django.http import HttpRequest
         from django.contrib.messages.storage.fallback import FallbackStorage
+        from django.contrib.messages import get_messages
 
         # Create lesson completions
         lesson1 = LessonCompletion.objects.create(
@@ -1086,12 +1104,23 @@ class TestAdminCustomActions(TestCase):
         # Verify lessons were deleted
         self.assertEqual(LessonCompletion.objects.count(), 0)
 
+        # Verify success message was displayed
+        messages = list(get_messages(request))
+        self.assertEqual(len(messages), 1)
+        self.assertIn('Successfully deleted 2 lesson completion(s)', str(messages[0]))
+
     def test_delete_selected_quizzes_action(self):
-        """Test delete_selected_quizzes admin action"""
+        """
+        Test delete_selected_quizzes admin action.
+
+        Verifies that the bulk delete action removes quiz results
+        and displays a success message to the admin user.
+        """
         from home.admin import delete_selected_quizzes, QuizResultAdmin
         from django.contrib.admin.sites import AdminSite
         from django.http import HttpRequest
         from django.contrib.messages.storage.fallback import FallbackStorage
+        from django.contrib.messages import get_messages
 
         # Create quiz results
         quiz1 = QuizResult.objects.create(
@@ -1121,21 +1150,37 @@ class TestAdminCustomActions(TestCase):
         # Verify quizzes were deleted
         self.assertEqual(QuizResult.objects.count(), 0)
 
+        # Verify success message was displayed
+        messages = list(get_messages(request))
+        self.assertEqual(len(messages), 1)
+        self.assertIn('Successfully deleted 2 quiz result(s)', str(messages[0]))
+
 
 # ============================================================================
 # ADMIN CRUD TESTS
 # ============================================================================
 
 class TestAdminCRUDOperations(TestCase):
-    """Test admin interface CRUD operations"""
+    """
+    Test admin interface CRUD operations.
 
-    def setUp(self):
-        """Create admin user and login"""
-        self.admin_user = User.objects.create_superuser(
+    Verifies that admin users can create, read, update, and delete
+    User, UserProgress, LessonCompletion, and QuizResult records
+    through the Django admin interface.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        """Create reusable test data (runs once per test class)"""
+        # Create admin user (reused across all tests)
+        cls.admin_user = User.objects.create_superuser(
             username='admin',
             email='admin@example.com',
             password='adminpass123'
         )
+
+    def setUp(self):
+        """Set up test client and login (runs before each test)"""
         self.client = Client()
         self.client.login(username='admin', password='adminpass123')
 
@@ -1301,31 +1346,41 @@ class TestAdminCRUDOperations(TestCase):
 # ============================================================================
 
 class TestAdminSearchAndFilters(TestCase):
-    """Test admin search and filter functionality"""
+    """
+    Test admin search and filter functionality.
 
-    def setUp(self):
-        """Create admin user and test data"""
-        self.admin_user = User.objects.create_superuser(
+    Verifies that admin search boxes and list filters work correctly
+    for User, UserProgress, LessonCompletion, and QuizResult models.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        """Create reusable test data (runs once per test class)"""
+        # Create admin user
+        cls.admin_user = User.objects.create_superuser(
             username='admin',
             email='admin@example.com',
             password='adminpass123'
         )
-        self.client = Client()
-        self.client.login(username='admin', password='adminpass123')
 
-        # Create test users
-        self.user1 = User.objects.create_user(
+        # Create test users for search/filter testing
+        cls.user1 = User.objects.create_user(
             username='john',
             email='john@example.com',
             first_name='John',
             last_name='Doe'
         )
-        self.user2 = User.objects.create_user(
+        cls.user2 = User.objects.create_user(
             username='jane',
             email='jane@example.com',
             first_name='Jane',
             last_name='Smith'
         )
+
+    def setUp(self):
+        """Set up test client and login (runs before each test)"""
+        self.client = Client()
+        self.client.login(username='admin', password='adminpass123')
 
     def test_user_search_by_username(self):
         """Test searching users by username in admin"""
@@ -1413,20 +1468,32 @@ class TestAdminSearchAndFilters(TestCase):
 # ============================================================================
 
 class TestAdminLoginFlow(TestCase):
-    """Test admin login and authentication flow"""
+    """
+    Test admin login and authentication flow.
 
-    def setUp(self):
-        """Create admin and regular users"""
-        self.admin_user = User.objects.create_superuser(
+    Verifies that only admin users can access the admin interface,
+    tests login/logout functionality, and ensures proper access control
+    for all admin pages.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        """Create reusable test data (runs once per test class)"""
+        # Create admin user for authentication testing
+        cls.admin_user = User.objects.create_superuser(
             username='admin',
             email='admin@example.com',
             password='adminpass123'
         )
-        self.regular_user = User.objects.create_user(
+        # Create regular user to test access denial
+        cls.regular_user = User.objects.create_user(
             username='regular',
             email='regular@example.com',
             password='regularpass123'
         )
+
+    def setUp(self):
+        """Set up test client (runs before each test)"""
         self.client = Client()
 
     def test_admin_login_successful(self):
