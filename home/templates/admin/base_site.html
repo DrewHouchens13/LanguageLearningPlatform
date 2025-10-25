@@ -4,8 +4,13 @@
 
 {% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Language Learning Platform Admin{% endblock %}
 
-{% block branding %}
+{% block extrastyle %}
 <style>
+    /* Hide the default Django admin header to replace with our unified navigation */
+    #header {
+        display: none;
+    }
+
     /* Add consistent navigation bar styling */
     .main-nav {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -50,9 +55,18 @@
         color: #ffd700;
         font-weight: bold;
     }
-</style>
 
-<!-- Main site navigation -->
+    /* Adjust main content to account for removed header */
+    #content {
+        margin-top: 0;
+    }
+</style>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} custom-nav{% endblock %}
+
+{% block header %}
+<!-- Main site navigation (replaces Django admin header) -->
 <div class="main-nav">
     <nav class="navbar">
         <div class="nav-brand">
@@ -69,24 +83,4 @@
         </ul>
     </nav>
 </div>
-
-<!-- Django Admin Branding -->
-<div id="site-name"><a href="{% url 'admin:index' %}">{% trans 'Admin Panel' %}</a></div>
-{% endblock %}
-
-{% block userlinks %}
-    {% if user.is_active and user.is_staff %}
-        <div id="user-tools">
-            {% trans 'Welcome,' %}
-            <strong>{% firstof user.get_short_name user.get_username %}</strong>.
-            {% url 'django-admindocs-docroot' as docsroot %}
-            {% if docsroot %}
-                <a href="{{ docsroot }}">{% trans 'Documentation' %}</a> /
-            {% endif %}
-            {% if user.has_usable_password %}
-                <a href="{% url 'admin:password_change' %}">{% trans 'Change password' %}</a> /
-            {% endif %}
-            <a href="{% url 'logout' %}">{% trans 'Log out' %}</a>
-        </div>
-    {% endif %}
 {% endblock %}
