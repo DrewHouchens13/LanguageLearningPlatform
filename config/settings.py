@@ -24,10 +24,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dv##fju3puju_bg4otr!stbh)0y==ql!cf=^o87+li&k&)u!1w')
 
+# Auto-detect DevEDU environment
+# DevEDU uses /home/student/ path and specific hostname pattern
+IS_DEVEDU = (
+    '/home/student/' in str(BASE_DIR) or  # DevEDU directory structure
+    'devedu.io' in os.environ.get('HOSTNAME', '') or  # DevEDU hostname
+    os.path.exists('/home/student')  # DevEDU user directory exists
+)
+
 # SECURITY WARNING: don't run with debug turned on in production!
-# Enable DEBUG in tests to avoid SSL redirect and other production security settings
+# Enable DEBUG in tests and DevEDU to avoid SSL redirect and other production security settings
 import sys
-if 'pytest' in sys.modules or 'test' in sys.argv:
+if 'pytest' in sys.modules or 'test' in sys.argv or IS_DEVEDU:
     DEBUG = True
 else:
     DEBUG = os.environ.get('DEBUG', 'False') == 'True'
@@ -153,10 +161,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-# For DevEDU development environment
-if os.environ.get('DEVEDU_ENVIRONMENT'):
+# Static files configuration
+# For DevEDU - need /proxy/8000 prefix so browser can find static files through proxy
+if IS_DEVEDU:
     STATIC_URL = '/proxy/8000/static/'
-    FORCE_SCRIPT_NAME = '/proxy/8000'  # Tell Django it's running under /proxy/8000/
+    USE_X_FORWARDED_HOST = True
 else:
     # For local development and production (Render)
     STATIC_URL = '/static/'

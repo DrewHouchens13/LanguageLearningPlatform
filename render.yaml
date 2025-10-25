@@ -5,6 +5,7 @@ services:
     runtime: python
     plan: free  # Use 'starter' for paid plan with better performance
     branch: main  # Deploy from main branch
+    autoDeploy: false  # Require manual deployment for safety
     buildCommand: "./build.sh"
     startCommand: "gunicorn config.wsgi:application"
     envVars:
