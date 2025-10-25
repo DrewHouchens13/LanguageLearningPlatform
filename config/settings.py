@@ -154,9 +154,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 # For DevEDU development environment
+# Note: DevEDU proxy strips /proxy/8000 before reaching Django,
+# so we don't use FORCE_SCRIPT_NAME (it causes redirect loops)
 if os.environ.get('DEVEDU_ENVIRONMENT'):
     STATIC_URL = '/proxy/8000/static/'
-    FORCE_SCRIPT_NAME = '/proxy/8000'  # Tell Django it's running under /proxy/8000/
+    # Allow proxy headers
+    USE_X_FORWARDED_HOST = True
 else:
     # For local development and production (Render)
     STATIC_URL = '/static/'
