@@ -153,15 +153,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-# Static URL for all environments
-# DevEDU, local dev, and production all use /static/
-# When DEBUG=True (DevEDU/local), Django serves static files automatically
-# When DEBUG=False (production), WhiteNoise serves static files
-STATIC_URL = '/static/'
-
-# For DevEDU - allow proxy headers
+# Static files configuration
+# For DevEDU - need /proxy/8000 prefix so browser can find static files through proxy
 if os.environ.get('DEVEDU_ENVIRONMENT'):
+    STATIC_URL = '/proxy/8000/static/'
     USE_X_FORWARDED_HOST = True
+else:
+    # For local development and production (Render)
+    STATIC_URL = '/static/'
 
 # Directory where collectstatic will collect static files for production
 STATIC_ROOT = BASE_DIR / 'staticfiles'
