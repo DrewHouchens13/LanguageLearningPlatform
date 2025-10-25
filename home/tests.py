@@ -1761,3 +1761,4 @@ class TestAdminLoginFlow(TestCase):
         self.assertContains(response, 'User Progress')
         self.assertContains(response, 'Lesson Completions')
         self.assertContains(response, 'Quiz Results')
+
