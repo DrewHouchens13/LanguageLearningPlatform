@@ -457,8 +457,8 @@ class TestSignupView(TestCase):
         data = {
             'name': 'Jane Smith',
             'email': 'jane@example.com',
-            'password': 'password123',
-            'confirm-password': 'password123'
+            'password': 'SecurePass123!@#',
+            'confirm-password': 'SecurePass123!@#'
         }
         response = self.client.post(self.signup_url, data, follow=True)
         
@@ -471,8 +471,8 @@ class TestSignupView(TestCase):
         data = {
             'name': 'John Doe',
             'email': 'john@example.com',
-            'password': 'password123',
-            'confirm-password': 'differentpass'
+            'password': 'SecurePass123!@#',
+            'confirm-password': 'DifferentPass456!@#'
         }
         response = self.client.post(self.signup_url, data)
         
@@ -506,14 +506,14 @@ class TestSignupView(TestCase):
         User.objects.create_user(
             username='existing',
             email='john@example.com',
-            password='password123'
+            password='SecurePass123!@#'
         )
         
         data = {
             'name': 'John Doe',
             'email': 'john@example.com',
-            'password': 'password123',
-            'confirm-password': 'password123'
+            'password': 'SecurePass123!@#',
+            'confirm-password': 'SecurePass123!@#'
         }
         response = self.client.post(self.signup_url, data)
         
@@ -528,14 +528,14 @@ class TestSignupView(TestCase):
         User.objects.create_user(
             username='john',
             email='john1@example.com',
-            password='password123'
+            password='SecurePass123!@#'
         )
         
         data = {
             'name': 'John Smith',
             'email': 'john@example.com',  # Use 'john@example.com' so username will be 'john'
-            'password': 'password123',
-            'confirm-password': 'password123'
+            'password': 'SecurePass123!@#',
+            'confirm-password': 'SecurePass123!@#'
         }
         response = self.client.post(self.signup_url, data)
         
@@ -878,14 +878,14 @@ class TestLandingPageAdminButton(TestCase):
         self.regular_user = User.objects.create_user(
             username='regular',
             email='regular@example.com',
-            password='password123'
+            password='SecurePass123!@#'
         )
 
         # Create staff user (admin)
         self.admin_user = User.objects.create_user(
             username='admin',
             email='admin@example.com',
-            password='password123',
+            password='SecurePass123!@#',
             is_staff=True,
             is_superuser=True
         )
@@ -921,7 +921,7 @@ class TestLandingPageAdminButton(TestCase):
         staff_user = User.objects.create_user(
             username='staff',
             email='staff@example.com',
-            password='password123',
+            password='SecurePass123!@#',
             is_staff=True,
             is_superuser=False
         )
@@ -1003,21 +1003,25 @@ class TestAdminCustomActions(TestCase):
         self.test_user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
-            password='oldpassword123'
+            password='OldSecurePass456!@#'
         )
         self.test_user2 = User.objects.create_user(
             username='testuser2',
             email='test2@example.com',
-            password='oldpassword123'
+            password='OldSecurePass456!@#'
         )
 
     def test_reset_password_to_default_action(self):
-        """Test admin action to reset user password"""
+        """Test admin action to reset user password to secure random password"""
         from home.admin import reset_password_to_default
         from django.contrib.admin.sites import AdminSite
         from django.http import HttpRequest
         from django.contrib.auth.admin import UserAdmin
         from django.contrib.messages.storage.fallback import FallbackStorage
+        from django.contrib.messages import get_messages
+
+        # Store old password
+        old_password = self.test_user.password
 
         # Create mock request and queryset
         request = HttpRequest()
@@ -1031,7 +1035,13 @@ class TestAdminCustomActions(TestCase):
 
         # Verify password was changed
         self.test_user.refresh_from_db()
-        self.assertTrue(self.test_user.check_password('password123'))
+        self.assertNotEqual(self.test_user.password, old_password)
+
+        # Verify a message was sent with the new password
+        messages = list(get_messages(request))
+        self.assertEqual(len(messages), 1)
+        self.assertIn('Passwords reset for 1 user(s)', str(messages[0]))
+        self.assertIn('SAVE THESE SECURELY', str(messages[0]))
 
     def test_make_staff_admin_action(self):
         """Test admin action to make user an administrator"""
@@ -1175,7 +1185,7 @@ class TestAdminCustomActions(TestCase):
 
     def test_admin_page_not_accessible_for_regular_user(self):
         """Test that admin page is not accessible for regular user"""
-        self.client.login(username='testuser', password='oldpassword123')
+        self.client.login(username='testuser', password='OldSecurePass456!@#')
         response = self.client.get('/admin/')
         # Should redirect to login page
         self.assertEqual(response.status_code, 302)

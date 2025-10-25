@@ -2,19 +2,31 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.utils.crypto import get_random_string
 from .models import UserProgress, LessonCompletion, QuizResult
 
 
 # Custom actions for User admin
 def reset_password_to_default(modeladmin, request, queryset):
-    """Reset selected users' passwords to 'password123'"""
-    count = 0
+    """
+    Reset selected users' passwords to a secure random password.
+    The new password will be displayed once - admin must communicate it to users.
+    """
+    reset_info = []
     for user in queryset:
-        user.set_password('password123')
+        # Generate a secure random password (12 characters with letters and digits)
+        new_password = get_random_string(length=12, allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')
+        user.set_password(new_password)
         user.save()
-        count += 1
-    messages.success(request, f'Successfully reset passwords for {count} user(s) to "password123"')
-reset_password_to_default.short_description = "Reset password to 'password123'"
+        reset_info.append(f"{user.username}: {new_password}")
+
+    # Display all passwords to admin (they should save these securely)
+    passwords_msg = " | ".join(reset_info)
+    messages.warning(
+        request,
+        f'Passwords reset for {len(reset_info)} user(s). SAVE THESE SECURELY: {passwords_msg}'
+    )
+reset_password_to_default.short_description = "Reset passwords (generates secure random passwords)"
 
 
 def make_staff_admin(modeladmin, request, queryset):

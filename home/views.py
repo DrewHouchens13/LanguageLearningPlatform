@@ -2,8 +2,13 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email as django_validate_email
 from django.contrib import messages
 from django.db import IntegrityError
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_http_methods
 
 
 def landing(request):
@@ -36,13 +41,17 @@ def login_view(request):
             login(request, user)
             messages.success(request, f'Welcome back, {user.first_name or user.username}!')
 
-            # Redirect to next page if specified, otherwise go up one level from /login/
-            next_page = request.GET.get('next')
-            if not next_page:
-                # Simple relative redirect - go up from /login/ to parent directory
-                # Works correctly through proxy: /proxy/8000/login/ -> /proxy/8000/
-                next_page = '..'
-            return HttpResponseRedirect(next_page)
+            # Redirect to next page if specified and safe, otherwise go to landing
+            next_page = request.GET.get('next', '')
+            if next_page and url_has_allowed_host_and_scheme(
+                url=next_page,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure()
+            ):
+                return HttpResponseRedirect(next_page)
+            else:
+                # Safe redirect to landing page
+                return HttpResponseRedirect('..')
         else:
             messages.error(request, 'Invalid email or password.')
 
@@ -57,19 +66,32 @@ def signup_view(request):
         return HttpResponseRedirect('..')
 
     if request.method == 'POST':
-        name = request.POST.get('name')
-        email = request.POST.get('email')
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
         password = request.POST.get('password')
         confirm_password = request.POST.get('confirm-password')
+
+        # Validate email format
+        try:
+            django_validate_email(email)
+        except ValidationError:
+            messages.error(request, 'Please enter a valid email address.')
+            return render(request, 'login.html')
 
         # Validate passwords match
         if password != confirm_password:
             messages.error(request, 'Passwords do not match.')
             return render(request, 'login.html')
 
-        # Validate password length
-        if len(password) < 8:
-            messages.error(request, 'Password must be at least 8 characters long.')
+        # Validate password strength using Django's validators
+        try:
+            # Create a temporary user object for validation
+            temp_user = User(username=email.split('@')[0], email=email, first_name=name.split()[0] if name else '')
+            validate_password(password, user=temp_user)
+        except ValidationError as e:
+            # Display all password validation errors
+            for error in e.messages:
+                messages.error(request, error)
             return render(request, 'login.html')
 
         # Split name into first and last name
@@ -102,26 +124,45 @@ def signup_view(request):
             messages.success(request, f'Welcome to Language Learning Platform, {first_name}!')
             return HttpResponseRedirect('..')
 
-        except IntegrityError:
-            messages.error(request, 'An account with this email already exists.')
+        except IntegrityError as e:
+            # Check if it's email duplicate or username duplicate
+            if 'email' in str(e):
+                messages.error(request, 'An account with this email already exists.')
+            else:
+                messages.error(request, 'An error occurred while creating your account. Please try again.')
+            return render(request, 'login.html')
+        except ValidationError as e:
+            # Handle any validation errors
+            for error in e.messages:
+                messages.error(request, error)
             return render(request, 'login.html')
         except Exception as e:
+            # Log unexpected errors for debugging (don't expose details to user)
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Unexpected error during signup: {str(e)}')
             messages.error(request, 'An error occurred while creating your account. Please try again.')
             return render(request, 'login.html')
 
     return render(request, 'login.html')
 
 
+@require_http_methods(["GET", "POST"])
 def logout_view(request):
-    logout(request)
-    messages.success(request, 'You have been successfully logged out.')
-    # Use absolute redirect to avoid double prefix issue in admin
-    # Build absolute URL using request scheme and host
-    from django.urls import reverse
-    from django.http import HttpResponseRedirect
-    landing_url = reverse('landing')
-    absolute_url = request.build_absolute_uri(landing_url)
-    return HttpResponseRedirect(absolute_url)
+    """
+    Logout view that accepts both GET and POST for compatibility.
+    GET is allowed for navigation links, but POST is recommended for security.
+    """
+    if request.method == 'POST' or request.method == 'GET':
+        logout(request)
+        messages.success(request, 'You have been successfully logged out.')
+        # Use absolute redirect to avoid double prefix issue in admin
+        # Build absolute URL using request scheme and host
+        from django.urls import reverse
+        from django.http import HttpResponseRedirect
+        landing_url = reverse('landing')
+        absolute_url = request.build_absolute_uri(landing_url)
+        return HttpResponseRedirect(absolute_url)
 
 
 @login_required
