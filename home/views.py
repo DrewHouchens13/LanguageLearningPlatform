@@ -7,18 +7,7 @@ from django.db import IntegrityError
 
 
 def landing(request):
-    # Build base URL for navigation links to work with proxy
-    # Check for proxy prefix in the full path
-    full_path = request.get_full_path()
-    if '/proxy/' in full_path:
-        # Extract base path including proxy prefix
-        import re
-        match = re.search(r'(/proxy/\d+)', full_path)
-        base_url = match.group(1) + '/' if match else '/'
-    else:
-        base_url = '/'
-
-    return render(request, "index.html", {'base_url': base_url})
+    return render(request, "index.html")
 
 
 def login_view(request):
