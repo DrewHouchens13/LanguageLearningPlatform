@@ -207,14 +207,15 @@ else:
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CSRF_TRUSTED_ORIGINS = []
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.devedu.io",  # Allow all DevEDU subdomains by default
+]
 
 # Add development proxy origins if IS_DEVEDU is set
 if IS_DEVEDU:
     devedu_host = os.environ.get('DEVEDU_HOST', '')
     if devedu_host:
         CSRF_TRUSTED_ORIGINS.append(f'https://{devedu_host}')
-    CSRF_TRUSTED_ORIGINS.append("https://*.devedu.io")
 
 # Add Render hostname to CSRF trusted origins
 if RENDER_EXTERNAL_HOSTNAME:
