@@ -1,6 +1,78 @@
 {% extends "admin/base.html" %}
-
+{% load static %}
 {% load i18n %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Language Learning Platform Admin{% endblock %}
+
+{% block branding %}
+<style>
+    /* Add consistent navigation bar styling */
+    .main-nav {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 0;
+        margin: 0;
+    }
+    .main-nav .navbar {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2rem;
+    }
+    .main-nav .nav-brand h1 {
+        color: white;
+        margin: 0;
+        font-size: 1.5rem;
+    }
+    .main-nav .nav-menu {
+        display: flex;
+        list-style: none;
+        gap: 1.5rem;
+        margin: 0;
+        padding: 0;
+    }
+    .main-nav .nav-link {
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        transition: opacity 0.3s;
+    }
+    .main-nav .nav-link:hover {
+        opacity: 0.8;
+    }
+    .main-nav .nav-button {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+    }
+    .main-nav .admin-link {
+        color: #ffd700;
+        font-weight: bold;
+    }
+</style>
+
+<!-- Main site navigation -->
+<div class="main-nav">
+    <nav class="navbar">
+        <div class="nav-brand">
+            <h1>Language Learning Platform</h1>
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item"><a href="{% url 'landing' %}" class="nav-link">Home</a></li>
+            <li class="nav-item"><a href="{% url 'progress' %}" class="nav-link">My Progress</a></li>
+            <li class="nav-item"><a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a></li>
+            {% if user.is_staff %}
+                <li class="nav-item"><a href="{% url 'admin:index' %}" class="nav-link admin-link">Admin</a></li>
+            {% endif %}
+            <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link nav-button">Logout</a></li>
+        </ul>
+    </nav>
+</div>
+
+<!-- Django Admin Branding -->
+<div id="site-name"><a href="{% url 'admin:index' %}">{% trans 'Admin Panel' %}</a></div>
+{% endblock %}
 
 {% block userlinks %}
     {% if user.is_active and user.is_staff %}
