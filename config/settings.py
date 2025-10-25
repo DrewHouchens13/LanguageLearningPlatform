@@ -42,12 +42,11 @@ ALLOWED_HOSTS = [
     "[::1]",
     "languagelearningplatform.org",     # Custom domain
     "www.languagelearningplatform.org", # Custom domain with www
+    ".devedu.io",  # Allow all devedu.io subdomains
 ]
 
 # Add development proxy hosts if IS_DEVEDU is set
 if IS_DEVEDU:
-    # Allow all devedu.io subdomains
-    ALLOWED_HOSTS.append('.devedu.io')
     # Add specific host if provided
     devedu_host = os.environ.get('DEVEDU_HOST', '')
     if devedu_host:
