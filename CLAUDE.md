@@ -147,11 +147,19 @@ DEVEDU_ENVIRONMENT=1 python manage.py runserver 0.0.0.0:8000
 - Build: `./build.sh` (installs deps, collects static, runs migrations)
 - Start: `gunicorn config.wsgi:application`
 - Auto-provisions PostgreSQL database
+- **Auto-deploy: DISABLED** - Requires manual deployment for safety
 - Environment variables: SECRET_KEY (auto-generated), DEBUG=False, DATABASE_URL (from database)
 
 **Production URL**: https://language-learning-platform-xb6f.onrender.com
 
-**Deployment Process**: Push to `main` branch triggers auto-deploy
+**Deployment Process**:
+- Push to `main` branch does NOT auto-deploy
+- **Manual deployment required:**
+  1. Go to [Render Dashboard](https://dashboard.render.com/)
+  2. Select your service: `language-learning-platform`
+  3. Click "Manual Deploy" → "Deploy latest commit"
+  4. Monitor build logs for any issues
+- This gives you full control over when changes go live
 
 ## Environment Variables
 
