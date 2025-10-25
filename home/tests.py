@@ -860,6 +860,77 @@ class TestDashboardView(TestCase):
 
 
 # ============================================================================
+# LANDING PAGE TESTS
+# ============================================================================
+
+class TestLandingPageAdminButton(TestCase):
+    """Test admin button visibility on landing page"""
+
+    def setUp(self):
+        """Create test users"""
+        self.client = Client()
+        self.landing_url = '/'
+
+        # Create regular user
+        self.regular_user = User.objects.create_user(
+            username='regular',
+            email='regular@example.com',
+            password='password123'
+        )
+
+        # Create staff user (admin)
+        self.admin_user = User.objects.create_user(
+            username='admin',
+            email='admin@example.com',
+            password='password123',
+            is_staff=True,
+            is_superuser=True
+        )
+
+    def test_admin_button_visible_for_staff(self):
+        """Test admin button appears for staff users"""
+        self.client.force_login(self.admin_user)
+        response = self.client.get(self.landing_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Admin')
+        self.assertContains(response, '/admin/')
+
+    def test_admin_button_hidden_for_regular_users(self):
+        """Test admin button does not appear for regular users"""
+        self.client.force_login(self.regular_user)
+        response = self.client.get(self.landing_url)
+
+        self.assertEqual(response.status_code, 200)
+        # Should not contain the admin link (checking for the text "Admin" with the admin-link class)
+        self.assertNotContains(response, 'admin-link')
+
+    def test_admin_button_hidden_for_anonymous_users(self):
+        """Test admin button does not appear for anonymous users"""
+        response = self.client.get(self.landing_url)
+
+        self.assertEqual(response.status_code, 200)
+        # Should not contain the admin link
+        self.assertNotContains(response, 'admin-link')
+
+    def test_staff_user_without_superuser_sees_admin_button(self):
+        """Test staff users (even without superuser) see admin button"""
+        staff_user = User.objects.create_user(
+            username='staff',
+            email='staff@example.com',
+            password='password123',
+            is_staff=True,
+            is_superuser=False
+        )
+        self.client.force_login(staff_user)
+        response = self.client.get(self.landing_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Admin')
+        self.assertContains(response, '/admin/')
+
+
+# ============================================================================
 # URL TESTS
 # ============================================================================
 

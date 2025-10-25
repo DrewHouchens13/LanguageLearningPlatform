@@ -24,24 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dv##fju3puju_bg4otr!stbh)0y==ql!cf=^o87+li&k&)u!1w')
 
-# Auto-detect DevEDU environment
-# DevEDU uses /home/student/ path and specific hostname pattern
-def _is_devedu_hostname():
-    """Check if hostname is a valid devedu.io domain (exact match or subdomain)."""
-    hostname = os.environ.get('HOSTNAME', '')
-    # Validate hostname is exactly 'devedu.io' or a subdomain like 'editor-xyz.devedu.io'
-    # This prevents matching malicious domains like 'maliciousdevedu.io' or 'devedu.io.evil.com'
-    return hostname == 'devedu.io' or hostname.endswith('.devedu.io')
-
-IS_DEVEDU = (
-    '/home/student/' in str(BASE_DIR) or  # DevEDU directory structure
-    _is_devedu_hostname() or  # DevEDU hostname (secure validation)
-    os.path.exists('/home/student')  # DevEDU user directory exists
-)
+# Development environment detection
+# Set IS_DEVEDU=True environment variable when running in development proxies
+import sys
+IS_DEVEDU = os.environ.get('IS_DEVEDU', 'False') == 'True'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# Enable DEBUG in tests and DevEDU to avoid SSL redirect and other production security settings
-import sys
+# Enable DEBUG in tests and development environments
 if 'pytest' in sys.modules or 'test' in sys.argv or IS_DEVEDU:
     DEBUG = True
 else:
@@ -51,11 +40,16 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "[::1]",
-    "editor-jmanchester-20.devedu.io",  # your DevEdu editor host
-    ".devedu.io",                       # any other DevEdu subdomain if needed
     "languagelearningplatform.org",     # Custom domain
     "www.languagelearningplatform.org", # Custom domain with www
 ]
+
+# Add development proxy hosts if IS_DEVEDU is set
+if IS_DEVEDU:
+    ALLOWED_HOSTS.extend([
+        os.environ.get('DEVEDU_HOST', ''),  # Specific development host
+        '.devedu.io',  # Allow all devedu.io subdomains
+    ])
 
 # Add Render.com host if RENDER environment variable exists
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -169,9 +163,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 # Static files configuration
-# For DevEDU - need /proxy/8000 prefix so browser can find static files through proxy
+# For development proxies - use STATIC_URL_PREFIX environment variable
 if IS_DEVEDU:
-    STATIC_URL = '/proxy/8000/static/'
+    proxy_prefix = os.environ.get('STATIC_URL_PREFIX', '/proxy/8000')
+    STATIC_URL = f'{proxy_prefix}/static/'
     USE_X_FORWARDED_HOST = True
 else:
     # For local development and production (Render)
@@ -207,10 +202,14 @@ else:
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://editor-jmanchester-20.devedu.io",
-    "https://*.devedu.io",
-]
+CSRF_TRUSTED_ORIGINS = []
+
+# Add development proxy origins if IS_DEVEDU is set
+if IS_DEVEDU:
+    devedu_host = os.environ.get('DEVEDU_HOST', '')
+    if devedu_host:
+        CSRF_TRUSTED_ORIGINS.append(f'https://{devedu_host}')
+    CSRF_TRUSTED_ORIGINS.append("https://*.devedu.io")
 
 # Add Render hostname to CSRF trusted origins
 if RENDER_EXTERNAL_HOSTNAME:
