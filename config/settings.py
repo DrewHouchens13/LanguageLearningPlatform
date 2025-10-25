@@ -31,8 +31,9 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dv##fju3puju_bg4otr!s
 #
 # Accepts: 'True', 'true', '1', 'yes' as truthy values (case-insensitive)
 # All other values (including unset) default to False
+# Strips whitespace to handle ' true ', ' 1 ', etc.
 import sys
-IS_DEVEDU = os.environ.get('IS_DEVEDU', '').lower() in ('true', '1', 'yes')
+IS_DEVEDU = os.environ.get('IS_DEVEDU', '').strip().lower() in ('true', '1', 'yes')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Enable DEBUG in tests and development environments

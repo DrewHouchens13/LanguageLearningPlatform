@@ -23,6 +23,12 @@ import logging
 # - Consider anonymizing IP addresses if storing long-term (e.g., hash last octet)
 # - Comply with applicable privacy regulations (GDPR, CCPA, etc.)
 # - IP addresses alone typically don't constitute PII in security logging context
+#
+# Log Management Best Practices:
+# - Implement log rotation (see Django logging configuration in settings.py)
+# - Secure log storage with restricted access (admin/security team only)
+# - Regular archival of old logs to prevent storage bloat
+# - Monitor logs for security incidents and suspicious patterns
 logger = logging.getLogger(__name__)
 
 

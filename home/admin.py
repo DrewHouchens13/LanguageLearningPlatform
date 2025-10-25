@@ -5,6 +5,10 @@ from django.contrib import messages
 from .models import UserProgress, LessonCompletion, QuizResult
 import secrets
 import string
+import logging
+
+# Configure logger for admin actions (audit trail)
+logger = logging.getLogger(__name__)
 
 
 # Custom actions for User admin
@@ -32,24 +36,48 @@ def reset_password_to_default(modeladmin, request, queryset):
         queryset: QuerySet of User objects to reset
     """
     reset_info = []
+    failed_users = []
+
     for user in queryset:
-        # Generate a cryptographically secure random password (16 characters)
-        # Using secrets.choice() for each character ensures cryptographic randomness
-        alphabet = string.ascii_letters + string.digits + '!@#$%^&*'
-        new_password = ''.join(secrets.choice(alphabet) for _ in range(16))
-        user.set_password(new_password)
-        user.save()
-        reset_info.append(f"{user.username}: {new_password}")
+        try:
+            # Generate a cryptographically secure random password (16 characters)
+            # Using secrets.choice() for each character ensures cryptographic randomness
+            alphabet = string.ascii_letters + string.digits + '!@#$%^&*'
+            new_password = ''.join(secrets.choice(alphabet) for _ in range(16))
+            user.set_password(new_password)
+            user.save()
+            reset_info.append(f"{user.username}: {new_password}")
+
+            # Log admin action for audit trail (password NOT logged, only action)
+            admin_user = getattr(request, 'user', None)
+            admin_username = admin_user.username if admin_user else 'Unknown'
+            logger.info(
+                f'Admin {admin_username} reset password for user: {user.username}'
+            )
+        except Exception as e:
+            # Handle save failures gracefully
+            failed_users.append(user.username)
+            logger.error(
+                f'Failed to reset password for user {user.username}: {str(e)}'
+            )
 
     # Display passwords to admin (one-time only, must communicate securely to users)
     # WARNING: Admin must copy these passwords immediately and transmit via secure channel
-    passwords_msg = " | ".join(reset_info)
-    messages.warning(
-        request,
-        f'⚠️ SECURITY: Passwords reset for {len(reset_info)} user(s). '
-        f'Copy these NOW and communicate via secure channel. '
-        f'They will not be shown again: {passwords_msg}'
-    )
+    if reset_info:
+        passwords_msg = " | ".join(reset_info)
+        messages.warning(
+            request,
+            f'⚠️ SECURITY: Passwords reset for {len(reset_info)} user(s). '
+            f'Copy these NOW and communicate via secure channel. '
+            f'They will not be shown again: {passwords_msg}'
+        )
+
+    # Report any failures
+    if failed_users:
+        messages.error(
+            request,
+            f'Failed to reset passwords for: {", ".join(failed_users)}'
+        )
 reset_password_to_default.short_description = "Reset passwords (generates secure random passwords)"
 
 
