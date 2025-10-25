@@ -15,7 +15,7 @@ def login_view(request):
 
     # If user is already logged in, redirect to home
     if request.user.is_authenticated:
-        return HttpResponseRedirect('../')
+        return HttpResponseRedirect('..')
 
     if request.method == 'POST':
         email = request.POST.get('email')
@@ -36,8 +36,12 @@ def login_view(request):
             login(request, user)
             messages.success(request, f'Welcome back, {user.first_name or user.username}!')
 
-            # Redirect to next page if specified, otherwise to landing (relative path)
-            next_page = request.GET.get('next', '../')
+            # Redirect to next page if specified, otherwise go up one level from /login/
+            next_page = request.GET.get('next')
+            if not next_page:
+                # Simple relative redirect - go up from /login/ to parent directory
+                # Works correctly through proxy: /proxy/8000/login/ -> /proxy/8000/
+                next_page = '..'
             return HttpResponseRedirect(next_page)
         else:
             messages.error(request, 'Invalid email or password.')
@@ -50,7 +54,7 @@ def signup_view(request):
 
     # If user is already logged in, redirect to home
     if request.user.is_authenticated:
-        return HttpResponseRedirect('../')
+        return HttpResponseRedirect('..')
 
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -96,7 +100,7 @@ def signup_view(request):
             # Log the user in
             login(request, user)
             messages.success(request, f'Welcome to Language Learning Platform, {first_name}!')
-            return HttpResponseRedirect('../')
+            return HttpResponseRedirect('..')
 
         except IntegrityError:
             messages.error(request, 'An account with this email already exists.')
@@ -113,7 +117,7 @@ def logout_view(request):
     messages.success(request, 'You have been successfully logged out.')
     # Use relative redirect to work with proxy prefix
     from django.http import HttpResponseRedirect
-    return HttpResponseRedirect('../')
+    return HttpResponseRedirect('..')
 
 
 @login_required
