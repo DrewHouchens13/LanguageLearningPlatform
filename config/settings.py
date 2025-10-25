@@ -26,9 +26,16 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dv##fju3puju_bg4otr!s
 
 # Auto-detect DevEDU environment
 # DevEDU uses /home/student/ path and specific hostname pattern
+def _is_devedu_hostname():
+    """Check if hostname is a valid devedu.io domain (exact match or subdomain)."""
+    hostname = os.environ.get('HOSTNAME', '')
+    # Validate hostname is exactly 'devedu.io' or a subdomain like 'editor-xyz.devedu.io'
+    # This prevents matching malicious domains like 'maliciousdevedu.io' or 'devedu.io.evil.com'
+    return hostname == 'devedu.io' or hostname.endswith('.devedu.io')
+
 IS_DEVEDU = (
     '/home/student/' in str(BASE_DIR) or  # DevEDU directory structure
-    'devedu.io' in os.environ.get('HOSTNAME', '') or  # DevEDU hostname
+    _is_devedu_hostname() or  # DevEDU hostname (secure validation)
     os.path.exists('/home/student')  # DevEDU user directory exists
 )
 
