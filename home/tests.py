@@ -1041,7 +1041,8 @@ class TestAdminCustomActions(TestCase):
         messages = list(get_messages(request))
         self.assertEqual(len(messages), 1)
         self.assertIn('Passwords reset for 1 user(s)', str(messages[0]))
-        self.assertIn('SAVE THESE SECURELY', str(messages[0]))
+        self.assertIn('SECURITY', str(messages[0]))  # Check for security warning
+        self.assertIn('testuser:', str(messages[0]))  # Verify username in message
 
     def test_make_staff_admin_action(self):
         """Test admin action to make user an administrator"""

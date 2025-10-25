@@ -16,7 +16,13 @@ import logging
 # - Detecting brute force attacks
 # - Identifying suspicious login patterns
 # - Security incident investigation and forensics
-# IP addresses are not considered PII in security logging context
+#
+# Privacy Considerations:
+# - IP addresses are logged for security purposes only
+# - Logs should be retained according to security policy (e.g., 90 days)
+# - Consider anonymizing IP addresses if storing long-term (e.g., hash last octet)
+# - Comply with applicable privacy regulations (GDPR, CCPA, etc.)
+# - IP addresses alone typically don't constitute PII in security logging context
 logger = logging.getLogger(__name__)
 
 

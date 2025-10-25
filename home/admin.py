@@ -11,10 +11,25 @@ import string
 def reset_password_to_default(modeladmin, request, queryset):
     """
     Reset selected users' passwords to a cryptographically secure random password.
-    The new password will be displayed once - admin must communicate it to users.
+
+    SECURITY NOTE: Passwords are displayed ONE TIME in the admin interface.
+    This is intentional design because:
+    1. Email system is not yet configured for automated delivery
+    2. Admin must securely communicate password to user via secure channel
+    3. This is displayed ONLY to superusers in the admin interface
+    4. Passwords are NOT logged or stored in plaintext
+
+    Alternative (recommended for production with email configured):
+    - Send password reset link via email instead of displaying password
+    - Use Django's PasswordResetForm for secure token-based reset
 
     Uses Python's secrets module for cryptographically strong randomness,
     which is recommended for security-sensitive applications like password generation.
+
+    Args:
+        modeladmin: The ModelAdmin instance
+        request: HttpRequest object
+        queryset: QuerySet of User objects to reset
     """
     reset_info = []
     for user in queryset:
@@ -26,11 +41,14 @@ def reset_password_to_default(modeladmin, request, queryset):
         user.save()
         reset_info.append(f"{user.username}: {new_password}")
 
-    # Display all passwords to admin (they should save these securely)
+    # Display passwords to admin (one-time only, must communicate securely to users)
+    # WARNING: Admin must copy these passwords immediately and transmit via secure channel
     passwords_msg = " | ".join(reset_info)
     messages.warning(
         request,
-        f'Passwords reset for {len(reset_info)} user(s). SAVE THESE SECURELY: {passwords_msg}'
+        f'⚠️ SECURITY: Passwords reset for {len(reset_info)} user(s). '
+        f'Copy these NOW and communicate via secure channel. '
+        f'They will not be shown again: {passwords_msg}'
     )
 reset_password_to_default.short_description = "Reset passwords (generates secure random passwords)"
 
