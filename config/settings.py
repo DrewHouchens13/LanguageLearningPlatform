@@ -25,9 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dv##fju3puju_bg4otr!stbh)0y==ql!cf=^o87+li&k&)u!1w')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# Enable DEBUG in tests to avoid SSL redirect and other production security settings
+# Enable DEBUG in tests and DevEDU to avoid SSL redirect and other production security settings
 import sys
-if 'pytest' in sys.modules or 'test' in sys.argv:
+if 'pytest' in sys.modules or 'test' in sys.argv or os.environ.get('DEVEDU_ENVIRONMENT'):
     DEBUG = True
 else:
     DEBUG = os.environ.get('DEBUG', 'False') == 'True'
@@ -153,16 +153,15 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-# For DevEDU development environment
-# Note: DevEDU proxy strips /proxy/8000 before reaching Django,
-# so we don't use FORCE_SCRIPT_NAME (it causes redirect loops)
+# Static URL for all environments
+# DevEDU, local dev, and production all use /static/
+# When DEBUG=True (DevEDU/local), Django serves static files automatically
+# When DEBUG=False (production), WhiteNoise serves static files
+STATIC_URL = '/static/'
+
+# For DevEDU - allow proxy headers
 if os.environ.get('DEVEDU_ENVIRONMENT'):
-    STATIC_URL = '/proxy/8000/static/'
-    # Allow proxy headers
     USE_X_FORWARDED_HOST = True
-else:
-    # For local development and production (Render)
-    STATIC_URL = '/static/'
 
 # Directory where collectstatic will collect static files for production
 STATIC_ROOT = BASE_DIR / 'staticfiles'
