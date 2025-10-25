@@ -46,10 +46,14 @@ ALLOWED_HOSTS = [
 
 # Add development proxy hosts if IS_DEVEDU is set
 if IS_DEVEDU:
-    ALLOWED_HOSTS.extend([
-        os.environ.get('DEVEDU_HOST', ''),  # Specific development host
-        '.devedu.io',  # Allow all devedu.io subdomains
-    ])
+    # Allow all devedu.io subdomains
+    ALLOWED_HOSTS.append('.devedu.io')
+    # Add specific host if provided
+    devedu_host = os.environ.get('DEVEDU_HOST', '')
+    if devedu_host:
+        ALLOWED_HOSTS.append(devedu_host)
+    # Also allow all hosts when in dev mode (needed for proxy forwarding)
+    ALLOWED_HOSTS.append('*')
 
 # Add Render.com host if RENDER environment variable exists
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -251,3 +255,8 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
     # Trust the X-Forwarded-Proto header from Render's proxy
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Trust proxy headers in DevEDU environment
+if IS_DEVEDU:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    X_FRAME_OPTIONS = 'SAMEORIGIN'  # Allow framing from same origin
