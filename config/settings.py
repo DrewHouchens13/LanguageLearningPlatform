@@ -31,10 +31,12 @@ IS_DEVEDU = os.environ.get('IS_DEVEDU', 'False') == 'True'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Enable DEBUG in tests and development environments
-if 'pytest' in sys.modules or 'test' in sys.argv or IS_DEVEDU:
+# Also enable DEBUG by default for local development (can be overridden with DEBUG=False)
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+
+# Force DEBUG=True in test mode
+if 'pytest' in sys.modules or 'test' in sys.argv:
     DEBUG = True
-else:
-    DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = [
     "localhost",
