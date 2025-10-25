@@ -110,20 +110,26 @@ python manage.py createsuperuser
 
 ### DevEDU Environment
 ```bash
-# Run server in DevEDU (sets proxy path to /proxy/8000)
-DEVEDU_ENVIRONMENT=1 python manage.py runserver 0.0.0.0:8000
+# Run server in DevEDU (auto-detects environment, no flags needed)
+python manage.py runserver 0.0.0.0:8000
 
 # Access via DevEDU proxy URL
 # https://editor-jmanchester-20.devedu.io/proxy/8000/
+
+# Auto-detection based on:
+# - /home/student/ directory path
+# - devedu.io in hostname
+# - Automatically sets STATIC_URL to /proxy/8000/static/
 ```
 
 ## Key Implementation Details
 
 **Settings Behavior** (config/settings.py):
-- Lines 30-33: Auto-enables DEBUG for pytest/test runs to avoid SSL redirect issues
-- Lines 157-159: DevEDU environment uses `/proxy/8000/static/` for STATIC_URL (requires DEVEDU_ENVIRONMENT env var)
-- Lines 170-187: Tests use simple StaticFilesStorage, production uses WhiteNoiseCompressedManifest
-- Lines 227-238: Security headers only enabled when DEBUG=False
+- Lines 27-33: Auto-detects DevEDU environment (checks /home/student/ path, hostname)
+- Lines 36-41: Auto-enables DEBUG for pytest/test runs and DevEDU to avoid SSL redirect issues
+- Lines 166-171: DevEDU environment auto-configures `/proxy/8000/static/` for STATIC_URL
+- Lines 178-195: Tests use simple StaticFilesStorage, production uses WhiteNoiseCompressedManifest
+- Lines 235-246: Security headers only enabled when DEBUG=False
 
 **User Progress Calculation**:
 - Weekly stats query lessons/quizzes from last 7 days using `completed_at__gte`
@@ -398,7 +404,7 @@ If you're stuck:
 ### Static Files Handling
 - Development: Django serves static files
 - Production: WhiteNoise with compression and caching
-- DevEDU: Special proxy path `/proxy/8000/static/` (requires DEVEDU_ENVIRONMENT=1)
+- DevEDU: Auto-detects and uses proxy path `/proxy/8000/static/` (no configuration needed)
 - Tests: Simplified storage backend for speed
 
 ### Database Configuration
