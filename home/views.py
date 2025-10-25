@@ -9,6 +9,10 @@ from django.contrib import messages
 from django.db import IntegrityError
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods
+import logging
+
+# Configure logger for security events
+logger = logging.getLogger(__name__)
 
 
 def landing(request):
@@ -47,6 +51,10 @@ def login_view(request):
             user = User.objects.get(email=email)
             username = user.username
         except User.DoesNotExist:
+            # Log failed login attempt (email not found)
+            logger.warning(
+                f'Failed login attempt - email not found: {email} from IP: {request.META.get("REMOTE_ADDR")}'
+            )
             messages.error(request, 'Invalid email or password.')
             return render(request, 'login.html')
 
@@ -55,6 +63,10 @@ def login_view(request):
 
         if user is not None:
             login(request, user)
+            # Log successful login
+            logger.info(
+                f'Successful login: {username} from IP: {request.META.get("REMOTE_ADDR")}'
+            )
             messages.success(request, f'Welcome back, {user.first_name or user.username}!')
 
             # Redirect to next page if specified and safe, otherwise go to landing
@@ -69,6 +81,10 @@ def login_view(request):
                 # Safe redirect to landing page
                 return HttpResponseRedirect('..')
         else:
+            # Log failed login attempt (incorrect password)
+            logger.warning(
+                f'Failed login attempt - incorrect password for: {username} from IP: {request.META.get("REMOTE_ADDR")}'
+            )
             messages.error(request, 'Invalid email or password.')
 
     return render(request, 'login.html')

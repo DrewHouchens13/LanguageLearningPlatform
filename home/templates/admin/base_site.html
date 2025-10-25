@@ -2,16 +2,23 @@
 {% load static %}
 {% load i18n %}
 
+{# Custom title for admin pages with platform branding #}
 {% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Language Learning Platform Admin{% endblock %}
 
 {% block extrastyle %}
 <style>
+    /*
+     * Custom Admin Navigation Styling
+     * This overrides Django's default admin header with our unified site navigation
+     * to provide a consistent user experience across the entire platform.
+     */
+
     /* Hide the default Django admin header to replace with our unified navigation */
     #header {
         display: none;
     }
 
-    /* Add consistent navigation bar styling */
+    /* Unified navigation bar styling (matches main site design) */
     .main-nav {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 0;
@@ -52,19 +59,24 @@
         border-radius: 4px;
     }
     .main-nav .admin-link {
-        color: #ffd700;
+        color: #ffd700;  /* Gold color to highlight admin link */
         font-weight: bold;
     }
 
     /* Adjust main content to account for removed header */
     #content {
-        margin-top: 0;
+        margin-top: 0;  /* No extra margin since we removed default header */
     }
 </style>
 {% endblock %}
 
 {% block bodyclass %}{{ block.super }} custom-nav{% endblock %}
 
+{#
+    Override Django's default admin header with our custom navigation
+    This provides consistent navigation across admin and non-admin pages
+    including links to: Home, My Progress, Dashboard, Admin, and Logout
+#}
 {% block header %}
 <!-- Main site navigation (replaces Django admin header) -->
 <div class="main-nav">
