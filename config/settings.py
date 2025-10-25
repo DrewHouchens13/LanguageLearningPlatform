@@ -172,6 +172,8 @@ USE_TZ = True
 if IS_DEVEDU:
     proxy_prefix = os.environ.get('STATIC_URL_PREFIX', '/proxy/8000')
     STATIC_URL = f'{proxy_prefix}/static/'
+    # Set FORCE_SCRIPT_NAME to make Django generate URLs with proxy prefix
+    FORCE_SCRIPT_NAME = proxy_prefix
     USE_X_FORWARDED_HOST = True
 else:
     # For local development and production (Render)
