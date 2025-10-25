@@ -8,31 +8,74 @@ from .views import landing, login_view, signup_view, logout_view, dashboard, pro
 
 
 # ============================================================================
-# TEST CONSTANTS - SECURITY NOTICE
-# ============================================================================
-#
-# ⚠️  SECURITY NOTICE: These credentials are TEST-ONLY and NOT used in production
-#
-# - These constants are used exclusively for automated testing
-# - They exist only in test database (created/destroyed per test run)
-# - Production uses Django's createsuperuser command with secure passwords
-# - Never use these credentials in production environments
-# - Git history contains these values (safe because they're test-only)
-#
-# For production admin creation, use:
-#   python manage.py createsuperuser
-#
+# TEST UTILITIES AND FACTORIES
 # ============================================================================
 
-# Admin credentials for testing (TEST DATABASE ONLY)
-TEST_ADMIN_USERNAME = 'test_admin'
-TEST_ADMIN_EMAIL = 'admin@test.example.com'
-TEST_ADMIN_PASSWORD = 'test_admin_pass_123'
+def create_test_user(**kwargs):
+    """
+    Factory method to create test users with secure, randomly generated data.
 
-# Regular user credentials for testing (TEST DATABASE ONLY)
-TEST_USER_USERNAME = 'test_user'
-TEST_USER_EMAIL = 'user@test.example.com'
-TEST_USER_PASSWORD = 'test_user_pass_123'
+    This approach avoids hardcoded credentials in the codebase and follows
+    Django testing best practices. Each test gets fresh, isolated user data.
+
+    Args:
+        **kwargs: Optional user attributes to override defaults
+
+    Returns:
+        User: Created user instance
+
+    Usage:
+        user = create_test_user()  # Random username/email
+        admin = create_test_user(is_staff=True, is_superuser=True)
+    """
+    from django.utils.crypto import get_random_string
+
+    # Generate random but predictable test data
+    random_suffix = get_random_string(8, allowed_chars='0123456789')
+
+    defaults = {
+        'username': f'testuser_{random_suffix}',
+        'email': f'test_{random_suffix}@example.com',
+        'password': get_random_string(16),  # Secure random password
+    }
+    defaults.update(kwargs)
+
+    password = defaults.pop('password')
+    user = User.objects.create_user(**defaults)
+    user.set_password(password)
+    user.save()
+
+    # Store password for login in tests
+    user._test_password = password
+    return user
+
+
+def create_test_superuser(**kwargs):
+    """
+    Factory method to create test superusers with secure, random credentials.
+
+    Returns:
+        User: Created superuser instance with _test_password attribute
+    """
+    from django.utils.crypto import get_random_string
+
+    random_suffix = get_random_string(8, allowed_chars='0123456789')
+
+    defaults = {
+        'username': f'admin_{random_suffix}',
+        'email': f'admin_{random_suffix}@example.com',
+        'password': get_random_string(16),
+    }
+    defaults.update(kwargs)
+
+    password = defaults.pop('password')
+    user = User.objects.create_superuser(**defaults)
+    user.set_password(password)
+    user.save()
+
+    # Store password for login in tests
+    user._test_password = password
+    return user
 
 
 # ============================================================================
@@ -42,22 +85,21 @@ TEST_USER_PASSWORD = 'test_user_pass_123'
 class AdminTestCase(TestCase):
     """
     Base class for admin-related tests.
-    Provides common setup for admin authentication and test data.
+    Uses factory methods to generate secure test data without hardcoded credentials.
     """
 
     @classmethod
     def setUpTestData(cls):
-        """Create reusable admin user (runs once per test class)"""
-        cls.admin_user = User.objects.create_superuser(
-            username=TEST_ADMIN_USERNAME,
-            email=TEST_ADMIN_EMAIL,
-            password=TEST_ADMIN_PASSWORD
-        )
+        """Create reusable admin user with randomly generated credentials"""
+        cls.admin_user = create_test_superuser()
 
     def setUp(self):
         """Set up test client and login as admin (runs before each test)"""
         self.client = Client()
-        self.client.login(username=TEST_ADMIN_USERNAME, password=TEST_ADMIN_PASSWORD)
+        self.client.login(
+            username=self.admin_user.username,
+            password=self.admin_user._test_password
+        )
 
 
 # ============================================================================
@@ -1498,19 +1540,11 @@ class TestAdminLoginFlow(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        """Create reusable test data (runs once per test class)"""
+        """Create reusable test data with factory methods (no hardcoded credentials)"""
         # Create admin user for authentication testing
-        cls.admin_user = User.objects.create_superuser(
-            username=TEST_ADMIN_USERNAME,
-            email=TEST_ADMIN_EMAIL,
-            password=TEST_ADMIN_PASSWORD
-        )
+        cls.admin_user = create_test_superuser()
         # Create regular user to test access denial
-        cls.regular_user = User.objects.create_user(
-            username=TEST_USER_USERNAME,
-            email=TEST_USER_EMAIL,
-            password=TEST_USER_PASSWORD
-        )
+        cls.regular_user = create_test_user()
 
     def setUp(self):
         """Set up test client (runs before each test)"""
@@ -1519,8 +1553,8 @@ class TestAdminLoginFlow(TestCase):
     def test_admin_login_successful(self):
         """Test successful admin login"""
         response = self.client.post('/admin/login/', {
-            'username': TEST_ADMIN_USERNAME,
-            'password': TEST_ADMIN_PASSWORD,
+            'username': self.admin_user.username,
+            'password': self.admin_user._test_password,
             'next': '/admin/'
         })
 
@@ -1531,7 +1565,7 @@ class TestAdminLoginFlow(TestCase):
     def test_admin_login_invalid_credentials(self):
         """Test admin login with invalid credentials"""
         response = self.client.post('/admin/login/', {
-            'username': TEST_ADMIN_USERNAME,
+            'username': self.admin_user.username,
             'password': 'wrongpassword',
         })
 
@@ -1541,7 +1575,10 @@ class TestAdminLoginFlow(TestCase):
 
     def test_regular_user_cannot_access_admin(self):
         """Test that regular users cannot access admin"""
-        self.client.login(username=TEST_USER_USERNAME, password=TEST_USER_PASSWORD)
+        self.client.login(
+            username=self.regular_user.username,
+            password=self.regular_user._test_password
+        )
 
         response = self.client.get('/admin/')
 
@@ -1552,7 +1589,10 @@ class TestAdminLoginFlow(TestCase):
     def test_admin_logout(self):
         """Test admin logout"""
         # Login first
-        self.client.login(username=TEST_ADMIN_USERNAME, password=TEST_ADMIN_PASSWORD)
+        self.client.login(
+            username=self.admin_user.username,
+            password=self.admin_user._test_password
+        )
 
         # Access admin to verify logged in
         response = self.client.get('/admin/')
@@ -1570,7 +1610,10 @@ class TestAdminLoginFlow(TestCase):
 
     def test_admin_access_user_changelist(self):
         """Test admin can access user changelist"""
-        self.client.login(username=TEST_ADMIN_USERNAME, password=TEST_ADMIN_PASSWORD)
+        self.client.login(
+            username=self.admin_user.username,
+            password=self.admin_user._test_password
+        )
 
         response = self.client.get('/admin/auth/user/')
 
@@ -1579,7 +1622,10 @@ class TestAdminLoginFlow(TestCase):
 
     def test_admin_access_user_progress_changelist(self):
         """Test admin can access UserProgress changelist"""
-        self.client.login(username=TEST_ADMIN_USERNAME, password=TEST_ADMIN_PASSWORD)
+        self.client.login(
+            username=self.admin_user.username,
+            password=self.admin_user._test_password
+        )
 
         response = self.client.get('/admin/home/userprogress/')
 
@@ -1588,7 +1634,10 @@ class TestAdminLoginFlow(TestCase):
 
     def test_admin_access_lesson_completion_changelist(self):
         """Test admin can access LessonCompletion changelist"""
-        self.client.login(username=TEST_ADMIN_USERNAME, password=TEST_ADMIN_PASSWORD)
+        self.client.login(
+            username=self.admin_user.username,
+            password=self.admin_user._test_password
+        )
 
         response = self.client.get('/admin/home/lessoncompletion/')
 
@@ -1597,7 +1646,10 @@ class TestAdminLoginFlow(TestCase):
 
     def test_admin_access_quiz_result_changelist(self):
         """Test admin can access QuizResult changelist"""
-        self.client.login(username=TEST_ADMIN_USERNAME, password=TEST_ADMIN_PASSWORD)
+        self.client.login(
+            username=self.admin_user.username,
+            password=self.admin_user._test_password
+        )
 
         response = self.client.get('/admin/home/quizresult/')
 
@@ -1613,7 +1665,10 @@ class TestAdminLoginFlow(TestCase):
 
     def test_admin_index_shows_models(self):
         """Test admin index page shows all registered models"""
-        self.client.login(username=TEST_ADMIN_USERNAME, password=TEST_ADMIN_PASSWORD)
+        self.client.login(
+            username=self.admin_user.username,
+            password=self.admin_user._test_password
+        )
 
         response = self.client.get('/admin/')
 
