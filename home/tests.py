@@ -8,6 +8,46 @@ from .views import landing, login_view, signup_view, logout_view, dashboard, pro
 
 
 # ============================================================================
+# TEST CONSTANTS
+# ============================================================================
+
+# Admin credentials for testing (not used in production)
+TEST_ADMIN_USERNAME = 'test_admin'
+TEST_ADMIN_EMAIL = 'admin@test.example.com'
+TEST_ADMIN_PASSWORD = 'test_admin_pass_123'
+
+# Regular user credentials for testing
+TEST_USER_USERNAME = 'test_user'
+TEST_USER_EMAIL = 'user@test.example.com'
+TEST_USER_PASSWORD = 'test_user_pass_123'
+
+
+# ============================================================================
+# BASE TEST CLASSES
+# ============================================================================
+
+class AdminTestCase(TestCase):
+    """
+    Base class for admin-related tests.
+    Provides common setup for admin authentication and test data.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        """Create reusable admin user (runs once per test class)"""
+        cls.admin_user = User.objects.create_superuser(
+            username=TEST_ADMIN_USERNAME,
+            email=TEST_ADMIN_EMAIL,
+            password=TEST_ADMIN_PASSWORD
+        )
+
+    def setUp(self):
+        """Set up test client and login as admin (runs before each test)"""
+        self.client = Client()
+        self.client.login(username=TEST_ADMIN_USERNAME, password=TEST_ADMIN_PASSWORD)
+
+
+# ============================================================================
 # MODEL TESTS (Unit Tests)
 # ============================================================================
 
@@ -495,9 +535,13 @@ class TestSignupView(TestCase):
             # User should not be created (database transaction rolled back)
             self.assertFalse(User.objects.filter(email='john@example.com').exists())
 
-            # Verify error message was set (check messages framework)
+            # Verify exact error message was set
             messages = list(response.context['messages'])
-            self.assertTrue(any('error occurred' in str(m).lower() for m in messages))
+            self.assertEqual(len(messages), 1)
+            self.assertEqual(
+                str(messages[0]),
+                'An error occurred while creating your account. Please try again.'
+            )
 
 
 class TestLoginView(TestCase):
@@ -1104,10 +1148,10 @@ class TestAdminCustomActions(TestCase):
         # Verify lessons were deleted
         self.assertEqual(LessonCompletion.objects.count(), 0)
 
-        # Verify success message was displayed
+        # Verify exact success message was displayed
         messages = list(get_messages(request))
         self.assertEqual(len(messages), 1)
-        self.assertIn('Successfully deleted 2 lesson completion(s)', str(messages[0]))
+        self.assertEqual(str(messages[0]), 'Successfully deleted 2 lesson completion(s)')
 
     def test_delete_selected_quizzes_action(self):
         """
@@ -1150,39 +1194,18 @@ class TestAdminCustomActions(TestCase):
         # Verify quizzes were deleted
         self.assertEqual(QuizResult.objects.count(), 0)
 
-        # Verify success message was displayed
+        # Verify exact success message was displayed
         messages = list(get_messages(request))
         self.assertEqual(len(messages), 1)
-        self.assertIn('Successfully deleted 2 quiz result(s)', str(messages[0]))
+        self.assertEqual(str(messages[0]), 'Successfully deleted 2 quiz result(s)')
 
 
 # ============================================================================
 # ADMIN CRUD TESTS
 # ============================================================================
 
-class TestAdminCRUDOperations(TestCase):
-    """
-    Test admin interface CRUD operations.
-
-    Verifies that admin users can create, read, update, and delete
-    User, UserProgress, LessonCompletion, and QuizResult records
-    through the Django admin interface.
-    """
-
-    @classmethod
-    def setUpTestData(cls):
-        """Create reusable test data (runs once per test class)"""
-        # Create admin user (reused across all tests)
-        cls.admin_user = User.objects.create_superuser(
-            username='admin',
-            email='admin@example.com',
-            password='adminpass123'
-        )
-
-    def setUp(self):
-        """Set up test client and login (runs before each test)"""
-        self.client = Client()
-        self.client.login(username='admin', password='adminpass123')
+class TestAdminCRUDOperations(AdminTestCase):
+    """Test admin CRUD operations for all models."""
 
     def test_create_user_through_admin(self):
         """Test creating a new user through admin interface"""
@@ -1345,23 +1368,13 @@ class TestAdminCRUDOperations(TestCase):
 # ADMIN SEARCH AND FILTER TESTS
 # ============================================================================
 
-class TestAdminSearchAndFilters(TestCase):
-    """
-    Test admin search and filter functionality.
-
-    Verifies that admin search boxes and list filters work correctly
-    for User, UserProgress, LessonCompletion, and QuizResult models.
-    """
+class TestAdminSearchAndFilters(AdminTestCase):
+    """Test admin search and filter functionality."""
 
     @classmethod
     def setUpTestData(cls):
         """Create reusable test data (runs once per test class)"""
-        # Create admin user
-        cls.admin_user = User.objects.create_superuser(
-            username='admin',
-            email='admin@example.com',
-            password='adminpass123'
-        )
+        super().setUpTestData()  # Create admin user from base class
 
         # Create test users for search/filter testing
         cls.user1 = User.objects.create_user(
@@ -1376,11 +1389,6 @@ class TestAdminSearchAndFilters(TestCase):
             first_name='Jane',
             last_name='Smith'
         )
-
-    def setUp(self):
-        """Set up test client and login (runs before each test)"""
-        self.client = Client()
-        self.client.login(username='admin', password='adminpass123')
 
     def test_user_search_by_username(self):
         """Test searching users by username in admin"""
@@ -1468,28 +1476,22 @@ class TestAdminSearchAndFilters(TestCase):
 # ============================================================================
 
 class TestAdminLoginFlow(TestCase):
-    """
-    Test admin login and authentication flow.
-
-    Verifies that only admin users can access the admin interface,
-    tests login/logout functionality, and ensures proper access control
-    for all admin pages.
-    """
+    """Test admin authentication and access control."""
 
     @classmethod
     def setUpTestData(cls):
         """Create reusable test data (runs once per test class)"""
         # Create admin user for authentication testing
         cls.admin_user = User.objects.create_superuser(
-            username='admin',
-            email='admin@example.com',
-            password='adminpass123'
+            username=TEST_ADMIN_USERNAME,
+            email=TEST_ADMIN_EMAIL,
+            password=TEST_ADMIN_PASSWORD
         )
         # Create regular user to test access denial
         cls.regular_user = User.objects.create_user(
-            username='regular',
-            email='regular@example.com',
-            password='regularpass123'
+            username=TEST_USER_USERNAME,
+            email=TEST_USER_EMAIL,
+            password=TEST_USER_PASSWORD
         )
 
     def setUp(self):
@@ -1499,8 +1501,8 @@ class TestAdminLoginFlow(TestCase):
     def test_admin_login_successful(self):
         """Test successful admin login"""
         response = self.client.post('/admin/login/', {
-            'username': 'admin',
-            'password': 'adminpass123',
+            'username': TEST_ADMIN_USERNAME,
+            'password': TEST_ADMIN_PASSWORD,
             'next': '/admin/'
         })
 
@@ -1511,7 +1513,7 @@ class TestAdminLoginFlow(TestCase):
     def test_admin_login_invalid_credentials(self):
         """Test admin login with invalid credentials"""
         response = self.client.post('/admin/login/', {
-            'username': 'admin',
+            'username': TEST_ADMIN_USERNAME,
             'password': 'wrongpassword',
         })
 
@@ -1521,7 +1523,7 @@ class TestAdminLoginFlow(TestCase):
 
     def test_regular_user_cannot_access_admin(self):
         """Test that regular users cannot access admin"""
-        self.client.login(username='regular', password='regularpass123')
+        self.client.login(username=TEST_USER_USERNAME, password=TEST_USER_PASSWORD)
 
         response = self.client.get('/admin/')
 
@@ -1532,7 +1534,7 @@ class TestAdminLoginFlow(TestCase):
     def test_admin_logout(self):
         """Test admin logout"""
         # Login first
-        self.client.login(username='admin', password='adminpass123')
+        self.client.login(username=TEST_ADMIN_USERNAME, password=TEST_ADMIN_PASSWORD)
 
         # Access admin to verify logged in
         response = self.client.get('/admin/')
@@ -1550,7 +1552,7 @@ class TestAdminLoginFlow(TestCase):
 
     def test_admin_access_user_changelist(self):
         """Test admin can access user changelist"""
-        self.client.login(username='admin', password='adminpass123')
+        self.client.login(username=TEST_ADMIN_USERNAME, password=TEST_ADMIN_PASSWORD)
 
         response = self.client.get('/admin/auth/user/')
 
@@ -1559,7 +1561,7 @@ class TestAdminLoginFlow(TestCase):
 
     def test_admin_access_user_progress_changelist(self):
         """Test admin can access UserProgress changelist"""
-        self.client.login(username='admin', password='adminpass123')
+        self.client.login(username=TEST_ADMIN_USERNAME, password=TEST_ADMIN_PASSWORD)
 
         response = self.client.get('/admin/home/userprogress/')
 
@@ -1568,7 +1570,7 @@ class TestAdminLoginFlow(TestCase):
 
     def test_admin_access_lesson_completion_changelist(self):
         """Test admin can access LessonCompletion changelist"""
-        self.client.login(username='admin', password='adminpass123')
+        self.client.login(username=TEST_ADMIN_USERNAME, password=TEST_ADMIN_PASSWORD)
 
         response = self.client.get('/admin/home/lessoncompletion/')
 
@@ -1577,7 +1579,7 @@ class TestAdminLoginFlow(TestCase):
 
     def test_admin_access_quiz_result_changelist(self):
         """Test admin can access QuizResult changelist"""
-        self.client.login(username='admin', password='adminpass123')
+        self.client.login(username=TEST_ADMIN_USERNAME, password=TEST_ADMIN_PASSWORD)
 
         response = self.client.get('/admin/home/quizresult/')
 
@@ -1593,7 +1595,7 @@ class TestAdminLoginFlow(TestCase):
 
     def test_admin_index_shows_models(self):
         """Test admin index page shows all registered models"""
-        self.client.login(username='admin', password='adminpass123')
+        self.client.login(username=TEST_ADMIN_USERNAME, password=TEST_ADMIN_PASSWORD)
 
         response = self.client.get('/admin/')
 
