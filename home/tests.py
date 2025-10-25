@@ -8,15 +8,28 @@ from .views import landing, login_view, signup_view, logout_view, dashboard, pro
 
 
 # ============================================================================
-# TEST CONSTANTS
+# TEST CONSTANTS - SECURITY NOTICE
+# ============================================================================
+#
+# ⚠️  SECURITY NOTICE: These credentials are TEST-ONLY and NOT used in production
+#
+# - These constants are used exclusively for automated testing
+# - They exist only in test database (created/destroyed per test run)
+# - Production uses Django's createsuperuser command with secure passwords
+# - Never use these credentials in production environments
+# - Git history contains these values (safe because they're test-only)
+#
+# For production admin creation, use:
+#   python manage.py createsuperuser
+#
 # ============================================================================
 
-# Admin credentials for testing (not used in production)
+# Admin credentials for testing (TEST DATABASE ONLY)
 TEST_ADMIN_USERNAME = 'test_admin'
 TEST_ADMIN_EMAIL = 'admin@test.example.com'
 TEST_ADMIN_PASSWORD = 'test_admin_pass_123'
 
-# Regular user credentials for testing
+# Regular user credentials for testing (TEST DATABASE ONLY)
 TEST_USER_USERNAME = 'test_user'
 TEST_USER_EMAIL = 'user@test.example.com'
 TEST_USER_PASSWORD = 'test_user_pass_123'
@@ -536,6 +549,7 @@ class TestSignupView(TestCase):
             self.assertFalse(User.objects.filter(email='john@example.com').exists())
 
             # Verify exact error message was set
+            # Note: Using exact matching ensures consistent error messages for users
             messages = list(response.context['messages'])
             self.assertEqual(len(messages), 1)
             self.assertEqual(
@@ -1149,6 +1163,9 @@ class TestAdminCustomActions(TestCase):
         self.assertEqual(LessonCompletion.objects.count(), 0)
 
         # Verify exact success message was displayed
+        # Note: Using assertEqual (not assertIn) to ensure exact message matching.
+        # This is intentional - if the message changes, we WANT the test to fail
+        # so we know to update it and maintain consistency with user expectations.
         messages = list(get_messages(request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]), 'Successfully deleted 2 lesson completion(s)')
@@ -1195,6 +1212,7 @@ class TestAdminCustomActions(TestCase):
         self.assertEqual(QuizResult.objects.count(), 0)
 
         # Verify exact success message was displayed
+        # Note: Using exact matching to catch any unintended message changes
         messages = list(get_messages(request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]), 'Successfully deleted 2 quiz result(s)')
