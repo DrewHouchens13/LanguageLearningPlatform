@@ -11,9 +11,11 @@ def landing(request):
 
 
 def login_view(request):
+    from django.http import HttpResponseRedirect
+
     # If user is already logged in, redirect to home
     if request.user.is_authenticated:
-        return redirect('landing')
+        return HttpResponseRedirect('../')
 
     if request.method == 'POST':
         email = request.POST.get('email')
@@ -34,9 +36,9 @@ def login_view(request):
             login(request, user)
             messages.success(request, f'Welcome back, {user.first_name or user.username}!')
 
-            # Redirect to next page if specified, otherwise to landing
-            next_page = request.GET.get('next', 'landing')
-            return redirect(next_page)
+            # Redirect to next page if specified, otherwise to landing (relative path)
+            next_page = request.GET.get('next', '../')
+            return HttpResponseRedirect(next_page)
         else:
             messages.error(request, 'Invalid email or password.')
 
@@ -44,9 +46,11 @@ def login_view(request):
 
 
 def signup_view(request):
+    from django.http import HttpResponseRedirect
+
     # If user is already logged in, redirect to home
     if request.user.is_authenticated:
-        return redirect('landing')
+        return HttpResponseRedirect('../')
 
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -92,7 +96,7 @@ def signup_view(request):
             # Log the user in
             login(request, user)
             messages.success(request, f'Welcome to Language Learning Platform, {first_name}!')
-            return redirect('landing')
+            return HttpResponseRedirect('../')
 
         except IntegrityError:
             messages.error(request, 'An account with this email already exists.')
