@@ -155,8 +155,8 @@ USE_TZ = True
 
 # For DevEDU development environment
 if os.environ.get('DEVEDU_ENVIRONMENT'):
-    STATIC_URL = '/proxy/8080/static/'
-    FORCE_SCRIPT_NAME = '/proxy/8080'  # Tell Django it's running under /proxy/8080/
+    STATIC_URL = '/proxy/8000/static/'
+    FORCE_SCRIPT_NAME = '/proxy/8000'  # Tell Django it's running under /proxy/8000/
 else:
     # For local development and production (Render)
     STATIC_URL = '/static/'

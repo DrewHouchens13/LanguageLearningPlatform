@@ -68,3 +68,4 @@ Thumbs.db
 .pytest_cache/
 .tox/
 .mypy_cache
+db.sqlite3
