@@ -11,9 +11,11 @@ urlpatterns = [
     path("", include("home.urls")),
 ]
 
-# In development, serve static files at /static/ (what Django receives after proxy strips /proxy/8000)
+# Static file serving for DEVELOPMENT ONLY
+# In production, use a dedicated web server (Nginx/Apache) or CDN
+# This serves static files at /static/ (what Django receives after proxy strips /proxy/8000)
+# Security: Only enabled when DEBUG=True to prevent use in production
 if settings.DEBUG:
     urlpatterns += [
         re_path(r'^static/(?P<path>.*)$', serve),
     ]
-

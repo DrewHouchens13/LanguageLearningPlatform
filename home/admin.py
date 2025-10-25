@@ -171,4 +171,3 @@ class QuizResultAdmin(admin.ModelAdmin):
     list_filter = ('completed_at',)
     readonly_fields = ('completed_at',)
     actions = [delete_selected_quizzes]
-

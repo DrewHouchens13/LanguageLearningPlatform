@@ -12,10 +12,26 @@ from django.views.decorators.http import require_http_methods
 
 
 def landing(request):
+    """
+    Render the landing page.
+
+    This is the home page of the application, accessible to all users.
+    """
     return render(request, "index.html")
 
 
 def login_view(request):
+    """
+    Handle user login with email-based authentication.
+
+    GET: Display login form
+    POST: Authenticate user by email/password and redirect securely
+
+    Security features:
+    - Validates redirect URLs to prevent open redirect attacks
+    - Uses Django's authenticate() for secure password verification
+    - Generic error messages to prevent user enumeration
+    """
     from django.http import HttpResponseRedirect
 
     # If user is already logged in, redirect to home
@@ -59,6 +75,20 @@ def login_view(request):
 
 
 def signup_view(request):
+    """
+    Handle user registration with comprehensive validation.
+
+    GET: Display signup form
+    POST: Create new user account with validation and auto-login
+
+    Security features:
+    - Email format validation
+    - Django password validators (min 8 chars, not common, not numeric only)
+    - Password confirmation matching
+    - Input sanitization (strip whitespace)
+    - Auto-generated unique usernames from email
+    - Secure error handling without information disclosure
+    """
     from django.http import HttpResponseRedirect
 
     # If user is already logged in, redirect to home
@@ -167,12 +197,27 @@ def logout_view(request):
 
 @login_required
 def dashboard(request):
-    """Example of a protected view that requires login"""
+    """
+    Render the user dashboard (protected view).
+
+    This view requires authentication. Users must be logged in to access.
+    Unauthenticated users are redirected to the login page.
+    """
     return render(request, 'dashboard.html')
 
 
 def progress_view(request):
-    """Progress dashboard - shows stats for logged-in users, CTA for guests"""
+    """
+    Display user progress dashboard or call-to-action for guests.
+
+    Authenticated users: Shows learning statistics including weekly and total metrics
+    - Weekly: minutes studied, lessons completed, quiz accuracy
+    - Total: cumulative minutes, lessons, quizzes, overall accuracy
+
+    Unauthenticated users: Shows placeholder UI with call-to-action to sign up
+
+    Auto-creates UserProgress record on first access for new users.
+    """
     if request.user.is_authenticated:
         # Get or create user progress record
         from .models import UserProgress
