@@ -460,9 +460,32 @@ class TestSignupView(TestCase):
             password='testpass123'
         )
         self.client.force_login(user)
-        
+
         response = self.client.get(self.signup_url)
         self.assertRedirects(response, reverse('landing'))
+
+    def test_signup_exception_handling(self):
+        """Test signup handles general exceptions gracefully"""
+        from unittest.mock import patch
+
+        # Mock User.objects.create_user to raise a generic exception
+        with patch('home.views.User.objects.create_user') as mock_create:
+            mock_create.side_effect = Exception('Unexpected error')
+
+            data = {
+                'name': 'John Doe',
+                'email': 'john@example.com',
+                'password': 'securepass123',
+                'confirm-password': 'securepass123'
+            }
+            response = self.client.post(self.signup_url, data)
+
+            # Should render login page with error
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, 'login.html')
+
+            # User should not be created
+            self.assertFalse(User.objects.filter(email='john@example.com').exists())
 
 
 class TestLoginView(TestCase):
@@ -980,3 +1003,120 @@ class TestAdminCustomActions(TestCase):
 
         expected_fields = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser', 'date_joined', 'last_login')
         self.assertEqual(admin.list_display, expected_fields)
+
+    def test_get_progress_info_with_progress(self):
+        """Test get_progress_info displays user progress data"""
+        from home.admin import CustomUserAdmin
+        from django.contrib.admin.sites import AdminSite
+
+        # Create user with progress
+        progress = UserProgress.objects.create(
+            user=self.test_user,
+            total_minutes_studied=150,
+            total_lessons_completed=10,
+            total_quizzes_taken=5,
+            overall_quiz_accuracy=85.0
+        )
+
+        # Create some lesson completions and quiz results
+        LessonCompletion.objects.create(
+            user=self.test_user,
+            lesson_id='lesson1',
+            duration_minutes=30
+        )
+        QuizResult.objects.create(
+            user=self.test_user,
+            quiz_id='quiz1',
+            score=8,
+            total_questions=10
+        )
+
+        admin = CustomUserAdmin(User, AdminSite())
+        progress_info = admin.get_progress_info(self.test_user)
+
+        # Verify progress data is displayed
+        self.assertIn('Total Minutes: 150', progress_info)
+        self.assertIn('Total Lessons: 10', progress_info)
+        self.assertIn('Total Quizzes: 5', progress_info)
+        self.assertIn('Quiz Accuracy: 85.0%', progress_info)
+        self.assertIn('Lesson Completions: 1', progress_info)
+        self.assertIn('Quiz Results: 1', progress_info)
+
+    def test_get_progress_info_without_progress(self):
+        """Test get_progress_info when user has no progress"""
+        from home.admin import CustomUserAdmin
+        from django.contrib.admin.sites import AdminSite
+
+        admin = CustomUserAdmin(User, AdminSite())
+        progress_info = admin.get_progress_info(self.test_user)
+
+        # Verify "no progress" message
+        self.assertEqual(progress_info, "No progress data yet")
+
+    def test_delete_selected_lessons_action(self):
+        """Test delete_selected_lessons admin action"""
+        from home.admin import delete_selected_lessons, LessonCompletionAdmin
+        from django.contrib.admin.sites import AdminSite
+        from django.http import HttpRequest
+        from django.contrib.messages.storage.fallback import FallbackStorage
+
+        # Create lesson completions
+        lesson1 = LessonCompletion.objects.create(
+            user=self.test_user,
+            lesson_id='lesson1',
+            duration_minutes=30
+        )
+        lesson2 = LessonCompletion.objects.create(
+            user=self.test_user,
+            lesson_id='lesson2',
+            duration_minutes=45
+        )
+
+        # Verify they exist
+        self.assertEqual(LessonCompletion.objects.count(), 2)
+
+        request = HttpRequest()
+        setattr(request, 'session', {})
+        setattr(request, '_messages', FallbackStorage(request))
+        queryset = LessonCompletion.objects.all()
+
+        # Execute the action
+        delete_selected_lessons(LessonCompletionAdmin(LessonCompletion, AdminSite()), request, queryset)
+
+        # Verify lessons were deleted
+        self.assertEqual(LessonCompletion.objects.count(), 0)
+
+    def test_delete_selected_quizzes_action(self):
+        """Test delete_selected_quizzes admin action"""
+        from home.admin import delete_selected_quizzes, QuizResultAdmin
+        from django.contrib.admin.sites import AdminSite
+        from django.http import HttpRequest
+        from django.contrib.messages.storage.fallback import FallbackStorage
+
+        # Create quiz results
+        quiz1 = QuizResult.objects.create(
+            user=self.test_user,
+            quiz_id='quiz1',
+            score=8,
+            total_questions=10
+        )
+        quiz2 = QuizResult.objects.create(
+            user=self.test_user,
+            quiz_id='quiz2',
+            score=15,
+            total_questions=20
+        )
+
+        # Verify they exist
+        self.assertEqual(QuizResult.objects.count(), 2)
+
+        request = HttpRequest()
+        setattr(request, 'session', {})
+        setattr(request, '_messages', FallbackStorage(request))
+        queryset = QuizResult.objects.all()
+
+        # Execute the action
+        delete_selected_quizzes(QuizResultAdmin(QuizResult, AdminSite()), request, queryset)
+
+        # Verify quizzes were deleted
+        self.assertEqual(QuizResult.objects.count(), 0)
