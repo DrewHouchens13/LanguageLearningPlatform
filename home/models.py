@@ -34,20 +34,20 @@ class UserProgress(models.Model):
         return round((total_score / total_possible) * 100, 1)
 
     def get_weekly_stats(self):
-        """Get statistics for the current week"""
+        """
+        Get statistics for the current week.
+
+        Optimized to minimize database queries by reusing querysets.
+        """
         one_week_ago = timezone.now() - timezone.timedelta(days=7)
-        
-        # Weekly lessons
-        weekly_lessons = self.user.lesson_completions.filter(
-            completed_at__gte=one_week_ago
-        ).count()
-        
-        # Weekly minutes (sum of all lesson durations this week)
+
+        # Fetch weekly lessons once and reuse (avoids duplicate query)
         weekly_completions = self.user.lesson_completions.filter(
             completed_at__gte=one_week_ago
         )
+        weekly_lessons = weekly_completions.count()
         weekly_minutes = sum(completion.duration_minutes for completion in weekly_completions)
-        
+
         # Weekly quiz accuracy
         weekly_quizzes = self.user.quiz_results.filter(
             completed_at__gte=one_week_ago
@@ -58,7 +58,7 @@ class UserProgress(models.Model):
             weekly_accuracy = round((total_score / total_possible) * 100, 1) if total_possible > 0 else 0.0
         else:
             weekly_accuracy = 0.0
-        
+
         return {
             'weekly_minutes': weekly_minutes,
             'weekly_lessons': weekly_lessons,

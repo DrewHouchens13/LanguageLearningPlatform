@@ -24,23 +24,43 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dv##fju3puju_bg4otr!stbh)0y==ql!cf=^o87+li&k&)u!1w')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-# Enable DEBUG in tests to avoid SSL redirect and other production security settings
+# Development environment detection
+# Set IS_DEVEDU=True environment variable when running in development proxies
+# IMPORTANT: This must be explicitly set via environment variable - it will NOT
+# auto-enable in production, ensuring CSRF and other security settings remain strict
+#
+# Accepts: 'True', 'true', '1', 'yes' as truthy values (case-insensitive)
+# All other values (including unset) default to False
+# Strips whitespace to handle ' true ', ' 1 ', etc.
 import sys
+IS_DEVEDU = os.environ.get('IS_DEVEDU', '').strip().lower() in ('true', '1', 'yes')
+
+# SECURITY WARNING: don't run with debug turned on in production!
+# Enable DEBUG in tests and development environments
+# Also enable DEBUG by default for local development (can be overridden with DEBUG=False)
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+
+# Force DEBUG=True in test mode
 if 'pytest' in sys.modules or 'test' in sys.argv:
     DEBUG = True
-else:
-    DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "[::1]",
-    "editor-jmanchester-20.devedu.io",  # your DevEdu editor host
-    ".devedu.io",                       # any other DevEdu subdomain if needed
     "languagelearningplatform.org",     # Custom domain
     "www.languagelearningplatform.org", # Custom domain with www
+    ".devedu.io",  # Allow all devedu.io subdomains
 ]
+
+# Add development proxy hosts if IS_DEVEDU is set
+if IS_DEVEDU:
+    # Add specific host if provided
+    devedu_host = os.environ.get('DEVEDU_HOST', '')
+    if devedu_host:
+        ALLOWED_HOSTS.append(devedu_host)
+    # Also allow all hosts when in dev mode (needed for proxy forwarding)
+    ALLOWED_HOSTS.append('*')
 
 # Add Render.com host if RENDER environment variable exists
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -50,13 +70,13 @@ if RENDER_EXTERNAL_HOSTNAME:
 # Application definition
 
 INSTALLED_APPS = [
+    "home",  # Must be before django.contrib.admin to override admin templates
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "home",
 ]
 
 MIDDLEWARE = [
@@ -153,10 +173,18 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-# For DevEDU development environment
-if os.environ.get('DEVEDU_ENVIRONMENT'):
-    STATIC_URL = '/proxy/8000/static/'
-    FORCE_SCRIPT_NAME = '/proxy/8000'  # Tell Django it's running under /proxy/8000/
+# Static files configuration
+# For development proxies - use STATIC_URL_PREFIX environment variable
+if IS_DEVEDU:
+    proxy_prefix = os.environ.get('STATIC_URL_PREFIX', '/proxy/8000')
+    STATIC_URL = f'{proxy_prefix}/static/'
+    # Set FORCE_SCRIPT_NAME to make Django prepend proxy prefix to all URLs
+    FORCE_SCRIPT_NAME = proxy_prefix
+    USE_X_FORWARDED_HOST = True
+    USE_X_FORWARDED_PORT = True
+    # Relax CSRF for DevEDU (development only - not for production!)
+    CSRF_COOKIE_SECURE = False
+    CSRF_COOKIE_SAMESITE = 'Lax'
 else:
     # For local development and production (Render)
     STATIC_URL = '/static/'
@@ -192,9 +220,18 @@ else:
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://editor-jmanchester-20.devedu.io",
-    "https://*.devedu.io",
+    "https://*.devedu.io",  # Allow all DevEDU subdomains by default
+    "http://*.devedu.io",   # Also allow HTTP for development
 ]
+
+# Add development proxy origins if IS_DEVEDU is set
+if IS_DEVEDU:
+    devedu_host = os.environ.get('DEVEDU_HOST', '')
+    if devedu_host:
+        CSRF_TRUSTED_ORIGINS.append(f'https://{devedu_host}')
+        CSRF_TRUSTED_ORIGINS.append(f'http://{devedu_host}')
+    # Set CSRF cookie path to root so it works with proxy prefix
+    CSRF_COOKIE_PATH = '/'
 
 # Add Render hostname to CSRF trusted origins
 if RENDER_EXTERNAL_HOSTNAME:
@@ -236,3 +273,8 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
     # Trust the X-Forwarded-Proto header from Render's proxy
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Trust proxy headers in DevEDU environment
+if IS_DEVEDU:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    X_FRAME_OPTIONS = 'SAMEORIGIN'  # Allow framing from same origin

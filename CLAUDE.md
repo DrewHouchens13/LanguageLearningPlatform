@@ -1,0 +1,497 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+Language Learning Platform - Django 5.2.7 web application for tracking language learning progress with user authentication and progress analytics.
+
+**Tech Stack**: Django 5.2.7, PostgreSQL (production) / SQLite (development), WhiteNoise, Gunicorn, Pytest
+
+## Architecture
+
+**Project Structure**:
+- `config/` - Django project settings, main URL configuration
+- `home/` - Main app: authentication, progress tracking, landing pages
+- `home/models.py` - Core models: `UserProgress`, `LessonCompletion`, `QuizResult`
+- `home/templates/` - HTML templates (index, login, progress, dashboard)
+- `config/settings.py` - Environment-aware settings (DEBUG mode, DB switching, WhiteNoise config)
+
+**Database Switching Logic** (config/settings.py:98-116):
+- Production: PostgreSQL via `DATABASE_URL` environment variable
+- Development: SQLite (`db.sqlite3`)
+- Tests: Automatically use DEBUG=True and simplified static storage
+
+**Authentication Flow**:
+- Email-based login (finds user by email, authenticates by username)
+- Username auto-generated from email prefix, deduplicated with numbers
+- Views: `login_view`, `signup_view`, `logout_view` in home/views.py
+- Redirects: LOGIN_REDIRECT_URL and LOGOUT_REDIRECT_URL set to 'landing'
+
+**Progress Tracking** (home/models.py):
+- `UserProgress.get_weekly_stats()` - Calculates weekly minutes, lessons, quiz accuracy
+- `UserProgress.calculate_quiz_accuracy()` - Overall accuracy from all quiz results
+- `progress_view` shows real data for authenticated users, CTA for guests
+
+**URL Patterns** (home/urls.py):
+- `/` - Landing page
+- `/login/` - Login/signup (same template, different POST handlers)
+- `/progress/` - Progress dashboard (public, shows CTA for guests)
+- `/dashboard/` - Protected view (@login_required)
+- `/admin/` - Django admin interface (superuser only)
+
+**Admin Interface** (home/admin.py, home/templates/admin/base_site.html):
+- Custom User admin with bulk actions: reset passwords, make/remove admins, reset progress
+- **Unified Navigation**: Admin panel uses same purple gradient navigation as main site
+- **Staff-Only Admin Button**: Admin link appears in navigation only for staff users
+- **Custom Logout**: Admin logout redirects properly in proxy environments
+- Enhanced UserProgress, LessonCompletion, and QuizResult admin
+- Progress information displayed in User detail view
+- Full search and filter capabilities for all models
+
+**Security Features** (home/views.py):
+- **Login Attempt Logging**: All authentication events logged with IP addresses for security monitoring
+- **Open Redirect Prevention**: Login redirects validated with `url_has_allowed_host_and_scheme()`
+- **Password Validation**: Django's built-in validators (min 8 chars, not common, not numeric only)
+- **Email Validation**: Format validation before account creation
+- **Secure Password Reset**: Admin password reset generates secure 12-character random passwords
+- **Generic Error Messages**: Prevents user enumeration during login
+
+## Development Commands
+
+### Setup
+```bash
+# Create virtual environment
+python -m venv venv
+venv\Scripts\activate  # Windows
+source venv/bin/activate  # macOS/Linux
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run migrations
+python manage.py migrate
+
+# Create superuser (optional)
+python manage.py createsuperuser
+
+# Start dev server
+python manage.py runserver
+```
+
+### Testing
+```bash
+# Run all tests with pytest
+pytest
+
+# Run Django tests
+python manage.py test
+
+# Run with coverage
+pytest --cov=. --cov-report=term-missing
+
+# Run specific test
+pytest home/tests.py::TestClassName::test_method_name
+```
+
+### Database Operations
+```bash
+# Create migrations after model changes
+python manage.py makemigrations
+
+# Apply migrations
+python manage.py migrate
+
+# Check migration status
+python manage.py showmigrations
+
+# Django shell (for debugging)
+python manage.py shell
+```
+
+### Admin Management
+```bash
+# Create superuser (admin account)
+python manage.py createsuperuser
+
+# Access admin panel
+# Local: http://localhost:8000/admin/
+# Production: https://language-learning-platform-xb6f.onrender.com/admin/
+```
+
+### DevEDU Environment
+```bash
+# Set environment variables for DevEDU proxy
+export IS_DEVEDU=True
+export STATIC_URL_PREFIX=/proxy/8000
+
+# Run server in DevEDU
+python manage.py runserver 0.0.0.0:8000
+
+# Access via DevEDU proxy URL
+# https://editor-jmanchester-20.devedu.io/proxy/8000/
+
+# Configuration:
+# - IS_DEVEDU=True enables proxy support
+# - Sets FORCE_SCRIPT_NAME to /proxy/8000 (handles all URL generation)
+# - Sets STATIC_URL to /proxy/8000/static/
+# - Relaxes CSRF settings for development
+```
+
+## Key Implementation Details
+
+**Settings Behavior** (config/settings.py):
+- Lines 30: IS_DEVEDU environment variable controls proxy configuration
+- Lines 35-39: Auto-enables DEBUG for pytest/test runs to avoid SSL redirect issues
+- Lines 172-178: DevEDU environment uses FORCE_SCRIPT_NAME for proxy URL handling
+- Lines 192-209: Tests use simple StaticFilesStorage, production uses WhiteNoiseCompressedManifest
+- Lines 258-270: Security headers only enabled when DEBUG=False
+
+**User Progress Calculation**:
+- Weekly stats query lessons/quizzes from last 7 days using `completed_at__gte`
+- Progress views use `get_or_create()` to auto-initialize UserProgress
+- Quiz accuracy = (total correct / total questions) * 100
+
+## CI/CD
+
+**GitHub Actions Workflows**:
+- `.github/workflows/coverage.yml` - Runs pytest with coverage on all pushes/PRs, posts coverage comment to PRs
+- `.github/workflows/ai-code-review.yml` - OpenAI code review on PRs when Python/HTML/JS/MD files change
+
+**Test Requirements**:
+- Uses pytest (configured in pytest.ini and conftest.py)
+- Coverage reporting via pytest-cov
+- `conftest.py` disables APPEND_SLASH for tests
+
+## Deployment (Render)
+
+**Configuration** (render.yaml):
+- Build: `./build.sh` (installs deps, collects static, runs migrations)
+- Start: `gunicorn config.wsgi:application`
+- Auto-provisions PostgreSQL database
+- **Auto-deploy: DISABLED** - Requires manual deployment for safety
+- Environment variables: SECRET_KEY (auto-generated), DEBUG=False, DATABASE_URL (from database)
+
+**Production URL**: https://language-learning-platform-xb6f.onrender.com
+
+**Deployment Process**:
+- Push to `main` branch does NOT auto-deploy
+- **Manual deployment required:**
+  1. Go to [Render Dashboard](https://dashboard.render.com/)
+  2. Select your service: `language-learning-platform`
+  3. Click "Manual Deploy" → "Deploy latest commit"
+  4. Monitor build logs for any issues
+- This gives you full control over when changes go live
+
+## Environment Variables
+
+**Required for Production**:
+- `SECRET_KEY` - Django secret (auto-generated by Render)
+- `DEBUG` - Set to "False"
+- `DATABASE_URL` - PostgreSQL connection string (auto-set by Render)
+
+**Optional**:
+- `RENDER_EXTERNAL_HOSTNAME` - Auto-set by Render, added to ALLOWED_HOSTS
+
+**Local Development**: Django uses fallback values in settings.py, but you can create `.env` for overrides
+
+## Agent Operating Principles
+
+### Task Completion Standards
+- Always verify your work before reporting completion
+- Run tests after making code changes
+- Check linting before finalizing changes (if configured)
+- If you encounter errors, debug them - don't just report failure
+- Provide specific file paths and line numbers in your final report
+- Test your changes in the actual running application when possible
+
+### Code Quality Requirements
+- Write tests for new functionality
+- Follow PEP 8 standards for Python code
+- Follow Django best practices and conventions
+- Match existing code style and patterns in the codebase
+- Write clear, descriptive commit messages
+
+### Testing Workflow
+When making code changes:
+1. Make your changes
+2. Run relevant tests: `pytest` or `python manage.py test`
+3. Check coverage: `pytest --cov=. --cov-report=term-missing`
+4. Fix any failures before reporting completion
+5. Manual testing in browser when UI changes are involved
+
+## Common Task Patterns
+
+### Adding New Features
+1. Understand the requirement and architecture (review this file)
+2. Identify which files need changes (models, views, forms, templates, urls)
+3. Check existing similar features for patterns
+4. Implement changes following Django conventions:
+   - **Models**: Add to `home/models.py` (or create new app if major feature)
+   - **Views**: Add to `home/views.py`
+   - **URLs**: Update `home/urls.py`
+   - **Templates**: Add to `home/templates/`
+   - **Forms**: Add to `home/forms.py` if needed
+5. Write tests in `home/tests.py`
+6. Run migrations if models changed: `python manage.py makemigrations && python manage.py migrate`
+7. Run tests: `pytest`
+8. Verify manually in browser
+9. Document any new environment variables or setup steps
+
+### Bug Fixing
+1. Reproduce the bug (check tests or manual verification)
+2. Identify root cause using search/read tools
+3. Fix the issue
+4. Add test case to prevent regression
+5. Verify fix with full test suite: `pytest`
+6. Report: what was broken, what you changed, which test proves it's fixed
+
+### Refactoring
+1. Understand current implementation thoroughly
+2. Write tests for current behavior if coverage is lacking
+3. Make incremental changes
+4. Run tests after each change: `pytest`
+5. Ensure no functionality is lost
+6. Report: what you refactored, why, and test results
+
+### Search and Analysis Tasks
+When searching for code or analyzing the codebase:
+1. Use search tools to find code patterns and files
+2. Read relevant files completely, not just snippets
+3. Trace function calls across files
+4. Check both backend logic (views.py, models.py) and frontend (templates/)
+5. Report findings with specific file:line references
+
+## Common Development Patterns
+
+### Adding a New Model
+1. Add to `home/models.py` (or create new app with `python manage.py startapp appname`)
+2. Run `python manage.py makemigrations`
+3. Run `python manage.py migrate`
+4. Register in `home/admin.py` for admin interface (optional)
+5. Add tests in `home/tests.py`
+6. Verify in Django shell or admin panel
+
+### Adding a New View
+1. Add function or class-based view to `home/views.py`
+2. Add URL pattern to `home/urls.py`
+3. Create template in `home/templates/`
+4. Add test to verify view response and context
+5. Test manually in browser
+
+### Working with Tests
+- Pytest is primary test runner (see pytest.ini)
+- Django's manage.py test also works
+- Always run tests after changes: `pytest`
+- Check coverage: `pytest --cov=.`
+- Write tests for edge cases and error handling
+- Use Django's TestCase for database-dependent tests
+- Use fixtures for common test data
+
+## Error Handling
+
+If you encounter errors:
+1. **Test failures**: Read the full traceback, identify the failing assertion, fix root cause
+2. **Import errors**: Check requirements.txt, verify file structure, check Python path
+3. **Migration errors**: Check for conflicting migrations, review migration files, try `python manage.py makemigrations --merge` if needed
+4. **Database errors**: Check DATABASE_URL, verify migrations ran, check model definitions
+5. **Template errors**: Check template syntax, verify template paths, check context variables
+6. **Static file errors**: Run `python manage.py collectstatic`, check STATIC_URL and STATIC_ROOT settings
+7. **Deployment errors**: Check Render logs, verify environment variables, check build.sh script
+
+## Reporting Results
+
+Your final report should include:
+- **Summary**: What you accomplished in 2-3 sentences
+- **Files changed**: List with file:line references for key changes
+- **Tests**: Did tests pass? Coverage percentage?
+- **Verification**: How did you verify your work?
+- **Issues**: Any blockers or problems encountered?
+- **Next steps**: What remains to be done (if task is incomplete)?
+
+### Good Report Example
+```
+Successfully implemented vocabulary practice feature with spaced repetition algorithm.
+
+Files changed:
+- home/models.py:145 - Added VocabularyCard and Review models with spaced repetition fields
+- home/views.py:289 - Added PracticeView with next card selection logic
+- home/urls.py:23 - Added /vocabulary/practice/ route
+- home/tests.py:456 - Added test_vocabulary_practice and test_spaced_repetition_algorithm
+- home/templates/vocabulary_practice.html - Created practice interface with flip card UI
+
+Tests: All passed (78 tests). Coverage: 87% (above target).
+
+Verification: 
+- Tested vocabulary practice flow manually in browser
+- Verified spaced repetition algorithm with unit tests
+- Checked database queries are optimized (select_related used)
+- Tested on both SQLite (dev) and PostgreSQL (staging)
+
+Next steps: Add audio pronunciation feature for vocabulary cards.
+```
+
+### Poor Report Example
+```
+I made some changes to the views file and added stuff. It might work but I'm not sure. There were some errors but I tried to fix them.
+```
+
+## Security Considerations
+
+### Implemented Security Features
+- **Login Attempt Logging**: All authentication events logged with IP addresses (see home/views.py:55-88)
+- **Open Redirect Prevention**: Login redirects validated with `url_has_allowed_host_and_scheme()` (home/views.py:74-78)
+- **Password Validation**: Django's built-in validators enforce strong passwords (home/views.py:120-125)
+- **Email Validation**: Format validation before account creation (home/views.py:107-109)
+- **Secure Password Reset**: Admin generates 12-char random passwords (home/admin.py:18)
+- **Generic Error Messages**: Prevents user enumeration during login
+- **CSRF Protection**: Django's built-in CSRF protection on all forms
+- **Input Sanitization**: User input stripped of whitespace, validated before processing
+
+### Best Practices to Follow
+- Never commit secrets or API keys to the repository
+- Use environment variables for sensitive data (.env for local, Render dashboard for production)
+- Validate all user input in forms
+- Use Django's authentication system for user management
+- Sanitize any user-generated content displayed in templates
+- Keep dependencies updated (check for security vulnerabilities with `pip list --outdated`)
+- Use HTTPS in production (Render provides this automatically)
+- Set secure cookie settings when DEBUG=False
+- Monitor login attempt logs for suspicious activity
+
+## Performance Notes
+
+### Implemented Optimizations
+- **Database Query Optimization**: `get_weekly_stats()` reuses queryset to avoid duplicate queries (home/models.py:45-49)
+- **Static File Compression**: WhiteNoise with CompressedManifestStaticFilesStorage in production
+- **Connection Pooling**: PostgreSQL connection max_age=600 for connection reuse
+
+### Best Practices to Follow
+- Use `select_related()` and `prefetch_related()` for database query optimization
+- Consider caching for frequently accessed data
+- Be mindful of N+1 query problems
+- Use database indexes for frequently queried fields
+- Monitor query counts in Django Debug Toolbar (development)
+- Consider pagination for large querysets
+
+## Getting Unstuck
+
+If you're stuck:
+1. Review this file for architecture overview
+2. Search for similar existing functionality in the codebase
+3. Check Django documentation: https://docs.djangoproject.com/
+4. Look at test files to understand expected behavior
+5. Check Render logs if deployment issues occur
+6. Review GitHub Actions logs if CI/CD fails
+7. Use Django shell to test queries interactively: `python manage.py shell`
+8. Check settings.py for configuration issues
+9. Look at existing views/models for patterns to follow
+10. Ask specific questions with context about what you've tried
+
+## Django-Specific Best Practices
+
+### Model Guidelines
+- Use descriptive field names
+- Add `__str__` methods to all models for admin readability
+- Use appropriate field types (CharField, TextField, DateTimeField, etc.)
+- Add `verbose_name` and `help_text` for clarity
+- Use `related_name` for reverse relations
+- Add model-level validation in `clean()` method when needed
+
+### View Guidelines
+- Use class-based views for standard CRUD operations
+- Use function-based views for simple or custom logic
+- Always validate and sanitize user input
+- Use `@login_required` decorator or `LoginRequiredMixin` for protected views
+- Return appropriate HTTP status codes
+- Handle exceptions gracefully
+
+### Template Guidelines
+- Use template inheritance with base templates
+- Use `{% load static %}` for static files
+- Use `{% url %}` tag for URL generation (never hardcode URLs)
+- Escape user content properly (Django does this by default)
+- Keep logic in views, not templates
+- Use template filters for formatting
+
+### URL Guidelines
+- Use descriptive URL names for reverse lookups
+- Group related URLs together
+- Use path converters (`<int:pk>`, `<slug:slug>`, etc.)
+- Keep URLs RESTful and intuitive
+
+## Project-Specific Notes
+
+### Authentication System
+- Email-based login (users enter email, system looks up username)
+- Usernames auto-generated from email prefix
+- Number suffix added for duplicates (e.g., john, john2, john3)
+- Login/signup use same template with different form handling
+
+### Progress Tracking System
+- `UserProgress` model stores user learning stats
+- Auto-created on first access with `get_or_create()`
+- Weekly stats calculated from last 7 days of data
+- Quiz accuracy = (sum of correct answers / sum of total questions) * 100
+
+### Static Files Handling
+- Development: Django serves static files (DEBUG=True only)
+- Production: WhiteNoise with compression and caching
+- DevEDU: Uses IS_DEVEDU env var, sets FORCE_SCRIPT_NAME to `/proxy/8000` for all URLs
+- Tests: Simplified storage backend for speed
+- **Security**: Static file serving via Django disabled in production (WhiteNoise handles it)
+
+### Database Configuration
+- Automatic switching between SQLite (dev) and PostgreSQL (prod)
+- Tests always use SQLite for speed
+- Migrations applied automatically on Render deployment via build.sh
+
+### Admin Interface
+- Django admin at `/admin/` with enhanced user management and unified navigation
+- **Unified UI**: Admin panel uses same purple gradient navigation as main site (no Django header)
+- **Staff-Only Access**: Admin button visible only to staff users in navigation bar
+- Custom admin actions for bulk operations (see home/admin.py)
+- **Creating admin**: `python manage.py createsuperuser` (local) or via Render Shell (production)
+- **Admin capabilities**:
+  - Reset user passwords (generates secure 12-char random passwords)
+  - Make users administrators or remove admin privileges
+  - Reset user progress (deletes lessons, quizzes, resets stats)
+  - View user progress summary in User detail page
+  - Search/filter all users, progress, lessons, and quizzes
+- **Security**: Login attempts logged with IP addresses for monitoring
+- See [ADMIN_GUIDE.md](ADMIN_GUIDE.md) for complete admin documentation
+
+---
+
+**Last Updated**: December 2025
+**Maintained By**: Development Team
+
+## Recent Updates (December 2025)
+
+### Admin Panel Enhancements
+- Added unified navigation across admin and main site (purple gradient header)
+- Staff-only admin button in navigation bar
+- Custom logout handler for proxy environment compatibility
+- Secure random password generation for admin password resets
+
+### Security Improvements
+- Login attempt logging with IP addresses for security monitoring
+- Open redirect prevention in login flow
+- Django password validators (min 8 chars, complexity requirements)
+- Email format validation
+- Generic error messages to prevent user enumeration
+
+### Performance Optimizations
+- Eliminated duplicate database queries in weekly stats calculation
+- Optimized queryset reuse in UserProgress.get_weekly_stats()
+
+### DevEDU Support
+- Simplified proxy configuration using IS_DEVEDU environment variable
+- FORCE_SCRIPT_NAME handles all URL generation in proxy environments
+- Proper CSRF configuration for development proxies
+
+### Code Quality
+- Comprehensive docstrings for all view functions
+- Module-level documentation in config/urls.py
+- Enhanced security comments and warnings
+- Template comments explaining customizations
