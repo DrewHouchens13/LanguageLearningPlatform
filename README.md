@@ -11,8 +11,11 @@ An interactive web application that helps users incorporate AI into their langua
 - 🌍 **Multi-Language Support**: Learn different languages with tier-based progression
 - 💡 **Insights**: Identify your strongest and weakest skills
 - 🔐 **Secure Authentication**: Email-based login with comprehensive validation
+- 👤 **Account Management**: Update email, name, username, and password
+- 🔑 **Password Recovery**: Email-based password reset with secure tokens
+- 📧 **Username Recovery**: Forgot username? Get a reminder via email
 - 👨‍💼 **Admin Panel**: Enhanced Django admin with unified navigation and bulk operations
-- 🛡️ **Security Features**: Login attempt logging, password validation, open redirect prevention
+- 🛡️ **Security Features**: Login attempt logging, password validation, account change tracking
 - 📱 **Responsive Design**: Works on desktop and mobile devices
 
 ## Tech Stack
@@ -104,6 +107,24 @@ python manage.py createsuperuser
 
 📖 **See [ADMIN_GUIDE.md](ADMIN_GUIDE.md) for complete administrator documentation**
 
+## User Account Management
+
+Users can manage their accounts through the **Account** page (accessible after login):
+
+### Account Settings
+- **Update Email Address**: Change your email (requires current password)
+- **Update Name**: Change your first and last name
+- **Update Username**: Change your login username
+- **Change Password**: Update your password (requires current password)
+
+### Password & Username Recovery
+- **Forgot Password**: Request a password reset link via email (expires in 20 minutes)
+- **Forgot Username**: Get a username reminder sent to your email
+
+All account changes are logged for security purposes.
+
+📖 **See [USER_GUIDE.md](USER_GUIDE.md) for complete user documentation**
+
 ## Deployment to Render
 
 **📖 See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment instructions.**
@@ -165,10 +186,17 @@ The platform implements comprehensive security measures:
 - **Open Redirect Prevention**: Login redirects validated to prevent attacks
 - **Generic Error Messages**: Prevents user enumeration during authentication
 
+### Account Security
+- **Secure Password Reset**: Token-based reset with 20-minute expiration
+- **Account Change Logging**: All email/username/password updates logged with IP addresses
+- **Password Verification**: Current password required for sensitive changes
+- **Session Persistence**: Users remain logged in after password change
+- **Username/Email Uniqueness**: Prevents duplicate accounts
+
 ### Security Monitoring
 - **Login Attempt Logging**: All authentication events logged with IP addresses
 - **Failed Login Tracking**: Monitor suspicious activity and brute force attempts
-- **Secure Password Reset**: Admin generates random 12-character passwords
+- **Account Activity Logs**: Track all account modifications
 
 ### Production Security
 - **HTTPS Enforcement**: SSL/TLS required in production
@@ -192,9 +220,16 @@ For production deployment, configure these environment variables:
 | `SECRET_KEY` | Django secret key | Yes |
 | `DEBUG` | Debug mode (False in production) | Yes |
 | `DATABASE_URL` | PostgreSQL connection string | Yes |
+| `EMAIL_HOST` | SMTP server (e.g., smtp.sendgrid.net) | For email features |
+| `EMAIL_PORT` | SMTP port (usually 587) | For email features |
+| `EMAIL_HOST_USER` | SMTP username | For email features |
+| `EMAIL_HOST_PASSWORD` | SMTP password/API key | For email features |
+| `DEFAULT_FROM_EMAIL` | From email address | For email features |
 | `RENDER_EXTERNAL_HOSTNAME` | Auto-set by Render | No |
 | `IS_DEVEDU` | Enable DevEDU proxy support | No (dev only) |
 | `STATIC_URL_PREFIX` | Proxy prefix for static files | No (dev only) |
+
+**Note**: In development, emails are printed to the console instead of being sent.
 
 ## Database Models
 
@@ -226,9 +261,13 @@ For application issues, please open an issue on GitHub.
 
 - [x] Progress dashboard implementation
 - [x] User authentication system with email-based login
+- [x] Account management (email, name, username, password updates)
+- [x] Password recovery via email
+- [x] Username recovery via email
 - [x] Django admin panel with enhanced features
 - [x] Security logging and monitoring
 - [x] Mobile responsive design
+- [ ] Help/Wiki section for user support
 - [ ] Real-time lesson progress tracking
 - [ ] Interactive quizzes and exercises
 - [ ] AI-powered language practice

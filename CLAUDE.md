@@ -38,6 +38,10 @@ Language Learning Platform - Django 5.2.7 web application for tracking language 
 - `/login/` - Login/signup (same template, different POST handlers)
 - `/progress/` - Progress dashboard (public, shows CTA for guests)
 - `/dashboard/` - Protected view (@login_required)
+- `/account/` - Account management (@login_required)
+- `/forgot-password/` - Password reset request
+- `/reset-password/<uidb64>/<token>/` - Password reset with token
+- `/forgot-username/` - Username reminder request
 - `/admin/` - Django admin interface (superuser only)
 
 **Admin Interface** (home/admin.py, home/templates/admin/base_site.html):
@@ -49,13 +53,31 @@ Language Learning Platform - Django 5.2.7 web application for tracking language 
 - Progress information displayed in User detail view
 - Full search and filter capabilities for all models
 
+**Account Management** (home/views.py:287-572):
+- `account_view` - User account settings page (@login_required)
+- Update email address (requires current password verification)
+- Update name (first and last)
+- Update username (with uniqueness validation)
+- Change password (with strength validation and session re-authentication)
+- All changes logged with IP addresses
+
+**Password Recovery** (home/views.py:392-572):
+- `forgot_password_view` - Request password reset via email
+- `reset_password_view` - Reset password with secure token (20-min expiration)
+- `forgot_username_view` - Request username reminder via email
+- Token-based password reset with expiration (configurable via PASSWORD_RESET_TIMEOUT)
+- Generic success messages to prevent user enumeration
+- Email templates in home/templates/emails/
+
 **Security Features** (home/views.py):
 - **Login Attempt Logging**: All authentication events logged with IP addresses for security monitoring
 - **Open Redirect Prevention**: Login redirects validated with `url_has_allowed_host_and_scheme()`
 - **Password Validation**: Django's built-in validators (min 8 chars, not common, not numeric only)
 - **Email Validation**: Format validation before account creation
-- **Secure Password Reset**: Admin password reset generates secure 12-character random passwords
-- **Generic Error Messages**: Prevents user enumeration during login
+- **Secure Password Reset**: Token expires after 20 minutes; admin generates 12-char random passwords
+- **Generic Error Messages**: Prevents user enumeration during login/password reset
+- **Account Change Logging**: All email/username/password updates logged with IP addresses
+- **Session Persistence**: Users remain logged in after password change (re-authenticated)
 
 ## Development Commands
 
@@ -138,6 +160,20 @@ python manage.py runserver 0.0.0.0:8000
 # - Relaxes CSRF settings for development
 ```
 
+### Email Testing (Password Reset / Username Recovery)
+```bash
+# Development - Emails print to console
+# Start server and check PowerShell console for email output
+python manage.py runserver
+
+# Production - Configure environment variables for SMTP
+# EMAIL_HOST=smtp.sendgrid.net (or other SMTP provider)
+# EMAIL_PORT=587
+# EMAIL_HOST_USER=apikey
+# EMAIL_HOST_PASSWORD=<your-api-key>
+# DEFAULT_FROM_EMAIL=noreply@yourdomain.com
+```
+
 ## Key Implementation Details
 
 **Settings Behavior** (config/settings.py):
@@ -211,6 +247,7 @@ python manage.py runserver 0.0.0.0:8000
 - Follow Django best practices and conventions
 - Match existing code style and patterns in the codebase
 - Write clear, descriptive commit messages
+- Write clear, descriptive, comprehensive docstrings in the Python code using line comments or block comments
 
 ### Testing Workflow
 When making code changes:
@@ -463,12 +500,27 @@ If you're stuck:
 
 ---
 
-**Last Updated**: December 2025
+**Last Updated**: 26 October 2025
 **Maintained By**: Development Team
 
-## Recent Updates (December 2025)
+## Recent Updates
 
-### Admin Panel Enhancements
+### Account Management System (26 October 2025)
+- **Account Settings Page**: Users can update email, name, username, and password
+- **Password Recovery**: Email-based password reset with secure tokens (20-min expiration)
+- **Username Recovery**: Email reminder for forgotten usernames
+- **Email Configuration**: Console backend for dev, SMTP for production
+- **Security Features**:
+  - Token-based password reset with 20-minute expiration
+  - All account changes logged with IP addresses
+  - Password verification required for email/password updates
+  - Generic messages to prevent user enumeration
+  - Session persistence after password change
+- **Testing**: 32 comprehensive tests added (148 total tests, 95% coverage)
+- **UI/UX**: Soft gray card backgrounds, forms stay visible after submission
+- **Documentation**: See USER_GUIDE.md for end-user documentation
+
+### Admin Panel Enhancements (25 October 2025)
 - Added unified navigation across admin and main site (purple gradient header)
 - Staff-only admin button in navigation bar
 - Custom logout handler for proxy environment compatibility
@@ -480,6 +532,7 @@ If you're stuck:
 - Django password validators (min 8 chars, complexity requirements)
 - Email format validation
 - Generic error messages to prevent user enumeration
+- Account change logging with IP addresses
 
 ### Performance Optimizations
 - Eliminated duplicate database queries in weekly stats calculation
