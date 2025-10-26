@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse, resolve
 from django.utils import timezone
 from datetime import timedelta
+from enum import Enum
 from .models import UserProgress, LessonCompletion, QuizResult
 from .views import landing, login_view, signup_view, logout_view, dashboard, progress_view
 
@@ -1768,18 +1769,34 @@ class TestAdminLoginFlow(TestCase):
 # ACCOUNT MANAGEMENT TESTS
 # ============================================================================
 
-# Test constants for account management
-ACTION_UPDATE_EMAIL = 'update_email'
-ACTION_UPDATE_NAME = 'update_name'
-ACTION_UPDATE_USERNAME = 'update_username'
-ACTION_UPDATE_PASSWORD = 'update_password'
+
+class AccountAction(str, Enum):
+    """
+    Enum for account management action types.
+
+    Using an Enum provides:
+    - Type safety and autocomplete in IDEs
+    - Clear namespace for related constants
+    - Prevention of typos in test code
+    - Self-documenting code
+    """
+    UPDATE_EMAIL = 'update_email'
+    UPDATE_NAME = 'update_name'
+    UPDATE_USERNAME = 'update_username'
+    UPDATE_PASSWORD = 'update_password'
 
 
 class AccountViewTests(TestCase):
-    """Tests for the account management page"""
+    """
+    Tests for the account management page.
+
+    Note: These tests modify the user object (email, name, username, password),
+    so we use setUp() instead of setUpTestData() to create a fresh user for each test.
+    This ensures test isolation but is slightly slower than setUpTestData().
+    """
 
     def setUp(self):
-        """Create test user for each test"""
+        """Create test user and client for each test"""
         self.client = Client()
         self.user = create_test_user(
             first_name='Test',
@@ -1818,7 +1835,7 @@ class AccountViewTests(TestCase):
 
         new_email = 'newemail@example.com'
         response = self.client.post(reverse('account'), {
-            'action': ACTION_UPDATE_EMAIL,
+            'action': AccountAction.UPDATE_EMAIL.value,
             'new_email': new_email,
             'current_password': self.user._test_password
         })
@@ -1833,7 +1850,7 @@ class AccountViewTests(TestCase):
 
         old_email = self.user.email
         response = self.client.post(reverse('account'), {
-            'action': ACTION_UPDATE_EMAIL,
+            'action': AccountAction.UPDATE_EMAIL.value,
             'new_email': 'newemail@example.com',
             'current_password': 'wrongpassword'
         })
@@ -1850,7 +1867,7 @@ class AccountViewTests(TestCase):
         )
 
         response = self.client.post(reverse('account'), {
-            'action': 'update_email',
+            'action': AccountAction.UPDATE_EMAIL.value,
             'new_email': 'notanemail',
             'current_password': self.user._test_password
         })
@@ -1867,7 +1884,7 @@ class AccountViewTests(TestCase):
         )
 
         response = self.client.post(reverse('account'), {
-            'action': 'update_email',
+            'action': AccountAction.UPDATE_EMAIL.value,
             'new_email': other_user.email,
             'current_password': self.user._test_password
         })
@@ -1882,7 +1899,7 @@ class AccountViewTests(TestCase):
         )
 
         response = self.client.post(reverse('account'), {
-            'action': ACTION_UPDATE_NAME,
+            'action': AccountAction.UPDATE_NAME.value,
             'first_name': 'NewFirst',
             'last_name': 'NewLast'
         })
@@ -1901,7 +1918,7 @@ class AccountViewTests(TestCase):
 
         old_first_name = self.user.first_name
         response = self.client.post(reverse('account'), {
-            'action': ACTION_UPDATE_NAME,
+            'action': AccountAction.UPDATE_NAME.value,
             'first_name': '',
             'last_name': 'NewLast'
         })
@@ -1919,7 +1936,7 @@ class AccountViewTests(TestCase):
 
         new_username = 'newusername'
         response = self.client.post(reverse('account'), {
-            'action': ACTION_UPDATE_USERNAME,
+            'action': AccountAction.UPDATE_USERNAME.value,
             'new_username': new_username
         })
 
@@ -1938,7 +1955,7 @@ class AccountViewTests(TestCase):
 
         old_username = self.user.username
         response = self.client.post(reverse('account'), {
-            'action': ACTION_UPDATE_USERNAME,
+            'action': AccountAction.UPDATE_USERNAME.value,
             'new_username': other_user.username
         })
 
@@ -1954,7 +1971,7 @@ class AccountViewTests(TestCase):
         )
 
         response = self.client.post(reverse('account'), {
-            'action': ACTION_UPDATE_USERNAME,
+            'action': AccountAction.UPDATE_USERNAME.value,
             'new_username': ''
         })
 
@@ -1969,7 +1986,7 @@ class AccountViewTests(TestCase):
 
         new_password = 'NewSecurePassword123!'
         response = self.client.post(reverse('account'), {
-            'action': ACTION_UPDATE_PASSWORD,
+            'action': AccountAction.UPDATE_PASSWORD.value,
             'current_password_pwd': self.user._test_password,
             'new_password': new_password,
             'confirm_password': new_password
@@ -1990,7 +2007,7 @@ class AccountViewTests(TestCase):
         )
 
         response = self.client.post(reverse('account'), {
-            'action': ACTION_UPDATE_PASSWORD,
+            'action': AccountAction.UPDATE_PASSWORD.value,
             'current_password_pwd': 'wrongpassword',
             'new_password': 'NewPassword123!',
             'confirm_password': 'NewPassword123!'
@@ -2006,7 +2023,7 @@ class AccountViewTests(TestCase):
         )
 
         response = self.client.post(reverse('account'), {
-            'action': ACTION_UPDATE_PASSWORD,
+            'action': AccountAction.UPDATE_PASSWORD.value,
             'current_password_pwd': self.user._test_password,
             'new_password': 'NewPassword123!',
             'confirm_password': 'DifferentPassword123!'
@@ -2022,7 +2039,7 @@ class AccountViewTests(TestCase):
         )
 
         response = self.client.post(reverse('account'), {
-            'action': ACTION_UPDATE_PASSWORD,
+            'action': AccountAction.UPDATE_PASSWORD.value,
             'current_password_pwd': self.user._test_password,
             'new_password': 'short',
             'confirm_password': 'short'

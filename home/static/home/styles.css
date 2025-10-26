@@ -443,18 +443,26 @@ main {
 }
 
 /* Forgot password/username specific styles */
+
+/* Secondary link styling for "Forgot Username?" */
 .forgot-username-link {
   font-size: 0.9rem;
 }
 
+/* Compact form options section with reduced top margin
+   Used to bring "Forgot Username?" closer to "Forgot Password?" link */
 .form-options-compact {
   margin-top: -10px;
 }
 
+/* Message shown when password reset link has expired
+   Provides spacing before the "Request New Link" button */
 .expired-link-message {
   margin-bottom: 1.5rem;
 }
 
+/* Makes auth button work as a styled link
+   Used for "Request New Reset Link" button on expired token page */
 .auth-button-link {
   display: inline-block;
   text-decoration: none;

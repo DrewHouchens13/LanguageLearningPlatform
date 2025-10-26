@@ -33,8 +33,40 @@ logger = logging.getLogger(__name__)
 
 
 # =============================================================================
-# RATE LIMITING HELPER
+# RATE LIMITING HELPERS
 # =============================================================================
+
+def get_client_ip(request):
+    """
+    Get the client's IP address, handling proxy scenarios.
+
+    When the application is behind a reverse proxy (nginx, Apache, load balancer),
+    the REMOTE_ADDR will be the proxy's IP, not the client's IP. This function
+    checks the X-Forwarded-For header first, which contains the real client IP.
+
+    Args:
+        request: Django request object
+
+    Returns:
+        str: Client's IP address
+
+    Security notes:
+    - X-Forwarded-For can be spoofed, so use with caution for security decisions
+    - For critical security checks, consider additional validation
+    - Only the first IP in X-Forwarded-For chain is used (client IP)
+    """
+    # Check if request is behind a proxy
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        # X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
+        # Take the first one (the client IP)
+        ip_address = x_forwarded_for.split(',')[0].strip()
+    else:
+        # Direct connection (no proxy)
+        ip_address = request.META.get('REMOTE_ADDR', 'unknown')
+
+    return ip_address
+
 
 def check_rate_limit(request, action, limit=5, period=300):
     """
@@ -63,8 +95,8 @@ def check_rate_limit(request, action, limit=5, period=300):
     """
     from django.core.cache import cache
 
-    # Get client IP address
-    ip_address = request.META.get('REMOTE_ADDR', 'unknown')
+    # Get client IP address (handles proxies)
+    ip_address = get_client_ip(request)
 
     # Create cache key combining action and IP
     cache_key = f'ratelimit_{action}_{ip_address}'
@@ -83,6 +115,58 @@ def check_rate_limit(request, action, limit=5, period=300):
     cache.set(cache_key, attempts + 1, period)
 
     return True, limit - attempts - 1, 0
+
+
+def send_template_email(request, template_name, context, subject, recipient_email, log_prefix):
+    """
+    Send an email using a template with comprehensive error handling.
+
+    This helper function reduces code duplication for email sending operations
+    like password reset and username reminders.
+
+    Args:
+        request: Django request object (for IP logging)
+        template_name: Path to email template (e.g., 'emails/password_reset_email.txt')
+        context: Dictionary of template context variables
+        subject: Email subject line
+        recipient_email: Email address to send to
+        log_prefix: Prefix for log messages (e.g., 'Password reset email')
+
+    Returns:
+        bool: True if email sent successfully, False otherwise
+
+    Example:
+        success = send_template_email(
+            request,
+            'emails/password_reset_email.txt',
+            {'user': user, 'reset_url': url},
+            'Password Reset - Language Learning Platform',
+            user.email,
+            'Password reset email'
+        )
+    """
+    from django.core.mail import send_mail, BadHeaderError
+    from django.template.loader import render_to_string
+    from smtplib import SMTPException
+
+    # Render email template
+    message = render_to_string(template_name, context)
+
+    # Attempt to send email with error handling
+    try:
+        send_mail(
+            subject,
+            message,
+            None,  # Use DEFAULT_FROM_EMAIL
+            [recipient_email],
+            fail_silently=False,
+        )
+        logger.info(f'{log_prefix} sent to: {recipient_email} from IP: {get_client_ip(request)}')
+        return True
+    except (SMTPException, BadHeaderError) as e:
+        # Log email sending failure but don't reveal to user
+        logger.error(f'Failed to send {log_prefix.lower()} to {recipient_email}: {str(e)} from IP: {get_client_ip(request)}')
+        return False
 
 
 def landing(request):
@@ -123,7 +207,7 @@ def login_view(request):
         except User.DoesNotExist:
             # Log failed login attempt (email not found)
             logger.warning(
-                f'Failed login attempt - email not found: {email} from IP: {request.META.get("REMOTE_ADDR")}'
+                f'Failed login attempt - email not found: {email} from IP: {get_client_ip(request)}'
             )
             messages.error(request, 'Invalid email or password.')
             return render(request, 'login.html')
@@ -135,7 +219,7 @@ def login_view(request):
             login(request, user)
             # Log successful login
             logger.info(
-                f'Successful login: {username} from IP: {request.META.get("REMOTE_ADDR")}'
+                f'Successful login: {username} from IP: {get_client_ip(request)}'
             )
             messages.success(request, f'Welcome back, {user.first_name or user.username}!')
 
@@ -153,7 +237,7 @@ def login_view(request):
         else:
             # Log failed login attempt (incorrect password)
             logger.warning(
-                f'Failed login attempt - incorrect password for: {username} from IP: {request.META.get("REMOTE_ADDR")}'
+                f'Failed login attempt - incorrect password for: {username} from IP: {get_client_ip(request)}'
             )
             messages.error(request, 'Invalid email or password.')
 
@@ -385,7 +469,7 @@ def account_view(request):
             request.user.email = new_email
             request.user.save()
             messages.success(request, 'Email address updated successfully!')
-            logger.info(f'Email updated for user: {request.user.username} from IP: {request.META.get("REMOTE_ADDR")}')
+            logger.info(f'Email updated for user: {request.user.username} from IP: {get_client_ip(request)}')
 
         elif action == 'update_name':
             first_name = request.POST.get('first_name', '').strip()
@@ -401,7 +485,7 @@ def account_view(request):
             request.user.last_name = last_name
             request.user.save()
             messages.success(request, 'Name updated successfully!')
-            logger.info(f'Name updated for user: {request.user.username} from IP: {request.META.get("REMOTE_ADDR")}')
+            logger.info(f'Name updated for user: {request.user.username} from IP: {get_client_ip(request)}')
 
         elif action == 'update_username':
             new_username = request.POST.get('new_username', '').strip()
@@ -421,7 +505,7 @@ def account_view(request):
             request.user.username = new_username
             request.user.save()
             messages.success(request, f'Username updated from "{old_username}" to "{new_username}"!')
-            logger.info(f'Username updated from {old_username} to {new_username} from IP: {request.META.get("REMOTE_ADDR")}')
+            logger.info(f'Username updated from {old_username} to {new_username} from IP: {get_client_ip(request)}')
 
         elif action == 'update_password':
             current_password = request.POST.get('current_password_pwd')
@@ -453,7 +537,7 @@ def account_view(request):
             # Re-authenticate user to maintain session
             login(request, request.user)
             messages.success(request, 'Password updated successfully!')
-            logger.info(f'Password updated for user: {request.user.username} from IP: {request.META.get("REMOTE_ADDR")}')
+            logger.info(f'Password updated for user: {request.user.username} from IP: {get_client_ip(request)}')
 
     return render(request, 'account.html')
 
@@ -476,9 +560,6 @@ def forgot_password_view(request):
     from django.contrib.auth.tokens import default_token_generator
     from django.utils.http import urlsafe_base64_encode
     from django.utils.encoding import force_bytes
-    from django.core.mail import send_mail, BadHeaderError
-    from django.template.loader import render_to_string
-    from smtplib import SMTPException
 
     if request.method == 'POST':
         # Check rate limit (5 requests per 5 minutes)
@@ -508,29 +589,22 @@ def forgot_password_view(request):
             )
 
             # Send password reset email
-            subject = 'Password Reset - Language Learning Platform'
-            message = render_to_string('emails/password_reset_email.txt', {
-                'user': user,
-                'reset_url': reset_url,
-                'site_name': 'Language Learning Platform',
-            })
-
-            try:
-                send_mail(
-                    subject,
-                    message,
-                    None,  # Use DEFAULT_FROM_EMAIL
-                    [user.email],
-                    fail_silently=False,
-                )
-                logger.info(f'Password reset email sent to: {email} from IP: {request.META.get("REMOTE_ADDR")}')
-            except (SMTPException, BadHeaderError) as e:
-                # Log email sending failure but don't reveal to user
-                logger.error(f'Failed to send password reset email to {email}: {str(e)} from IP: {request.META.get("REMOTE_ADDR")}')
+            send_template_email(
+                request,
+                'emails/password_reset_email.txt',
+                {
+                    'user': user,
+                    'reset_url': reset_url,
+                    'site_name': 'Language Learning Platform',
+                },
+                'Password Reset - Language Learning Platform',
+                user.email,
+                'Password reset email'
+            )
 
         except User.DoesNotExist:
             # Log failed attempt but don't inform user (prevent enumeration)
-            logger.warning(f'Password reset attempted for non-existent email: {email} from IP: {request.META.get("REMOTE_ADDR")}')
+            logger.warning(f'Password reset attempted for non-existent email: {email} from IP: {get_client_ip(request)}')
 
         # Always show success message (don't reveal if email exists or sending failed)
         messages.success(request, 'If an account with that email exists, a password reset link has been sent. Please check your email.')
@@ -586,7 +660,7 @@ def reset_password_view(request, uidb64, token):
             login(request, user)
 
             messages.success(request, 'Your password has been reset successfully!')
-            logger.info(f'Password reset completed for user: {user.username} from IP: {request.META.get("REMOTE_ADDR")}')
+            logger.info(f'Password reset completed for user: {user.username} from IP: {get_client_ip(request)}')
             return redirect('landing')
 
         return render(request, 'reset_password.html', {'valid_link': True})
@@ -609,10 +683,6 @@ def forgot_username_view(request):
     - Error handling for email sending failures
     - Rate limiting: 5 requests per 5 minutes per IP address
     """
-    from django.core.mail import send_mail, BadHeaderError
-    from django.template.loader import render_to_string
-    from smtplib import SMTPException
-
     if request.method == 'POST':
         # Check rate limit (5 requests per 5 minutes)
         is_allowed, attempts_remaining, retry_after = check_rate_limit(
@@ -635,29 +705,22 @@ def forgot_username_view(request):
             login_url = request.build_absolute_uri('/login/')
 
             # Send username reminder email
-            subject = 'Username Reminder - Language Learning Platform'
-            message = render_to_string('emails/username_reminder_email.txt', {
-                'user': user,
-                'site_name': 'Language Learning Platform',
-                'login_url': login_url,
-            })
-
-            try:
-                send_mail(
-                    subject,
-                    message,
-                    None,  # Use DEFAULT_FROM_EMAIL
-                    [user.email],
-                    fail_silently=False,
-                )
-                logger.info(f'Username reminder sent to: {email} from IP: {request.META.get("REMOTE_ADDR")}')
-            except (SMTPException, BadHeaderError) as e:
-                # Log email sending failure but don't reveal to user
-                logger.error(f'Failed to send username reminder to {email}: {str(e)} from IP: {request.META.get("REMOTE_ADDR")}')
+            send_template_email(
+                request,
+                'emails/username_reminder_email.txt',
+                {
+                    'user': user,
+                    'site_name': 'Language Learning Platform',
+                    'login_url': login_url,
+                },
+                'Username Reminder - Language Learning Platform',
+                user.email,
+                'Username reminder'
+            )
 
         except User.DoesNotExist:
             # Log failed attempt but don't inform user (prevent enumeration)
-            logger.warning(f'Username reminder attempted for non-existent email: {email} from IP: {request.META.get("REMOTE_ADDR")}')
+            logger.warning(f'Username reminder attempted for non-existent email: {email} from IP: {get_client_ip(request)}')
 
         # Always show success message (don't reveal if email exists or sending failed)
         messages.success(request, 'If an account with that email exists, a username reminder has been sent. Please check your email.')

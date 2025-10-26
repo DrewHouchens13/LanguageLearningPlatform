@@ -278,8 +278,29 @@ PASSWORD_RESET_TIMEOUT = 1200  # 20 minutes in seconds
 # =============================================================================
 
 # Cache configuration for rate limiting and performance
-# Development: Local memory cache
-# Production: Consider using Redis or Memcached for better performance
+#
+# DEVELOPMENT ONLY: Currently using local memory cache
+# This configuration is suitable for development and testing but NOT for production.
+#
+# For production deployment, configure a robust caching backend:
+# - Redis: Recommended for high-performance caching and rate limiting
+# - Memcached: Alternative high-performance distributed caching
+#
+# Local memory cache limitations:
+# - Not shared across multiple server processes/instances
+# - Lost when server restarts
+# - Not suitable for load-balanced deployments
+#
+# To use Redis in production, install django-redis and configure:
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django_redis.cache.RedisCache',
+#         'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+#         'OPTIONS': {
+#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#         }
+#     }
+# }
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
