@@ -32,6 +32,59 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# =============================================================================
+# RATE LIMITING HELPER
+# =============================================================================
+
+def check_rate_limit(request, action, limit=5, period=300):
+    """
+    Simple rate limiting using Django's cache framework.
+
+    Args:
+        request: Django request object
+        action: String identifier for the action (e.g., 'password_reset')
+        limit: Maximum number of attempts allowed (default: 5)
+        period: Time period in seconds (default: 300 = 5 minutes)
+
+    Returns:
+        tuple: (is_allowed, attempts_remaining, retry_after)
+            - is_allowed: Boolean indicating if request should be allowed
+            - attempts_remaining: Number of attempts left before rate limit
+            - retry_after: Seconds until rate limit resets (if rate limited)
+
+    Rate limiting strategy:
+    - Uses IP address as the rate limit key
+    - Tracks number of requests per IP per action
+    - Implements sliding window rate limiting
+    - Prevents abuse of password reset and username reminder endpoints
+
+    Privacy note: IP addresses are temporarily cached for rate limiting only
+    and automatically expire after the rate limit period.
+    """
+    from django.core.cache import cache
+
+    # Get client IP address
+    ip_address = request.META.get('REMOTE_ADDR', 'unknown')
+
+    # Create cache key combining action and IP
+    cache_key = f'ratelimit_{action}_{ip_address}'
+
+    # Get current attempt count
+    attempts = cache.get(cache_key, 0)
+
+    if attempts >= limit:
+        # Rate limit exceeded
+        ttl = cache.ttl(cache_key)
+        retry_after = ttl if ttl and ttl > 0 else period
+        logger.warning(f'Rate limit exceeded for {action} from IP: {ip_address}')
+        return False, 0, retry_after
+
+    # Increment attempt counter
+    cache.set(cache_key, attempts + 1, period)
+
+    return True, limit - attempts - 1, 0
+
+
 def landing(request):
     """
     Render the landing page.
@@ -417,14 +470,29 @@ def forgot_password_view(request):
     - Generates secure token for password reset
     - Token expires after PASSWORD_RESET_TIMEOUT (20 minutes)
     - Logs password reset requests with IP addresses
+    - Error handling for email sending failures
+    - Rate limiting: 5 requests per 5 minutes per IP address
     """
     from django.contrib.auth.tokens import default_token_generator
     from django.utils.http import urlsafe_base64_encode
     from django.utils.encoding import force_bytes
-    from django.core.mail import send_mail
+    from django.core.mail import send_mail, BadHeaderError
     from django.template.loader import render_to_string
+    from smtplib import SMTPException
 
     if request.method == 'POST':
+        # Check rate limit (5 requests per 5 minutes)
+        is_allowed, attempts_remaining, retry_after = check_rate_limit(
+            request, 'password_reset', limit=5, period=300
+        )
+
+        if not is_allowed:
+            messages.error(
+                request,
+                f'Too many password reset attempts. Please try again in {retry_after // 60} minutes.'
+            )
+            return render(request, 'forgot_password.html')
+
         email = request.POST.get('email', '').strip()
 
         try:
@@ -447,21 +515,24 @@ def forgot_password_view(request):
                 'site_name': 'Language Learning Platform',
             })
 
-            send_mail(
-                subject,
-                message,
-                None,  # Use DEFAULT_FROM_EMAIL
-                [user.email],
-                fail_silently=False,
-            )
-
-            logger.info(f'Password reset email sent to: {email} from IP: {request.META.get("REMOTE_ADDR")}')
+            try:
+                send_mail(
+                    subject,
+                    message,
+                    None,  # Use DEFAULT_FROM_EMAIL
+                    [user.email],
+                    fail_silently=False,
+                )
+                logger.info(f'Password reset email sent to: {email} from IP: {request.META.get("REMOTE_ADDR")}')
+            except (SMTPException, BadHeaderError) as e:
+                # Log email sending failure but don't reveal to user
+                logger.error(f'Failed to send password reset email to {email}: {str(e)} from IP: {request.META.get("REMOTE_ADDR")}')
 
         except User.DoesNotExist:
             # Log failed attempt but don't inform user (prevent enumeration)
             logger.warning(f'Password reset attempted for non-existent email: {email} from IP: {request.META.get("REMOTE_ADDR")}')
 
-        # Always show success message (don't reveal if email exists)
+        # Always show success message (don't reveal if email exists or sending failed)
         messages.success(request, 'If an account with that email exists, a password reset link has been sent. Please check your email.')
 
     return render(request, 'forgot_password.html')
@@ -535,38 +606,60 @@ def forgot_username_view(request):
     Security features:
     - Only sends email if account exists (but doesn't confirm to prevent enumeration)
     - Logs username recovery requests with IP addresses
+    - Error handling for email sending failures
+    - Rate limiting: 5 requests per 5 minutes per IP address
     """
-    from django.core.mail import send_mail
+    from django.core.mail import send_mail, BadHeaderError
     from django.template.loader import render_to_string
+    from smtplib import SMTPException
 
     if request.method == 'POST':
+        # Check rate limit (5 requests per 5 minutes)
+        is_allowed, attempts_remaining, retry_after = check_rate_limit(
+            request, 'username_reminder', limit=5, period=300
+        )
+
+        if not is_allowed:
+            messages.error(
+                request,
+                f'Too many username reminder attempts. Please try again in {retry_after // 60} minutes.'
+            )
+            return render(request, 'forgot_username.html')
+
         email = request.POST.get('email', '').strip()
 
         try:
             user = User.objects.get(email=email)
+
+            # Build login URL
+            login_url = request.build_absolute_uri('/login/')
 
             # Send username reminder email
             subject = 'Username Reminder - Language Learning Platform'
             message = render_to_string('emails/username_reminder_email.txt', {
                 'user': user,
                 'site_name': 'Language Learning Platform',
+                'login_url': login_url,
             })
 
-            send_mail(
-                subject,
-                message,
-                None,  # Use DEFAULT_FROM_EMAIL
-                [user.email],
-                fail_silently=False,
-            )
-
-            logger.info(f'Username reminder sent to: {email} from IP: {request.META.get("REMOTE_ADDR")}')
+            try:
+                send_mail(
+                    subject,
+                    message,
+                    None,  # Use DEFAULT_FROM_EMAIL
+                    [user.email],
+                    fail_silently=False,
+                )
+                logger.info(f'Username reminder sent to: {email} from IP: {request.META.get("REMOTE_ADDR")}')
+            except (SMTPException, BadHeaderError) as e:
+                # Log email sending failure but don't reveal to user
+                logger.error(f'Failed to send username reminder to {email}: {str(e)} from IP: {request.META.get("REMOTE_ADDR")}')
 
         except User.DoesNotExist:
             # Log failed attempt but don't inform user (prevent enumeration)
             logger.warning(f'Username reminder attempted for non-existent email: {email} from IP: {request.META.get("REMOTE_ADDR")}')
 
-        # Always show success message (don't reveal if email exists)
+        # Always show success message (don't reveal if email exists or sending failed)
         messages.success(request, 'If an account with that email exists, a username reminder has been sent. Please check your email.')
 
     return render(request, 'forgot_username.html')

@@ -1768,6 +1768,13 @@ class TestAdminLoginFlow(TestCase):
 # ACCOUNT MANAGEMENT TESTS
 # ============================================================================
 
+# Test constants for account management
+ACTION_UPDATE_EMAIL = 'update_email'
+ACTION_UPDATE_NAME = 'update_name'
+ACTION_UPDATE_USERNAME = 'update_username'
+ACTION_UPDATE_PASSWORD = 'update_password'
+
+
 class AccountViewTests(TestCase):
     """Tests for the account management page"""
 
@@ -1780,6 +1787,13 @@ class AccountViewTests(TestCase):
             email='testuser@example.com'
         )
 
+    def login_test_user(self):
+        """Helper method to login the test user"""
+        return self.client.login(
+            username=self.user.username,
+            password=self.user._test_password
+        )
+
     def test_account_view_requires_login(self):
         """Test account page redirects to login when not authenticated"""
         response = self.client.get(reverse('account'))
@@ -1789,10 +1803,7 @@ class AccountViewTests(TestCase):
 
     def test_account_view_accessible_when_logged_in(self):
         """Test account page accessible to authenticated users"""
-        self.client.login(
-            username=self.user.username,
-            password=self.user._test_password
-        )
+        self.login_test_user()
 
         response = self.client.get(reverse('account'))
 
@@ -1803,14 +1814,11 @@ class AccountViewTests(TestCase):
 
     def test_update_email_success(self):
         """Test successful email update"""
-        self.client.login(
-            username=self.user.username,
-            password=self.user._test_password
-        )
+        self.login_test_user()
 
         new_email = 'newemail@example.com'
         response = self.client.post(reverse('account'), {
-            'action': 'update_email',
+            'action': ACTION_UPDATE_EMAIL,
             'new_email': new_email,
             'current_password': self.user._test_password
         })
@@ -1821,14 +1829,11 @@ class AccountViewTests(TestCase):
 
     def test_update_email_wrong_password(self):
         """Test email update fails with wrong password"""
-        self.client.login(
-            username=self.user.username,
-            password=self.user._test_password
-        )
+        self.login_test_user()
 
         old_email = self.user.email
         response = self.client.post(reverse('account'), {
-            'action': 'update_email',
+            'action': ACTION_UPDATE_EMAIL,
             'new_email': 'newemail@example.com',
             'current_password': 'wrongpassword'
         })
@@ -1877,7 +1882,7 @@ class AccountViewTests(TestCase):
         )
 
         response = self.client.post(reverse('account'), {
-            'action': 'update_name',
+            'action': ACTION_UPDATE_NAME,
             'first_name': 'NewFirst',
             'last_name': 'NewLast'
         })
@@ -1896,7 +1901,7 @@ class AccountViewTests(TestCase):
 
         old_first_name = self.user.first_name
         response = self.client.post(reverse('account'), {
-            'action': 'update_name',
+            'action': ACTION_UPDATE_NAME,
             'first_name': '',
             'last_name': 'NewLast'
         })
@@ -1914,7 +1919,7 @@ class AccountViewTests(TestCase):
 
         new_username = 'newusername'
         response = self.client.post(reverse('account'), {
-            'action': 'update_username',
+            'action': ACTION_UPDATE_USERNAME,
             'new_username': new_username
         })
 
@@ -1933,7 +1938,7 @@ class AccountViewTests(TestCase):
 
         old_username = self.user.username
         response = self.client.post(reverse('account'), {
-            'action': 'update_username',
+            'action': ACTION_UPDATE_USERNAME,
             'new_username': other_user.username
         })
 
@@ -1949,7 +1954,7 @@ class AccountViewTests(TestCase):
         )
 
         response = self.client.post(reverse('account'), {
-            'action': 'update_username',
+            'action': ACTION_UPDATE_USERNAME,
             'new_username': ''
         })
 
@@ -1964,7 +1969,7 @@ class AccountViewTests(TestCase):
 
         new_password = 'NewSecurePassword123!'
         response = self.client.post(reverse('account'), {
-            'action': 'update_password',
+            'action': ACTION_UPDATE_PASSWORD,
             'current_password_pwd': self.user._test_password,
             'new_password': new_password,
             'confirm_password': new_password
@@ -1985,7 +1990,7 @@ class AccountViewTests(TestCase):
         )
 
         response = self.client.post(reverse('account'), {
-            'action': 'update_password',
+            'action': ACTION_UPDATE_PASSWORD,
             'current_password_pwd': 'wrongpassword',
             'new_password': 'NewPassword123!',
             'confirm_password': 'NewPassword123!'
@@ -2001,7 +2006,7 @@ class AccountViewTests(TestCase):
         )
 
         response = self.client.post(reverse('account'), {
-            'action': 'update_password',
+            'action': ACTION_UPDATE_PASSWORD,
             'current_password_pwd': self.user._test_password,
             'new_password': 'NewPassword123!',
             'confirm_password': 'DifferentPassword123!'
@@ -2017,7 +2022,7 @@ class AccountViewTests(TestCase):
         )
 
         response = self.client.post(reverse('account'), {
-            'action': 'update_password',
+            'action': ACTION_UPDATE_PASSWORD,
             'current_password_pwd': self.user._test_password,
             'new_password': 'short',
             'confirm_password': 'short'

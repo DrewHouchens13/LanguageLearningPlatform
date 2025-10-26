@@ -266,13 +266,29 @@ else:
     EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
     EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
     EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@languagelearningplatform.org')
 
-# From email for all messages
+# From email for all messages (used by both development and production)
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Language Learning Platform <noreply@languagelearningplatform.org>')
 
 # Password reset token expiration (in seconds) - 20 minutes for security
 PASSWORD_RESET_TIMEOUT = 1200  # 20 minutes in seconds
+
+# =============================================================================
+# CACHE SETTINGS
+# =============================================================================
+
+# Cache configuration for rate limiting and performance
+# Development: Local memory cache
+# Production: Consider using Redis or Memcached for better performance
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        }
+    }
+}
 
 # Session settings
 SESSION_COOKIE_AGE = 86400  # Session expires after 1 day (86400 seconds)

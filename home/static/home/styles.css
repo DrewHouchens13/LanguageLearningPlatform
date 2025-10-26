@@ -442,6 +442,25 @@ main {
   text-decoration: underline;
 }
 
+/* Forgot password/username specific styles */
+.forgot-username-link {
+  font-size: 0.9rem;
+}
+
+.form-options-compact {
+  margin-top: -10px;
+}
+
+.expired-link-message {
+  margin-bottom: 1.5rem;
+}
+
+.auth-button-link {
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
+}
+
 /* Auth Button */
 .auth-button {
   width: 100%;
