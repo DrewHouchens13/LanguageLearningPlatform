@@ -1,0 +1,257 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - Language Learning Platform</title>
+    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+  </head>
+  <body>
+    <header>
+      <nav class="navbar">
+        <div class="nav-brand">
+          <h1>Language Learning Platform</h1>
+        </div>
+        <button class="nav-toggle" aria-label="Toggle navigation">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="{% url 'landing' %}" class="nav-link">Home</a></li>
+          <li class="nav-item"><a href="#" class="nav-link">Courses</a></li>
+          <li class="nav-item"><a href="#" class="nav-link">Lessons</a></li>
+          <li class="nav-item"><a href="{% url 'progress' %}" class="nav-link">My Progress</a></li>
+          {% if user.is_authenticated %}
+            <li class="nav-item"><a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a></li>
+            {% if user.is_staff %}
+              <li class="nav-item"><a href="{% url 'admin:index' %}" class="nav-link admin-link">Admin</a></li>
+            {% endif %}
+            <li class="nav-item"><a href="{% url 'account' %}" class="nav-link active">Account</a></li>
+            <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link nav-button">Logout</a></li>
+          {% else %}
+            <li class="nav-item"><a href="{% url 'login' %}" class="nav-link">Login</a></li>
+            <li class="nav-item"><a href="{% url 'login' %}" class="nav-link nav-button">Sign Up</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <div class="account-container">
+        <div class="account-header">
+          <h2>Account Settings</h2>
+          <p>Manage your account information and security settings</p>
+        </div>
+
+        <!-- Django Messages -->
+        {% if messages %}
+          <div class="messages-container">
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="account-sections">
+          <!-- Current Account Info -->
+          <div class="account-info-box">
+            <h3>Current Information</h3>
+            <div class="info-row">
+              <span class="info-label">Email:</span>
+              <span class="info-value">{{ user.email }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Username:</span>
+              <span class="info-value">{{ user.username }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Name:</span>
+              <span class="info-value">{{ user.first_name }} {{ user.last_name }}</span>
+            </div>
+          </div>
+
+          <!-- Update Email -->
+          <div class="account-card">
+            <h3>Update Email Address</h3>
+            <form method="POST" class="account-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_email">
+
+              <div class="form-group">
+                <label for="new-email">New Email Address</label>
+                <input
+                  type="email"
+                  id="new-email"
+                  name="new_email"
+                  required
+                  placeholder="Enter new email address"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="current-password-email">Current Password (for verification)</label>
+                <input
+                  type="password"
+                  id="current-password-email"
+                  name="current_password"
+                  required
+                  placeholder="Enter your current password"
+                >
+              </div>
+
+              <button type="submit" class="account-button">Update Email</button>
+            </form>
+          </div>
+
+          <!-- Update Name -->
+          <div class="account-card">
+            <h3>Update Name</h3>
+            <form method="POST" class="account-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_name">
+
+              <div class="form-group">
+                <label for="first-name">First Name</label>
+                <input
+                  type="text"
+                  id="first-name"
+                  name="first_name"
+                  required
+                  placeholder="Enter your first name"
+                  value="{{ user.first_name }}"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="last-name">Last Name</label>
+                <input
+                  type="text"
+                  id="last-name"
+                  name="last_name"
+                  placeholder="Enter your last name (optional)"
+                  value="{{ user.last_name }}"
+                >
+              </div>
+
+              <button type="submit" class="account-button">Update Name</button>
+            </form>
+          </div>
+
+          <!-- Update Username -->
+          <div class="account-card">
+            <h3>Update Username</h3>
+            <form method="POST" class="account-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_username">
+
+              <div class="form-group">
+                <label for="new-username">New Username</label>
+                <input
+                  type="text"
+                  id="new-username"
+                  name="new_username"
+                  required
+                  placeholder="Enter new username"
+                  value="{{ user.username }}"
+                >
+                <small class="form-hint">This will be your login username</small>
+              </div>
+
+              <button type="submit" class="account-button">Update Username</button>
+            </form>
+          </div>
+
+          <!-- Update Password -->
+          <div class="account-card">
+            <h3>Change Password</h3>
+            <form method="POST" class="account-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_password">
+
+              <div class="form-group">
+                <label for="current-password-pwd">Current Password</label>
+                <input
+                  type="password"
+                  id="current-password-pwd"
+                  name="current_password_pwd"
+                  required
+                  placeholder="Enter your current password"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="new-password">New Password</label>
+                <input
+                  type="password"
+                  id="new-password"
+                  name="new_password"
+                  required
+                  placeholder="Enter new password"
+                  minlength="8"
+                >
+                <small class="form-hint">Must be at least 8 characters</small>
+              </div>
+
+              <div class="form-group">
+                <label for="confirm-password">Confirm New Password</label>
+                <input
+                  type="password"
+                  id="confirm-password"
+                  name="confirm_password"
+                  required
+                  placeholder="Confirm new password"
+                >
+              </div>
+
+              <button type="submit" class="account-button">Change Password</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+    </footer>
+
+    <script>
+      // Mobile menu toggle
+      const navToggle = document.querySelector('.nav-toggle');
+      const navMenu = document.querySelector('.nav-menu');
+
+      navToggle.addEventListener('click', () => {
+        navMenu.classList.toggle('active');
+        navToggle.classList.toggle('active');
+      });
+
+      // Close menu when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+          navMenu.classList.remove('active');
+          navToggle.classList.remove('active');
+        }
+      });
+
+      // Password match validation
+      const passwordForms = document.querySelectorAll('.account-form');
+      passwordForms.forEach(form => {
+        form.addEventListener('submit', (e) => {
+          const newPassword = form.querySelector('[name="new_password"]');
+          const confirmPassword = form.querySelector('[name="confirm_password"]');
+
+          if (newPassword && confirmPassword) {
+            if (newPassword.value !== confirmPassword.value) {
+              e.preventDefault();
+              alert('New passwords do not match!');
+              return false;
+            }
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

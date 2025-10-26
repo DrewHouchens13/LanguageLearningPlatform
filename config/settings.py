@@ -247,9 +247,32 @@ LOGIN_URL = 'login'  # Where to redirect if login is required
 LOGIN_REDIRECT_URL = 'landing'  # Where to redirect after successful login
 LOGOUT_REDIRECT_URL = 'landing'  # Where to redirect after logout
 
-# Email backend (for development - prints emails to console)
-# In production, configure a real email backend for sending actual emails
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# =============================================================================
+# EMAIL SETTINGS
+# =============================================================================
+
+# Email configuration for password reset and account notifications
+# Development: Print emails to console
+# Production: Use SMTP (configure via environment variables)
+
+if DEBUG:
+    # Development - print emails to console for testing
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    # Production - use SMTP
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@languagelearningplatform.org')
+
+# From email for all messages
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Language Learning Platform <noreply@languagelearningplatform.org>')
+
+# Password reset token expiration (in seconds) - 20 minutes for security
+PASSWORD_RESET_TIMEOUT = 1200  # 20 minutes in seconds
 
 # Session settings
 SESSION_COOKIE_AGE = 86400  # Session expires after 1 day (86400 seconds)
