@@ -63,7 +63,7 @@ You'll be automatically logged in and redirected to the landing page. Your usern
 ## Logging In
 
 1. **Go to the login page**
-2. **Enter your email address** (not your username)
+2. **Enter your username or email address**
 3. **Enter your password**
 4. **Optional:** Check "Remember me" to stay logged in
 5. **Click "Login"**
@@ -117,8 +117,8 @@ Your name will be displayed in your dashboard and profile.
 
 **Important:**
 - Your username must be unique
-- You'll still log in with your email address (not username)
-- Your username is for display purposes
+- You can log in with either your username or email address
+- Your username is visible to other users
 
 #### Possible Errors:
 - "This username is already taken" - Choose a different username
@@ -261,13 +261,14 @@ If you haven't completed any lessons yet, you'll see a call-to-action to start l
 
 ### Can't Log In
 
-**Problem:** "Invalid email or password"
+**Problem:** "Invalid username/email or password"
 
 **Solutions:**
-1. Verify you're using the correct email address
+1. Verify you're using the correct username or email address
 2. Check for typos in your password
-3. Try the "Forgot Password?" link
-4. Contact support if issue persists
+3. Try the "Forgot Password?" link if you forgot your password
+4. Try the "Forgot Username?" link if you forgot your username
+5. Contact support if issue persists
 
 ---
 
@@ -303,7 +304,7 @@ If you haven't completed any lessons yet, you'll see a call-to-action to start l
 **Solutions:**
 1. Try a different username
 2. Add numbers or underscores (e.g., "john_doe" or "john2024")
-3. Your username is just for display - you log in with email
+3. You can log in with either your username or email address
 
 ---
 
@@ -429,7 +430,7 @@ This guide is updated regularly as new features are added to the platform.
 **Progress:** Statistics tracking your learning achievements
 **Session:** The period you're logged in
 **Token:** A secure temporary code for password reset
-**Username:** Your display name (different from login email)
+**Username:** Your unique identifier that can be used to log in (along with email)
 **Staff:** Users with admin privileges
 
 ---

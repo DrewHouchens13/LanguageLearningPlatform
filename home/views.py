@@ -171,8 +171,13 @@ def check_rate_limit(request, action, limit=5, period=300):
 
     if attempts >= limit:
         # Rate limit exceeded
-        ttl = cache.ttl(cache_key)
-        retry_after = ttl if ttl and ttl > 0 else period
+        # Try to get TTL if cache backend supports it, otherwise use period
+        try:
+            ttl = cache.ttl(cache_key)
+            retry_after = ttl if ttl and ttl > 0 else period
+        except AttributeError:
+            # Cache backend doesn't support TTL (e.g., LocMemCache), use period
+            retry_after = period
         logger.warning(f'Rate limit exceeded for {action} from IP: {ip_address}')
         return False, 0, retry_after
 
@@ -291,10 +296,10 @@ def landing(request):
 
 
 def login_view(request):
-    """Handle user login with email-based authentication.
+    """Handle user login with username or email-based authentication.
 
     GET: Display login form
-    POST: Authenticate user by email/password and redirect securely
+    POST: Authenticate user by username/email and password, redirect securely
 
     Args:
         request: HttpRequest object from Django
@@ -303,10 +308,21 @@ def login_view(request):
         HttpResponse: Rendered login.html template or redirect to landing page
 
     Security features:
+        - Rate limiting: 5 attempts per 5 minutes per IP to prevent brute force attacks
+        - Input validation: Empty field checks, length limits (max 254 chars)
+        - Character whitelist: Only alphanumeric and safe email characters (@._+-)
         - Validates redirect URLs to prevent open redirect attacks
         - Uses Django's authenticate() for secure password verification
         - Generic error messages to prevent user enumeration
         - Logs all login attempts with IP addresses for security monitoring
+        - Django ORM parameterized queries prevent SQL injection
+
+    Authentication flow:
+        - Accepts either username or email for login
+        - Validates and sanitizes input before processing
+        - First attempts to find user by username
+        - If not found, attempts to find user by email
+        - Authenticates with Django's built-in authentication system
     """
     from django.http import HttpResponseRedirect
 
@@ -315,22 +331,70 @@ def login_view(request):
         return HttpResponseRedirect('..')
 
     if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
+        # Rate limiting: Prevent brute force attacks (5 attempts per 5 minutes per IP)
+        is_allowed, attempts_remaining, retry_after = check_rate_limit(
+            request,
+            action='login',
+            limit=5,
+            period=300
+        )
 
-        # Find user by email
-        try:
-            user = User.objects.get(email=email)
-            username = user.username
-        except User.DoesNotExist:
-            # Log failed login attempt (email not found)
+        if not is_allowed:
             logger.warning(
-                f'Failed login attempt - email not found: {email} from IP: {get_client_ip(request)}'
+                f'Login rate limit exceeded from IP: {get_client_ip(request)}, '
+                f'retry after {retry_after} seconds'
             )
-            messages.error(request, 'Invalid email or password.')
+            messages.error(
+                request,
+                f'Too many login attempts. Please try again in {retry_after // 60} minute(s).'
+            )
             return render(request, 'login.html')
 
-        # Authenticate user
+        username_or_email = request.POST.get('username_or_email', '').strip()
+        password = request.POST.get('password', '')
+
+        # Input validation: Check for empty fields
+        if not username_or_email or not password:
+            messages.error(request, 'Please provide both username/email and password.')
+            return render(request, 'login.html')
+
+        # Input validation: Check length to prevent excessively long inputs
+        if len(username_or_email) > 254:  # Max email length per RFC 5321
+            logger.warning(
+                f'Login attempt with excessively long username/email from IP: {get_client_ip(request)}'
+            )
+            messages.error(request, 'Invalid username/email or password.')
+            return render(request, 'login.html')
+
+        # Input validation: Allow only safe characters (alphanumeric, @, ., _, -, +)
+        # This prevents potential injection attacks while allowing valid usernames and emails
+        import re
+        if not re.match(r'^[a-zA-Z0-9@._+\-]+$', username_or_email):
+            logger.warning(
+                f'Login attempt with invalid characters in username/email from IP: {get_client_ip(request)}'
+            )
+            messages.error(request, 'Invalid username/email or password.')
+            return render(request, 'login.html')
+
+        # Find user by username or email
+        user_obj = None
+        try:
+            # First, try to find by username
+            user_obj = User.objects.get(username=username_or_email)
+        except User.DoesNotExist:
+            # If not found by username, try email
+            try:
+                user_obj = User.objects.get(email=username_or_email)
+            except User.DoesNotExist:
+                # Log failed login attempt (username/email not found)
+                logger.warning(
+                    f'Failed login attempt - user not found: {username_or_email} from IP: {get_client_ip(request)}'
+                )
+                messages.error(request, 'Invalid username/email or password.')
+                return render(request, 'login.html')
+
+        # Authenticate user with their username
+        username = user_obj.username
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
@@ -357,7 +421,7 @@ def login_view(request):
             logger.warning(
                 f'Failed login attempt - incorrect password for: {username} from IP: {get_client_ip(request)}'
             )
-            messages.error(request, 'Invalid email or password.')
+            messages.error(request, 'Invalid username/email or password.')
 
     return render(request, 'login.html')
 

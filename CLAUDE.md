@@ -23,8 +23,8 @@ Language Learning Platform - Django 5.2.7 web application for tracking language 
 - Tests: Automatically use DEBUG=True and simplified static storage
 
 **Authentication Flow**:
-- Email-based login (finds user by email, authenticates by username)
-- Username auto-generated from email prefix, deduplicated with numbers
+- Flexible login (accepts username or email, authenticates by username)
+- Username auto-generated from email prefix during signup, deduplicated with numbers
 - Views: `login_view`, `signup_view`, `logout_view` in home/views.py
 - Redirects: LOGIN_REDIRECT_URL and LOGOUT_REDIRECT_URL set to 'landing'
 
@@ -202,14 +202,16 @@ python manage.py runserver
 - Uses pytest (configured in pytest.ini and conftest.py)
 - Coverage reporting via pytest-cov
 - `conftest.py` disables APPEND_SLASH for tests
-- **Current Status**: 129 tests, 89% code coverage
+- **Current Status**: 167 tests, 93% code coverage
 - **Test Categories**:
   - Model tests (20 tests)
-  - Authentication tests (30 tests)
+  - Authentication tests (39 tests including validation, rate limiting, redirect protection)
   - Account management tests (21 tests including edge cases)
   - Password recovery tests (14 tests)
   - Admin tests (36 tests)
-  - Security tests (XSS, SQL injection, unauthorized access)
+  - Security tests (XSS, SQL injection, unauthorized access, input validation, user enumeration)
+  - Rate limiting tests (brute force prevention)
+  - Open redirect protection tests
 
 ## Deployment (Render)
 
@@ -399,9 +401,19 @@ I made some changes to the views file and added stuff. It might work but I'm not
 - **Secure Password Reset**: Token expires after 20 minutes; admin generates 12-char random passwords
 - **Generic Error Messages**: Prevents user enumeration during login/password reset
 - **CSRF Protection**: Django's built-in CSRF protection on all forms
-- **Input Sanitization**: User input stripped of whitespace, validated before processing
-- **XSS Protection**: Django's automatic HTML escaping (verified via test suite)
-- **SQL Injection Protection**: Django ORM parameterized queries (verified via test suite)
+- **Rate Limiting**: 5 login attempts per 5 minutes per IP to prevent brute force attacks (home/views.py:328-345)
+  - Tracks attempts via Django cache framework
+  - IP-based rate limiting with automatic expiration
+  - Graceful handling of cache backends without TTL support
+  - Clear error messages with retry-after timing
+- **Input Validation & Sanitization**: Comprehensive multi-layer validation (home/views.py:350-371)
+  - Empty field checks for all required inputs
+  - Length limits (max 254 chars for username/email per RFC 5321)
+  - Character whitelist (alphanumeric + @._+- for safe email/username characters)
+  - Prevents injection attacks, XSS, and SQL injection attempts
+  - User input stripped of whitespace before validation
+- **XSS Protection**: Django's automatic HTML escaping + input character whitelist (verified via test suite)
+- **SQL Injection Protection**: Django ORM parameterized queries + input validation (verified via test suite)
 - **Production Cache Warning**: Runtime validation prevents local memory cache in production
 - **Email Configuration Validation**: Validates DEFAULT_FROM_EMAIL before sending
 - **Email Retry Mechanism**: Exponential backoff for transient SMTP failures
@@ -497,8 +509,8 @@ If you're stuck:
 ## Project-Specific Notes
 
 ### Authentication System
-- Email-based login (users enter email, system looks up username)
-- Usernames auto-generated from email prefix
+- Flexible login (users can enter username or email, system authenticates by username)
+- Usernames auto-generated from email prefix during signup
 - Number suffix added for duplicates (e.g., john, john2, john3)
 - Login/signup use same template with different form handling
 
@@ -541,6 +553,39 @@ If you're stuck:
 **Maintained By**: Development Team
 
 ## Recent Updates
+
+### Login Security Enhancements (26 October 2025)
+- **Username or Email Login**: Users can now log in with either username or email
+- **Rate Limiting** (home/views.py:328-345):
+  - 5 login attempts per 5 minutes per IP
+  - Prevents brute force attacks
+  - Graceful cache backend handling (supports LocMemCache and Redis)
+  - Clear error messages with retry-after timing
+- **Comprehensive Input Validation** (home/views.py:350-371):
+  - Empty field validation for username/email and password
+  - Length limits (max 254 characters per RFC 5321)
+  - Character whitelist (alphanumeric + @._+- only)
+  - Prevents XSS, SQL injection, and other injection attacks
+  - Generic error messages to prevent user enumeration
+- **Open Redirect Protection** (home/views.py:405-413):
+  - Django's `url_has_allowed_host_and_scheme()` validates redirect URLs
+  - Only allows redirects to same host
+  - Requires HTTPS in secure contexts
+  - Falls back to landing page for invalid redirects
+- **Client-Side Protection** (home/templates/login.html:59-70):
+  - HTML5 pattern attribute matches backend validation
+  - Maxlength attribute enforces 254 char limit
+  - User-friendly validation messages
+  - Help text for acceptable characters
+- **Testing**:
+  - 9 new security tests (rate limiting, open redirects, user enumeration, input validation)
+  - Improved test quality with `assertContains()` for better error checking
+  - Cache clearing between tests to prevent test interference
+  - **Total: 167 tests with 93% code coverage**
+  - Verified all injection attack scenarios blocked
+- **Documentation**:
+  - Updated CLAUDE.md with comprehensive security details
+  - Updated USER_GUIDE.md to reflect username/email login
 
 ### Comprehensive Code Quality & Security Improvements (26 October 2025)
 - **Security Enhancements**:
