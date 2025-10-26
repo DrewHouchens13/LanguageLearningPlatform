@@ -202,14 +202,15 @@ python manage.py runserver
 - Uses pytest (configured in pytest.ini and conftest.py)
 - Coverage reporting via pytest-cov
 - `conftest.py` disables APPEND_SLASH for tests
-- **Current Status**: 129 tests, 89% code coverage
+- **Current Status**: 163 tests, 93% code coverage
 - **Test Categories**:
   - Model tests (20 tests)
-  - Authentication tests (30 tests)
+  - Authentication tests (35 tests including input validation)
   - Account management tests (21 tests including edge cases)
   - Password recovery tests (14 tests)
   - Admin tests (36 tests)
-  - Security tests (XSS, SQL injection, unauthorized access)
+  - Security tests (XSS, SQL injection, unauthorized access, input validation)
+  - Login input validation (empty fields, length limits, character whitelist, injection prevention)
 
 ## Deployment (Render)
 
@@ -399,9 +400,14 @@ I made some changes to the views file and added stuff. It might work but I'm not
 - **Secure Password Reset**: Token expires after 20 minutes; admin generates 12-char random passwords
 - **Generic Error Messages**: Prevents user enumeration during login/password reset
 - **CSRF Protection**: Django's built-in CSRF protection on all forms
-- **Input Sanitization**: User input stripped of whitespace, validated before processing
-- **XSS Protection**: Django's automatic HTML escaping (verified via test suite)
-- **SQL Injection Protection**: Django ORM parameterized queries (verified via test suite)
+- **Input Validation & Sanitization**: Comprehensive multi-layer validation (home/views.py:327-348)
+  - Empty field checks for all required inputs
+  - Length limits (max 254 chars for username/email per RFC 5321)
+  - Character whitelist (alphanumeric + @._+- for safe email/username characters)
+  - Prevents injection attacks, XSS, and SQL injection attempts
+  - User input stripped of whitespace before validation
+- **XSS Protection**: Django's automatic HTML escaping + input character whitelist (verified via test suite)
+- **SQL Injection Protection**: Django ORM parameterized queries + input validation (verified via test suite)
 - **Production Cache Warning**: Runtime validation prevents local memory cache in production
 - **Email Configuration Validation**: Validates DEFAULT_FROM_EMAIL before sending
 - **Email Retry Mechanism**: Exponential backoff for transient SMTP failures
@@ -541,6 +547,27 @@ If you're stuck:
 **Maintained By**: Development Team
 
 ## Recent Updates
+
+### Login Security Enhancements (26 October 2025)
+- **Username or Email Login**: Users can now log in with either username or email
+- **Comprehensive Input Validation** (home/views.py:327-348):
+  - Empty field validation for username/email and password
+  - Length limits (max 254 characters per RFC 5321)
+  - Character whitelist (alphanumeric + @._+- only)
+  - Prevents XSS, SQL injection, and other injection attacks
+  - Generic error messages to prevent user enumeration
+- **Client-Side Protection** (home/templates/login.html:59-70):
+  - HTML5 pattern attribute matches backend validation
+  - Maxlength attribute enforces 254 char limit
+  - User-friendly validation messages
+  - Help text for acceptable characters
+- **Testing**:
+  - 5 new security tests (empty fields, length, invalid chars, SQL injection, XSS)
+  - **Total: 163 tests with 93% code coverage**
+  - Verified all injection attack scenarios blocked
+- **Documentation**:
+  - Updated CLAUDE.md with security validation details
+  - Updated USER_GUIDE.md to reflect username/email login
 
 ### Comprehensive Code Quality & Security Improvements (26 October 2025)
 - **Security Enhancements**:

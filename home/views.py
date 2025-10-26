@@ -303,13 +303,17 @@ def login_view(request):
         HttpResponse: Rendered login.html template or redirect to landing page
 
     Security features:
+        - Input validation: Empty field checks, length limits (max 254 chars)
+        - Character whitelist: Only alphanumeric and safe email characters (@._+-)
         - Validates redirect URLs to prevent open redirect attacks
         - Uses Django's authenticate() for secure password verification
         - Generic error messages to prevent user enumeration
         - Logs all login attempts with IP addresses for security monitoring
+        - Django ORM parameterized queries prevent SQL injection
 
     Authentication flow:
         - Accepts either username or email for login
+        - Validates and sanitizes input before processing
         - First attempts to find user by username
         - If not found, attempts to find user by email
         - Authenticates with Django's built-in authentication system
@@ -322,7 +326,30 @@ def login_view(request):
 
     if request.method == 'POST':
         username_or_email = request.POST.get('username_or_email', '').strip()
-        password = request.POST.get('password')
+        password = request.POST.get('password', '')
+
+        # Input validation: Check for empty fields
+        if not username_or_email or not password:
+            messages.error(request, 'Please provide both username/email and password.')
+            return render(request, 'login.html')
+
+        # Input validation: Check length to prevent excessively long inputs
+        if len(username_or_email) > 254:  # Max email length per RFC 5321
+            logger.warning(
+                f'Login attempt with excessively long username/email from IP: {get_client_ip(request)}'
+            )
+            messages.error(request, 'Invalid username/email or password.')
+            return render(request, 'login.html')
+
+        # Input validation: Allow only safe characters (alphanumeric, @, ., _, -, +)
+        # This prevents potential injection attacks while allowing valid usernames and emails
+        import re
+        if not re.match(r'^[a-zA-Z0-9@._+\-]+$', username_or_email):
+            logger.warning(
+                f'Login attempt with invalid characters in username/email from IP: {get_client_ip(request)}'
+            )
+            messages.error(request, 'Invalid username/email or password.')
+            return render(request, 'login.html')
 
         # Find user by username or email
         user_obj = None

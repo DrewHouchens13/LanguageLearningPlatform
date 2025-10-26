@@ -726,6 +726,81 @@ class TestLoginView(TestCase):
         # Should redirect to dashboard
         self.assertRedirects(response, '/dashboard/')
 
+    def test_login_empty_username_or_email(self):
+        """Test login fails with empty username/email field"""
+        data = {
+            'username_or_email': '',
+            'password': 'testpass123'
+        }
+        response = self.client.post(self.login_url, data)
+
+        # Should render login page with error
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'login.html')
+        messages = list(response.context['messages'])
+        self.assertEqual(len(messages), 1)
+        self.assertIn('provide both', str(messages[0]))
+
+    def test_login_empty_password(self):
+        """Test login fails with empty password field"""
+        data = {
+            'username_or_email': 'testuser',
+            'password': ''
+        }
+        response = self.client.post(self.login_url, data)
+
+        # Should render login page with error
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'login.html')
+        messages = list(response.context['messages'])
+        self.assertEqual(len(messages), 1)
+        self.assertIn('provide both', str(messages[0]))
+
+    def test_login_excessively_long_input(self):
+        """Test login fails with excessively long username/email"""
+        data = {
+            'username_or_email': 'a' * 300,  # Exceeds 254 char limit
+            'password': 'testpass123'
+        }
+        response = self.client.post(self.login_url, data)
+
+        # Should render login page with error
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'login.html')
+        messages = list(response.context['messages'])
+        self.assertEqual(len(messages), 1)
+        self.assertIn('Invalid', str(messages[0]))
+
+    def test_login_invalid_characters(self):
+        """Test login fails with invalid characters in username/email"""
+        data = {
+            'username_or_email': 'test<script>alert("xss")</script>',
+            'password': 'testpass123'
+        }
+        response = self.client.post(self.login_url, data)
+
+        # Should render login page with error
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'login.html')
+        messages = list(response.context['messages'])
+        self.assertEqual(len(messages), 1)
+        self.assertIn('Invalid', str(messages[0]))
+
+    def test_login_sql_injection_attempt(self):
+        """Test login prevents SQL injection attempts"""
+        data = {
+            'username_or_email': "admin' OR '1'='1",
+            'password': 'testpass123'
+        }
+        response = self.client.post(self.login_url, data)
+
+        # Should render login page with error (single quote is invalid)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'login.html')
+        messages = list(response.context['messages'])
+        self.assertEqual(len(messages), 1)
+        self.assertIn('Invalid', str(messages[0]))
+
 
 class TestLogoutView(TestCase):
     """Test user logout functionality"""

@@ -61,8 +61,12 @@
                 id="login-username-or-email"
                 name="username_or_email"
                 required
+                maxlength="254"
+                pattern="[a-zA-Z0-9@._+\-]+"
                 placeholder="Enter your username or email"
+                title="Use only letters, numbers, and @._+- characters"
               >
+              <small class="form-hint">You can log in with either your username or email address</small>
             </div>
             
             <div class="form-group">
