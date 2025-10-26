@@ -606,6 +606,9 @@ class TestLoginView(TestCase):
 
     def setUp(self):
         """Create test user and initialize client"""
+        from django.core.cache import cache
+        cache.clear()  # Clear cache to reset rate limiting between tests
+
         self.client = Client()
         self.login_url = '/login/'
         self.user = User.objects.create_user(
@@ -737,9 +740,7 @@ class TestLoginView(TestCase):
         # Should render login page with error
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'login.html')
-        messages = list(response.context['messages'])
-        self.assertEqual(len(messages), 1)
-        self.assertIn('provide both', str(messages[0]))
+        self.assertContains(response, 'Please provide both username/email and password')
 
     def test_login_empty_password(self):
         """Test login fails with empty password field"""
@@ -752,9 +753,7 @@ class TestLoginView(TestCase):
         # Should render login page with error
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'login.html')
-        messages = list(response.context['messages'])
-        self.assertEqual(len(messages), 1)
-        self.assertIn('provide both', str(messages[0]))
+        self.assertContains(response, 'Please provide both username/email and password')
 
     def test_login_excessively_long_input(self):
         """Test login fails with excessively long username/email"""
@@ -767,9 +766,7 @@ class TestLoginView(TestCase):
         # Should render login page with error
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'login.html')
-        messages = list(response.context['messages'])
-        self.assertEqual(len(messages), 1)
-        self.assertIn('Invalid', str(messages[0]))
+        self.assertContains(response, 'Invalid username/email or password')
 
     def test_login_invalid_characters(self):
         """Test login fails with invalid characters in username/email"""
@@ -782,9 +779,7 @@ class TestLoginView(TestCase):
         # Should render login page with error
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'login.html')
-        messages = list(response.context['messages'])
-        self.assertEqual(len(messages), 1)
-        self.assertIn('Invalid', str(messages[0]))
+        self.assertContains(response, 'Invalid username/email or password')
 
     def test_login_sql_injection_attempt(self):
         """Test login prevents SQL injection attempts"""
@@ -797,9 +792,72 @@ class TestLoginView(TestCase):
         # Should render login page with error (single quote is invalid)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'login.html')
-        messages = list(response.context['messages'])
-        self.assertEqual(len(messages), 1)
-        self.assertIn('Invalid', str(messages[0]))
+        self.assertContains(response, 'Invalid username/email or password')
+
+    def test_login_rate_limiting(self):
+        """Test login rate limiting prevents brute force attacks"""
+        data = {
+            'username_or_email': 'wronguser',
+            'password': 'wrongpass'
+        }
+
+        # Make 5 failed login attempts (should all be allowed)
+        for i in range(5):
+            response = self.client.post(self.login_url, data)
+            self.assertEqual(response.status_code, 200)
+
+        # 6th attempt should be rate limited
+        response = self.client.post(self.login_url, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'login.html')
+        self.assertContains(response, 'Too many login attempts')
+
+    def test_login_open_redirect_prevention(self):
+        """Test login prevents open redirect attacks"""
+        data = {
+            'username_or_email': 'testuser',
+            'password': 'testpass123'
+        }
+
+        # Try to redirect to external URL (should be blocked)
+        response = self.client.post(f"{self.login_url}?next=https://evil.com", data)
+
+        # Should redirect to landing page instead of evil.com
+        self.assertRedirects(response, reverse('landing'))
+
+    def test_login_safe_internal_redirect(self):
+        """Test login allows safe internal redirects"""
+        data = {
+            'username_or_email': 'testuser',
+            'password': 'testpass123'
+        }
+
+        # Internal redirect should be allowed
+        response = self.client.post(f"{self.login_url}?next=/progress/", data)
+        self.assertRedirects(response, '/progress/')
+
+    def test_login_error_message_prevents_user_enumeration(self):
+        """Test login error messages don't reveal if user exists"""
+        # Non-existent user
+        response1 = self.client.post(self.login_url, {
+            'username_or_email': 'nonexistentuser',
+            'password': 'anypassword'
+        })
+
+        # Existing user with wrong password
+        response2 = self.client.post(self.login_url, {
+            'username_or_email': 'testuser',
+            'password': 'wrongpassword'
+        })
+
+        # Both should have the same generic error message
+        messages1 = list(response1.context['messages'])
+        messages2 = list(response2.context['messages'])
+
+        self.assertEqual(len(messages1), 1)
+        self.assertEqual(len(messages2), 1)
+        self.assertEqual(str(messages1[0]), str(messages2[0]))
+        self.assertIn('Invalid username/email or password', str(messages1[0]))
 
 
 class TestLogoutView(TestCase):

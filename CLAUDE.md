@@ -202,15 +202,16 @@ python manage.py runserver
 - Uses pytest (configured in pytest.ini and conftest.py)
 - Coverage reporting via pytest-cov
 - `conftest.py` disables APPEND_SLASH for tests
-- **Current Status**: 163 tests, 93% code coverage
+- **Current Status**: 167 tests, 93% code coverage
 - **Test Categories**:
   - Model tests (20 tests)
-  - Authentication tests (35 tests including input validation)
+  - Authentication tests (39 tests including validation, rate limiting, redirect protection)
   - Account management tests (21 tests including edge cases)
   - Password recovery tests (14 tests)
   - Admin tests (36 tests)
-  - Security tests (XSS, SQL injection, unauthorized access, input validation)
-  - Login input validation (empty fields, length limits, character whitelist, injection prevention)
+  - Security tests (XSS, SQL injection, unauthorized access, input validation, user enumeration)
+  - Rate limiting tests (brute force prevention)
+  - Open redirect protection tests
 
 ## Deployment (Render)
 
@@ -400,7 +401,12 @@ I made some changes to the views file and added stuff. It might work but I'm not
 - **Secure Password Reset**: Token expires after 20 minutes; admin generates 12-char random passwords
 - **Generic Error Messages**: Prevents user enumeration during login/password reset
 - **CSRF Protection**: Django's built-in CSRF protection on all forms
-- **Input Validation & Sanitization**: Comprehensive multi-layer validation (home/views.py:327-348)
+- **Rate Limiting**: 5 login attempts per 5 minutes per IP to prevent brute force attacks (home/views.py:328-345)
+  - Tracks attempts via Django cache framework
+  - IP-based rate limiting with automatic expiration
+  - Graceful handling of cache backends without TTL support
+  - Clear error messages with retry-after timing
+- **Input Validation & Sanitization**: Comprehensive multi-layer validation (home/views.py:350-371)
   - Empty field checks for all required inputs
   - Length limits (max 254 chars for username/email per RFC 5321)
   - Character whitelist (alphanumeric + @._+- for safe email/username characters)
@@ -550,23 +556,35 @@ If you're stuck:
 
 ### Login Security Enhancements (26 October 2025)
 - **Username or Email Login**: Users can now log in with either username or email
-- **Comprehensive Input Validation** (home/views.py:327-348):
+- **Rate Limiting** (home/views.py:328-345):
+  - 5 login attempts per 5 minutes per IP
+  - Prevents brute force attacks
+  - Graceful cache backend handling (supports LocMemCache and Redis)
+  - Clear error messages with retry-after timing
+- **Comprehensive Input Validation** (home/views.py:350-371):
   - Empty field validation for username/email and password
   - Length limits (max 254 characters per RFC 5321)
   - Character whitelist (alphanumeric + @._+- only)
   - Prevents XSS, SQL injection, and other injection attacks
   - Generic error messages to prevent user enumeration
+- **Open Redirect Protection** (home/views.py:405-413):
+  - Django's `url_has_allowed_host_and_scheme()` validates redirect URLs
+  - Only allows redirects to same host
+  - Requires HTTPS in secure contexts
+  - Falls back to landing page for invalid redirects
 - **Client-Side Protection** (home/templates/login.html:59-70):
   - HTML5 pattern attribute matches backend validation
   - Maxlength attribute enforces 254 char limit
   - User-friendly validation messages
   - Help text for acceptable characters
 - **Testing**:
-  - 5 new security tests (empty fields, length, invalid chars, SQL injection, XSS)
-  - **Total: 163 tests with 93% code coverage**
+  - 9 new security tests (rate limiting, open redirects, user enumeration, input validation)
+  - Improved test quality with `assertContains()` for better error checking
+  - Cache clearing between tests to prevent test interference
+  - **Total: 167 tests with 93% code coverage**
   - Verified all injection attack scenarios blocked
 - **Documentation**:
-  - Updated CLAUDE.md with security validation details
+  - Updated CLAUDE.md with comprehensive security details
   - Updated USER_GUIDE.md to reflect username/email login
 
 ### Comprehensive Code Quality & Security Improvements (26 October 2025)

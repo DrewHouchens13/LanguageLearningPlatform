@@ -171,8 +171,13 @@ def check_rate_limit(request, action, limit=5, period=300):
 
     if attempts >= limit:
         # Rate limit exceeded
-        ttl = cache.ttl(cache_key)
-        retry_after = ttl if ttl and ttl > 0 else period
+        # Try to get TTL if cache backend supports it, otherwise use period
+        try:
+            ttl = cache.ttl(cache_key)
+            retry_after = ttl if ttl and ttl > 0 else period
+        except AttributeError:
+            # Cache backend doesn't support TTL (e.g., LocMemCache), use period
+            retry_after = period
         logger.warning(f'Rate limit exceeded for {action} from IP: {ip_address}')
         return False, 0, retry_after
 
@@ -303,6 +308,7 @@ def login_view(request):
         HttpResponse: Rendered login.html template or redirect to landing page
 
     Security features:
+        - Rate limiting: 5 attempts per 5 minutes per IP to prevent brute force attacks
         - Input validation: Empty field checks, length limits (max 254 chars)
         - Character whitelist: Only alphanumeric and safe email characters (@._+-)
         - Validates redirect URLs to prevent open redirect attacks
@@ -325,6 +331,25 @@ def login_view(request):
         return HttpResponseRedirect('..')
 
     if request.method == 'POST':
+        # Rate limiting: Prevent brute force attacks (5 attempts per 5 minutes per IP)
+        is_allowed, attempts_remaining, retry_after = check_rate_limit(
+            request,
+            action='login',
+            limit=5,
+            period=300
+        )
+
+        if not is_allowed:
+            logger.warning(
+                f'Login rate limit exceeded from IP: {get_client_ip(request)}, '
+                f'retry after {retry_after} seconds'
+            )
+            messages.error(
+                request,
+                f'Too many login attempts. Please try again in {retry_after // 60} minute(s).'
+            )
+            return render(request, 'login.html')
+
         username_or_email = request.POST.get('username_or_email', '').strip()
         password = request.POST.get('password', '')
 
