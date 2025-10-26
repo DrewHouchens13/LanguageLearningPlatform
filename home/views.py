@@ -90,9 +90,21 @@ def get_client_ip(request):
             # Never trust X-Forwarded-For (most secure, but won't work behind proxies)
             should_trust_xff = False
         else:
-            # Invalid setting, log warning and default to DEBUG mode
-            logger.warning(f'Invalid TRUST_X_FORWARDED_FOR setting: {trust_mode}, defaulting to debug mode')
-            should_trust_xff = settings.DEBUG
+            # Invalid setting - raise exception in production, warn in debug
+            error_msg = (
+                f'Invalid TRUST_X_FORWARDED_FOR setting: "{trust_mode}". '
+                f'Must be one of: "always", "debug", or "never". '
+                f'See config/settings.py for configuration details.'
+            )
+            if settings.DEBUG:
+                # Development: log warning and default to DEBUG mode to allow debugging
+                logger.warning(f'{error_msg} Defaulting to debug mode.')
+                should_trust_xff = True
+            else:
+                # Production: raise exception to prevent running with unknown configuration
+                from django.core.exceptions import ImproperlyConfigured
+                logger.error(error_msg)
+                raise ImproperlyConfigured(error_msg)
 
     if should_trust_xff and x_forwarded_for:
         # X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
@@ -204,7 +216,8 @@ def send_template_email(request, template_name, context, subject, recipient_emai
     """
     from django.core.mail import send_mail, BadHeaderError
     from django.template.loader import render_to_string
-    from django.core.exceptions import ImproperlyConfigured
+    from django.core.exceptions import ImproperlyConfigured, ValidationError
+    from django.core.validators import validate_email
     from django.conf import settings
     from smtplib import SMTPException
     import time
@@ -217,6 +230,13 @@ def send_template_email(request, template_name, context, subject, recipient_emai
         )
         logger.error(f'{error_msg} Attempted to send: {log_prefix}')
         raise ImproperlyConfigured(error_msg)
+
+    # Validate recipient email format before attempting to send
+    try:
+        validate_email(recipient_email)
+    except ValidationError:
+        logger.error(f'Invalid recipient email format: {recipient_email} for {log_prefix} from IP: {get_client_ip(request)}')
+        return False
 
     # Render email template
     message = render_to_string(template_name, context)
@@ -637,8 +657,11 @@ def account_view(request):
             request.user.set_password(new_password)
             request.user.save()
 
-            # Re-authenticate user to maintain session
-            login(request, request.user)
+            # Update session auth hash to keep user logged in
+            # This prevents invalidating the current session after password change
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+
             messages.success(request, 'Password updated successfully!')
             logger.info(f'Password updated for user: {request.user.username} from IP: {get_client_ip(request)}')
 
