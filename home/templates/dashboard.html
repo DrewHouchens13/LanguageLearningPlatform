@@ -24,6 +24,10 @@
           <li class="nav-item"><a href="#" class="nav-link">Lessons</a></li>
           <li class="nav-item"><a href="{% url 'progress' %}" class="nav-link">My Progress</a></li>
           <li class="nav-item"><a href="{% url 'dashboard' %}" class="nav-link active">Dashboard</a></li>
+          {% if user.is_staff %}
+            <li class="nav-item"><a href="{% url 'admin:index' %}" class="nav-link admin-link">Admin</a></li>
+          {% endif %}
+          <li class="nav-item"><a href="{% url 'account' %}" class="nav-link">Account</a></li>
           <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link nav-button">Logout</a></li>
         </ul>
       </nav>

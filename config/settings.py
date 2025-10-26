@@ -247,14 +247,108 @@ LOGIN_URL = 'login'  # Where to redirect if login is required
 LOGIN_REDIRECT_URL = 'landing'  # Where to redirect after successful login
 LOGOUT_REDIRECT_URL = 'landing'  # Where to redirect after logout
 
-# Email backend (for development - prints emails to console)
-# In production, configure a real email backend for sending actual emails
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# =============================================================================
+# EMAIL SETTINGS
+# =============================================================================
+
+# Email configuration for password reset and account notifications
+# Development: Print emails to console
+# Production: Use SMTP (configure via environment variables)
+
+if DEBUG:
+    # Development - print emails to console for testing
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    # Production - use SMTP
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+
+# From email for all messages (used by both development and production)
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Language Learning Platform <noreply@languagelearningplatform.org>')
+
+# Password reset token expiration (in seconds) - 20 minutes for security
+PASSWORD_RESET_TIMEOUT = 1200  # 20 minutes in seconds
+
+# =============================================================================
+# CACHE SETTINGS
+# =============================================================================
+
+# Cache configuration for rate limiting and performance
+#
+# DEVELOPMENT ONLY: Currently using local memory cache
+# This configuration is suitable for development and testing but NOT for production.
+#
+# For production deployment, configure a robust caching backend:
+# - Redis: Recommended for high-performance caching and rate limiting
+#   * SECURITY: Use password authentication (requirepass in redis.conf)
+#   * SECURITY: Bind Redis to localhost or use firewall rules
+#   * SECURITY: Use TLS for connections over public networks
+#   * SECURITY: Regularly update Redis to patch security vulnerabilities
+# - Memcached: Alternative high-performance distributed caching
+#   * SECURITY: Bind to localhost or use firewall to restrict access
+#   * SECURITY: Use SASL authentication if available
+#
+# Local memory cache limitations:
+# - Not shared across multiple server processes/instances
+# - Lost when server restarts
+# - Not suitable for load-balanced deployments
+#
+# To use Redis in production, install django-redis and configure:
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django_redis.cache.RedisCache',
+#         'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+#         'OPTIONS': {
+#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#             'PASSWORD': os.environ.get('REDIS_PASSWORD'),  # Strongly recommended
+#         }
+#     }
+# }
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        }
+    }
+}
+
+# Production cache backend validation
+if not DEBUG and CACHES['default']['BACKEND'] == 'django.core.cache.backends.locmem.LocMemCache':
+    import warnings
+    warnings.warn(
+        'WARNING: Using local memory cache in production! '
+        'This cache is not shared across processes and will cause issues with '
+        'rate limiting and session management in multi-process deployments. '
+        'Configure Redis or Memcached for production use.',
+        RuntimeWarning,
+        stacklevel=2
+    )
 
 # Session settings
 SESSION_COOKIE_AGE = 86400  # Session expires after 1 day (86400 seconds)
 SESSION_SAVE_EVERY_REQUEST = True  # Update session on every request to extend expiry
 
+# =============================================================================
+# TRUSTED PROXY CONFIGURATION
+# =============================================================================
+
+# Control whether to trust X-Forwarded-For header for IP address detection
+# SECURITY: Only enable this if you're behind a trusted reverse proxy
+#
+# Options:
+# - 'always': Always trust X-Forwarded-For (suitable for Render, Heroku, etc.)
+# - 'debug': Only trust in DEBUG mode (suitable for development with DevEDU)
+# - 'never': Never trust, always use REMOTE_ADDR (most secure, but won't work behind proxies)
+#
+# Default: 'always' for production deployments on cloud platforms
+# For self-hosted deployments, consider 'never' or implement IP-based trust validation
+TRUST_X_FORWARDED_FOR = os.environ.get('TRUST_X_FORWARDED_FOR', 'always')
 
 # =============================================================================
 # SECURITY SETTINGS (Production Only)

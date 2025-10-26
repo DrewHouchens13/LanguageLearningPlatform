@@ -218,6 +218,25 @@ main {
   overflow: hidden;
 }
 
+/* Styles for standalone headings (forgot password, etc.) */
+.auth-box > h2 {
+  color: #333;
+  font-size: 1.75rem;
+  margin: 2rem 0 0.5rem 0;
+  font-weight: 700;
+  text-align: center;
+  padding: 0 2.5rem;
+}
+
+.auth-box > .auth-subtitle {
+  color: #666;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  padding: 0 3rem;
+  line-height: 1.6;
+}
+
 /* Django Messages */
 .messages-container {
   padding: 1rem 2.5rem;
@@ -421,6 +440,44 @@ main {
 .forgot-password:hover {
   color: #764ba2;
   text-decoration: underline;
+}
+
+/* Forgot password/username specific styles */
+
+/* Secondary link styling for "Forgot Username?"
+   WHY: Visually de-emphasize the username recovery option compared to the primary
+   "Forgot Password?" link, creating a visual hierarchy where password recovery is
+   the primary action and username recovery is secondary. */
+.forgot-username-link {
+  font-size: 0.9rem;
+}
+
+/* Compact form options section
+   WHY: Reduces vertical spacing between "Forgot Password?" and "Forgot Username?"
+   links to visually group them together as related recovery options. Using reduced
+   margin-top (0.5rem) instead of negative margin for better responsive behavior
+   and to avoid potential layout issues across different screen sizes. */
+.form-options-compact {
+  margin-top: 0.5rem;
+}
+
+/* Message shown when password reset link has expired
+   WHY: Provides breathing room between the error message and the action button,
+   improving readability and making the page feel less cramped. The 1.5rem spacing
+   follows standard vertical rhythm principles. */
+.expired-link-message {
+  margin-bottom: 1.5rem;
+}
+
+/* Makes auth button work as a styled link
+   WHY: Allows anchor tags to inherit full button styling for better semantics
+   (using <a> for navigation vs <button> for form submission) while maintaining
+   consistent visual appearance. Used for "Request New Reset Link" button on
+   expired token page where navigation is semantically more appropriate than a button. */
+.auth-button-link {
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
 }
 
 /* Auth Button */
@@ -923,5 +980,162 @@ footer p {
 
   .lifetime-stat-value {
     font-size: 1.5rem;
+  }
+}
+
+/* Account Management Page Styles */
+.account-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.account-header {
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  padding: 2.5rem 3rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.account-header h2 {
+  color: #667eea;
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.account-header p {
+  color: #666;
+  font-size: 1.125rem;
+}
+
+.account-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.account-info-box {
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 0.5rem;
+}
+
+.account-info-box h3 {
+  color: #667eea;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.875rem 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+}
+
+.info-value {
+  color: #666;
+  font-size: 1rem;
+}
+
+.account-card {
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.account-card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.account-card h3 {
+  color: #764ba2;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.account-button {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.account-button:hover {
+  background: linear-gradient(135deg, #7c8fef 0%, #8d5cb5 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.account-button:active {
+  transform: translateY(0);
+}
+
+/* Responsive Design for Account Page */
+@media (max-width: 768px) {
+  .account-header,
+  .account-info-box,
+  .account-card {
+    padding: 2rem;
+  }
+
+  .account-header h2 {
+    font-size: 2rem;
+  }
+
+  .info-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .info-label {
+    font-weight: 700;
+  }
+}
+
+@media (max-width: 480px) {
+  .account-header,
+  .account-info-box,
+  .account-card {
+    padding: 1.5rem;
+  }
+
+  .account-header h2 {
+    font-size: 1.75rem;
+  }
+
+  .account-card h3 {
+    font-size: 1.25rem;
   }
 }
