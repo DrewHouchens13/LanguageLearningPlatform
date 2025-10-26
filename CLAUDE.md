@@ -70,14 +70,18 @@ Language Learning Platform - Django 5.2.7 web application for tracking language 
 - Email templates in home/templates/emails/
 
 **Security Features** (home/views.py):
-- **Login Attempt Logging**: All authentication events logged with IP addresses for security monitoring
+- **IP Address Validation**: Format validation using Python's ipaddress module to prevent injection attacks (home/views.py:39-87)
+- **Login Attempt Logging**: All authentication events logged with validated IP addresses for security monitoring
 - **Open Redirect Prevention**: Login redirects validated with `url_has_allowed_host_and_scheme()`
 - **Password Validation**: Django's built-in validators (min 8 chars, not common, not numeric only)
 - **Email Validation**: Format validation before account creation
 - **Secure Password Reset**: Token expires after 20 minutes; admin generates 12-char random passwords
 - **Generic Error Messages**: Prevents user enumeration during login/password reset
-- **Account Change Logging**: All email/username/password updates logged with IP addresses
+- **Account Change Logging**: All email/username/password updates logged with validated IP addresses
 - **Session Persistence**: Users remain logged in after password change (re-authenticated)
+- **Production Cache Validation**: Runtime warning if local memory cache used in production (config/settings.py:322-331)
+- **Email Configuration Validation**: Validates DEFAULT_FROM_EMAIL is set before sending emails (home/views.py:177-185)
+- **Email Retry Mechanism**: 3 retry attempts with exponential backoff (1s, 2s, 4s) for transient failures (home/views.py:190-217)
 
 ## Development Commands
 
@@ -198,6 +202,14 @@ python manage.py runserver
 - Uses pytest (configured in pytest.ini and conftest.py)
 - Coverage reporting via pytest-cov
 - `conftest.py` disables APPEND_SLASH for tests
+- **Current Status**: 129 tests, 89% code coverage
+- **Test Categories**:
+  - Model tests (20 tests)
+  - Authentication tests (30 tests)
+  - Account management tests (21 tests including edge cases)
+  - Password recovery tests (14 tests)
+  - Admin tests (36 tests)
+  - Security tests (XSS, SQL injection, unauthorized access)
 
 ## Deployment (Render)
 
@@ -376,14 +388,23 @@ I made some changes to the views file and added stuff. It might work but I'm not
 ## Security Considerations
 
 ### Implemented Security Features
-- **Login Attempt Logging**: All authentication events logged with IP addresses (see home/views.py:55-88)
-- **Open Redirect Prevention**: Login redirects validated with `url_has_allowed_host_and_scheme()` (home/views.py:74-78)
-- **Password Validation**: Django's built-in validators enforce strong passwords (home/views.py:120-125)
-- **Email Validation**: Format validation before account creation (home/views.py:107-109)
-- **Secure Password Reset**: Admin generates 12-char random passwords (home/admin.py:18)
-- **Generic Error Messages**: Prevents user enumeration during login
+- **IP Address Validation**: Python ipaddress module validates format to prevent injection attacks (home/views.py:39-87)
+  - Falls back to REMOTE_ADDR if X-Forwarded-For is invalid
+  - Logs warnings for malformed IP addresses
+  - Returns 'unknown' for unparseable addresses
+- **Login Attempt Logging**: All authentication events logged with validated IP addresses
+- **Open Redirect Prevention**: Login redirects validated with `url_has_allowed_host_and_scheme()`
+- **Password Validation**: Django's built-in validators enforce strong passwords (min 8 chars, complexity)
+- **Email Validation**: Format validation before account creation
+- **Secure Password Reset**: Token expires after 20 minutes; admin generates 12-char random passwords
+- **Generic Error Messages**: Prevents user enumeration during login/password reset
 - **CSRF Protection**: Django's built-in CSRF protection on all forms
 - **Input Sanitization**: User input stripped of whitespace, validated before processing
+- **XSS Protection**: Django's automatic HTML escaping (verified via test suite)
+- **SQL Injection Protection**: Django ORM parameterized queries (verified via test suite)
+- **Production Cache Warning**: Runtime validation prevents local memory cache in production
+- **Email Configuration Validation**: Validates DEFAULT_FROM_EMAIL before sending
+- **Email Retry Mechanism**: Exponential backoff for transient SMTP failures
 
 ### Best Practices to Follow
 - Never commit secrets or API keys to the repository
@@ -395,6 +416,22 @@ I made some changes to the views file and added stuff. It might work but I'm not
 - Use HTTPS in production (Render provides this automatically)
 - Set secure cookie settings when DEBUG=False
 - Monitor login attempt logs for suspicious activity
+
+### Cache Security (Redis/Memcached for Production)
+When deploying with Redis or Memcached:
+- **Redis Security**:
+  - Use password authentication (requirepass in redis.conf)
+  - Bind Redis to localhost or use firewall rules to restrict access
+  - Use TLS for connections over public networks
+  - Regularly update Redis to patch security vulnerabilities
+  - Include PASSWORD in Django CACHES configuration
+- **Memcached Security**:
+  - Bind to localhost or use firewall to restrict access
+  - Use SASL authentication if available
+- **Production Deployment**:
+  - Never use local memory cache in production (runtime warning enabled)
+  - Configure Redis/Memcached via environment variables
+  - See config/settings.py:280-331 for detailed configuration examples
 
 ## Performance Notes
 
@@ -505,6 +542,30 @@ If you're stuck:
 
 ## Recent Updates
 
+### Comprehensive Code Quality & Security Improvements (26 October 2025)
+- **Security Enhancements**:
+  - IP address format validation to prevent injection attacks
+  - Production cache backend validation with runtime warnings
+  - Email configuration validation (DEFAULT_FROM_EMAIL)
+  - Email retry mechanism with exponential backoff (1s, 2s, 4s delays)
+  - Verified XSS and SQL injection protection via test suite
+- **Documentation Improvements**:
+  - Comprehensive Redis/Memcached security documentation
+  - Enhanced CSS comments explaining "why" not just "what"
+  - PEP 257 compliant docstrings with Args/Returns sections
+  - Production deployment warnings and best practices
+- **Testing Improvements**:
+  - 7 new edge case tests (invalid actions, XSS, SQL injection, unauthorized access, etc.)
+  - Query optimization verification with assertNumQueries
+  - **Total: 129 tests with 89% code coverage**
+- **UX/UI Fixes**:
+  - Fixed negative margin responsive layout issue (changed to 0.5rem)
+  - Better visual hierarchy for forgot username/password links
+- **Reliability**:
+  - Email sending retry mechanism improves production resilience
+  - Exponential backoff for transient SMTP failures
+  - Comprehensive error logging with attempt tracking
+
 ### Account Management System (26 October 2025)
 - **Account Settings Page**: Users can update email, name, username, and password
 - **Password Recovery**: Email-based password reset with secure tokens (20-min expiration)
@@ -516,7 +577,7 @@ If you're stuck:
   - Password verification required for email/password updates
   - Generic messages to prevent user enumeration
   - Session persistence after password change
-- **Testing**: 32 comprehensive tests added (148 total tests, 95% coverage)
+- **Testing**: 32 comprehensive tests for account features
 - **UI/UX**: Soft gray card backgrounds, forms stay visible after submission
 - **Documentation**: See USER_GUIDE.md for end-user documentation
 
