@@ -621,28 +621,54 @@ class TestLoginView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'login.html')
 
-    def test_login_successful(self):
-        """Test successful login with valid credentials"""
+    def test_login_successful_with_email(self):
+        """Test successful login with valid email and password"""
         data = {
-            'email': 'test@example.com',
+            'username_or_email': 'test@example.com',
             'password': 'testpass123'
         }
         response = self.client.post(self.login_url, data)
-        
+
         # Should redirect to landing page
         self.assertRedirects(response, reverse('landing'))
-        
+
+        # User should be logged in
+        self.assertTrue(response.wsgi_request.user.is_authenticated)
+
+    def test_login_successful_with_username(self):
+        """Test successful login with valid username and password"""
+        data = {
+            'username_or_email': 'testuser',
+            'password': 'testpass123'
+        }
+        response = self.client.post(self.login_url, data)
+
+        # Should redirect to landing page
+        self.assertRedirects(response, reverse('landing'))
+
         # User should be logged in
         self.assertTrue(response.wsgi_request.user.is_authenticated)
 
     def test_login_invalid_email(self):
         """Test login fails with non-existent email"""
         data = {
-            'email': 'nonexistent@example.com',
+            'username_or_email': 'nonexistent@example.com',
             'password': 'testpass123'
         }
         response = self.client.post(self.login_url, data)
-        
+
+        # Should render login page with error
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'login.html')
+
+    def test_login_invalid_username(self):
+        """Test login fails with non-existent username"""
+        data = {
+            'username_or_email': 'nonexistentuser',
+            'password': 'testpass123'
+        }
+        response = self.client.post(self.login_url, data)
+
         # Should render login page with error
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'login.html')
@@ -650,11 +676,23 @@ class TestLoginView(TestCase):
     def test_login_invalid_password(self):
         """Test login fails with incorrect password"""
         data = {
-            'email': 'test@example.com',
+            'username_or_email': 'test@example.com',
             'password': 'wrongpassword'
         }
         response = self.client.post(self.login_url, data)
-        
+
+        # Should render login page with error
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'login.html')
+
+    def test_login_invalid_password_with_username(self):
+        """Test login fails with incorrect password when using username"""
+        data = {
+            'username_or_email': 'testuser',
+            'password': 'wrongpassword'
+        }
+        response = self.client.post(self.login_url, data)
+
         # Should render login page with error
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'login.html')
@@ -669,11 +707,22 @@ class TestLoginView(TestCase):
     def test_login_redirect_to_next_parameter(self):
         """Test login redirects to 'next' parameter after successful login"""
         data = {
-            'email': 'test@example.com',
+            'username_or_email': 'test@example.com',
             'password': 'testpass123'
         }
         response = self.client.post(f"{self.login_url}?next=/dashboard/", data)
-        
+
+        # Should redirect to dashboard
+        self.assertRedirects(response, '/dashboard/')
+
+    def test_login_redirect_to_next_parameter_with_username(self):
+        """Test login with username redirects to 'next' parameter after successful login"""
+        data = {
+            'username_or_email': 'testuser',
+            'password': 'testpass123'
+        }
+        response = self.client.post(f"{self.login_url}?next=/dashboard/", data)
+
         # Should redirect to dashboard
         self.assertRedirects(response, '/dashboard/')
 

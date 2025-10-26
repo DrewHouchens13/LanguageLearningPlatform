@@ -23,8 +23,8 @@ Language Learning Platform - Django 5.2.7 web application for tracking language 
 - Tests: Automatically use DEBUG=True and simplified static storage
 
 **Authentication Flow**:
-- Email-based login (finds user by email, authenticates by username)
-- Username auto-generated from email prefix, deduplicated with numbers
+- Flexible login (accepts username or email, authenticates by username)
+- Username auto-generated from email prefix during signup, deduplicated with numbers
 - Views: `login_view`, `signup_view`, `logout_view` in home/views.py
 - Redirects: LOGIN_REDIRECT_URL and LOGOUT_REDIRECT_URL set to 'landing'
 
@@ -497,8 +497,8 @@ If you're stuck:
 ## Project-Specific Notes
 
 ### Authentication System
-- Email-based login (users enter email, system looks up username)
-- Usernames auto-generated from email prefix
+- Flexible login (users can enter username or email, system authenticates by username)
+- Usernames auto-generated from email prefix during signup
 - Number suffix added for duplicates (e.g., john, john2, john3)
 - Login/signup use same template with different form handling
 

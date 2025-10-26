@@ -291,10 +291,10 @@ def landing(request):
 
 
 def login_view(request):
-    """Handle user login with email-based authentication.
+    """Handle user login with username or email-based authentication.
 
     GET: Display login form
-    POST: Authenticate user by email/password and redirect securely
+    POST: Authenticate user by username/email and password, redirect securely
 
     Args:
         request: HttpRequest object from Django
@@ -307,6 +307,12 @@ def login_view(request):
         - Uses Django's authenticate() for secure password verification
         - Generic error messages to prevent user enumeration
         - Logs all login attempts with IP addresses for security monitoring
+
+    Authentication flow:
+        - Accepts either username or email for login
+        - First attempts to find user by username
+        - If not found, attempts to find user by email
+        - Authenticates with Django's built-in authentication system
     """
     from django.http import HttpResponseRedirect
 
@@ -315,22 +321,28 @@ def login_view(request):
         return HttpResponseRedirect('..')
 
     if request.method == 'POST':
-        email = request.POST.get('email')
+        username_or_email = request.POST.get('username_or_email', '').strip()
         password = request.POST.get('password')
 
-        # Find user by email
+        # Find user by username or email
+        user_obj = None
         try:
-            user = User.objects.get(email=email)
-            username = user.username
+            # First, try to find by username
+            user_obj = User.objects.get(username=username_or_email)
         except User.DoesNotExist:
-            # Log failed login attempt (email not found)
-            logger.warning(
-                f'Failed login attempt - email not found: {email} from IP: {get_client_ip(request)}'
-            )
-            messages.error(request, 'Invalid email or password.')
-            return render(request, 'login.html')
+            # If not found by username, try email
+            try:
+                user_obj = User.objects.get(email=username_or_email)
+            except User.DoesNotExist:
+                # Log failed login attempt (username/email not found)
+                logger.warning(
+                    f'Failed login attempt - user not found: {username_or_email} from IP: {get_client_ip(request)}'
+                )
+                messages.error(request, 'Invalid username/email or password.')
+                return render(request, 'login.html')
 
-        # Authenticate user
+        # Authenticate user with their username
+        username = user_obj.username
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
@@ -357,7 +369,7 @@ def login_view(request):
             logger.warning(
                 f'Failed login attempt - incorrect password for: {username} from IP: {get_client_ip(request)}'
             )
-            messages.error(request, 'Invalid email or password.')
+            messages.error(request, 'Invalid username/email or password.')
 
     return render(request, 'login.html')
 
