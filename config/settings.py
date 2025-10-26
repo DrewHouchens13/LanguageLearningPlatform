@@ -334,6 +334,21 @@ if not DEBUG and CACHES['default']['BACKEND'] == 'django.core.cache.backends.loc
 SESSION_COOKIE_AGE = 86400  # Session expires after 1 day (86400 seconds)
 SESSION_SAVE_EVERY_REQUEST = True  # Update session on every request to extend expiry
 
+# =============================================================================
+# TRUSTED PROXY CONFIGURATION
+# =============================================================================
+
+# Control whether to trust X-Forwarded-For header for IP address detection
+# SECURITY: Only enable this if you're behind a trusted reverse proxy
+#
+# Options:
+# - 'always': Always trust X-Forwarded-For (suitable for Render, Heroku, etc.)
+# - 'debug': Only trust in DEBUG mode (suitable for development with DevEDU)
+# - 'never': Never trust, always use REMOTE_ADDR (most secure, but won't work behind proxies)
+#
+# Default: 'always' for production deployments on cloud platforms
+# For self-hosted deployments, consider 'never' or implement IP-based trust validation
+TRUST_X_FORWARDED_FOR = os.environ.get('TRUST_X_FORWARDED_FOR', 'always')
 
 # =============================================================================
 # SECURITY SETTINGS (Production Only)

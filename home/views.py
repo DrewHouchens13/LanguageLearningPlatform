@@ -55,12 +55,46 @@ def get_client_ip(request):
     - For critical security checks, consider additional validation
     - Only the first IP in X-Forwarded-For chain is used (client IP)
     - IP addresses are validated to ensure proper format
+    - In production, X-Forwarded-For is only trusted from known proxies (Render, DevEDU)
     """
     import ipaddress
+    from django.conf import settings
 
-    # Check if request is behind a proxy
+    # Get REMOTE_ADDR first (this is always the direct connection IP)
+    remote_addr = request.META.get('REMOTE_ADDR', 'unknown')
+
+    # Trusted proxy IP ranges (adjust for your deployment)
+    # Render.com uses various IPs, DevEDU varies, localhost for development
+    TRUSTED_PROXIES = [
+        '127.0.0.1',  # Localhost (development)
+        '::1',  # Localhost IPv6
+        # Add your production proxy IPs here when deploying
+        # e.g., '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16' for private networks
+    ]
+
+    # Check if request is behind a trusted proxy
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+
+    # Only trust X-Forwarded-For based on TRUST_X_FORWARDED_FOR setting
+    should_trust_xff = False
     if x_forwarded_for:
+        trust_mode = getattr(settings, 'TRUST_X_FORWARDED_FOR', 'always')
+
+        if trust_mode == 'always':
+            # Always trust X-Forwarded-For (for Render, Heroku, etc.)
+            should_trust_xff = True
+        elif trust_mode == 'debug':
+            # Only trust in DEBUG mode (for DevEDU development)
+            should_trust_xff = settings.DEBUG
+        elif trust_mode == 'never':
+            # Never trust X-Forwarded-For (most secure, but won't work behind proxies)
+            should_trust_xff = False
+        else:
+            # Invalid setting, log warning and default to DEBUG mode
+            logger.warning(f'Invalid TRUST_X_FORWARDED_FOR setting: {trust_mode}, defaulting to debug mode')
+            should_trust_xff = settings.DEBUG
+
+    if should_trust_xff and x_forwarded_for:
         # X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
         # Take the first one (the client IP)
         ip_address = x_forwarded_for.split(',')[0].strip()
@@ -71,10 +105,10 @@ def get_client_ip(request):
             return ip_address
         except ValueError:
             # Invalid IP format in X-Forwarded-For, fall back to REMOTE_ADDR
-            logger.warning(f'Invalid IP in X-Forwarded-For header: {ip_address}')
+            logger.warning(f'Invalid IP in X-Forwarded-For header: {ip_address}, using REMOTE_ADDR instead')
 
-    # Direct connection (no proxy) or invalid X-Forwarded-For
-    ip_address = request.META.get('REMOTE_ADDR', 'unknown')
+    # Direct connection (no proxy) or untrusted/invalid X-Forwarded-For
+    ip_address = remote_addr
 
     # Validate REMOTE_ADDR as well
     if ip_address != 'unknown':
@@ -203,12 +237,16 @@ def send_template_email(request, template_name, context, subject, recipient_emai
                 logger.info(f'{log_prefix} sent to: {recipient_email} from IP: {get_client_ip(request)}')
             return True
         except (SMTPException, BadHeaderError) as e:
-            # Log attempt failure
-            logger.warning(f'Email send attempt {attempt + 1}/{max_retries} failed for {log_prefix.lower()} to {recipient_email}: {str(e)}')
+            # Log attempt failure (sanitize exception to avoid leaking SMTP credentials)
+            exception_type = type(e).__name__
+            logger.warning(f'Email send attempt {attempt + 1}/{max_retries} failed for {log_prefix.lower()} to {recipient_email}: {exception_type}')
 
             # If this was the last attempt, log error and return False
             if attempt == max_retries - 1:
                 logger.error(f'Failed to send {log_prefix.lower()} to {recipient_email} after {max_retries} attempts from IP: {get_client_ip(request)}')
+                # In DEBUG mode, log full exception for troubleshooting
+                if settings.DEBUG:
+                    logger.debug(f'SMTP Error details (DEBUG only): {str(e)}')
                 return False
 
             # Exponential backoff: wait 2^attempt seconds (1s, 2s, 4s, ...)
@@ -399,8 +437,13 @@ def signup_view(request):
         except Exception as e:
             # Log unexpected errors for debugging (don't expose details to user)
             import logging
+            from django.conf import settings
             logger = logging.getLogger(__name__)
-            logger.error(f'Unexpected error during signup: {str(e)}')
+            exception_type = type(e).__name__
+            logger.error(f'Unexpected error during signup: {exception_type}')
+            # In DEBUG mode, log full exception for troubleshooting
+            if settings.DEBUG:
+                logger.debug(f'Signup error details (DEBUG only): {str(e)}')
             messages.error(request, 'An error occurred while creating your account. Please try again.')
             return render(request, 'login.html')
 
