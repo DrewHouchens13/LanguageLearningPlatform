@@ -284,7 +284,13 @@ PASSWORD_RESET_TIMEOUT = 1200  # 20 minutes in seconds
 #
 # For production deployment, configure a robust caching backend:
 # - Redis: Recommended for high-performance caching and rate limiting
+#   * SECURITY: Use password authentication (requirepass in redis.conf)
+#   * SECURITY: Bind Redis to localhost or use firewall rules
+#   * SECURITY: Use TLS for connections over public networks
+#   * SECURITY: Regularly update Redis to patch security vulnerabilities
 # - Memcached: Alternative high-performance distributed caching
+#   * SECURITY: Bind to localhost or use firewall to restrict access
+#   * SECURITY: Use SASL authentication if available
 #
 # Local memory cache limitations:
 # - Not shared across multiple server processes/instances
@@ -298,6 +304,7 @@ PASSWORD_RESET_TIMEOUT = 1200  # 20 minutes in seconds
 #         'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
 #         'OPTIONS': {
 #             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#             'PASSWORD': os.environ.get('REDIS_PASSWORD'),  # Strongly recommended
 #         }
 #     }
 # }
@@ -310,6 +317,18 @@ CACHES = {
         }
     }
 }
+
+# Production cache backend validation
+if not DEBUG and CACHES['default']['BACKEND'] == 'django.core.cache.backends.locmem.LocMemCache':
+    import warnings
+    warnings.warn(
+        'WARNING: Using local memory cache in production! '
+        'This cache is not shared across processes and will cause issues with '
+        'rate limiting and session management in multi-process deployments. '
+        'Configure Redis or Memcached for production use.',
+        RuntimeWarning,
+        stacklevel=2
+    )
 
 # Session settings
 SESSION_COOKIE_AGE = 86400  # Session expires after 1 day (86400 seconds)

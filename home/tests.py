@@ -2047,6 +2047,118 @@ class AccountViewTests(TestCase):
 
         self.assertContains(response, 'at least 8 characters')
 
+    def test_invalid_action(self):
+        """Test account view handles invalid action gracefully"""
+        self.client.login(
+            username=self.user.username,
+            password=self.user._test_password
+        )
+
+        response = self.client.post(reverse('account'), {
+            'action': 'invalid_action',
+            'some_data': 'test'
+        })
+
+        # Should return 200 and show account page (no error crash)
+        self.assertEqual(response.status_code, 200)
+
+    def test_xss_attempt_in_name_field(self):
+        """Test XSS protection in name update"""
+        self.client.login(
+            username=self.user.username,
+            password=self.user._test_password
+        )
+
+        xss_payload = '<script>alert("XSS")</script>'
+        response = self.client.post(reverse('account'), {
+            'action': AccountAction.UPDATE_NAME.value,
+            'first_name': xss_payload,
+            'last_name': 'Test'
+        })
+
+        self.user.refresh_from_db()
+        # Django automatically escapes HTML, so the actual data is stored
+        # but it's escaped when rendered
+        self.assertEqual(self.user.first_name, xss_payload)
+        # Verify it's escaped in response (not executed)
+        self.assertNotContains(response, xss_payload, html=False)
+        self.assertContains(response, '&lt;script&gt;', html=False)
+
+    def test_sql_injection_attempt_in_username(self):
+        """Test SQL injection protection in username update"""
+        self.client.login(
+            username=self.user.username,
+            password=self.user._test_password
+        )
+
+        sql_payload = "admin' OR '1'='1"
+        old_username = self.user.username
+        response = self.client.post(reverse('account'), {
+            'action': AccountAction.UPDATE_USERNAME.value,
+            'new_username': sql_payload
+        })
+
+        self.user.refresh_from_db()
+        # Django's ORM prevents SQL injection - the string is escaped
+        # The update should succeed with the literal string
+        self.assertEqual(self.user.username, sql_payload)
+
+    def test_account_view_query_optimization(self):
+        """Test account view uses optimal number of database queries"""
+        self.client.login(
+            username=self.user.username,
+            password=self.user._test_password
+        )
+
+        # GET request should minimize queries
+        # Queries: 1=session read, 2=user, 3-5=session update (savepoint, update, release)
+        with self.assertNumQueries(5):
+            response = self.client.get(reverse('account'))
+            self.assertEqual(response.status_code, 200)
+
+    def test_unauthorized_post_without_login(self):
+        """Test POST to account without authentication redirects to login"""
+        response = self.client.post(reverse('account'), {
+            'action': AccountAction.UPDATE_EMAIL.value,
+            'new_email': 'hacker@example.com',
+            'current_password': 'anything'
+        })
+
+        # Should redirect to login
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login/', response.url)
+
+    def test_concurrent_password_update(self):
+        """Test password update with stale user session
+
+        When password is changed externally, Django invalidates the session
+        and the user is logged out, resulting in a redirect to login.
+        """
+        self.client.login(
+            username=self.user.username,
+            password=self.user._test_password
+        )
+
+        # Store old password for later use
+        old_password = self.user._test_password
+
+        # Simulate another process updating the password
+        self.user.set_password('NewPasswordFromElsewhere123!')
+        self.user.save()
+
+        # Try to update password with old password
+        # Django should redirect to login since session is now invalid
+        response = self.client.post(reverse('account'), {
+            'action': AccountAction.UPDATE_PASSWORD.value,
+            'current_password_pwd': old_password,
+            'new_password': 'AnotherPassword123!',
+            'confirm_password': 'AnotherPassword123!'
+        })
+
+        # Session was invalidated, so redirect to login expected
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/login/', response.url)
+
 
 # ============================================================================
 # PASSWORD RECOVERY TESTS

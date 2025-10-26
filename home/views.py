@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 def get_client_ip(request):
     """
-    Get the client's IP address, handling proxy scenarios.
+    Get the client's IP address, handling proxy scenarios with validation.
 
     When the application is behind a reverse proxy (nginx, Apache, load balancer),
     the REMOTE_ADDR will be the proxy's IP, not the client's IP. This function
@@ -48,22 +48,41 @@ def get_client_ip(request):
         request: Django request object
 
     Returns:
-        str: Client's IP address
+        str: Client's IP address (validated format) or 'unknown' if invalid
 
     Security notes:
     - X-Forwarded-For can be spoofed, so use with caution for security decisions
     - For critical security checks, consider additional validation
     - Only the first IP in X-Forwarded-For chain is used (client IP)
+    - IP addresses are validated to ensure proper format
     """
+    import ipaddress
+
     # Check if request is behind a proxy
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
         # X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
         # Take the first one (the client IP)
         ip_address = x_forwarded_for.split(',')[0].strip()
-    else:
-        # Direct connection (no proxy)
-        ip_address = request.META.get('REMOTE_ADDR', 'unknown')
+
+        # Validate IP address format to prevent injection attacks
+        try:
+            ipaddress.ip_address(ip_address)
+            return ip_address
+        except ValueError:
+            # Invalid IP format in X-Forwarded-For, fall back to REMOTE_ADDR
+            logger.warning(f'Invalid IP in X-Forwarded-For header: {ip_address}')
+
+    # Direct connection (no proxy) or invalid X-Forwarded-For
+    ip_address = request.META.get('REMOTE_ADDR', 'unknown')
+
+    # Validate REMOTE_ADDR as well
+    if ip_address != 'unknown':
+        try:
+            ipaddress.ip_address(ip_address)
+        except ValueError:
+            logger.warning(f'Invalid REMOTE_ADDR: {ip_address}')
+            ip_address = 'unknown'
 
     return ip_address
 
@@ -117,12 +136,12 @@ def check_rate_limit(request, action, limit=5, period=300):
     return True, limit - attempts - 1, 0
 
 
-def send_template_email(request, template_name, context, subject, recipient_email, log_prefix):
-    """
-    Send an email using a template with comprehensive error handling.
+def send_template_email(request, template_name, context, subject, recipient_email, log_prefix, max_retries=3):
+    """Send an email using a template with comprehensive error handling and retry logic.
 
     This helper function reduces code duplication for email sending operations
-    like password reset and username reminders.
+    like password reset and username reminders. Implements exponential backoff
+    retry mechanism for improved reliability.
 
     Args:
         request: Django request object (for IP logging)
@@ -131,9 +150,13 @@ def send_template_email(request, template_name, context, subject, recipient_emai
         subject: Email subject line
         recipient_email: Email address to send to
         log_prefix: Prefix for log messages (e.g., 'Password reset email')
+        max_retries: Maximum number of retry attempts (default: 3)
 
     Returns:
         bool: True if email sent successfully, False otherwise
+
+    Raises:
+        ImproperlyConfigured: If DEFAULT_FROM_EMAIL is not set in Django settings
 
     Example:
         success = send_template_email(
@@ -147,48 +170,85 @@ def send_template_email(request, template_name, context, subject, recipient_emai
     """
     from django.core.mail import send_mail, BadHeaderError
     from django.template.loader import render_to_string
+    from django.core.exceptions import ImproperlyConfigured
+    from django.conf import settings
     from smtplib import SMTPException
+    import time
+
+    # Validate email configuration before attempting to send
+    if not hasattr(settings, 'DEFAULT_FROM_EMAIL') or not settings.DEFAULT_FROM_EMAIL:
+        error_msg = (
+            'DEFAULT_FROM_EMAIL is not configured in Django settings. '
+            'Email sending requires a valid from address.'
+        )
+        logger.error(f'{error_msg} Attempted to send: {log_prefix}')
+        raise ImproperlyConfigured(error_msg)
 
     # Render email template
     message = render_to_string(template_name, context)
 
-    # Attempt to send email with error handling
-    try:
-        send_mail(
-            subject,
-            message,
-            None,  # Use DEFAULT_FROM_EMAIL
-            [recipient_email],
-            fail_silently=False,
-        )
-        logger.info(f'{log_prefix} sent to: {recipient_email} from IP: {get_client_ip(request)}')
-        return True
-    except (SMTPException, BadHeaderError) as e:
-        # Log email sending failure but don't reveal to user
-        logger.error(f'Failed to send {log_prefix.lower()} to {recipient_email}: {str(e)} from IP: {get_client_ip(request)}')
-        return False
+    # Retry mechanism with exponential backoff
+    for attempt in range(max_retries):
+        try:
+            send_mail(
+                subject,
+                message,
+                None,  # Use DEFAULT_FROM_EMAIL
+                [recipient_email],
+                fail_silently=False,
+            )
+            if attempt > 0:
+                logger.info(f'{log_prefix} sent to: {recipient_email} on retry {attempt} from IP: {get_client_ip(request)}')
+            else:
+                logger.info(f'{log_prefix} sent to: {recipient_email} from IP: {get_client_ip(request)}')
+            return True
+        except (SMTPException, BadHeaderError) as e:
+            # Log attempt failure
+            logger.warning(f'Email send attempt {attempt + 1}/{max_retries} failed for {log_prefix.lower()} to {recipient_email}: {str(e)}')
+
+            # If this was the last attempt, log error and return False
+            if attempt == max_retries - 1:
+                logger.error(f'Failed to send {log_prefix.lower()} to {recipient_email} after {max_retries} attempts from IP: {get_client_ip(request)}')
+                return False
+
+            # Exponential backoff: wait 2^attempt seconds (1s, 2s, 4s, ...)
+            wait_time = 2 ** attempt
+            logger.info(f'Retrying email send in {wait_time} seconds...')
+            time.sleep(wait_time)
 
 
 def landing(request):
-    """
-    Render the landing page.
+    """Render the landing page.
 
-    This is the home page of the application, accessible to all users.
+    This is the home page of the application, accessible to all users
+    (authenticated and anonymous).
+
+    Args:
+        request: HttpRequest object from Django
+
+    Returns:
+        HttpResponse: Rendered index.html template
     """
     return render(request, "index.html")
 
 
 def login_view(request):
-    """
-    Handle user login with email-based authentication.
+    """Handle user login with email-based authentication.
 
     GET: Display login form
     POST: Authenticate user by email/password and redirect securely
 
+    Args:
+        request: HttpRequest object from Django
+
+    Returns:
+        HttpResponse: Rendered login.html template or redirect to landing page
+
     Security features:
-    - Validates redirect URLs to prevent open redirect attacks
-    - Uses Django's authenticate() for secure password verification
-    - Generic error messages to prevent user enumeration
+        - Validates redirect URLs to prevent open redirect attacks
+        - Uses Django's authenticate() for secure password verification
+        - Generic error messages to prevent user enumeration
+        - Logs all login attempts with IP addresses for security monitoring
     """
     from django.http import HttpResponseRedirect
 

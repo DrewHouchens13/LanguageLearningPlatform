@@ -444,25 +444,36 @@ main {
 
 /* Forgot password/username specific styles */
 
-/* Secondary link styling for "Forgot Username?" */
+/* Secondary link styling for "Forgot Username?"
+   WHY: Visually de-emphasize the username recovery option compared to the primary
+   "Forgot Password?" link, creating a visual hierarchy where password recovery is
+   the primary action and username recovery is secondary. */
 .forgot-username-link {
   font-size: 0.9rem;
 }
 
-/* Compact form options section with reduced top margin
-   Used to bring "Forgot Username?" closer to "Forgot Password?" link */
+/* Compact form options section
+   WHY: Reduces vertical spacing between "Forgot Password?" and "Forgot Username?"
+   links to visually group them together as related recovery options. Using reduced
+   margin-top (0.5rem) instead of negative margin for better responsive behavior
+   and to avoid potential layout issues across different screen sizes. */
 .form-options-compact {
-  margin-top: -10px;
+  margin-top: 0.5rem;
 }
 
 /* Message shown when password reset link has expired
-   Provides spacing before the "Request New Link" button */
+   WHY: Provides breathing room between the error message and the action button,
+   improving readability and making the page feel less cramped. The 1.5rem spacing
+   follows standard vertical rhythm principles. */
 .expired-link-message {
   margin-bottom: 1.5rem;
 }
 
 /* Makes auth button work as a styled link
-   Used for "Request New Reset Link" button on expired token page */
+   WHY: Allows anchor tags to inherit full button styling for better semantics
+   (using <a> for navigation vs <button> for form submission) while maintaining
+   consistent visual appearance. Used for "Request New Reset Link" button on
+   expired token page where navigation is semantically more appropriate than a button. */
 .auth-button-link {
   display: inline-block;
   text-decoration: none;
