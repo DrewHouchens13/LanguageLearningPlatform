@@ -219,19 +219,20 @@ python manage.py runserver
 - Build: `./build.sh` (installs deps, collects static, runs migrations)
 - Start: `gunicorn config.wsgi:application`
 - Auto-provisions PostgreSQL database
-- **Auto-deploy: DISABLED** - Requires manual deployment for safety
+- **Auto-deploy: ENABLED** - Pushes to `main` automatically deploy to production
 - Environment variables: SECRET_KEY (auto-generated), DEBUG=False, DATABASE_URL (from database)
 
 **Production URL**: https://language-learning-platform-xb6f.onrender.com
 
 **Deployment Process**:
-- Push to `main` branch does NOT auto-deploy
-- **Manual deployment required:**
-  1. Go to [Render Dashboard](https://dashboard.render.com/)
-  2. Select your service: `language-learning-platform`
-  3. Click "Manual Deploy" → "Deploy latest commit"
-  4. Monitor build logs for any issues
-- This gives you full control over when changes go live
+- Push to `main` branch **automatically deploys** to production
+- **Continuous Deployment (CD) Active:**
+  1. Merge changes to `main` branch
+  2. Render automatically detects the push
+  3. Runs `./build.sh` (installs deps, collects static, runs migrations)
+  4. Deploys new version if build succeeds
+  5. Monitor build logs at [Render Dashboard](https://dashboard.render.com/)
+- Changes go live automatically within ~2-5 minutes of merge
 
 ## Environment Variables
 
