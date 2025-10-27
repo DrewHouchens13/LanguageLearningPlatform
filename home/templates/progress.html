@@ -8,34 +8,7 @@
     <link rel="stylesheet" href="{% static 'home/styles.css' %}">
   </head>
   <body>
-    <header>
-      <nav class="navbar">
-        <div class="nav-brand">
-          <h1>Language Learning Platform</h1>
-        </div>
-        <button class="nav-toggle" aria-label="Toggle navigation">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-        <ul class="nav-menu">
-          <li class="nav-item"><a href="{% url 'landing' %}" class="nav-link">Home</a></li>
-          <li class="nav-item"><a href="#" class="nav-link">Courses</a></li>
-          <li class="nav-item"><a href="#" class="nav-link">Lessons</a></li>
-          <li class="nav-item"><a href="{% url 'progress' %}" class="nav-link active">My Progress</a></li>
-          {% if user.is_authenticated %}
-            <li class="nav-item"><a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a></li>
-            {% if user.is_staff %}
-              <li class="nav-item"><a href="{% url 'admin:index' %}" class="nav-link admin-link">Admin</a></li>
-            {% endif %}
-            <li class="nav-item"><a href="{% url 'account' %}" class="nav-link">Account</a></li>
-            <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link nav-button">Logout</a></li>
-          {% else %}
-            <li class="nav-item"><a href="{% url 'login' %}" class="nav-link nav-button">Login</a></li>
-          {% endif %}
-        </ul>
-      </nav>
-    </header>
+    {% include '_nav.html' %}
     
     <main>
       <!-- Django Messages -->
@@ -55,6 +28,42 @@
           <h2>Your Learning Progress</h2>
           <p>Welcome back, {{ user.first_name }}! Here's how you're doing this week.</p>
         </section>
+        
+        <!-- Onboarding/Proficiency Level Section -->
+        {% if user_profile and user_profile.has_completed_onboarding %}
+        <section class="progress-section">
+          <h3 class="section-title">Your Spanish Proficiency</h3>
+          <div class="proficiency-card">
+            <div class="proficiency-badge proficiency-{{ user_profile.proficiency_level|lower }}">
+              {{ user_profile.get_proficiency_level_display }}
+            </div>
+            {% if latest_onboarding_attempt %}
+            <div class="proficiency-details">
+              <p><strong>Assessment Score:</strong> {{ latest_onboarding_attempt.total_score }}/{{ latest_onboarding_attempt.total_possible }} ({{ latest_onboarding_attempt.score_percentage }}%)</p>
+              <p><strong>Completed:</strong> {{ latest_onboarding_attempt.completed_at|date:"F j, Y" }}</p>
+              <a href="{% url 'onboarding_results' %}?attempt={{ latest_onboarding_attempt.id }}" class="link-button">View Detailed Results</a>
+              <a href="{% url 'onboarding_quiz' %}" class="link-button">Retake Assessment</a>
+            </div>
+            {% endif %}
+          </div>
+        </section>
+        {% elif user_profile %}
+        <section class="progress-section">
+          <div class="cta-card">
+            <h3>Discover Your Spanish Level</h3>
+            <p>Take our quick 10-question assessment to determine your proficiency level and get personalized recommendations.</p>
+            <a href="{% url 'onboarding_welcome' %}" class="cta-button">Take Assessment</a>
+          </div>
+        </section>
+        {% else %}
+        <section class="progress-section">
+          <div class="cta-card">
+            <h3>Discover Your Spanish Level</h3>
+            <p>Take our quick 10-question assessment to determine your proficiency level and get personalized recommendations.</p>
+            <a href="{% url 'onboarding_welcome' %}" class="cta-button">Take Assessment</a>
+          </div>
+        </section>
+        {% endif %}
         
         <!-- Weekly Stats -->
         <section class="progress-section">

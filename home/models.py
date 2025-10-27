@@ -104,3 +104,158 @@ class QuizResult(models.Model):
         if self.total_questions == 0:
             return 0.0
         return round((self.score / self.total_questions) * 100, 1)
+
+
+class UserProfile(models.Model):
+    """Extended user profile with language learning specifics"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='language_profile')
+    
+    # Proficiency tracking (capped at B1 for new users)
+    proficiency_level = models.CharField(
+        max_length=2,
+        choices=[
+            ('A1', 'Beginner (A1)'),
+            ('A2', 'Elementary (A2)'),
+            ('B1', 'Intermediate (B1)'),
+        ],
+        null=True,
+        blank=True,
+        help_text="CEFR proficiency level determined by onboarding assessment"
+    )
+    
+    # Onboarding state
+    has_completed_onboarding = models.BooleanField(default=False)
+    onboarding_completed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Learning preferences
+    target_language = models.CharField(max_length=50, default='Spanish')
+    daily_goal_minutes = models.IntegerField(default=15)
+    learning_motivation = models.TextField(blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        level_display = self.get_proficiency_level_display() if self.proficiency_level else 'Not assessed'
+        return f"{self.user.username}'s Profile - {level_display}"
+    
+    class Meta:
+        verbose_name = "User Profile"
+        verbose_name_plural = "User Profiles"
+
+
+class OnboardingQuestion(models.Model):
+    """Cached multiple choice questions for onboarding assessment"""
+    question_number = models.IntegerField()
+    question_text = models.TextField()
+    language = models.CharField(max_length=50, default='Spanish')
+    
+    # Difficulty level (capped at B1)
+    difficulty_level = models.CharField(
+        max_length=2,
+        choices=[
+            ('A1', 'Beginner'),
+            ('A2', 'Elementary'),
+            ('B1', 'Intermediate')
+        ]
+    )
+    
+    # Multiple choice options
+    option_a = models.CharField(max_length=500)
+    option_b = models.CharField(max_length=500)
+    option_c = models.CharField(max_length=500)
+    option_d = models.CharField(max_length=500)
+    
+    # Answer and explanation
+    correct_answer = models.CharField(max_length=1, help_text="Store 'A', 'B', 'C', or 'D'")
+    explanation = models.TextField(blank=True)
+    
+    # Scoring (A1=1, A2=2, B1=3)
+    difficulty_points = models.IntegerField(default=1)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Q{self.question_number} ({self.language} - {self.difficulty_level}): {self.question_text[:50]}..."
+    
+    class Meta:
+        verbose_name = "Onboarding Question"
+        verbose_name_plural = "Onboarding Questions"
+        ordering = ['language', 'question_number']
+        unique_together = ['language', 'question_number']
+
+
+class OnboardingAttempt(models.Model):
+    """Track onboarding assessment attempts (for both guests and authenticated users)"""
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='onboarding_attempts',
+        null=True, 
+        blank=True
+    )
+    session_key = models.CharField(max_length=100, blank=True, help_text="For guest tracking")
+    language = models.CharField(max_length=50, default='Spanish')
+    
+    # Timing
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Results
+    calculated_level = models.CharField(
+        max_length=2,
+        choices=[
+            ('A1', 'Beginner'),
+            ('A2', 'Elementary'),
+            ('B1', 'Intermediate')
+        ],
+        blank=True
+    )
+    total_score = models.IntegerField(default=0)
+    total_possible = models.IntegerField(default=0)
+    
+    def __str__(self):
+        user_display = self.user.username if self.user else f"Guest-{self.session_key[:8]}"
+        return f"{user_display} - {self.language} ({self.calculated_level or 'In Progress'})"
+    
+    @property
+    def score_percentage(self):
+        """Calculate percentage score"""
+        if self.total_possible == 0:
+            return 0.0
+        return round((self.total_score / self.total_possible) * 100, 1)
+    
+    class Meta:
+        verbose_name = "Onboarding Attempt"
+        verbose_name_plural = "Onboarding Attempts"
+        ordering = ['-started_at']
+
+
+class OnboardingAnswer(models.Model):
+    """Individual answers within an onboarding attempt"""
+    attempt = models.ForeignKey(
+        OnboardingAttempt, 
+        on_delete=models.CASCADE, 
+        related_name='answers'
+    )
+    question = models.ForeignKey(
+        OnboardingQuestion, 
+        on_delete=models.CASCADE,
+        related_name='user_answers'
+    )
+    
+    # User's response
+    user_answer = models.CharField(max_length=1, help_text="A, B, C, or D")
+    is_correct = models.BooleanField()
+    time_taken_seconds = models.IntegerField(default=0)
+    
+    answered_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        status = "✓" if self.is_correct else "✗"
+        return f"{status} Q{self.question.question_number} - {self.user_answer}"
+    
+    class Meta:
+        verbose_name = "Onboarding Answer"
+        verbose_name_plural = "Onboarding Answers"
+        ordering = ['question__question_number']

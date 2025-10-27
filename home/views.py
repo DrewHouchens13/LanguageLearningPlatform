@@ -283,16 +283,24 @@ def send_template_email(request, template_name, context, subject, recipient_emai
 def landing(request):
     """Render the landing page.
 
-    This is the home page of the application, accessible to all users
-    (authenticated and anonymous).
+    This is the home page of the application for guests only.
+    Logged-in users are automatically redirected to their dashboard.
 
     Args:
         request: HttpRequest object from Django
 
     Returns:
-        HttpResponse: Rendered index.html template
+        HttpResponse: Rendered index.html template (guests) or redirect to dashboard (authenticated)
     """
-    return render(request, "index.html")
+    # Redirect logged-in users to dashboard (their "Home")
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
+    # Guest users see the landing page
+    context = {
+        'has_completed_onboarding': False
+    }
+    return render(request, "index.html", context)
 
 
 def login_view(request):
@@ -403,9 +411,57 @@ def login_view(request):
             logger.info(
                 f'Successful login: {username} from IP: {get_client_ip(request)}'
             )
+            
+            # Check if user completed onboarding as a guest (only redirect if it's unlinked)
+            onboarding_attempt_id = request.session.get('onboarding_attempt_id')
+            if onboarding_attempt_id:
+                try:
+                    from .models import OnboardingAttempt, UserProfile
+                    from django.utils import timezone
+                    
+                    # Get the attempt
+                    attempt = OnboardingAttempt.objects.get(id=onboarding_attempt_id)
+                    
+                    # Only process if this attempt is NOT yet linked to a user
+                    # (This prevents redirect on subsequent logins)
+                    if not attempt.user:
+                        # Link attempt to user
+                        attempt.user = user
+                        attempt.save()
+                        
+                        # Create/update user profile with onboarding data
+                        user_profile, created = UserProfile.objects.get_or_create(user=user)
+                        
+                        # Only update if user hasn't completed onboarding or this is newer
+                        if not user_profile.has_completed_onboarding or not user_profile.onboarding_completed_at or attempt.completed_at > user_profile.onboarding_completed_at:
+                            user_profile.proficiency_level = attempt.calculated_level
+                            user_profile.has_completed_onboarding = True
+                            user_profile.onboarding_completed_at = attempt.completed_at or timezone.now()
+                            user_profile.target_language = attempt.language
+                            user_profile.save()
+                        
+                        logger.info(f'Linked onboarding attempt {attempt.id} to user {user.username}')
+                        
+                        # Clear session AFTER getting the ID
+                        del request.session['onboarding_attempt_id']
+                        
+                        # Redirect to results page with attempt ID in URL
+                        messages.success(request, f'Welcome back, {user.first_name or user.username}! Your assessment results have been saved.')
+                        return redirect(f'/onboarding/results/?attempt={attempt.id}')
+                    else:
+                        # Attempt already linked - clear stale session data and continue normal flow
+                        del request.session['onboarding_attempt_id']
+                        logger.info(f'Cleared stale onboarding session for user {user.username}')
+                except OnboardingAttempt.DoesNotExist:
+                    # Clear invalid session data
+                    del request.session['onboarding_attempt_id']
+                    logger.warning(f'Onboarding attempt {onboarding_attempt_id} not found, cleared session')
+                except Exception as e:
+                    logger.error(f'Error linking onboarding attempt to user: {str(e)}')
+            
             messages.success(request, f'Welcome back, {user.first_name or user.username}!')
 
-            # Redirect to next page if specified and safe, otherwise go to landing
+            # Redirect to next page if specified and safe, otherwise go to dashboard (home for logged-in users)
             next_page = request.GET.get('next', '')
             if next_page and url_has_allowed_host_and_scheme(
                 url=next_page,
@@ -414,8 +470,8 @@ def login_view(request):
             ):
                 return HttpResponseRedirect(next_page)
             else:
-                # Safe redirect to landing page
-                return HttpResponseRedirect('..')
+                # Redirect to dashboard (home for authenticated users)
+                return redirect('dashboard')
         else:
             # Log failed login attempt (incorrect password)
             logger.warning(
@@ -491,6 +547,11 @@ def signup_view(request):
             username = f"{original_username}{counter}"
             counter += 1
 
+        # Check if email already exists before attempting creation
+        if User.objects.filter(email=email).exists():
+            messages.error(request, 'An account with this email already exists.')
+            return render(request, 'login.html')
+
         try:
             # Create new user
             user = User.objects.create_user(
@@ -500,36 +561,66 @@ def signup_view(request):
                 first_name=first_name,
                 last_name=last_name
             )
-
-            # Log the user in
-            login(request, user)
-            messages.success(request, f'Welcome to Language Learning Platform, {first_name}!')
-            return HttpResponseRedirect('..')
+            logger.info(f'New user created: {user.username} ({email}) from IP: {get_client_ip(request)}')
 
         except IntegrityError as e:
-            # Check if it's email duplicate or username duplicate
-            if 'email' in str(e):
-                messages.error(request, 'An account with this email already exists.')
-            else:
-                messages.error(request, 'An error occurred while creating your account. Please try again.')
-            return render(request, 'login.html')
-        except ValidationError as e:
-            # Handle any validation errors
-            for error in e.messages:
-                messages.error(request, error)
+            # This shouldn't happen since we checked, but handle it anyway
+            logger.error(f'IntegrityError during user creation: {str(e)} from IP: {get_client_ip(request)}')
+            messages.error(request, 'An error occurred while creating your account. Please try again.')
             return render(request, 'login.html')
         except Exception as e:
             # Log unexpected errors for debugging (don't expose details to user)
-            import logging
             from django.conf import settings
-            logger = logging.getLogger(__name__)
             exception_type = type(e).__name__
-            logger.error(f'Unexpected error during signup: {exception_type}')
-            # In DEBUG mode, log full exception for troubleshooting
+            logger.error(f'Unexpected error during user creation: {exception_type} from IP: {get_client_ip(request)}')
             if settings.DEBUG:
-                logger.debug(f'Signup error details (DEBUG only): {str(e)}')
+                logger.debug(f'User creation error details (DEBUG only): {str(e)}')
             messages.error(request, 'An error occurred while creating your account. Please try again.')
             return render(request, 'login.html')
+
+        # User created successfully, now log them in
+        login(request, user)
+        
+        # Check if user completed onboarding as a guest
+        onboarding_attempt_id = request.session.get('onboarding_attempt_id')
+        if onboarding_attempt_id:
+            try:
+                from .models import OnboardingAttempt, UserProfile
+                from django.utils import timezone
+                
+                # Get the attempt
+                attempt = OnboardingAttempt.objects.get(id=onboarding_attempt_id)
+                
+                # Link attempt to new user
+                attempt.user = user
+                attempt.save()
+                
+                # Create user profile with onboarding data
+                user_profile, created = UserProfile.objects.get_or_create(user=user)
+                user_profile.proficiency_level = attempt.calculated_level
+                user_profile.has_completed_onboarding = True
+                user_profile.onboarding_completed_at = attempt.completed_at or timezone.now()
+                user_profile.target_language = attempt.language
+                user_profile.save()
+                
+                logger.info(f'Linked onboarding attempt {attempt.id} to new user {user.username}')
+                
+                # Clear session AFTER getting the ID
+                del request.session['onboarding_attempt_id']
+                
+                # Redirect to results page with attempt ID in URL
+                messages.success(request, f'Welcome to Language Learning Platform, {first_name}! Your assessment results have been saved.')
+                return redirect(f'/onboarding/results/?attempt={attempt.id}')
+            except OnboardingAttempt.DoesNotExist:
+                logger.warning(f'Onboarding attempt {onboarding_attempt_id} not found for new user {user.username}')
+                # Continue with normal signup flow
+            except Exception as e:
+                logger.error(f'Error linking onboarding attempt to new user {user.username}: {str(e)}')
+                # Continue with normal signup flow - user is created, just onboarding link failed
+        
+        messages.success(request, f'Welcome to Language Learning Platform, {first_name}!')
+        # Redirect to dashboard (home for authenticated users)
+        return redirect('dashboard')
 
     return render(request, 'login.html')
 
@@ -560,7 +651,42 @@ def dashboard(request):
     This view requires authentication. Users must be logged in to access.
     Unauthenticated users are redirected to the login page.
     """
-    return render(request, 'dashboard.html')
+    # Check if user has completed onboarding
+    from .models import UserProfile
+    has_completed_onboarding = False
+    user_profile = None
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+        has_completed_onboarding = user_profile.has_completed_onboarding
+    except UserProfile.DoesNotExist:
+        has_completed_onboarding = False
+    
+    # Clean up stale onboarding session data
+    # (Prevents redirect issues on return visits with persistent sessions)
+    if 'onboarding_attempt_id' in request.session:
+        try:
+            from .models import OnboardingAttempt
+            attempt_id = request.session['onboarding_attempt_id']
+            attempt = OnboardingAttempt.objects.get(id=attempt_id)
+            
+            # If attempt is already linked to this user, clear the session
+            if attempt.user == request.user:
+                del request.session['onboarding_attempt_id']
+                logger.info(f'Cleared stale onboarding session for user {request.user.username} on dashboard')
+        except OnboardingAttempt.DoesNotExist:
+            # Invalid attempt ID, clear it
+            del request.session['onboarding_attempt_id']
+        except Exception as e:
+            # Any other error, clear it to be safe
+            logger.error(f'Error checking onboarding session on dashboard: {str(e)}')
+            if 'onboarding_attempt_id' in request.session:
+                del request.session['onboarding_attempt_id']
+    
+    context = {
+        'has_completed_onboarding': has_completed_onboarding,
+        'user_profile': user_profile
+    }
+    return render(request, 'dashboard.html', context)
 
 
 def progress_view(request):
@@ -570,6 +696,7 @@ def progress_view(request):
     Authenticated users: Shows learning statistics including weekly and total metrics
     - Weekly: minutes studied, lessons completed, quiz accuracy
     - Total: cumulative minutes, lessons, quizzes, overall accuracy
+    - Onboarding: proficiency level and assessment results
 
     Unauthenticated users: Shows placeholder UI with call-to-action to sign up
 
@@ -577,11 +704,24 @@ def progress_view(request):
     """
     if request.user.is_authenticated:
         # Get or create user progress record
-        from .models import UserProgress
+        from .models import UserProgress, UserProfile, OnboardingAttempt
         user_progress, created = UserProgress.objects.get_or_create(user=request.user)
 
         # Get weekly stats
         weekly_stats = user_progress.get_weekly_stats()
+
+        # Get onboarding/profile information
+        user_profile = None
+        latest_attempt = None
+        try:
+            user_profile = UserProfile.objects.get(user=request.user)
+            # Get most recent completed onboarding attempt
+            latest_attempt = OnboardingAttempt.objects.filter(
+                user=request.user,
+                completed_at__isnull=False
+            ).first()
+        except UserProfile.DoesNotExist:
+            pass
 
         # Prepare context for authenticated users
         context = {
@@ -592,6 +732,8 @@ def progress_view(request):
             'total_lessons': user_progress.total_lessons_completed,
             'total_quizzes': user_progress.total_quizzes_taken,
             'overall_accuracy': user_progress.overall_quiz_accuracy,
+            'user_profile': user_profile,
+            'latest_onboarding_attempt': latest_attempt,
         }
     else:
         # Context for guest users (all None/empty)
@@ -603,6 +745,8 @@ def progress_view(request):
             'total_lessons': None,
             'total_quizzes': None,
             'overall_accuracy': None,
+            'user_profile': None,
+            'latest_onboarding_attempt': None,
         }
 
     return render(request, 'progress.html', context)
@@ -916,3 +1060,310 @@ def forgot_username_view(request):
         messages.success(request, 'If an account with that email exists, a username reminder has been sent. Please check your email.')
 
     return render(request, 'forgot_username.html')
+
+
+# =============================================================================
+# ONBOARDING ASSESSMENT VIEWS
+# =============================================================================
+
+def onboarding_welcome(request):
+    """
+    Landing page for onboarding assessment.
+    
+    Explains the assessment, shows start button.
+    Available to all users (guests and authenticated).
+    
+    For authenticated users who already completed:
+    - Shows current level
+    - Allows retake (updates level)
+    """
+    user_profile = None
+    if request.user.is_authenticated:
+        from .models import UserProfile
+        user_profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    context = {
+        'user_profile': user_profile
+    }
+    return render(request, 'onboarding/welcome.html', context)
+
+
+def onboarding_quiz(request):
+    """
+    Display the onboarding quiz with 10 questions.
+    
+    GET: Load questions, create attempt, render quiz
+    
+    For guests: Generates session key for tracking
+    For authenticated: Links attempt to user
+    
+    Creates OnboardingAttempt with started_at timestamp.
+    """
+    from .models import OnboardingAttempt
+    from .services.onboarding_service import OnboardingService
+    
+    # Get questions for language (Spanish default)
+    language = request.GET.get('language', 'Spanish')
+    service = OnboardingService()
+    questions = service.get_questions_for_language(language)
+    
+    if questions.count() != 10:
+        messages.error(request, f'Assessment not available for {language}. Please contact support.')
+        return redirect('onboarding_welcome')
+    
+    # Ensure session exists for guests
+    if not request.session.session_key:
+        request.session.create()
+    
+    # Create OnboardingAttempt
+    attempt = OnboardingAttempt.objects.create(
+        user=request.user if request.user.is_authenticated else None,
+        session_key=request.session.session_key,
+        language=language
+    )
+    
+    # Store attempt_id in session for later retrieval
+    request.session['onboarding_attempt_id'] = attempt.id
+    
+    context = {
+        'questions': questions,
+        'attempt_id': attempt.id,
+        'language': language,
+        'is_guest': not request.user.is_authenticated
+    }
+    
+    return render(request, 'onboarding/quiz.html', context)
+
+
+def submit_onboarding(request):
+    """
+    Process onboarding quiz submission (AJAX endpoint).
+    
+    POST: Accept answers, calculate level, update profile
+    
+    Expects JSON:
+    {
+        "attempt_id": 123,
+        "answers": [
+            {"question_id": 1, "answer": "B", "time_taken": 15},
+            ...
+        ]
+    }
+    
+    Returns JSON:
+    {
+        "success": true,
+        "level": "A2",
+        "score": 12,
+        "total": 19,
+        "percentage": 63.2,
+        "redirect_url": "/onboarding/results/?attempt=123"
+    }
+    """
+    import json
+    from django.http import JsonResponse
+    from django.views.decorators.http import require_POST
+    from django.views.decorators.csrf import csrf_exempt
+    from django.utils import timezone
+    from .models import OnboardingAttempt, OnboardingAnswer, OnboardingQuestion, UserProfile
+    from .services.onboarding_service import OnboardingService
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        attempt_id = data.get('attempt_id')
+        answers = data.get('answers', [])
+        
+        # Validate input
+        if not attempt_id or not answers:
+            return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+        
+        if len(answers) != 10:
+            return JsonResponse({'success': False, 'error': 'Must answer all 10 questions'}, status=400)
+        
+        # Get attempt
+        try:
+            attempt = OnboardingAttempt.objects.get(id=attempt_id)
+        except OnboardingAttempt.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Invalid attempt ID'}, status=404)
+        
+        # Check if already completed
+        if attempt.completed_at:
+            return JsonResponse({'success': False, 'error': 'Assessment already submitted'}, status=400)
+        
+        # Process answers and calculate score
+        answers_data = []
+        total_score = 0
+        total_possible = 0
+        
+        for answer_item in answers:
+            question_id = answer_item.get('question_id')
+            user_answer = answer_item.get('answer', '').strip().upper()
+            time_taken = answer_item.get('time_taken', 0)
+            
+            try:
+                question = OnboardingQuestion.objects.get(id=question_id)
+            except OnboardingQuestion.DoesNotExist:
+                return JsonResponse({'success': False, 'error': f'Invalid question ID: {question_id}'}, status=400)
+            
+            # Check if answer is correct
+            is_correct = (user_answer == question.correct_answer.upper())
+            
+            # Save answer
+            OnboardingAnswer.objects.create(
+                attempt=attempt,
+                question=question,
+                user_answer=user_answer,
+                is_correct=is_correct,
+                time_taken_seconds=time_taken
+            )
+            
+            # Track for level calculation
+            answers_data.append({
+                'difficulty_level': question.difficulty_level,
+                'is_correct': is_correct,
+                'difficulty_points': question.difficulty_points,
+                'question_number': question.question_number
+            })
+            
+            # Calculate score
+            total_possible += question.difficulty_points
+            if is_correct:
+                total_score += question.difficulty_points
+        
+        # Calculate proficiency level
+        service = OnboardingService()
+        calculated_level = service.calculate_proficiency_level(answers_data)
+        
+        # Update attempt
+        attempt.calculated_level = calculated_level
+        attempt.total_score = total_score
+        attempt.total_possible = total_possible
+        attempt.completed_at = timezone.now()
+        attempt.save()
+        
+        # For authenticated users, update profile
+        if request.user.is_authenticated:
+            user_profile, created = UserProfile.objects.get_or_create(user=request.user)
+            user_profile.proficiency_level = calculated_level
+            user_profile.has_completed_onboarding = True
+            user_profile.onboarding_completed_at = timezone.now()
+            user_profile.save()
+            
+            logger.info(f'Onboarding completed for user {request.user.username}: {calculated_level} ({total_score}/{total_possible})')
+        else:
+            # For guests, store attempt_id in session
+            request.session['onboarding_attempt_id'] = attempt.id
+            logger.info(f'Onboarding completed for guest session {attempt.session_key}: {calculated_level} ({total_score}/{total_possible})')
+        
+        # Calculate percentage
+        percentage = round((total_score / total_possible * 100), 1) if total_possible > 0 else 0
+        
+        return JsonResponse({
+            'success': True,
+            'level': calculated_level,
+            'score': total_score,
+            'total': total_possible,
+            'percentage': percentage,
+            'redirect_url': f'/onboarding/results/?attempt={attempt.id}'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        logger.error(f'Error processing onboarding submission: {str(e)}')
+        return JsonResponse({'success': False, 'error': 'Internal server error'}, status=500)
+
+
+def onboarding_results(request):
+    """
+    Display onboarding assessment results.
+    
+    Shows:
+    - Calculated proficiency level with badge
+    - Score breakdown (total and by level)
+    - Explanation of level
+    - Next steps (dashboard for authenticated, signup for guests)
+    
+    GET params:
+    - attempt: OnboardingAttempt ID
+    
+    Falls back to session storage for guests.
+    """
+    from .models import OnboardingAttempt, UserProfile
+    
+    # Get attempt ID from query param or session
+    attempt_id = request.GET.get('attempt')
+    if not attempt_id:
+        attempt_id = request.session.get('onboarding_attempt_id')
+    
+    # For logged-in users, if no attempt ID or attempt already linked, redirect to home
+    if request.user.is_authenticated and not attempt_id:
+        messages.info(request, 'Assessment already completed. Check your dashboard for your level.')
+        return redirect('dashboard')
+    
+    if not attempt_id:
+        messages.error(request, 'No assessment results found. Please take the assessment first.')
+        return redirect('onboarding_welcome')
+    
+    try:
+        attempt = OnboardingAttempt.objects.get(id=attempt_id)
+    except OnboardingAttempt.DoesNotExist:
+        messages.error(request, 'Assessment results not found.')
+        return redirect('onboarding_welcome')
+    
+    # Check if attempt is completed
+    if not attempt.completed_at:
+        messages.error(request, 'Assessment not yet completed.')
+        return redirect('onboarding_quiz')
+    
+    # Get answer breakdown by level
+    answers = attempt.answers.all()
+    breakdown = {
+        'A1': {'correct': 0, 'total': 0},
+        'A2': {'correct': 0, 'total': 0},
+        'B1': {'correct': 0, 'total': 0}
+    }
+    
+    for answer in answers:
+        level = answer.question.difficulty_level
+        breakdown[level]['total'] += 1
+        if answer.is_correct:
+            breakdown[level]['correct'] += 1
+    
+    # Calculate percentages for each level
+    for level in breakdown:
+        if breakdown[level]['total'] > 0:
+            breakdown[level]['percentage'] = round(
+                (breakdown[level]['correct'] / breakdown[level]['total']) * 100, 1
+            )
+        else:
+            breakdown[level]['percentage'] = 0
+    
+    # Level descriptions
+    level_descriptions = {
+        'A1': 'Beginner - You can understand and use familiar everyday expressions and very basic phrases.',
+        'A2': 'Elementary - You can understand sentences and frequently used expressions related to everyday topics.',
+        'B1': 'Intermediate - You can understand the main points of clear standard input on familiar matters and produce simple connected text.'
+    }
+    
+    # Get user profile if authenticated
+    user_profile = None
+    if request.user.is_authenticated:
+        try:
+            user_profile = UserProfile.objects.get(user=request.user)
+        except UserProfile.DoesNotExist:
+            pass
+    
+    context = {
+        'attempt': attempt,
+        'breakdown': breakdown,
+        'level_description': level_descriptions.get(attempt.calculated_level, ''),
+        'percentage': attempt.score_percentage,
+        'user_profile': user_profile,
+        'is_guest': not request.user.is_authenticated
+    }
+    
+    return render(request, 'onboarding/results.html', context)

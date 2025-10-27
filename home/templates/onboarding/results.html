@@ -1,0 +1,234 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Spanish Level - Language Learning Platform</title>
+    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+    <style>
+      .level-badge {
+        display: inline-block;
+        padding: 0.75rem 2rem;
+        border-radius: 50px;
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 1rem 0;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+      
+      .level-A1 {
+        background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%);
+        color: white;
+      }
+      
+      .level-A2 {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+      }
+      
+      .level-B1 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+      
+      .score-display {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #667eea;
+        margin: 1.5rem 0;
+      }
+      
+      .breakdown-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin: 2rem 0;
+      }
+      
+      .breakdown-card {
+        background: rgba(102, 126, 234, 0.05);
+        border: 2px solid rgba(102, 126, 234, 0.2);
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+      }
+      
+      .breakdown-card h4 {
+        color: #333;
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+      }
+      
+      .breakdown-score {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+      }
+      
+      .breakdown-A1 .breakdown-score {
+        color: #56ab2f;
+      }
+      
+      .breakdown-A2 .breakdown-score {
+        color: #00f2fe;
+      }
+      
+      .breakdown-B1 .breakdown-score {
+        color: #764ba2;
+      }
+      
+      .breakdown-percentage {
+        font-size: 1.1rem;
+        color: #666;
+      }
+      
+      .checkmark {
+        color: #56ab2f;
+        font-size: 1.5rem;
+        margin-left: 0.5rem;
+      }
+      
+      @media (max-width: 768px) {
+        .breakdown-grid {
+          grid-template-columns: 1fr;
+        }
+        
+        .score-display {
+          font-size: 2rem;
+        }
+        
+        .level-badge {
+          font-size: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    {% include '_nav.html' %}
+
+    <main>
+      <!-- Django Messages -->
+      {% if messages %}
+        <div class="page-messages">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <!-- Results Header -->
+      <section class="progress-header">
+        <h2 style="margin-bottom: 0.5rem;">🎉 Assessment Complete!</h2>
+        <p style="font-size: 1.2rem; margin-bottom: 1.5rem;">Your Spanish Proficiency Level:</p>
+        <div class="level-badge level-{{ attempt.calculated_level }}">
+          {{ attempt.calculated_level }}
+        </div>
+        <p style="font-size: 1.1rem; color: #666; max-width: 700px; margin: 0 auto; margin-top: 1.5rem; line-height: 1.8;">
+          {{ level_description }}
+        </p>
+      </section>
+
+      <!-- Score Breakdown -->
+      <section class="progress-section">
+        <h2 class="section-title">Performance by Level</h2>
+        <div class="breakdown-grid">
+          <div class="breakdown-card breakdown-A1">
+            <h4>A1 - Beginner</h4>
+            <div class="breakdown-score">
+              {{ breakdown.A1.correct }} / {{ breakdown.A1.total }}
+              {% if breakdown.A1.percentage >= 75 %}<span class="checkmark">✓</span>{% endif %}
+            </div>
+            <div class="breakdown-percentage">{{ breakdown.A1.percentage }}%</div>
+          </div>
+          
+          <div class="breakdown-card breakdown-A2">
+            <h4>A2 - Elementary</h4>
+            <div class="breakdown-score">
+              {{ breakdown.A2.correct }} / {{ breakdown.A2.total }}
+              {% if breakdown.A2.percentage >= 75 %}<span class="checkmark">✓</span>{% endif %}
+            </div>
+            <div class="breakdown-percentage">{{ breakdown.A2.percentage }}%</div>
+          </div>
+          
+          <div class="breakdown-card breakdown-B1">
+            <h4>B1 - Intermediate</h4>
+            <div class="breakdown-score">
+              {{ breakdown.B1.correct }} / {{ breakdown.B1.total }}
+              {% if breakdown.B1.percentage >= 75 %}<span class="checkmark">✓</span>{% endif %}
+            </div>
+            <div class="breakdown-percentage">{{ breakdown.B1.percentage }}%</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Next Steps -->
+      <section class="progress-section">
+        <h2 class="section-title">What's Next?</h2>
+        
+        {% if is_guest %}
+          <!-- Guest CTA -->
+          <div style="text-align: center; max-width: 600px; margin: 0 auto;">
+            <p style="font-size: 1.2rem; margin-bottom: 2rem; color: #333;">
+              <strong>Sign up now to save your level and start learning!</strong>
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+              <a href="{% url 'login' %}" class="cta-button cta-button-primary">
+                Create Account
+              </a>
+              <a href="{% url 'login' %}" class="cta-button cta-button-secondary">
+                Login
+              </a>
+            </div>
+            <p style="margin-top: 2rem; color: #666;">
+              Your assessment results will be waiting for you after you sign up.
+            </p>
+          </div>
+        {% else %}
+          <!-- Authenticated User Next Steps -->
+          <div style="text-align: center; max-width: 600px; margin: 0 auto;">
+            <p style="font-size: 1.2rem; margin-bottom: 2rem; color: #333;">
+              Your level has been saved to your profile. You're ready to start learning with personalized AI-powered lessons!
+            </p>
+            <a href="{% url 'dashboard' %}" class="auth-button" style="display: inline-block; text-decoration: none;">
+              Go to Dashboard
+            </a>
+            <p style="margin-top: 2rem; color: #666;">
+              <a href="{% url 'onboarding_welcome' %}" style="color: #667eea; text-decoration: none;">Want to retake the assessment?</a>
+            </p>
+          </div>
+        {% endif %}
+      </section>
+
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+    </footer>
+
+    <script>
+      // Mobile menu toggle
+      const navToggle = document.querySelector('.nav-toggle');
+      const navMenu = document.querySelector('.nav-menu');
+
+      if (navToggle) {
+        navToggle.addEventListener('click', () => {
+          navMenu.classList.toggle('active');
+          navToggle.classList.toggle('active');
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+            navMenu.classList.remove('active');
+            navToggle.classList.remove('active');
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
+
