@@ -387,29 +387,6 @@ class TestAdminCustomActions(TestCase):
 
 class TestAdminCRUDOperations(AdminTestCase):
     """Test admin CRUD operations for all models."""
-
-    def test_create_user_through_admin(self):
-        """
-        Test creating a new user through admin interface.
-        
-        NOTE: This test is skipped because it requires complex Django admin form data
-        including CSRF tokens, management forms for inlines, etc. Testing Django's
-        built-in admin CRUD is not necessary - we should focus on testing our custom
-        admin actions instead.
-        """
-        self.skipTest("Django admin CRUD operations require complex form data - testing custom actions instead")
-
-    def test_edit_user_through_admin(self):
-        """
-        Test editing a user through admin interface.
-        
-        NOTE: This test is skipped because it requires complex Django admin form data
-        including CSRF tokens, management forms for inlines (UserProfile), and all
-        required fields. Testing Django's built-in admin CRUD is not necessary - we
-        should focus on testing our custom admin actions instead.
-        """
-        self.skipTest("Django admin CRUD operations require complex form data - testing custom actions instead")
-
     def test_delete_user_through_admin(self):
         """Test deleting a user through admin interface"""
         # Create a test user
