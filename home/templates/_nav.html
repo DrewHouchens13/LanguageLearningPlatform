@@ -30,6 +30,11 @@
         <li class="nav-item">
           <a href="{% url 'account' %}" class="nav-link {% if request.path == '/account/' %}active{% endif %}">Account</a>
         </li>
+        {% if user.is_staff %}
+        <li class="nav-item">
+          <a href="/admin/" class="nav-link admin-link">Admin</a>
+        </li>
+        {% endif %}
         <li class="nav-item">
           <a href="{% url 'logout' %}" class="nav-link nav-button">Logout</a>
         </li>
