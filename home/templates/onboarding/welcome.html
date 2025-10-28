@@ -29,20 +29,18 @@
           {% if user_profile and user_profile.has_completed_onboarding %}
             <div style="margin: 1.5rem 0; padding: 1rem; background: rgba(102, 126, 234, 0.1); border-radius: 8px; border-left: 4px solid #667eea;">
               <p style="margin: 0; font-size: 1.1rem; color: #333;">
-                <strong>Your Current Level:</strong> 
-                <span style="color: #667eea; font-weight: 700;">{{ user_profile.get_proficiency_level_display }}</span>
+                <strong>Assessment Complete!</strong> 
+                Your proficiency level is <span style="color: #667eea; font-weight: 700;">{{ user_profile.get_proficiency_level_display }}</span>
+              </p>
+              <p style="margin: 0.5rem 0 0 0; font-size: 0.95rem; color: #666;">
+                View your results anytime from your progress page.
               </p>
             </div>
-            <p>You've already completed the assessment. Want to retake it? Your level will be updated based on your new results.</p>
-          {% else %}
-            <p>Take our quick 10-question assessment to determine your Spanish proficiency level. This helps us personalize your learning experience with AI-powered lessons matched to your current skills.</p>
-          {% endif %}
-          
-          {% if user_profile and user_profile.has_completed_onboarding %}
-            <a href="{% url 'onboarding_quiz' %}" class="auth-button" style="display: inline-block; text-decoration: none; margin-top: 1rem;">
-              Retake Assessment
+            <a href="{% url 'dashboard' %}" class="auth-button" style="display: inline-block; text-decoration: none; margin-top: 1rem;">
+              Go to Dashboard
             </a>
           {% else %}
+            <p>Take our quick 10-question assessment to determine your Spanish proficiency level. This helps us personalize your learning experience with AI-powered lessons matched to your current skills.</p>
             <a href="{% url 'onboarding_quiz' %}" class="auth-button" style="display: inline-block; text-decoration: none; margin-top: 1rem;">
               Start Assessment
             </a>

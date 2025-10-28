@@ -3,13 +3,25 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email as django_validate_email
 from django.contrib import messages
 from django.db import IntegrityError
-from django.utils.http import url_has_allowed_host_and_scheme
+from django.http import HttpResponseRedirect, JsonResponse
+from django.utils import timezone
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import url_has_allowed_host_and_scheme, urlsafe_base64_encode, urlsafe_base64_decode
 from django.views.decorators.http import require_http_methods
+from functools import wraps
+import json
 import logging
+
+from .models import (
+    UserProgress, QuizResult, UserProfile, 
+    OnboardingAttempt, OnboardingAnswer, OnboardingQuestion
+)
+from .services.onboarding_service import OnboardingService
 
 # Configure logger for security events
 # Note: IP address logging is standard security practice for:
@@ -30,6 +42,46 @@ import logging
 # - Regular archival of old logs to prevent storage bloat
 # - Monitor logs for security incidents and suspicious patterns
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# ONBOARDING PROTECTION DECORATOR
+# =============================================================================
+
+def block_if_onboarding_completed(view_func):
+    """
+    Decorator to redirect users who have already completed onboarding.
+    
+    - Authenticated users with completed onboarding -> redirect to dashboard
+    - Guests with completed onboarding in session -> redirect to landing
+    - Others -> allow access
+    """
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        # Check authenticated users
+        if request.user.is_authenticated:
+            try:
+                user_profile = UserProfile.objects.get(user=request.user)
+                if user_profile.has_completed_onboarding:
+                    messages.info(request, "You've already completed the placement assessment.")
+                    return redirect('dashboard')
+            except UserProfile.DoesNotExist:
+                pass  # No profile, allow access
+        
+        # Check guest session
+        attempt_id = request.session.get('onboarding_attempt_id')
+        if attempt_id:
+            try:
+                attempt = OnboardingAttempt.objects.get(id=attempt_id)
+                if attempt.completed_at:
+                    messages.info(request, "You've already completed the assessment. Please log in to save your results.")
+                    return redirect('landing')
+            except OnboardingAttempt.DoesNotExist:
+                pass  # Invalid attempt, allow access
+        
+        return view_func(request, *args, **kwargs)
+    
+    return wrapper
 
 
 # =============================================================================
@@ -332,8 +384,6 @@ def login_view(request):
         - If not found, attempts to find user by email
         - Authenticates with Django's built-in authentication system
     """
-    from django.http import HttpResponseRedirect
-
     # If user is already logged in, redirect to home
     if request.user.is_authenticated:
         return HttpResponseRedirect('..')
@@ -416,9 +466,6 @@ def login_view(request):
             onboarding_attempt_id = request.session.get('onboarding_attempt_id')
             if onboarding_attempt_id:
                 try:
-                    from .models import OnboardingAttempt, UserProfile
-                    from django.utils import timezone
-                    
                     # Get the attempt
                     attempt = OnboardingAttempt.objects.get(id=onboarding_attempt_id)
                     
@@ -439,6 +486,27 @@ def login_view(request):
                             user_profile.onboarding_completed_at = attempt.completed_at or timezone.now()
                             user_profile.target_language = attempt.language
                             user_profile.save()
+                            
+                            # Populate stats from guest onboarding
+                            QuizResult.objects.create(
+                                user=user,
+                                quiz_id=f'onboarding_{attempt.language}',
+                                quiz_title=f'{attempt.language} Placement Assessment',
+                                score=attempt.total_score,
+                                total_questions=attempt.total_possible
+                            )
+                            
+                            # Calculate total time from all answers
+                            total_time_minutes = sum(
+                                answer.time_taken_seconds for answer in attempt.answers.all()
+                            ) // 60  # Convert seconds to minutes
+                            
+                            # Update UserProgress
+                            user_progress, _ = UserProgress.objects.get_or_create(user=user)
+                            user_progress.total_minutes_studied += total_time_minutes
+                            user_progress.total_quizzes_taken += 1
+                            user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
+                            user_progress.save()
                         
                         logger.info(f'Linked onboarding attempt {attempt.id} to user {user.username}')
                         
@@ -497,8 +565,6 @@ def signup_view(request):
     - Auto-generated unique usernames from email
     - Secure error handling without information disclosure
     """
-    from django.http import HttpResponseRedirect
-
     # If user is already logged in, redirect to home
     if request.user.is_authenticated:
         return HttpResponseRedirect('..')
@@ -585,9 +651,6 @@ def signup_view(request):
         onboarding_attempt_id = request.session.get('onboarding_attempt_id')
         if onboarding_attempt_id:
             try:
-                from .models import OnboardingAttempt, UserProfile
-                from django.utils import timezone
-                
                 # Get the attempt
                 attempt = OnboardingAttempt.objects.get(id=onboarding_attempt_id)
                 
@@ -602,6 +665,27 @@ def signup_view(request):
                 user_profile.onboarding_completed_at = attempt.completed_at or timezone.now()
                 user_profile.target_language = attempt.language
                 user_profile.save()
+                
+                # Populate stats from guest onboarding
+                QuizResult.objects.create(
+                    user=user,
+                    quiz_id=f'onboarding_{attempt.language}',
+                    quiz_title=f'{attempt.language} Placement Assessment',
+                    score=attempt.total_score,
+                    total_questions=attempt.total_possible
+                )
+                
+                # Calculate total time from all answers
+                total_time_minutes = sum(
+                    answer.time_taken_seconds for answer in attempt.answers.all()
+                ) // 60  # Convert seconds to minutes
+                
+                # Update UserProgress
+                user_progress, _ = UserProgress.objects.get_or_create(user=user)
+                user_progress.total_minutes_studied += total_time_minutes
+                user_progress.total_quizzes_taken += 1
+                user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
+                user_progress.save()
                 
                 logger.info(f'Linked onboarding attempt {attempt.id} to new user {user.username}')
                 
@@ -636,8 +720,7 @@ def logout_view(request):
         messages.success(request, 'You have been successfully logged out.')
         # Use absolute redirect to avoid double prefix issue in admin
         # Build absolute URL using request scheme and host
-        from django.urls import reverse
-        from django.http import HttpResponseRedirect
+        from django.urls import reverse  # Keep inline - only used here
         landing_url = reverse('landing')
         absolute_url = request.build_absolute_uri(landing_url)
         return HttpResponseRedirect(absolute_url)
@@ -652,7 +735,6 @@ def dashboard(request):
     Unauthenticated users are redirected to the login page.
     """
     # Check if user has completed onboarding
-    from .models import UserProfile
     has_completed_onboarding = False
     user_profile = None
     try:
@@ -665,7 +747,6 @@ def dashboard(request):
     # (Prevents redirect issues on return visits with persistent sessions)
     if 'onboarding_attempt_id' in request.session:
         try:
-            from .models import OnboardingAttempt
             attempt_id = request.session['onboarding_attempt_id']
             attempt = OnboardingAttempt.objects.get(id=attempt_id)
             
@@ -704,7 +785,6 @@ def progress_view(request):
     """
     if request.user.is_authenticated:
         # Get or create user progress record
-        from .models import UserProgress, UserProfile, OnboardingAttempt
         user_progress, created = UserProgress.objects.get_or_create(user=request.user)
 
         # Get weekly stats
@@ -891,10 +971,6 @@ def forgot_password_view(request):
     - Error handling for email sending failures
     - Rate limiting: 5 requests per 5 minutes per IP address
     """
-    from django.contrib.auth.tokens import default_token_generator
-    from django.utils.http import urlsafe_base64_encode
-    from django.utils.encoding import force_bytes
-
     if request.method == 'POST':
         # Check rate limit (5 requests per 5 minutes)
         is_allowed, attempts_remaining, retry_after = check_rate_limit(
@@ -958,10 +1034,6 @@ def reset_password_view(request, uidb64, token):
     - Validates new password strength
     - Auto-logs in user after successful reset
     """
-    from django.contrib.auth.tokens import default_token_generator
-    from django.utils.http import urlsafe_base64_decode
-    from django.utils.encoding import force_str
-
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
@@ -1066,6 +1138,7 @@ def forgot_username_view(request):
 # ONBOARDING ASSESSMENT VIEWS
 # =============================================================================
 
+@block_if_onboarding_completed
 def onboarding_welcome(request):
     """
     Landing page for onboarding assessment.
@@ -1073,13 +1146,10 @@ def onboarding_welcome(request):
     Explains the assessment, shows start button.
     Available to all users (guests and authenticated).
     
-    For authenticated users who already completed:
-    - Shows current level
-    - Allows retake (updates level)
+    Users who have already completed onboarding are redirected to dashboard.
     """
     user_profile = None
     if request.user.is_authenticated:
-        from .models import UserProfile
         user_profile, created = UserProfile.objects.get_or_create(user=request.user)
     
     context = {
@@ -1088,6 +1158,7 @@ def onboarding_welcome(request):
     return render(request, 'onboarding/welcome.html', context)
 
 
+@block_if_onboarding_completed
 def onboarding_quiz(request):
     """
     Display the onboarding quiz with 10 questions.
@@ -1099,9 +1170,6 @@ def onboarding_quiz(request):
     
     Creates OnboardingAttempt with started_at timestamp.
     """
-    from .models import OnboardingAttempt
-    from .services.onboarding_service import OnboardingService
-    
     # Get questions for language (Spanish default)
     language = request.GET.get('language', 'Spanish')
     service = OnboardingService()
@@ -1160,14 +1228,6 @@ def submit_onboarding(request):
         "redirect_url": "/onboarding/results/?attempt=123"
     }
     """
-    import json
-    from django.http import JsonResponse
-    from django.views.decorators.http import require_POST
-    from django.views.decorators.csrf import csrf_exempt
-    from django.utils import timezone
-    from .models import OnboardingAttempt, OnboardingAnswer, OnboardingQuestion, UserProfile
-    from .services.onboarding_service import OnboardingService
-    
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
     
@@ -1244,13 +1304,34 @@ def submit_onboarding(request):
         attempt.completed_at = timezone.now()
         attempt.save()
         
-        # For authenticated users, update profile
+        # For authenticated users, update profile AND stats
         if request.user.is_authenticated:
             user_profile, created = UserProfile.objects.get_or_create(user=request.user)
             user_profile.proficiency_level = calculated_level
             user_profile.has_completed_onboarding = True
             user_profile.onboarding_completed_at = timezone.now()
             user_profile.save()
+            
+            # Create QuizResult for stats tracking
+            QuizResult.objects.create(
+                user=request.user,
+                quiz_id=f'onboarding_{attempt.language}',
+                quiz_title=f'{attempt.language} Placement Assessment',
+                score=total_score,
+                total_questions=total_possible
+            )
+            
+            # Calculate total time from all answers
+            total_time_minutes = sum(
+                answer_item.get('time_taken', 0) for answer_item in answers
+            ) // 60  # Convert seconds to minutes
+            
+            # Update UserProgress
+            user_progress, _ = UserProgress.objects.get_or_create(user=request.user)
+            user_progress.total_minutes_studied += total_time_minutes
+            user_progress.total_quizzes_taken += 1
+            user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
+            user_progress.save()
             
             logger.info(f'Onboarding completed for user {request.user.username}: {calculated_level} ({total_score}/{total_possible})')
         else:
@@ -1292,8 +1373,6 @@ def onboarding_results(request):
     
     Falls back to session storage for guests.
     """
-    from .models import OnboardingAttempt, UserProfile
-    
     # Get attempt ID from query param or session
     attempt_id = request.GET.get('attempt')
     if not attempt_id:

@@ -1,7 +1,10 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
-from home.models import OnboardingQuestion, OnboardingAttempt, UserProfile
+from home.models import (
+    OnboardingQuestion, OnboardingAttempt, UserProfile,
+    QuizResult, UserProgress
+)
 import json
 
 
@@ -153,6 +156,52 @@ class TestCompleteGuestOnboardingFlow(TestCase):
         self.assertTrue(profile.has_completed_onboarding)
         self.assertEqual(profile.proficiency_level, 'B1')
 
+    def test_guest_onboarding_stats_linked_on_signup(self):
+        """When guest completes onboarding then signs up, stats are properly linked"""
+        # Step 1: Complete quiz as guest
+        response = self.client.get(reverse('onboarding_quiz'))
+        attempt_id = response.context['attempt_id']
+        
+        # Submit with known time (60 seconds per question = 600 seconds = 10 minutes)
+        answers = [
+            {'question_id': q.id, 'answer': 'A', 'time_taken': 60}
+            for q in self.questions
+        ]
+        data = {
+            'attempt_id': attempt_id,
+            'answers': answers
+        }
+        self.client.post(
+            reverse('submit_onboarding'),
+            data=json.dumps(data),
+            content_type='application/json'
+        )
+        
+        # Step 2: Sign up
+        signup_data = {
+            'name': 'Jane Doe',
+            'email': 'jane@example.com',
+            'password': 'SecurePass123!@#',
+            'confirm-password': 'SecurePass123!@#'
+        }
+        self.client.post(reverse('signup'), signup_data)
+        
+        # Step 3: Verify stats were populated
+        user = User.objects.get(email='jane@example.com')
+        
+        # Check QuizResult was created
+        quiz_result = QuizResult.objects.filter(user=user).first()
+        self.assertIsNotNone(quiz_result)
+        self.assertEqual(quiz_result.quiz_id, 'onboarding_Spanish')
+        self.assertEqual(quiz_result.score, 19)
+        self.assertEqual(quiz_result.total_questions, 19)
+        
+        # Check UserProgress was updated
+        user_progress = UserProgress.objects.get(user=user)
+        self.assertEqual(user_progress.total_minutes_studied, 10)
+        self.assertEqual(user_progress.total_quizzes_taken, 1)
+        self.assertEqual(user_progress.overall_quiz_accuracy, 100.0)
+
 
 class TestCompleteAuthenticatedOnboardingFlow(TestCase):
     """Test complete onboarding flow for authenticated users"""
@@ -201,8 +250,8 @@ class TestCompleteAuthenticatedOnboardingFlow(TestCase):
         self.assertTrue(profile.has_completed_onboarding)
         self.assertEqual(profile.proficiency_level, 'B1')
 
-    def test_authenticated_user_can_retake_quiz(self):
-        """Test authenticated user can retake quiz and update level"""
+    def test_authenticated_user_cannot_retake_quiz(self):
+        """Test authenticated user cannot retake quiz after completion"""
         # First attempt - all correct (B1)
         response = self.client.get(reverse('onboarding_quiz'))
         attempt1_id = response.context['attempt_id']
@@ -220,27 +269,16 @@ class TestCompleteAuthenticatedOnboardingFlow(TestCase):
         profile = UserProfile.objects.get(user=self.user)
         self.assertEqual(profile.proficiency_level, 'B1')
         
-        # Second attempt - some wrong (should result in lower level)
+        # Try to access quiz again - should be redirected to dashboard
         response = self.client.get(reverse('onboarding_quiz'))
-        attempt2_id = response.context['attempt_id']
+        self.assertRedirects(response, reverse('dashboard'))
         
-        # Answer first 4 correct, rest wrong
-        answers_retake = [
-            {'question_id': self.questions[i].id, 'answer': 'A' if i < 4 else 'D', 'time_taken': 10}
-            for i in range(10)
-        ]
-        self.client.post(
-            reverse('submit_onboarding'),
-            data=json.dumps({'attempt_id': attempt2_id, 'answers': answers_retake}),
-            content_type='application/json'
-        )
+        # Try to access welcome page again - should be redirected to dashboard
+        response = self.client.get(reverse('onboarding_welcome'))
+        self.assertRedirects(response, reverse('dashboard'))
         
-        profile.refresh_from_db()
-        # 4/19 = 21.1%, 4/4 A1 (100%) → A1
-        self.assertEqual(profile.proficiency_level, 'A1')
-        
-        # Verify both attempts exist
-        self.assertEqual(OnboardingAttempt.objects.filter(user=self.user).count(), 2)
+        # Verify only one attempt exists
+        self.assertEqual(OnboardingAttempt.objects.filter(user=self.user).count(), 1)
 
 
 class TestOnboardingLevelCalculationIntegration(TestCase):

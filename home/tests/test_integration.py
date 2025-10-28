@@ -170,8 +170,8 @@ class OnboardingFlowTest(TestCase):
         self.assertTrue(profile.has_completed_onboarding)
         self.assertEqual(profile.proficiency_level, 'B1')
     
-    def test_user_retake_quiz_updates_level(self):
-        """Test user can retake quiz and level updates"""
+    def test_user_cannot_retake_quiz_after_completion(self):
+        """Test user cannot retake quiz after completion (blocked by decorator)"""
         client = Client()
         user = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
         client.login(username='testuser', password='pass123')
@@ -189,21 +189,17 @@ class OnboardingFlowTest(TestCase):
         profile = UserProfile.objects.get(user=user)
         self.assertEqual(profile.proficiency_level, 'B1')
         
-        # Second attempt: only A1 correct (A1)
+        # Try to access quiz again - should be redirected to dashboard
         response = client.get('/onboarding/quiz/')
-        attempt2_id = response.context['attempt_id']
-        answers_retake = [
-            {'question_id': self.questions[i].id, 'answer': 'A' if i < 4 else 'D', 'time_taken': 10}
-            for i in range(10)
-        ]
-        client.post(
-            '/onboarding/submit/',
-            data=json.dumps({'attempt_id': attempt2_id, 'answers': answers_retake}),
-            content_type='application/json'
-        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/dashboard', response.url)
         
+        # Verify level stayed at B1 (no retake happened)
         profile.refresh_from_db()
-        self.assertEqual(profile.proficiency_level, 'A1')
+        self.assertEqual(profile.proficiency_level, 'B1')
+        
+        # Verify only one attempt exists
+        self.assertEqual(OnboardingAttempt.objects.filter(user=user).count(), 1)
 
 
 # =============================================================================

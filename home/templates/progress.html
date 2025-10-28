@@ -42,7 +42,6 @@
               <p><strong>Assessment Score:</strong> {{ latest_onboarding_attempt.total_score }}/{{ latest_onboarding_attempt.total_possible }} ({{ latest_onboarding_attempt.score_percentage }}%)</p>
               <p><strong>Completed:</strong> {{ latest_onboarding_attempt.completed_at|date:"F j, Y" }}</p>
               <a href="{% url 'onboarding_results' %}?attempt={{ latest_onboarding_attempt.id }}" class="link-button">View Detailed Results</a>
-              <a href="{% url 'onboarding_quiz' %}" class="link-button">Retake Assessment</a>
             </div>
             {% endif %}
           </div>

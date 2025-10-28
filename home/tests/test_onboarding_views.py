@@ -29,18 +29,18 @@ class TestOnboardingWelcomeView(TestCase):
         
         self.assertEqual(response.status_code, 200)
 
-    def test_welcome_shows_profile_for_authenticated(self):
-        """Test welcome page shows user profile for authenticated users"""
+    def test_welcome_shows_profile_for_authenticated_without_onboarding(self):
+        """Test welcome page shows user profile for authenticated users who haven't completed onboarding"""
         user = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
         profile = UserProfile.objects.create(
             user=user,
-            proficiency_level='A2',
-            has_completed_onboarding=True
+            has_completed_onboarding=False
         )
         self.client.login(username='testuser', password='pass123')
         
         response = self.client.get(self.url)
         
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['user_profile'], profile)
 
 
@@ -343,3 +343,123 @@ class TestOnboardingResultsView(TestCase):
         
         self.assertRedirects(response, reverse('onboarding_quiz'))
 
+
+class TestOnboardingRetakeBlocking(TestCase):
+    """Test that users cannot retake onboarding once completed"""
+
+    def setUp(self):
+        """Create test user, questions, and completed attempt"""
+        self.client = Client()
+        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
+        
+        # Create 10 questions
+        for i in range(1, 11):
+            difficulty = 'A1' if i <= 4 else ('A2' if i <= 7 else 'B1')
+            points = 1 if difficulty == 'A1' else (2 if difficulty == 'A2' else 3)
+            
+            OnboardingQuestion.objects.create(
+                question_number=i,
+                question_text=f'Question {i}',
+                language='Spanish',
+                difficulty_level=difficulty,
+                option_a='A', option_b='B', option_c='C', option_d='D',
+                correct_answer='A',
+                difficulty_points=points
+            )
+
+    def test_authenticated_user_blocked_from_retaking_welcome(self):
+        """Authenticated users who completed onboarding are redirected from welcome page"""
+        # Create completed user profile
+        UserProfile.objects.create(
+            user=self.user,
+            proficiency_level='A2',
+            has_completed_onboarding=True
+        )
+        self.client.login(username='testuser', password='pass123')
+        
+        response = self.client.get(reverse('onboarding_welcome'))
+        
+        self.assertRedirects(response, reverse('dashboard'))
+        
+    def test_authenticated_user_blocked_from_retaking_quiz(self):
+        """Authenticated users who completed onboarding are redirected from quiz page"""
+        # Create completed user profile
+        UserProfile.objects.create(
+            user=self.user,
+            proficiency_level='A2',
+            has_completed_onboarding=True
+        )
+        self.client.login(username='testuser', password='pass123')
+        
+        response = self.client.get(reverse('onboarding_quiz'))
+        
+        self.assertRedirects(response, reverse('dashboard'))
+        
+    def test_guest_with_completed_session_blocked_from_retaking(self):
+        """Guests who completed in same session are blocked from retaking"""
+        from django.utils import timezone
+        
+        # Create a completed guest attempt
+        attempt = OnboardingAttempt.objects.create(
+            user=None,
+            session_key='test_session_key',
+            language='Spanish',
+            calculated_level='A2',
+            total_score=12,
+            total_possible=19,
+            completed_at=timezone.now()
+        )
+        
+        # Set session
+        session = self.client.session
+        session['onboarding_attempt_id'] = attempt.id
+        session.save()
+        
+        response = self.client.get(reverse('onboarding_welcome'))
+        
+        self.assertRedirects(response, reverse('landing'))
+        
+    def test_new_guest_can_still_take_onboarding(self):
+        """New guests without completed session can still take onboarding"""
+        response = self.client.get(reverse('onboarding_welcome'))
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'onboarding/welcome.html')
+        
+    def test_results_page_still_accessible_after_completion(self):
+        """Users can still view their results page after completion"""
+        from django.utils import timezone
+        
+        # Create completed user profile
+        UserProfile.objects.create(
+            user=self.user,
+            proficiency_level='A2',
+            has_completed_onboarding=True
+        )
+        
+        # Create completed attempt
+        attempt = OnboardingAttempt.objects.create(
+            user=self.user,
+            language='Spanish',
+            calculated_level='A2',
+            total_score=12,
+            total_possible=19,
+            completed_at=timezone.now()
+        )
+        
+        self.client.login(username='testuser', password='pass123')
+        
+        url = f"{reverse('onboarding_results')}?attempt={attempt.id}"
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'onboarding/results.html')
+
+    def test_user_without_onboarding_can_access_welcome(self):
+        """Users who haven't completed onboarding can still access welcome page"""
+        self.client.login(username='testuser', password='pass123')
+        
+        response = self.client.get(reverse('onboarding_welcome'))
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'onboarding/welcome.html')
