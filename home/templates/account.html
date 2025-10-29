@@ -35,8 +35,13 @@
             <div class="info-row avatar-row">
               <span class="info-label">Avatar:</span>
               <span class="info-value">
-                <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="account-avatar-display">
-                <span class="avatar-hint">Using {% if user.profile.avatar %}custom upload{% else %}Gravatar{% endif %}</span>
+                {% if user.profile %}
+                  <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="account-avatar-display">
+                  <span class="avatar-hint">Using {% if user.profile.avatar %}custom upload{% else %}Gravatar{% endif %}</span>
+                {% else %}
+                  <img src="https://www.gravatar.com/avatar/?s=200&d=identicon" alt="{{ user.username }}'s avatar" class="account-avatar-display">
+                  <span class="avatar-hint">Using Gravatar (default)</span>
+                {% endif %}
               </span>
             </div>
             <div class="info-row">

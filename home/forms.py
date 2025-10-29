@@ -1,6 +1,7 @@
 """
 Forms for the home app, including user profile avatar upload.
 """
+import os
 from django import forms
 from django.core.exceptions import ValidationError
 from .models import UserProfile
@@ -37,14 +38,16 @@ class AvatarUploadForm(forms.ModelForm):
         """
         avatar = self.cleaned_data.get('avatar')
 
+        # Return early if no file uploaded (allows users to skip avatar upload)
         if not avatar:
             return avatar
 
-        # Validate file type
+        # Validate file type using os.path.splitext for robust extension parsing
+        # This handles edge cases like multiple dots, no extension, etc.
         valid_extensions = ['.png', '.jpg', '.jpeg']
-        file_extension = avatar.name.lower().split('.')[-1]
+        _, file_extension = os.path.splitext(avatar.name.lower())
 
-        if f'.{file_extension}' not in valid_extensions:
+        if not file_extension or file_extension not in valid_extensions:
             raise ValidationError(
                 'Invalid file type. Only PNG and JPG images are allowed.'
             )

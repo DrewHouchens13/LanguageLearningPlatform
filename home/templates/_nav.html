@@ -11,7 +11,11 @@
     <ul class="nav-menu">
       {% if user.is_authenticated %}
         <li class="nav-item nav-avatar">
-          <img src="{{ user.profile.get_avatar_thumbnail_url }}" alt="{{ user.username }}" class="nav-avatar-img">
+          {% if user.profile %}
+            <img src="{{ user.profile.get_avatar_thumbnail_url }}" alt="{{ user.username }}" class="nav-avatar-img">
+          {% else %}
+            <img src="https://www.gravatar.com/avatar/?s=40&d=identicon" alt="{{ user.username }}" class="nav-avatar-img">
+          {% endif %}
         </li>
       {% endif %}
       <li class="nav-item">

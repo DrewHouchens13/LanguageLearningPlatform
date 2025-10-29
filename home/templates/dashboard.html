@@ -40,8 +40,13 @@
           <p><strong>Member since:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
         </div>
         <div class="hero-image dashboard-avatar-container">
-          <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="dashboard-avatar">
-          <p class="avatar-source">{% if user.profile.avatar %}Custom Avatar{% else %}Gravatar{% endif %}</p>
+          {% if user.profile %}
+            <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="dashboard-avatar">
+            <p class="avatar-source">{% if user.profile.avatar %}Custom Avatar{% else %}Gravatar{% endif %}</p>
+          {% else %}
+            <img src="https://www.gravatar.com/avatar/?s=200&d=identicon" alt="{{ user.username }}'s avatar" class="dashboard-avatar">
+            <p class="avatar-source">Gravatar (default)</p>
+          {% endif %}
         </div>
       </section>
       

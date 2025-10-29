@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.utils.html import format_html
 from .models import (
     UserProgress,
     LessonCompletion,
@@ -426,11 +427,18 @@ class UserProfileAdmin(admin.ModelAdmin):
     has_avatar.short_description = "Custom Avatar"
 
     def avatar_preview(self, obj):
-        """Display avatar preview in admin"""
+        """Display avatar preview in admin (XSS-safe with format_html)"""
         if obj.avatar:
-            return f'<img src="{obj.avatar.url}" width="100" height="100" style="border-radius: 50%;" /><br><small>Custom Upload</small>'
-        return f'<img src="{obj.get_gravatar_url(size=100)}" width="100" height="100" style="border-radius: 50%;" /><br><small>Gravatar (default)</small>'
-    avatar_preview.allow_tags = True
+            return format_html(
+                '<img src="{}" width="100" height="100" style="border-radius: 50%;" />'
+                '<br><small>Custom Upload</small>',
+                obj.avatar.url
+            )
+        return format_html(
+            '<img src="{}" width="100" height="100" style="border-radius: 50%;" />'
+            '<br><small>Gravatar (default)</small>',
+            obj.get_gravatar_url(size=100)
+        )
     avatar_preview.short_description = "Avatar Preview"
 
 

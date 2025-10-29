@@ -31,7 +31,11 @@
               <p>Welcome back, {{ user.first_name }}! Here's how you're doing this week.</p>
             </div>
             <div class="progress-avatar-container">
-              <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="progress-avatar">
+              {% if user.profile %}
+                <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="progress-avatar">
+              {% else %}
+                <img src="https://www.gravatar.com/avatar/?s=120&d=identicon" alt="{{ user.username }}'s avatar" class="progress-avatar">
+              {% endif %}
             </div>
           </div>
         </section>

@@ -4,10 +4,15 @@ from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.files.base import ContentFile
+from django.core.exceptions import ValidationError
 from PIL import Image
 from io import BytesIO
 import hashlib
 import os
+import logging
+
+# Configure logger for error tracking
+logger = logging.getLogger(__name__)
 
 
 def user_avatar_path(instance, filename):
@@ -123,32 +128,48 @@ class UserProfile(models.Model):
         (PNG or JPEG) with high quality.
         """
         if self.avatar:
-            # Open the uploaded image
-            img = Image.open(self.avatar)
+            try:
+                # Open and validate the uploaded image
+                img = Image.open(self.avatar)
 
-            # Convert RGBA to RGB for JPEG compatibility
-            if img.mode in ('RGBA', 'LA', 'P'):
-                background = Image.new('RGB', img.size, (255, 255, 255))
-                background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
-                img = background
+                # Verify it's a valid image by attempting to load it
+                img.verify()
 
-            # Resize image if larger than 200x200
-            max_size = (200, 200)
-            if img.height > max_size[1] or img.width > max_size[0]:
-                img.thumbnail(max_size, Image.Resampling.LANCZOS)
+                # Re-open after verify (verify() closes the file)
+                self.avatar.seek(0)
+                img = Image.open(self.avatar)
 
-            # Save resized image to BytesIO
-            output = BytesIO()
-            img_format = 'JPEG' if self.avatar.name.lower().endswith('.jpg') or self.avatar.name.lower().endswith('.jpeg') else 'PNG'
-            img.save(output, format=img_format, quality=95)
-            output.seek(0)
+                # Convert RGBA to RGB for JPEG compatibility
+                if img.mode in ('RGBA', 'LA', 'P'):
+                    background = Image.new('RGB', img.size, (255, 255, 255))
+                    background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+                    img = background
 
-            # Replace avatar with resized version
-            self.avatar.save(
-                self.avatar.name,
-                ContentFile(output.read()),
-                save=False
-            )
+                # Resize image if larger than 200x200
+                max_size = (200, 200)
+                if img.height > max_size[1] or img.width > max_size[0]:
+                    img.thumbnail(max_size, Image.Resampling.LANCZOS)
+
+                # Save resized image to BytesIO
+                output = BytesIO()
+                img_format = 'JPEG' if self.avatar.name.lower().endswith('.jpg') or self.avatar.name.lower().endswith('.jpeg') else 'PNG'
+                img.save(output, format=img_format, quality=95)
+                output.seek(0)
+
+                # Replace avatar with resized version
+                self.avatar.save(
+                    self.avatar.name,
+                    ContentFile(output.read()),
+                    save=False
+                )
+            except (IOError, OSError) as e:
+                # Handle corrupted or invalid image files
+                logger.error('Failed to process avatar image for user %s: %s', self.user.username, str(e))
+                raise ValidationError('Invalid or corrupted image file. Please upload a valid PNG or JPG image.') from e
+            except Exception as e:
+                # Catch any other unexpected errors during image processing
+                logger.error('Unexpected error processing avatar for user %s: %s', self.user.username, str(e))
+                raise ValidationError('An error occurred while processing your image. Please try a different file.') from e
 
         super().save(*args, **kwargs)
 

@@ -193,13 +193,30 @@ else:
 # Directory where collectstatic will collect static files for production
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Media files configuration (user uploaded content)
+# Media files configuration (user uploaded content - avatars, etc.)
+# SECURITY CONSIDERATIONS:
+# - MEDIA_ROOT stores user-uploaded files which should NEVER be directly web-accessible
+# - Django serves media files via views in development (see config/urls.py)
+# - In production, configure web server (nginx/Apache) to serve from MEDIA_ROOT with:
+#   * Content-Type validation to prevent script execution
+#   * X-Content-Type-Options: nosniff header
+#   * No directory listings
+#   * Separate domain/subdomain if possible (e.g., media.example.com)
+# - DO NOT serve MEDIA_ROOT from the same path as STATIC_ROOT
+# - Implement file type validation at upload (see home/forms.py)
+# - Consider cloud storage (S3, Cloudinary) for production scalability
+
 if IS_DEVEDU:
+    # DevEDU proxy environment: Use STATIC_URL_PREFIX for media files
+    # Default to /proxy/8000 if not set explicitly
     proxy_prefix = os.environ.get('STATIC_URL_PREFIX', '/proxy/8000')
     MEDIA_URL = f'{proxy_prefix}/media/'
 else:
+    # Local development and production: Standard media URL
     MEDIA_URL = '/media/'
 
+# Directory where uploaded media files are stored
+# WARNING: Ensure proper file permissions (not world-writable)
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # WhiteNoise configuration for efficient static file serving
