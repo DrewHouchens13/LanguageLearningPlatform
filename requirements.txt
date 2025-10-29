@@ -3,7 +3,7 @@ Django==5.2.7
 sqlparse==0.5.3
 
 # Production dependencies
-gunicorn==21.2.0           # WSGI HTTP server for production
+gunicorn==22.0.0           # WSGI HTTP server for production (fixes CVE-2024-6827, CVE-2024-1135)
 whitenoise==6.6.0          # Serve static files in production
 psycopg2-binary==2.9.9     # PostgreSQL adapter
 dj-database-url==2.1.0     # Parse database URL from environment
