@@ -60,13 +60,13 @@ def reset_password_to_default(modeladmin, request, queryset):
             admin_user = getattr(request, 'user', None)
             admin_username = admin_user.username if admin_user else 'Unknown'
             logger.info(
-                f'Admin {admin_username} reset password for user: {user.username}'
+                'Admin %s reset password for user: %s', admin_username, user.username
             )
-        except Exception as e:
-            # Handle save failures gracefully
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Handle save failures gracefully (catch all to avoid breaking batch operation)
             failed_users.append(user.username)
             logger.error(
-                f'Failed to reset password for user {user.username}: {str(e)}'
+                'Failed to reset password for user %s: %s', user.username, str(e)
             )
 
     # Display passwords to admin (one-time only, must communicate securely to users)

@@ -3,7 +3,7 @@ Django==5.2.7
 sqlparse==0.5.3
 
 # Production dependencies
-gunicorn==21.2.0           # WSGI HTTP server for production
+gunicorn==22.0.0           # WSGI HTTP server for production (fixes CVE-2024-6827, CVE-2024-1135)
 whitenoise==6.6.0          # Serve static files in production
 psycopg2-binary==2.9.9     # PostgreSQL adapter
 dj-database-url==2.1.0     # Parse database URL from environment
@@ -12,3 +12,21 @@ dj-database-url==2.1.0     # Parse database URL from environment
 pytest==8.3.4              # Testing framework
 pytest-django==4.9.0       # Django integration for pytest
 pytest-cov==6.0.0          # Coverage plugin for pytest
+
+# Code Quality & Linting (Sprint 3)
+pylint==3.3.9              # Python linter for code quality
+pylint-django==2.6.1       # Django plugin for pylint
+isort==6.1.0               # Import sorting (dependency of pylint)
+
+# Security Scanning Tools (Sprint 3)
+bandit==1.7.10             # Security linter for Python
+safety==3.2.10             # Dependency vulnerability scanner
+pip-audit==2.8.0           # Python package security auditing
+semgrep==1.104.0           # Advanced static analysis (optional)
+
+# Advanced Testing Tools (Optional - Recommended)
+hypothesis==6.123.2        # Property-based testing (fuzz testing)
+freezegun==1.5.1          # Time mocking for deterministic tests
+pytest-mock==3.14.0        # Mock fixtures for pytest
+mutmut==2.4.5              # Mutation testing
+pytest-random-order==1.1.1 # Test independence verification

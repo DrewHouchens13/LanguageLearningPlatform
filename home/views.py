@@ -150,7 +150,7 @@ def get_client_ip(request):
             )
             if settings.DEBUG:
                 # Development: log warning and default to DEBUG mode to allow debugging
-                logger.warning(f'{error_msg} Defaulting to debug mode.')
+                logger.warning('%s Defaulting to debug mode.', error_msg)
                 should_trust_xff = True
             else:
                 # Production: raise exception to prevent running with unknown configuration
@@ -169,7 +169,7 @@ def get_client_ip(request):
             return ip_address
         except ValueError:
             # Invalid IP format in X-Forwarded-For, fall back to REMOTE_ADDR
-            logger.warning(f'Invalid IP in X-Forwarded-For header: {ip_address}, using REMOTE_ADDR instead')
+            logger.warning('Invalid IP in X-Forwarded-For header: %s, using REMOTE_ADDR instead', ip_address)
 
     # Direct connection (no proxy) or untrusted/invalid X-Forwarded-For
     ip_address = remote_addr
@@ -179,7 +179,7 @@ def get_client_ip(request):
         try:
             ipaddress.ip_address(ip_address)
         except ValueError:
-            logger.warning(f'Invalid REMOTE_ADDR: {ip_address}')
+            logger.warning('Invalid REMOTE_ADDR: %s', ip_address)
             ip_address = 'unknown'
 
     return ip_address
@@ -230,7 +230,7 @@ def check_rate_limit(request, action, limit=5, period=300):
         except AttributeError:
             # Cache backend doesn't support TTL (e.g., LocMemCache), use period
             retry_after = period
-        logger.warning(f'Rate limit exceeded for {action} from IP: {ip_address}')
+        logger.warning('Rate limit exceeded for %s from IP: %s', action, ip_address)
         return False, 0, retry_after
 
     # Increment attempt counter
@@ -285,14 +285,15 @@ def send_template_email(request, template_name, context, subject, recipient_emai
             'DEFAULT_FROM_EMAIL is not configured in Django settings. '
             'Email sending requires a valid from address.'
         )
-        logger.error(f'{error_msg} Attempted to send: {log_prefix}')
+        logger.error('%s Attempted to send: %s', error_msg, log_prefix)
         raise ImproperlyConfigured(error_msg)
 
     # Validate recipient email format before attempting to send
     try:
         validate_email(recipient_email)
     except ValidationError:
-        logger.error(f'Invalid recipient email format: {recipient_email} for {log_prefix} from IP: {get_client_ip(request)}')
+        logger.error('Invalid recipient email format: %s for %s from IP: %s',
+                     recipient_email, log_prefix, get_client_ip(request))
         return False
 
     # Render email template
@@ -309,26 +310,30 @@ def send_template_email(request, template_name, context, subject, recipient_emai
                 fail_silently=False,
             )
             if attempt > 0:
-                logger.info(f'{log_prefix} sent to: {recipient_email} on retry {attempt} from IP: {get_client_ip(request)}')
+                logger.info('%s sent to: %s on retry %s from IP: %s',
+                           log_prefix, recipient_email, attempt, get_client_ip(request))
             else:
-                logger.info(f'{log_prefix} sent to: {recipient_email} from IP: {get_client_ip(request)}')
+                logger.info('%s sent to: %s from IP: %s',
+                           log_prefix, recipient_email, get_client_ip(request))
             return True
         except (SMTPException, BadHeaderError) as e:
             # Log attempt failure (sanitize exception to avoid leaking SMTP credentials)
             exception_type = type(e).__name__
-            logger.warning(f'Email send attempt {attempt + 1}/{max_retries} failed for {log_prefix.lower()} to {recipient_email}: {exception_type}')
+            logger.warning('Email send attempt %s/%s failed for %s to %s: %s',
+                          attempt + 1, max_retries, log_prefix.lower(), recipient_email, exception_type)
 
             # If this was the last attempt, log error and return False
             if attempt == max_retries - 1:
-                logger.error(f'Failed to send {log_prefix.lower()} to {recipient_email} after {max_retries} attempts from IP: {get_client_ip(request)}')
+                logger.error('Failed to send %s to %s after %s attempts from IP: %s',
+                            log_prefix.lower(), recipient_email, max_retries, get_client_ip(request))
                 # In DEBUG mode, log full exception for troubleshooting
                 if settings.DEBUG:
-                    logger.debug(f'SMTP Error details (DEBUG only): {str(e)}')
+                    logger.debug('SMTP Error details (DEBUG only): %s', str(e))
                 return False
 
             # Exponential backoff: wait 2^attempt seconds (1s, 2s, 4s, ...)
             wait_time = 2 ** attempt
-            logger.info(f'Retrying email send in {wait_time} seconds...')
+            logger.info('Retrying email send in %s seconds...', wait_time)
             time.sleep(wait_time)
 
 
@@ -390,7 +395,7 @@ def login_view(request):
 
     if request.method == 'POST':
         # Rate limiting: Prevent brute force attacks (5 attempts per 5 minutes per IP)
-        is_allowed, attempts_remaining, retry_after = check_rate_limit(
+        is_allowed, _attempts_remaining, retry_after = check_rate_limit(
             request,
             action='login',
             limit=5,
@@ -399,8 +404,8 @@ def login_view(request):
 
         if not is_allowed:
             logger.warning(
-                f'Login rate limit exceeded from IP: {get_client_ip(request)}, '
-                f'retry after {retry_after} seconds'
+                'Login rate limit exceeded from IP: %s, retry after %s seconds',
+                get_client_ip(request), retry_after
             )
             messages.error(
                 request,
@@ -419,7 +424,8 @@ def login_view(request):
         # Input validation: Check length to prevent excessively long inputs
         if len(username_or_email) > 254:  # Max email length per RFC 5321
             logger.warning(
-                f'Login attempt with excessively long username/email from IP: {get_client_ip(request)}'
+                'Login attempt with excessively long username/email from IP: %s',
+                get_client_ip(request)
             )
             messages.error(request, 'Invalid username/email or password.')
             return render(request, 'login.html')
@@ -429,7 +435,8 @@ def login_view(request):
         import re
         if not re.match(r'^[a-zA-Z0-9@._+\-]+$', username_or_email):
             logger.warning(
-                f'Login attempt with invalid characters in username/email from IP: {get_client_ip(request)}'
+                'Login attempt with invalid characters in username/email from IP: %s',
+                get_client_ip(request)
             )
             messages.error(request, 'Invalid username/email or password.')
             return render(request, 'login.html')
@@ -446,7 +453,8 @@ def login_view(request):
             except User.DoesNotExist:
                 # Log failed login attempt (username/email not found)
                 logger.warning(
-                    f'Failed login attempt - user not found: {username_or_email} from IP: {get_client_ip(request)}'
+                    'Failed login attempt - user not found: %s from IP: %s',
+                    username_or_email, get_client_ip(request)
                 )
                 messages.error(request, 'Invalid username/email or password.')
                 return render(request, 'login.html')
@@ -543,7 +551,8 @@ def login_view(request):
         else:
             # Log failed login attempt (incorrect password)
             logger.warning(
-                f'Failed login attempt - incorrect password for: {username} from IP: {get_client_ip(request)}'
+                'Failed login attempt - incorrect password for: %s from IP: %s',
+                username, get_client_ip(request)
             )
             messages.error(request, 'Invalid username/email or password.')
 
@@ -880,7 +889,8 @@ def account_view(request):
             request.user.email = new_email
             request.user.save()
             messages.success(request, 'Email address updated successfully!')
-            logger.info(f'Email updated for user: {request.user.username} from IP: {get_client_ip(request)}')
+            logger.info('Email updated for user: %s from IP: %s',
+                       request.user.username, get_client_ip(request))
 
         elif action == 'update_name':
             first_name = request.POST.get('first_name', '').strip()
@@ -896,7 +906,8 @@ def account_view(request):
             request.user.last_name = last_name
             request.user.save()
             messages.success(request, 'Name updated successfully!')
-            logger.info(f'Name updated for user: {request.user.username} from IP: {get_client_ip(request)}')
+            logger.info('Name updated for user: %s from IP: %s',
+                       request.user.username, get_client_ip(request))
 
         elif action == 'update_username':
             new_username = request.POST.get('new_username', '').strip()
@@ -916,7 +927,8 @@ def account_view(request):
             request.user.username = new_username
             request.user.save()
             messages.success(request, f'Username updated from "{old_username}" to "{new_username}"!')
-            logger.info(f'Username updated from {old_username} to {new_username} from IP: {get_client_ip(request)}')
+            logger.info('Username updated from %s to %s from IP: %s',
+                       old_username, new_username, get_client_ip(request))
 
         elif action == 'update_password':
             current_password = request.POST.get('current_password_pwd')
@@ -951,7 +963,8 @@ def account_view(request):
             update_session_auth_hash(request, request.user)
 
             messages.success(request, 'Password updated successfully!')
-            logger.info(f'Password updated for user: {request.user.username} from IP: {get_client_ip(request)}')
+            logger.info('Password updated for user: %s from IP: %s',
+                       request.user.username, get_client_ip(request))
 
     return render(request, 'account.html')
 
@@ -973,7 +986,7 @@ def forgot_password_view(request):
     """
     if request.method == 'POST':
         # Check rate limit (5 requests per 5 minutes)
-        is_allowed, attempts_remaining, retry_after = check_rate_limit(
+        is_allowed, _attempts_remaining, retry_after = check_rate_limit(
             request, 'password_reset', limit=5, period=300
         )
 
@@ -1014,7 +1027,8 @@ def forgot_password_view(request):
 
         except User.DoesNotExist:
             # Log failed attempt but don't inform user (prevent enumeration)
-            logger.warning(f'Password reset attempted for non-existent email: {email} from IP: {get_client_ip(request)}')
+            logger.warning('Password reset attempted for non-existent email: %s from IP: %s',
+                          email, get_client_ip(request))
 
         # Always show success message (don't reveal if email exists or sending failed)
         messages.success(request, 'If an account with that email exists, a password reset link has been sent. Please check your email.')
@@ -1066,14 +1080,14 @@ def reset_password_view(request, uidb64, token):
             login(request, user)
 
             messages.success(request, 'Your password has been reset successfully!')
-            logger.info(f'Password reset completed for user: {user.username} from IP: {get_client_ip(request)}')
+            logger.info('Password reset completed for user: %s from IP: %s',
+                       user.username, get_client_ip(request))
             return redirect('landing')
 
         return render(request, 'reset_password.html', {'valid_link': True})
-    else:
-        # Invalid or expired token
-        messages.error(request, 'This password reset link is invalid or has expired.')
-        return render(request, 'reset_password.html', {'valid_link': False})
+    # Invalid or expired token
+    messages.error(request, 'This password reset link is invalid or has expired.')
+    return render(request, 'reset_password.html', {'valid_link': False})
 
 
 def forgot_username_view(request):
@@ -1091,7 +1105,7 @@ def forgot_username_view(request):
     """
     if request.method == 'POST':
         # Check rate limit (5 requests per 5 minutes)
-        is_allowed, attempts_remaining, retry_after = check_rate_limit(
+        is_allowed, _attempts_remaining, retry_after = check_rate_limit(
             request, 'username_reminder', limit=5, period=300
         )
 
@@ -1126,7 +1140,8 @@ def forgot_username_view(request):
 
         except User.DoesNotExist:
             # Log failed attempt but don't inform user (prevent enumeration)
-            logger.warning(f'Username reminder attempted for non-existent email: {email} from IP: {get_client_ip(request)}')
+            logger.warning('Username reminder attempted for non-existent email: %s from IP: %s',
+                          email, get_client_ip(request))
 
         # Always show success message (don't reveal if email exists or sending failed)
         messages.success(request, 'If an account with that email exists, a username reminder has been sent. Please check your email.')

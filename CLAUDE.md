@@ -92,8 +92,13 @@ python -m venv venv
 venv\Scripts\activate  # Windows
 source venv/bin/activate  # macOS/Linux
 
-# Install dependencies
+# Install all dependencies (includes linting and security tools)
 pip install -r requirements.txt
+
+# Verify tools installed
+pylint --version
+bandit --version
+pytest --version
 
 # Run migrations
 python manage.py migrate
@@ -118,7 +123,76 @@ pytest --cov=. --cov-report=term-missing
 
 # Run specific test
 pytest home/tests.py::TestClassName::test_method_name
+
+# Test independence verification (pytest-random-order included in requirements.txt)
+pytest --random-order         # Run tests in random order
+pytest -x                     # Stop on first failure to debug test dependencies
+
+# Mutation testing (mutmut included in requirements.txt)
+mutmut run                    # Run mutation tests
+mutmut results                # View mutation test results
+mutmut show <mutation_id>     # Show specific mutation
+mutmut html                   # Generate HTML report
+
+# Fuzz testing (hypothesis included in requirements.txt)
+# Add @given decorators to test functions in home/tests.py
+# Example:
+# from hypothesis import given
+# from hypothesis.strategies import text, integers
+# @given(text(), integers())
+# def test_with_random_inputs(string_input, int_input):
+#     # Test with randomly generated inputs
+
+# Mocking tools (pytest-mock included in requirements.txt)
+# Use unittest.mock.patch to mock external dependencies
+# Example:
+# from unittest.mock import patch, MagicMock
+# @patch('home.views.send_mail')
+# def test_email_sending(mock_send_mail):
+#     mock_send_mail.return_value = 1
+#     # Test code that calls send_mail
+
+# Time mocking for deterministic tests (freezegun included in requirements.txt)
+# from freezegun import freeze_time
+# @freeze_time('2025-01-15 12:00:00')
+# def test_time_dependent_feature():
+#     # Test with fixed time
 ```
+
+### Code Linting (Pylint)
+```bash
+# Pylint is included in requirements.txt
+
+# Run pylint on specific files
+pylint home/views.py
+pylint home/models.py
+
+# Run on entire app
+pylint home/
+
+# Run on entire project (home and config apps)
+pylint home/ config/
+
+# Run with specific score threshold
+pylint home/ --fail-under=8.0
+
+# Generate configuration file (creates .pylintrc)
+pylint --generate-rcfile > .pylintrc
+
+# Run with custom config
+pylint home/ --rcfile=.pylintrc
+
+# Show only errors (ignore warnings)
+pylint home/ --errors-only
+
+# Disable specific warnings
+pylint home/ --disable=C0111,C0103
+
+# Generate report
+pylint home/ --output-format=text > pylint_report.txt
+```
+
+**Note**: Pylint will be integrated into CI pipeline in Sprint 3. For Sprint 2, use it locally to maintain code quality.
 
 ### Database Operations
 ```bash
@@ -257,20 +331,37 @@ python manage.py runserver
 - Test your changes in the actual running application when possible
 
 ### Code Quality Requirements
-- Write tests for new functionality
+- Write tests for new functionality (unit tests, integration tests, edge cases)
+- **Ensure all tests are independent** - tests must pass when run individually or in any order
+- **Prevent flaky tests** - use mocks for external dependencies (network, time, random, email)
+- **Run pylint before committing** - maintain code quality with linting: `pylint home/ config/`
+- **Single return statement**: Functions should return one thing when practical
+  - Use guard clauses for early validation exits
+  - Prefer single return at end for normal flow
+  - Improves readability and reduces cognitive complexity
+  - Exception: Early returns for validation/error conditions are acceptable
 - Follow PEP 8 standards for Python code
 - Follow Django best practices and conventions
 - Match existing code style and patterns in the codebase
 - Write clear, descriptive commit messages
 - Write clear, descriptive, comprehensive docstrings in the Python code using line comments or block comments
+- **See STYLE_GUIDE.md** for comprehensive coding standards
+- **See SECURITY_GUIDE.md** for security best practices and scanning tools
 
 ### Testing Workflow
 When making code changes:
 1. Make your changes
-2. Run relevant tests: `pytest` or `python manage.py test`
-3. Check coverage: `pytest --cov=. --cov-report=term-missing`
-4. Fix any failures before reporting completion
-5. Manual testing in browser when UI changes are involved
+2. Run pylint: `pylint home/ config/` and fix any critical issues
+3. Run relevant tests: `pytest` or `python manage.py test`
+4. Check coverage: `pytest --cov=. --cov-report=term-missing`
+5. Fix any failures before reporting completion
+6. Manual testing in browser when UI changes are involved
+
+**For Critical/Security Code (authentication, input validation, permissions):**
+7. Run mutation testing: `mutmut run` to verify tests catch actual bugs
+8. Add fuzz testing with `hypothesis` to discover edge cases with random inputs
+9. Review mutation survivors and add tests to catch them
+10. Ensure mutation score >80% for security-critical modules
 
 ## Common Task Patterns
 
@@ -295,16 +386,22 @@ When making code changes:
 2. Identify root cause using search/read tools
 3. Fix the issue
 4. Add test case to prevent regression
+   - Ensure test is independent (doesn't rely on other tests)
+   - Mock external dependencies to prevent flakiness
+   - Test should fail before the fix and pass after
 5. Verify fix with full test suite: `pytest`
-6. Report: what was broken, what you changed, which test proves it's fixed
+6. Run tests in random order to verify independence: `pytest --random-order`
+7. Report: what was broken, what you changed, which test proves it's fixed
 
 ### Refactoring
 1. Understand current implementation thoroughly
 2. Write tests for current behavior if coverage is lacking
+   - Ensure tests are independent and not flaky
 3. Make incremental changes
 4. Run tests after each change: `pytest`
-5. Ensure no functionality is lost
-6. Report: what you refactored, why, and test results
+5. Verify test independence: `pytest --random-order`
+6. Ensure no functionality is lost
+7. Report: what you refactored, why, and test results
 
 ### Search and Analysis Tasks
 When searching for code or analyzing the codebase:
@@ -339,6 +436,40 @@ When searching for code or analyzing the codebase:
 - Write tests for edge cases and error handling
 - Use Django's TestCase for database-dependent tests
 - Use fixtures for common test data
+
+**Test Quality Requirements:**
+- **Test Independence**: Every test must be completely independent
+  - Tests should pass when run individually or in any order
+  - Use `setUp()` and `tearDown()` methods or pytest fixtures to ensure clean state
+  - Clear cache between tests (`cache.clear()`) to prevent state leakage
+  - Create fresh test data for each test, never rely on data from previous tests
+  - Avoid global state or shared mutable objects
+  - Run tests in random order to detect dependencies: `pytest --random-order`
+- **Prevent Flaky Tests**: Tests must be deterministic and reliable
+  - **Mock external dependencies**: Use `unittest.mock` or `pytest-mock` for:
+    - Network calls (APIs, external services)
+    - Email sending (SMTP)
+    - File system operations (when testing logic, not I/O)
+    - Time-dependent behavior (`datetime.now()`, `timezone.now()`)
+    - Random number generation
+  - **Use freezegun** for time-dependent tests: `@freeze_time('2025-01-15')`
+  - **Avoid sleep()**: Never use `time.sleep()` in tests; use mocks or timeouts
+  - **Fix random seeds**: If using random data, set seed: `random.seed(42)`
+  - **Mock third-party services**: Don't make real HTTP requests in tests
+  - **Database state**: Use Django's TestCase for automatic transaction rollback
+  - **Clean up resources**: Close files, connections, temp directories in tearDown
+
+**Advanced Testing Techniques:**
+- **Mutation Testing**: Use `mutmut` to verify test quality by introducing small code changes (mutations) and ensuring tests catch them. This validates that tests actually detect bugs, not just provide coverage.
+  - Run mutation testing on critical security code (authentication, input validation, permissions)
+  - Aim for high mutation score (>80%) on security-sensitive modules
+  - Use mutation testing to find weak tests that don't actually verify behavior
+- **Fuzz Testing**: Use `hypothesis` to generate random test inputs and discover edge cases
+  - Apply to input validation functions (login, signup, account updates)
+  - Use for data parsing and serialization functions
+  - Particularly valuable for security-critical code paths
+  - Define strategies that match your domain (email formats, usernames, passwords)
+  - Run fuzz tests in CI to catch unexpected edge cases
 
 ## Error Handling
 
