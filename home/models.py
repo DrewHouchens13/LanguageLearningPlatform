@@ -58,7 +58,7 @@ class UserProfile(models.Model):
             str: Gravatar URL with default fallback
         """
         email = self.user.email.lower().encode('utf-8')
-        email_hash = hashlib.md5(email).hexdigest()
+        email_hash = hashlib.md5(email, usedforsecurity=False).hexdigest()
         return f"https://www.gravatar.com/avatar/{email_hash}?s={size}&d=identicon"
 
     def get_avatar_url(self):
