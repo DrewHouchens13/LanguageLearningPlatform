@@ -1351,3 +1351,87 @@ footer p {
     font-size: 1.25rem;
   }
 }
+
+/* Proficiency Card Styles */
+.proficiency-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.proficiency-badge {
+  font-size: 1.5rem;
+  font-weight: 700;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.proficiency-badge.proficiency-a1 {
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+}
+
+.proficiency-badge.proficiency-a2 {
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+}
+
+.proficiency-badge.proficiency-b1 {
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+}
+
+.proficiency-details {
+  text-align: center;
+  width: 100%;
+}
+
+.proficiency-details p {
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+.proficiency-details strong {
+  color: #333;
+}
+
+.link-button {
+  display: inline-block;
+  margin: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.link-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.cta-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.cta-card h3 {
+  color: #667eea;
+  margin-bottom: 1rem;
+}
+
+.cta-card p {
+  color: #666;
+  margin-bottom: 1.5rem;
+}

@@ -6,40 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Language Learning Platform</title>
     <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+    <style>
+      .hero-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+    </style>
   </head>
   <body>
-    <header>
-      <nav class="navbar">
-        <div class="nav-brand">
-          <h1>Language Learning Platform</h1>
-        </div>
-        <button class="nav-toggle" aria-label="Toggle navigation">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-        <ul class="nav-menu">
-          <li class="nav-item"><a href="{% url 'landing' %}" class="nav-link active">Home</a></li>
-          <li class="nav-item"><a href="#" class="nav-link">Courses</a></li>
-          <li class="nav-item"><a href="#" class="nav-link">Lessons</a></li>
-          <li class="nav-item"><a href="{% url 'progress' %}" class="nav-link">My Progress</a></li>
-          {% if user.is_authenticated %}
-            <li class="nav-item"><a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a></li>
-            {% if user.is_staff %}
-              <li class="nav-item"><a href="{% url 'admin:index' %}" class="nav-link admin-link">Admin</a></li>
-            {% endif %}
-            <li class="nav-item nav-avatar">
-              <img src="{{ user.profile.get_avatar_thumbnail_url }}" alt="{{ user.username }}" class="nav-avatar-img">
-            </li>
-            <li class="nav-item"><a href="{% url 'account' %}" class="nav-link">Account</a></li>
-            <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link nav-button">Logout</a></li>
-          {% else %}
-            <li class="nav-item"><a href="{% url 'login' %}" class="nav-link">Login</a></li>
-            <li class="nav-item"><a href="{% url 'login' %}" class="nav-link nav-button">Sign Up</a></li>
-          {% endif %}
-        </ul>
-      </nav>
-    </header>
+    {% include '_nav.html' %}
 
     <main>
       <!-- Django Messages -->
@@ -57,6 +32,7 @@
         <div class="hero-content">
           <h2>Welcome to Your Journey</h2>
           <p>Embark on an exciting adventure to master new languages. Our platform makes learning engaging, effective, and enjoyable for learners at the beginner level.</p>
+          <a href="{% url 'onboarding_welcome' %}" class="hero-button" style="display: inline-block; margin-top: 1rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: transform 0.2s;">Take Onboarding Test</a>
         </div>
         <div class="hero-image">
           <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80" alt="Students learning together">

@@ -2,7 +2,15 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.contrib import messages
-from .models import UserProgress, LessonCompletion, QuizResult, UserProfile
+from .models import (
+    UserProgress,
+    LessonCompletion,
+    QuizResult,
+    UserProfile,
+    OnboardingQuestion,
+    OnboardingAttempt,
+    OnboardingAnswer
+)
 import secrets
 import string
 import logging
@@ -120,11 +128,12 @@ admin.site.unregister(User)
 
 
 class UserProfileInline(admin.StackedInline):
-    """Inline admin for UserProfile to show avatar in User admin"""
+    """Inline admin for UserProfile to show avatar and language profile in User admin"""
     model = UserProfile
     can_delete = False
-    verbose_name_plural = 'Profile'
-    fields = ('avatar',)
+    verbose_name_plural = 'Profile & Language Settings'
+    fields = ('avatar', 'proficiency_level', 'has_completed_onboarding', 'onboarding_completed_at', 'target_language', 'daily_goal_minutes', 'learning_motivation')
+    readonly_fields = ('onboarding_completed_at',)
 
 
 @admin.register(User)
@@ -146,6 +155,7 @@ class CustomUserAdmin(BaseUserAdmin):
     )
 
     readonly_fields = BaseUserAdmin.readonly_fields + ('get_progress_info',)
+    inlines = [UserProfileInline]
 
     def get_progress_info(self, obj):
         """Display user progress information in admin"""
@@ -232,3 +242,134 @@ class QuizResultAdmin(admin.ModelAdmin):
     list_filter = ('completed_at',)
     readonly_fields = ('completed_at',)
     actions = [delete_selected_quizzes]
+
+
+# =============================================================================
+# ONBOARDING ASSESSMENT ADMIN
+# =============================================================================
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    """Admin for UserProfile model"""
+    list_display = ('user', 'proficiency_level', 'target_language', 'has_completed_onboarding', 'onboarding_completed_at', 'daily_goal_minutes')
+    search_fields = ('user__username', 'user__email', 'target_language')
+    list_filter = ('proficiency_level', 'target_language', 'has_completed_onboarding', 'created_at')
+    readonly_fields = ('created_at', 'updated_at', 'onboarding_completed_at')
+    
+    fieldsets = (
+        ('User', {
+            'fields': ('user',)
+        }),
+        ('Proficiency', {
+            'fields': ('proficiency_level', 'has_completed_onboarding', 'onboarding_completed_at')
+        }),
+        ('Language Preferences', {
+            'fields': ('target_language', 'daily_goal_minutes', 'learning_motivation')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(OnboardingQuestion)
+class OnboardingQuestionAdmin(admin.ModelAdmin):
+    """Admin for OnboardingQuestion model"""
+    list_display = ('question_number', 'language', 'difficulty_level', 'difficulty_points', 'short_text')
+    search_fields = ('question_text', 'language')
+    list_filter = ('language', 'difficulty_level', 'difficulty_points')
+    ordering = ('language', 'question_number')
+    
+    fieldsets = (
+        ('Question Details', {
+            'fields': ('question_number', 'language', 'difficulty_level', 'difficulty_points')
+        }),
+        ('Question Content', {
+            'fields': ('question_text', 'option_a', 'option_b', 'option_c', 'option_d')
+        }),
+        ('Answer', {
+            'fields': ('correct_answer', 'explanation')
+        }),
+        ('Metadata', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    readonly_fields = ('created_at',)
+    
+    def short_text(self, obj):
+        """Display shortened question text"""
+        return obj.question_text[:50] + '...' if len(obj.question_text) > 50 else obj.question_text
+    short_text.short_description = 'Question Text'
+
+
+@admin.register(OnboardingAttempt)
+class OnboardingAttemptAdmin(admin.ModelAdmin):
+    """Admin for OnboardingAttempt model"""
+    list_display = ('id', 'user_or_guest', 'language', 'calculated_level', 'score_display', 'percentage_display', 'completed_at')
+    search_fields = ('user__username', 'user__email', 'session_key')
+    list_filter = ('language', 'calculated_level', 'completed_at', 'started_at')
+    readonly_fields = ('started_at', 'completed_at', 'score_percentage')
+    ordering = ('-started_at',)
+    
+    fieldsets = (
+        ('Attempt Details', {
+            'fields': ('user', 'session_key', 'language')
+        }),
+        ('Results', {
+            'fields': ('calculated_level', 'total_score', 'total_possible', 'score_percentage')
+        }),
+        ('Timestamps', {
+            'fields': ('started_at', 'completed_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def user_or_guest(self, obj):
+        """Display username or guest session ID"""
+        if obj.user:
+            return obj.user.username
+        return f'Guest-{obj.session_key[:8]}'
+    user_or_guest.short_description = 'User'
+    
+    def score_display(self, obj):
+        """Display score as fraction"""
+        return f'{obj.total_score}/{obj.total_possible}'
+    score_display.short_description = 'Score'
+    
+    def percentage_display(self, obj):
+        """Display score percentage"""
+        return f'{obj.score_percentage}%'
+    percentage_display.short_description = 'Percentage'
+
+
+@admin.register(OnboardingAnswer)
+class OnboardingAnswerAdmin(admin.ModelAdmin):
+    """Admin for OnboardingAnswer model"""
+    list_display = ('id', 'attempt_info', 'question_info', 'user_answer', 'is_correct', 'time_taken_seconds', 'answered_at')
+    search_fields = ('attempt__user__username', 'question__question_text')
+    list_filter = ('is_correct', 'question__difficulty_level', 'answered_at')
+    readonly_fields = ('answered_at',)
+    ordering = ('-answered_at',)
+    
+    fieldsets = (
+        ('Answer Details', {
+            'fields': ('attempt', 'question', 'user_answer', 'is_correct')
+        }),
+        ('Timing', {
+            'fields': ('time_taken_seconds', 'answered_at')
+        }),
+    )
+    
+    def attempt_info(self, obj):
+        """Display attempt information"""
+        user = obj.attempt.user.username if obj.attempt.user else f'Guest-{obj.attempt.session_key[:8]}'
+        return f'Attempt #{obj.attempt.id} - {user}'
+    attempt_info.short_description = 'Attempt'
+    
+    def question_info(self, obj):
+        """Display question information"""
+        return f'Q{obj.question.question_number} ({obj.question.difficulty_level})'
+    question_info.short_description = 'Question'

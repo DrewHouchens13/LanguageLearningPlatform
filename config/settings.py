@@ -48,6 +48,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "[::1]",
+    "testserver",  # For Django test client
     "languagelearningplatform.org",     # Custom domain
     "www.languagelearningplatform.org", # Custom domain with www
     ".devedu.io",  # Allow all devedu.io subdomains

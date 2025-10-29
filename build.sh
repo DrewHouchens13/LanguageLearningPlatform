@@ -11,3 +11,6 @@ python manage.py collectstatic --no-input
 # Apply database migrations
 python manage.py migrate
 
+# Load onboarding questions fixtures
+python manage.py loaddata home/fixtures/onboarding_spanish.json
+
