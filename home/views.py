@@ -741,6 +741,28 @@ def account_view(request):
             logger.info('Password updated for user: %s from IP: %s',
                        request.user.username, get_client_ip(request))
 
+        elif action == 'update_avatar':
+            from .forms import AvatarUploadForm
+
+            # Get or create user profile
+            profile, _created = request.user.profile, False
+            if not hasattr(request.user, 'profile'):
+                from .models import UserProfile
+                profile = UserProfile.objects.create(user=request.user)
+                _created = True
+
+            form = AvatarUploadForm(request.POST, request.FILES, instance=profile)
+
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Avatar updated successfully!')
+                logger.info('Avatar updated for user: %s from IP: %s',
+                           request.user.username, get_client_ip(request))
+            else:
+                for error_list in form.errors.values():
+                    for error in error_list:
+                        messages.error(request, error)
+
     return render(request, 'account.html')
 
 

@@ -28,6 +28,9 @@
             {% if user.is_staff %}
               <li class="nav-item"><a href="{% url 'admin:index' %}" class="nav-link admin-link">Admin</a></li>
             {% endif %}
+            <li class="nav-item nav-avatar">
+              <img src="{{ user.profile.get_avatar_thumbnail_url }}" alt="{{ user.username }}" class="nav-avatar-img">
+            </li>
             <li class="nav-item"><a href="{% url 'account' %}" class="nav-link">Account</a></li>
             <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link nav-button">Logout</a></li>
           {% else %}
@@ -52,8 +55,15 @@
       {% if user.is_authenticated %}
         <!-- Logged-in User View -->
         <section class="progress-header">
-          <h2>Your Learning Progress</h2>
-          <p>Welcome back, {{ user.first_name }}! Here's how you're doing this week.</p>
+          <div class="progress-header-content">
+            <div>
+              <h2>Your Learning Progress</h2>
+              <p>Welcome back, {{ user.first_name }}! Here's how you're doing this week.</p>
+            </div>
+            <div class="progress-avatar-container">
+              <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="progress-avatar">
+            </div>
+          </div>
         </section>
         
         <!-- Weekly Stats -->

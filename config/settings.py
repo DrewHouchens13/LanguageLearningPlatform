@@ -192,6 +192,15 @@ else:
 # Directory where collectstatic will collect static files for production
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Media files configuration (user uploaded content)
+if IS_DEVEDU:
+    proxy_prefix = os.environ.get('STATIC_URL_PREFIX', '/proxy/8000')
+    MEDIA_URL = f'{proxy_prefix}/media/'
+else:
+    MEDIA_URL = '/media/'
+
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # WhiteNoise configuration for efficient static file serving
 # Use simpler storage for tests (avoids manifest file requirement)
 import sys

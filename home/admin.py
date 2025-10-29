@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.contrib import messages
-from .models import UserProgress, LessonCompletion, QuizResult
+from .models import UserProgress, LessonCompletion, QuizResult, UserProfile
 import secrets
 import string
 import logging
@@ -119,6 +119,14 @@ reset_user_progress.short_description = "Reset all user progress"
 admin.site.unregister(User)
 
 
+class UserProfileInline(admin.StackedInline):
+    """Inline admin for UserProfile to show avatar in User admin"""
+    model = UserProfile
+    can_delete = False
+    verbose_name_plural = 'Profile'
+    fields = ('avatar',)
+
+
 @admin.register(User)
 class CustomUserAdmin(BaseUserAdmin):
     """Enhanced User admin with custom actions"""
@@ -126,6 +134,7 @@ class CustomUserAdmin(BaseUserAdmin):
     list_filter = ('is_staff', 'is_superuser', 'is_active', 'date_joined')
     search_fields = ('username', 'email', 'first_name', 'last_name')
     ordering = ('-date_joined',)
+    inlines = (UserProfileInline,)
 
     actions = [reset_password_to_default, make_staff_admin, remove_admin_privileges, reset_user_progress]
 

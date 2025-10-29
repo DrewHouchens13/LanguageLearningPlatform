@@ -1541,6 +1541,11 @@ class TestAdminCRUDOperations(AdminTestCase):
             'username': 'newuser',
             'password1': 'testpass123456',
             'password2': 'testpass123456',
+            # UserProfile inline formset data
+            'profile-TOTAL_FORMS': '1',
+            'profile-INITIAL_FORMS': '0',
+            'profile-MIN_NUM_FORMS': '0',
+            'profile-MAX_NUM_FORMS': '1',
         })
 
         # Should redirect after successful creation
@@ -1568,6 +1573,13 @@ class TestAdminCRUDOperations(AdminTestCase):
             'date_joined_1': '00:00:00',
             'initial-date_joined_0': '2025-01-01',
             'initial-date_joined_1': '00:00:00',
+            # UserProfile inline formset data
+            'profile-TOTAL_FORMS': '1',
+            'profile-INITIAL_FORMS': '1',
+            'profile-MIN_NUM_FORMS': '0',
+            'profile-MAX_NUM_FORMS': '1',
+            'profile-0-id': test_user.profile.pk,
+            'profile-0-user': test_user.pk,
         })
 
         # Refresh user from database
@@ -2293,8 +2305,8 @@ class AccountViewTests(TestCase):
         )
 
         # GET request should minimize queries
-        # Queries: 1=session read, 2=user, 3-5=session update (savepoint, update, release)
-        with self.assertNumQueries(5):
+        # Queries: 1=session read, 2=user, 3=user profile, 4-6=session update (savepoint, update, release)
+        with self.assertNumQueries(6):
             response = self.client.get(reverse('account'))
             self.assertEqual(response.status_code, 200)
 
