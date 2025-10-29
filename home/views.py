@@ -966,6 +966,28 @@ def account_view(request):
             logger.info('Password updated for user: %s from IP: %s',
                        request.user.username, get_client_ip(request))
 
+        elif action == 'update_avatar':
+            from .forms import AvatarUploadForm
+
+            # Get or create user profile
+            profile, _created = request.user.profile, False
+            if not hasattr(request.user, 'profile'):
+                from .models import UserProfile
+                profile = UserProfile.objects.create(user=request.user)
+                _created = True
+
+            form = AvatarUploadForm(request.POST, request.FILES, instance=profile)
+
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Avatar updated successfully!')
+                logger.info('Avatar updated for user: %s from IP: %s',
+                           request.user.username, get_client_ip(request))
+            else:
+                for error_list in form.errors.values():
+                    for error in error_list:
+                        messages.error(request, error)
+
     return render(request, 'account.html')
 
 
@@ -1011,19 +1033,22 @@ def forgot_password_view(request):
                 f'/reset-password/{uid}/{token}/'
             )
 
-            # Send password reset email
-            send_template_email(
-                request,
-                'emails/password_reset_email.txt',
-                {
-                    'user': user,
-                    'reset_url': reset_url,
-                    'site_name': 'Language Learning Platform',
-                },
-                'Password Reset - Language Learning Platform',
-                user.email,
-                'Password reset email'
-            )
+            # Render simulated email (for college project - no real SMTP)
+            from django.template.loader import render_to_string
+            email_content = render_to_string('emails/password_reset_email.txt', {
+                'user': user,
+                'reset_url': reset_url,
+                'site_name': 'Language Learning Platform',
+            })
+
+            # Show simulated email in styled box
+            return render(request, 'forgot_password.html', {
+                'simulated_email': {
+                    'to': user.email,
+                    'subject': 'Password Reset - Language Learning Platform',
+                    'content': email_content,
+                }
+            })
 
         except User.DoesNotExist:
             # Log failed attempt but don't inform user (prevent enumeration)
@@ -1124,19 +1149,22 @@ def forgot_username_view(request):
             # Build login URL
             login_url = request.build_absolute_uri('/login/')
 
-            # Send username reminder email
-            send_template_email(
-                request,
-                'emails/username_reminder_email.txt',
-                {
-                    'user': user,
-                    'site_name': 'Language Learning Platform',
-                    'login_url': login_url,
-                },
-                'Username Reminder - Language Learning Platform',
-                user.email,
-                'Username reminder'
-            )
+            # Render simulated email (for college project - no real SMTP)
+            from django.template.loader import render_to_string
+            email_content = render_to_string('emails/username_reminder_email.txt', {
+                'user': user,
+                'site_name': 'Language Learning Platform',
+                'login_url': login_url,
+            })
+
+            # Show simulated email in styled box
+            return render(request, 'forgot_username.html', {
+                'simulated_email': {
+                    'to': user.email,
+                    'subject': 'Username Reminder - Language Learning Platform',
+                    'content': email_content,
+                }
+            })
 
         except User.DoesNotExist:
             # Log failed attempt but don't inform user (prevent enumeration)

@@ -18,7 +18,8 @@ from django.contrib.messages import get_messages
 from home.admin import (
     CustomUserAdmin, UserProgressAdmin, LessonCompletionAdmin, QuizResultAdmin,
     reset_password_to_default, make_staff_admin, remove_admin_privileges,
-    reset_user_progress, reset_progress_stats, delete_selected_lessons, delete_selected_quizzes
+    reset_user_progress, reset_progress_stats, delete_selected_lessons, delete_selected_quizzes,
+    delete_user_avatars, delete_user_avatars_from_users
 )
 
 
@@ -379,6 +380,99 @@ class TestAdminCustomActions(TestCase):
         messages = list(get_messages(request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]), 'Successfully deleted 2 quiz result(s)')
+
+    def test_delete_user_avatars_action(self):
+        """Test delete_user_avatars admin action for content moderation"""
+        from django.core.files.base import ContentFile
+        from home.models import UserProfile
+
+        # Set avatar directly without image processing
+        profile = self.test_user.profile
+        profile.avatar.save('test_avatar.jpg', ContentFile(b'fake image'), save=False)
+        UserProfile.objects.filter(pk=profile.pk).update(avatar=profile.avatar.name)
+        profile.refresh_from_db()
+
+        # Verify avatar field is set
+        self.assertTrue(profile.avatar)
+
+        # Create request and add message storage
+        request = HttpRequest()
+        request.user = self.admin_user
+        setattr(request, 'session', 'session')
+        messages_storage = FallbackStorage(request)
+        setattr(request, '_messages', messages_storage)
+
+        # Execute action
+        queryset = UserProfile.objects.filter(user=self.test_user)
+        delete_user_avatars(None, request, queryset)
+
+        # Verify avatar was deleted
+        profile.refresh_from_db()
+        self.assertFalse(profile.avatar)
+
+        # Check success message
+        messages = list(get_messages(request))
+        self.assertEqual(len(messages), 1)
+        self.assertIn('Successfully deleted 1 avatar', str(messages[0]))
+
+    def test_delete_user_avatars_from_users_action(self):
+        """Test delete_user_avatars_from_users admin action (User admin wrapper)"""
+        from django.core.files.base import ContentFile
+        from home.models import UserProfile
+
+        # Set avatar directly without image processing
+        profile = self.test_user.profile
+        profile.avatar.save('test_avatar2.jpg', ContentFile(b'fake image 2'), save=False)
+        UserProfile.objects.filter(pk=profile.pk).update(avatar=profile.avatar.name)
+        profile.refresh_from_db()
+
+        # User 2 has no avatar (uses Gravatar)
+
+        # Verify avatar exists for user 1
+        self.assertTrue(profile.avatar)
+
+        # Create request and add message storage
+        request = HttpRequest()
+        request.user = self.admin_user
+        setattr(request, 'session', 'session')
+        messages_storage = FallbackStorage(request)
+        setattr(request, '_messages', messages_storage)
+
+        # Execute action on both users
+        queryset = User.objects.filter(username__in=['testuser', 'testuser2'])
+        delete_user_avatars_from_users(None, request, queryset)
+
+        # Verify avatar was deleted for user 1
+        profile.refresh_from_db()
+        self.assertFalse(profile.avatar)
+
+        # Check messages
+        messages = list(get_messages(request))
+        self.assertEqual(len(messages), 2)
+        self.assertIn('Successfully deleted 1 avatar', str(messages[0]))
+        self.assertIn('1 user(s) had no custom avatar', str(messages[1]))
+
+    def test_delete_avatars_no_custom_avatars(self):
+        """Test delete avatars action when no custom avatars exist"""
+        from home.models import UserProfile
+
+        # Both users use Gravatar (no custom avatars)
+
+        # Create request and add message storage
+        request = HttpRequest()
+        request.user = self.admin_user
+        setattr(request, 'session', 'session')
+        messages_storage = FallbackStorage(request)
+        setattr(request, '_messages', messages_storage)
+
+        # Execute action
+        queryset = UserProfile.objects.filter(user__in=[self.test_user, self.test_user2])
+        delete_user_avatars(None, request, queryset)
+
+        # Check info message
+        messages = list(get_messages(request))
+        self.assertEqual(len(messages), 1)
+        self.assertIn('No custom avatars found', str(messages[0]))
 
 
 # ============================================================================

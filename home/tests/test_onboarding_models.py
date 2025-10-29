@@ -7,96 +7,11 @@ from home.models import (
 )
 
 
-class TestUserProfileModel(TestCase):
-    """Test UserProfile model functionality"""
-
-    def setUp(self):
-        """Create test user"""
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
-        )
-
-    def test_user_profile_creation_with_defaults(self):
-        """Test UserProfile is created with correct default values"""
-        profile = UserProfile.objects.create(user=self.user)
-        
-        self.assertEqual(profile.user, self.user)
-        self.assertIsNone(profile.proficiency_level)
-        self.assertFalse(profile.has_completed_onboarding)
-        self.assertIsNone(profile.onboarding_completed_at)
-        self.assertEqual(profile.target_language, 'Spanish')
-        self.assertEqual(profile.daily_goal_minutes, 15)
-        self.assertEqual(profile.learning_motivation, '')
-        self.assertIsNotNone(profile.created_at)
-        self.assertIsNotNone(profile.updated_at)
-
-    def test_user_profile_with_onboarding_complete(self):
-        """Test UserProfile with completed onboarding"""
-        completed_time = timezone.now()
-        profile = UserProfile.objects.create(
-            user=self.user,
-            proficiency_level='A2',
-            has_completed_onboarding=True,
-            onboarding_completed_at=completed_time,
-            target_language='Spanish',
-            daily_goal_minutes=30,
-            learning_motivation='Want to travel to Spain'
-        )
-        
-        self.assertEqual(profile.proficiency_level, 'A2')
-        self.assertTrue(profile.has_completed_onboarding)
-        self.assertEqual(profile.onboarding_completed_at, completed_time)
-        self.assertEqual(profile.daily_goal_minutes, 30)
-        self.assertEqual(profile.learning_motivation, 'Want to travel to Spain')
-
-    def test_user_profile_string_representation(self):
-        """Test __str__ method returns correct format"""
-        profile = UserProfile.objects.create(
-            user=self.user,
-            proficiency_level='A1'
-        )
-        expected = f"{self.user.username}'s Profile - Beginner (A1)"
-        self.assertEqual(str(profile), expected)
-
-    def test_user_profile_string_representation_without_level(self):
-        """Test __str__ method for profile without proficiency level"""
-        profile = UserProfile.objects.create(user=self.user)
-        expected = f"{self.user.username}'s Profile - Not assessed"
-        self.assertEqual(str(profile), expected)
-
-    def test_user_profile_one_to_one_relationship(self):
-        """Test OneToOne relationship with User"""
-        profile = UserProfile.objects.create(
-            user=self.user,
-            proficiency_level='B1'
-        )
-        
-        # Access profile from user
-        self.assertEqual(self.user.language_profile, profile)
-
-    def test_user_profile_unique_constraint(self):
-        """Test that only one profile per user can exist"""
-        UserProfile.objects.create(user=self.user)
-        
-        # Attempting to create second profile should raise error
-        with self.assertRaises(IntegrityError):
-            UserProfile.objects.create(user=self.user)
-
-    def test_user_profile_proficiency_level_choices(self):
-        """Test proficiency level choices"""
-        valid_levels = ['A1', 'A2', 'B1']
-        
-        for level in valid_levels:
-            profile = UserProfile.objects.create(
-                user=User.objects.create_user(
-                    username=f'user_{level}',
-                    email=f'{level}@example.com'
-                ),
-                proficiency_level=level
-            )
-            self.assertEqual(profile.proficiency_level, level)
+# NOTE: TestUserProfileModel tests have been removed from this file
+# as they are duplicates of tests in test_models.py. The tests in test_models.py
+# correctly use the auto-created UserProfile via the post_save signal,
+# while these tests were attempting to manually create profiles which causes
+# IntegrityError due to the OneToOne constraint.
 
 
 class TestOnboardingQuestionModel(TestCase):

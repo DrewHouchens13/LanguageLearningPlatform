@@ -357,8 +357,9 @@ class AccountViewTests(TestCase):
         )
 
         # GET request should minimize queries
-        # Queries: 1=session read, 2=user, 3-5=session update (savepoint, update, release)
-        with self.assertNumQueries(5):
+        # Queries: 1=session read, 2=user, 3=user profile (for avatar display),
+        #          4-6=session update (savepoint, update, release)
+        with self.assertNumQueries(6):
             response = self.client.get(reverse('account'))
             self.assertEqual(response.status_code, 200)
 

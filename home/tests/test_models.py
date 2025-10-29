@@ -341,9 +341,10 @@ class TestUserProfileModel(TestCase):
         )
 
     def test_user_profile_creation_with_defaults(self):
-        """Test UserProfile is created with correct default values"""
-        profile = UserProfile.objects.create(user=self.user)
-        
+        """Test UserProfile is auto-created with correct default values via signal"""
+        # Profile is auto-created by signal when user is created
+        profile = self.user.profile
+
         self.assertEqual(profile.user, self.user)
         self.assertIsNone(profile.proficiency_level)
         self.assertFalse(profile.has_completed_onboarding)
@@ -357,16 +358,16 @@ class TestUserProfileModel(TestCase):
     def test_user_profile_with_onboarding_complete(self):
         """Test UserProfile with completed onboarding"""
         completed_time = timezone.now()
-        profile = UserProfile.objects.create(
-            user=self.user,
-            proficiency_level='A2',
-            has_completed_onboarding=True,
-            onboarding_completed_at=completed_time,
-            target_language='Spanish',
-            daily_goal_minutes=30,
-            learning_motivation='Want to travel to Spain'
-        )
-        
+        # Use auto-created profile and update it
+        profile = self.user.profile
+        profile.proficiency_level = 'A2'
+        profile.has_completed_onboarding = True
+        profile.onboarding_completed_at = completed_time
+        profile.target_language = 'Spanish'
+        profile.daily_goal_minutes = 30
+        profile.learning_motivation = 'Want to travel to Spain'
+        profile.save()
+
         self.assertEqual(profile.proficiency_level, 'A2')
         self.assertTrue(profile.has_completed_onboarding)
         self.assertEqual(profile.onboarding_completed_at, completed_time)
@@ -375,33 +376,36 @@ class TestUserProfileModel(TestCase):
 
     def test_user_profile_string_representation(self):
         """Test __str__ method returns correct format"""
-        profile = UserProfile.objects.create(
-            user=self.user,
-            proficiency_level='A1'
-        )
+        # Use auto-created profile and update it
+        profile = self.user.profile
+        profile.proficiency_level = 'A1'
+        profile.save()
         expected = f"{self.user.username}'s Profile - Beginner (A1)"
         self.assertEqual(str(profile), expected)
 
     def test_user_profile_string_representation_without_level(self):
         """Test __str__ method for profile without proficiency level"""
-        profile = UserProfile.objects.create(user=self.user)
+        # Use auto-created profile (default has no level)
+        profile = self.user.profile
         expected = f"{self.user.username}'s Profile - Not assessed"
         self.assertEqual(str(profile), expected)
 
     def test_user_profile_one_to_one_relationship(self):
         """Test OneToOne relationship with User"""
-        profile = UserProfile.objects.create(
-            user=self.user,
-            proficiency_level='B1'
-        )
-        
+        # Use auto-created profile and update it
+        profile = self.user.profile
+        profile.proficiency_level = 'B1'
+        profile.save()
+
         # Access profile from user
-        self.assertEqual(self.user.language_profile, profile)
+        self.assertEqual(self.user.profile, profile)
 
     def test_user_profile_unique_constraint(self):
-        """Test that only one profile per user can exist"""
-        UserProfile.objects.create(user=self.user)
-        
+        """Test that only one profile per user can exist (auto-created via signal)"""
+        # Profile already exists from signal
+        existing_profile = self.user.profile
+        self.assertIsNotNone(existing_profile)
+
         # Attempting to create second profile should raise error
         with self.assertRaises(IntegrityError):
             UserProfile.objects.create(user=self.user)
@@ -409,15 +413,16 @@ class TestUserProfileModel(TestCase):
     def test_user_profile_proficiency_level_choices(self):
         """Test proficiency level choices"""
         valid_levels = ['A1', 'A2', 'B1']
-        
+
         for level in valid_levels:
-            profile = UserProfile.objects.create(
-                user=User.objects.create_user(
-                    username=f'user_{level}',
-                    email=f'{level}@example.com'
-                ),
-                proficiency_level=level
+            # Create new user (which auto-creates profile via signal)
+            user = User.objects.create_user(
+                username=f'user_{level}',
+                email=f'{level}@example.com'
             )
+            profile = user.profile
+            profile.proficiency_level = level
+            profile.save()
             self.assertEqual(profile.proficiency_level, level)
 
 

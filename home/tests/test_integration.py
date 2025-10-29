@@ -214,15 +214,15 @@ class ProgressTrackingFlowTest(TestCase):
         client = Client()
         user = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
         client.login(username='testuser', password='pass123')
-        
+
         # Create onboarding data
         from django.utils import timezone
-        profile = UserProfile.objects.create(
-            user=user,
-            proficiency_level='A2',
-            has_completed_onboarding=True,
-            onboarding_completed_at=timezone.now()
-        )
+        # Use auto-created profile and update it
+        profile = user.profile
+        profile.proficiency_level = 'A2'
+        profile.has_completed_onboarding = True
+        profile.onboarding_completed_at = timezone.now()
+        profile.save()
         attempt = OnboardingAttempt.objects.create(
             user=user,
             language='Spanish',

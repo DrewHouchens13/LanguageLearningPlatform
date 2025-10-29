@@ -148,6 +148,44 @@ Your name will be displayed in your dashboard and profile.
 
 ---
 
+### Updating Your Profile Picture (Avatar)
+
+1. Click **"Account"** in the navigation
+2. Scroll to **"Update Profile Picture"** section
+3. View your current avatar (either custom upload or Gravatar)
+4. Click **"Choose Image"** to select a new avatar
+5. Select a PNG or JPG image file (max 5MB)
+6. Click **"Upload Avatar"**
+
+**Avatar Features:**
+- **Gravatar Integration:** If you don't upload a custom avatar, your profile will automatically use your Gravatar (based on your email address)
+- **Automatic Resize:** Uploaded images are automatically resized to 200x200 pixels
+- **Format Conversion:** RGBA images are converted to RGB for JPEG compatibility
+- **File Requirements:**
+  - Accepted formats: PNG, JPG/JPEG
+  - Maximum file size: 5MB
+  - Recommended size: 200x200 pixels or larger
+
+**Where Your Avatar Appears:**
+- Navigation bar (small 32px circular icon)
+- Account page (80px display)
+- Progress page (120px header)
+- Dashboard (200px hero image)
+
+#### Possible Errors:
+- "Invalid file type" - Use PNG or JPG images only
+- "File size too large" - Reduce file size to under 5MB
+- If upload fails, check your internet connection and try again
+
+**Gravatar Setup (Optional):**
+If you want a custom Gravatar without uploading:
+1. Visit [gravatar.com](https://gravatar.com)
+2. Create an account with your platform email address
+3. Upload an avatar on Gravatar
+4. Your avatar will automatically appear on the platform
+
+---
+
 ## Password & Username Recovery
 
 ### Forgot Your Password?
@@ -156,10 +194,11 @@ Your name will be displayed in your dashboard and profile.
 2. **Click "Forgot Password?"** link
 3. **Enter your email address**
 4. **Click "Send Reset Link"**
-5. **Check your email** for the password reset link
-   - In development: Check the server console
-   - In production: Check your email inbox/spam folder
-6. **Click the link in the email**
+5. **View the simulated email** displayed on the page
+   - For this college project, password reset emails are displayed directly on the page in a styled box
+   - No actual email is sent (SMTP not required)
+   - **Look for the blue gradient box** showing the simulated email
+6. **Click the reset link** shown in the simulated email
 7. **Enter your new password** (twice)
 8. **Click "Reset Password"**
 9. You'll be automatically logged in
@@ -168,6 +207,7 @@ Your name will be displayed in your dashboard and profile.
 - Password reset links expire after **20 minutes** for security
 - If your link expires, request a new one
 - For security, you'll see a success message even if the email doesn't exist
+- The simulated email is for demonstration purposes (college project feature)
 
 ### Forgot Your Username?
 
@@ -175,11 +215,12 @@ Your name will be displayed in your dashboard and profile.
 2. **Click "Forgot Username?"** link
 3. **Enter your email address**
 4. **Click "Send Username"**
-5. **Check your email** for your username
-   - In development: Check the server console
-   - In production: Check your email inbox/spam folder
+5. **View the simulated email** displayed on the page
+   - For this college project, username reminder emails are displayed directly on the page in a styled box
+   - No actual email is sent (SMTP not required)
+   - **Look for the blue gradient box** showing the simulated email with your username
 
-**Note:** You can log in with either your username or email address.
+**Note:** You can log in with either your username or email address, so if you know your email, you can skip this step and log in directly with your email.
 
 ---
 

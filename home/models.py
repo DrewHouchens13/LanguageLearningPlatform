@@ -1,6 +1,206 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.core.files.base import ContentFile
+from django.core.exceptions import ValidationError
+from PIL import Image
+from io import BytesIO
+import hashlib
+import os
+import logging
+
+# Configure logger for error tracking
+logger = logging.getLogger(__name__)
+
+
+def user_avatar_path(instance, filename):
+    """
+    Generate upload path for user avatars.
+
+    Args:
+        instance: UserProfile instance
+        filename: Original filename
+
+    Returns:
+        str: Upload path in format 'avatars/user_<id>/<filename>'
+    """
+    ext = os.path.splitext(filename)[1]
+    new_filename = f"avatar{ext}"
+    return os.path.join('avatars', f'user_{instance.user.id}', new_filename)
+
+
+class UserProfile(models.Model):
+    """
+    Extended user profile with avatar support and language learning settings.
+
+    Features:
+    - Avatar: Gravatar as default (based on email) with optional custom upload
+    - Proficiency: CEFR level tracking from onboarding assessment
+    - Learning preferences: Target language, daily goals, motivation
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+
+    # Avatar support
+    avatar = models.ImageField(
+        upload_to=user_avatar_path,
+        blank=True,
+        null=True,
+        help_text="Profile picture (max 5MB, PNG/JPG only)"
+    )
+
+    # Proficiency tracking (capped at B1 for new users)
+    proficiency_level = models.CharField(
+        max_length=2,
+        choices=[
+            ('A1', 'Beginner (A1)'),
+            ('A2', 'Elementary (A2)'),
+            ('B1', 'Intermediate (B1)'),
+        ],
+        null=True,
+        blank=True,
+        help_text="CEFR proficiency level determined by onboarding assessment"
+    )
+
+    # Onboarding state
+    has_completed_onboarding = models.BooleanField(default=False)
+    onboarding_completed_at = models.DateTimeField(null=True, blank=True)
+
+    # Learning preferences
+    target_language = models.CharField(max_length=50, default='Spanish')
+    daily_goal_minutes = models.IntegerField(default=15)
+    learning_motivation = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        level_display = self.get_proficiency_level_display() if self.proficiency_level else 'Not assessed'
+        return f"{self.user.username}'s Profile - {level_display}"
+
+    class Meta:
+        verbose_name = "User Profile"
+        verbose_name_plural = "User Profiles"
+
+    def get_gravatar_url(self, size=200):
+        """
+        Get Gravatar URL for user's email.
+
+        Args:
+            size: Image size in pixels (default 200)
+
+        Returns:
+            str: Gravatar URL with default fallback
+        """
+        email = self.user.email.lower().encode('utf-8')
+        email_hash = hashlib.md5(email, usedforsecurity=False).hexdigest()
+        return f"https://www.gravatar.com/avatar/{email_hash}?s={size}&d=identicon"
+
+    def get_avatar_url(self):
+        """
+        Get avatar URL with fallback to Gravatar.
+
+        Returns:
+            str: URL to user's avatar (custom upload or Gravatar)
+        """
+        if self.avatar:
+            return self.avatar.url
+        return self.get_gravatar_url()
+
+    def get_avatar_thumbnail_url(self):
+        """
+        Get small avatar URL for navigation bar (40x40).
+
+        Returns:
+            str: URL to thumbnail avatar
+        """
+        if self.avatar:
+            return self.avatar.url
+        return self.get_gravatar_url(size=40)
+
+    def save(self, *args, **kwargs):
+        """
+        Override save to resize avatar images to 200x200 pixels.
+
+        Automatically resizes uploaded avatars to a maximum of 200x200 pixels
+        while maintaining aspect ratio. Images are saved in their original format
+        (PNG or JPEG) with high quality.
+        """
+        if self.avatar:
+            try:
+                # Open and validate the uploaded image
+                img = Image.open(self.avatar)
+
+                # Verify it's a valid image by attempting to load it
+                img.verify()
+
+                # Re-open after verify (verify() closes the file)
+                self.avatar.seek(0)
+                img = Image.open(self.avatar)
+
+                # Convert RGBA to RGB for JPEG compatibility
+                if img.mode in ('RGBA', 'LA', 'P'):
+                    background = Image.new('RGB', img.size, (255, 255, 255))
+                    background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+                    img = background
+
+                # Resize image if larger than 200x200
+                max_size = (200, 200)
+                if img.height > max_size[1] or img.width > max_size[0]:
+                    img.thumbnail(max_size, Image.Resampling.LANCZOS)
+
+                # Save resized image to BytesIO
+                output = BytesIO()
+                img_format = 'JPEG' if self.avatar.name.lower().endswith('.jpg') or self.avatar.name.lower().endswith('.jpeg') else 'PNG'
+                img.save(output, format=img_format, quality=95)
+                output.seek(0)
+
+                # Replace avatar with resized version
+                self.avatar.save(
+                    self.avatar.name,
+                    ContentFile(output.read()),
+                    save=False
+                )
+            except (IOError, OSError) as e:
+                # Handle corrupted or invalid image files
+                logger.error('Failed to process avatar image for user %s: %s', self.user.username, str(e))
+                raise ValidationError('Invalid or corrupted image file. Please upload a valid PNG or JPG image.') from e
+            except Exception as e:
+                # Catch any other unexpected errors during image processing
+                logger.error('Unexpected error processing avatar for user %s: %s', self.user.username, str(e))
+                raise ValidationError('An error occurred while processing your image. Please try a different file.') from e
+
+        super().save(*args, **kwargs)
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """
+    Signal to automatically create UserProfile when User is created.
+
+    Args:
+        sender: The model class (User)
+        instance: The User instance being saved
+        created: Boolean - True if this is a new User
+        **kwargs: Additional keyword arguments
+    """
+    if created:
+        UserProfile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """
+    Signal to save UserProfile when User is saved.
+
+    Args:
+        sender: The model class (User)
+        instance: The User instance being saved
+        **kwargs: Additional keyword arguments
+    """
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
 
 
 class UserProgress(models.Model):
@@ -104,44 +304,6 @@ class QuizResult(models.Model):
         if self.total_questions == 0:
             return 0.0
         return round((self.score / self.total_questions) * 100, 1)
-
-
-class UserProfile(models.Model):
-    """Extended user profile with language learning specifics"""
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='language_profile')
-    
-    # Proficiency tracking (capped at B1 for new users)
-    proficiency_level = models.CharField(
-        max_length=2,
-        choices=[
-            ('A1', 'Beginner (A1)'),
-            ('A2', 'Elementary (A2)'),
-            ('B1', 'Intermediate (B1)'),
-        ],
-        null=True,
-        blank=True,
-        help_text="CEFR proficiency level determined by onboarding assessment"
-    )
-    
-    # Onboarding state
-    has_completed_onboarding = models.BooleanField(default=False)
-    onboarding_completed_at = models.DateTimeField(null=True, blank=True)
-    
-    # Learning preferences
-    target_language = models.CharField(max_length=50, default='Spanish')
-    daily_goal_minutes = models.IntegerField(default=15)
-    learning_motivation = models.TextField(blank=True)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        level_display = self.get_proficiency_level_display() if self.proficiency_level else 'Not assessed'
-        return f"{self.user.username}'s Profile - {level_display}"
-    
-    class Meta:
-        verbose_name = "User Profile"
-        verbose_name_plural = "User Profiles"
 
 
 class OnboardingQuestion(models.Model):

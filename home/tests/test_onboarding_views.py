@@ -32,14 +32,15 @@ class TestOnboardingWelcomeView(TestCase):
     def test_welcome_shows_profile_for_authenticated_without_onboarding(self):
         """Test welcome page shows user profile for authenticated users who haven't completed onboarding"""
         user = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
-        profile = UserProfile.objects.create(
-            user=user,
-            has_completed_onboarding=False
-        )
+        # Profile is auto-created by signal, just get it and ensure onboarding is not completed
+        profile = user.profile
+        profile.has_completed_onboarding = False
+        profile.save()
+
         self.client.login(username='testuser', password='pass123')
-        
+
         response = self.client.get(self.url)
-        
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['user_profile'], profile)
 
@@ -369,30 +370,30 @@ class TestOnboardingRetakeBlocking(TestCase):
 
     def test_authenticated_user_blocked_from_retaking_welcome(self):
         """Authenticated users who completed onboarding are redirected from welcome page"""
-        # Create completed user profile
-        UserProfile.objects.create(
-            user=self.user,
-            proficiency_level='A2',
-            has_completed_onboarding=True
-        )
+        # Use auto-created profile and mark as completed
+        profile = self.user.profile
+        profile.proficiency_level = 'A2'
+        profile.has_completed_onboarding = True
+        profile.save()
+
         self.client.login(username='testuser', password='pass123')
-        
+
         response = self.client.get(reverse('onboarding_welcome'))
-        
+
         self.assertRedirects(response, reverse('dashboard'))
-        
+
     def test_authenticated_user_blocked_from_retaking_quiz(self):
         """Authenticated users who completed onboarding are redirected from quiz page"""
-        # Create completed user profile
-        UserProfile.objects.create(
-            user=self.user,
-            proficiency_level='A2',
-            has_completed_onboarding=True
-        )
+        # Use auto-created profile and mark as completed
+        profile = self.user.profile
+        profile.proficiency_level = 'A2'
+        profile.has_completed_onboarding = True
+        profile.save()
+
         self.client.login(username='testuser', password='pass123')
-        
+
         response = self.client.get(reverse('onboarding_quiz'))
-        
+
         self.assertRedirects(response, reverse('dashboard'))
         
     def test_guest_with_completed_session_blocked_from_retaking(self):
@@ -429,13 +430,12 @@ class TestOnboardingRetakeBlocking(TestCase):
     def test_results_page_still_accessible_after_completion(self):
         """Users can still view their results page after completion"""
         from django.utils import timezone
-        
-        # Create completed user profile
-        UserProfile.objects.create(
-            user=self.user,
-            proficiency_level='A2',
-            has_completed_onboarding=True
-        )
+
+        # Use auto-created profile and mark as completed
+        profile = self.user.profile
+        profile.proficiency_level = 'A2'
+        profile.has_completed_onboarding = True
+        profile.save()
         
         # Create completed attempt
         attempt = OnboardingAttempt.objects.create(
