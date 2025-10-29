@@ -28,24 +28,55 @@ def user_avatar_path(instance, filename):
 
 class UserProfile(models.Model):
     """
-    Extended user profile with avatar support.
+    Extended user profile with avatar support and language learning settings.
 
-    Uses hybrid approach:
-    - Gravatar as default (based on email)
-    - Optional custom avatar upload
+    Features:
+    - Avatar: Gravatar as default (based on email) with optional custom upload
+    - Proficiency: CEFR level tracking from onboarding assessment
+    - Learning preferences: Target language, daily goals, motivation
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+
+    # Avatar support
     avatar = models.ImageField(
         upload_to=user_avatar_path,
         blank=True,
         null=True,
         help_text="Profile picture (max 5MB, PNG/JPG only)"
     )
+
+    # Proficiency tracking (capped at B1 for new users)
+    proficiency_level = models.CharField(
+        max_length=2,
+        choices=[
+            ('A1', 'Beginner (A1)'),
+            ('A2', 'Elementary (A2)'),
+            ('B1', 'Intermediate (B1)'),
+        ],
+        null=True,
+        blank=True,
+        help_text="CEFR proficiency level determined by onboarding assessment"
+    )
+
+    # Onboarding state
+    has_completed_onboarding = models.BooleanField(default=False)
+    onboarding_completed_at = models.DateTimeField(null=True, blank=True)
+
+    # Learning preferences
+    target_language = models.CharField(max_length=50, default='Spanish')
+    daily_goal_minutes = models.IntegerField(default=15)
+    learning_motivation = models.TextField(blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Profile for {self.user.username}"
+        level_display = self.get_proficiency_level_display() if self.proficiency_level else 'Not assessed'
+        return f"{self.user.username}'s Profile - {level_display}"
+
+    class Meta:
+        verbose_name = "User Profile"
+        verbose_name_plural = "User Profiles"
 
     def get_gravatar_url(self, size=200):
         """
@@ -252,44 +283,6 @@ class QuizResult(models.Model):
         if self.total_questions == 0:
             return 0.0
         return round((self.score / self.total_questions) * 100, 1)
-
-
-class UserProfile(models.Model):
-    """Extended user profile with language learning specifics"""
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='language_profile')
-    
-    # Proficiency tracking (capped at B1 for new users)
-    proficiency_level = models.CharField(
-        max_length=2,
-        choices=[
-            ('A1', 'Beginner (A1)'),
-            ('A2', 'Elementary (A2)'),
-            ('B1', 'Intermediate (B1)'),
-        ],
-        null=True,
-        blank=True,
-        help_text="CEFR proficiency level determined by onboarding assessment"
-    )
-    
-    # Onboarding state
-    has_completed_onboarding = models.BooleanField(default=False)
-    onboarding_completed_at = models.DateTimeField(null=True, blank=True)
-    
-    # Learning preferences
-    target_language = models.CharField(max_length=50, default='Spanish')
-    daily_goal_minutes = models.IntegerField(default=15)
-    learning_motivation = models.TextField(blank=True)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        level_display = self.get_proficiency_level_display() if self.proficiency_level else 'Not assessed'
-        return f"{self.user.username}'s Profile - {level_display}"
-    
-    class Meta:
-        verbose_name = "User Profile"
-        verbose_name_plural = "User Profiles"
 
 
 class OnboardingQuestion(models.Model):
