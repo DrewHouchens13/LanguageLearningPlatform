@@ -8,30 +8,7 @@
     <link rel="stylesheet" href="{% static 'home/styles.css' %}">
   </head>
   <body>
-    <header>
-      <nav class="navbar">
-        <div class="nav-brand">
-          <h1>Language Learning Platform</h1>
-        </div>
-        <button class="nav-toggle" aria-label="Toggle navigation">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-        <ul class="nav-menu">
-          <li class="nav-item"><a href="{% url 'landing' %}" class="nav-link">Home</a></li>
-          <li class="nav-item"><a href="#" class="nav-link">Courses</a></li>
-          <li class="nav-item"><a href="#" class="nav-link">Lessons</a></li>
-          <li class="nav-item"><a href="{% url 'progress' %}" class="nav-link">My Progress</a></li>
-          <li class="nav-item"><a href="{% url 'dashboard' %}" class="nav-link active">Dashboard</a></li>
-          {% if user.is_staff %}
-            <li class="nav-item"><a href="{% url 'admin:index' %}" class="nav-link admin-link">Admin</a></li>
-          {% endif %}
-          <li class="nav-item"><a href="{% url 'account' %}" class="nav-link">Account</a></li>
-          <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link nav-button">Logout</a></li>
-        </ul>
-      </nav>
-    </header>
+    {% include '_nav.html' %}
     
     <main>
       <!-- Django Messages -->
@@ -49,6 +26,15 @@
         <div class="hero-content">
           <h2>Welcome, {{ user.first_name }}! 👋</h2>
           <p>This is your personal dashboard. Here you can track your progress, manage your courses, and continue your language learning journey.</p>
+          {% if not has_completed_onboarding %}
+            <div style="margin: 1.5rem 0; padding: 1rem; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+              <p style="margin: 0 0 0.5rem 0; font-weight: 600; color: #856404;">📝 Take Your Placement Test</p>
+              <p style="margin: 0 0 1rem 0; color: #856404;">Discover your Spanish proficiency level to unlock personalized lessons tailored to your skills!</p>
+              <a href="{% url 'onboarding_welcome' %}" style="display: inline-block; padding: 0.5rem 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Take Assessment Now</a>
+            </div>
+          {% else %}
+            <p><strong>Your Level:</strong> <span style="display: inline-block; padding: 0.25rem 0.75rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">{{ user_profile.get_proficiency_level_display }}</span></p>
+          {% endif %}
           <p><strong>Email:</strong> {{ user.email }}</p>
           <p><strong>Username:</strong> {{ user.username }}</p>
           <p><strong>Member since:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
