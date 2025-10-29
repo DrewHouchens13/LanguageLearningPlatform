@@ -812,19 +812,22 @@ def forgot_password_view(request):
                 f'/reset-password/{uid}/{token}/'
             )
 
-            # Send password reset email
-            send_template_email(
-                request,
-                'emails/password_reset_email.txt',
-                {
-                    'user': user,
-                    'reset_url': reset_url,
-                    'site_name': 'Language Learning Platform',
-                },
-                'Password Reset - Language Learning Platform',
-                user.email,
-                'Password reset email'
-            )
+            # Render simulated email (for college project - no real SMTP)
+            from django.template.loader import render_to_string
+            email_content = render_to_string('emails/password_reset_email.txt', {
+                'user': user,
+                'reset_url': reset_url,
+                'site_name': 'Language Learning Platform',
+            })
+
+            # Show simulated email in styled box
+            return render(request, 'forgot_password.html', {
+                'simulated_email': {
+                    'to': user.email,
+                    'subject': 'Password Reset - Language Learning Platform',
+                    'content': email_content,
+                }
+            })
 
         except User.DoesNotExist:
             # Log failed attempt but don't inform user (prevent enumeration)
@@ -929,19 +932,22 @@ def forgot_username_view(request):
             # Build login URL
             login_url = request.build_absolute_uri('/login/')
 
-            # Send username reminder email
-            send_template_email(
-                request,
-                'emails/username_reminder_email.txt',
-                {
-                    'user': user,
-                    'site_name': 'Language Learning Platform',
-                    'login_url': login_url,
-                },
-                'Username Reminder - Language Learning Platform',
-                user.email,
-                'Username reminder'
-            )
+            # Render simulated email (for college project - no real SMTP)
+            from django.template.loader import render_to_string
+            email_content = render_to_string('emails/username_reminder_email.txt', {
+                'user': user,
+                'site_name': 'Language Learning Platform',
+                'login_url': login_url,
+            })
+
+            # Show simulated email in styled box
+            return render(request, 'forgot_username.html', {
+                'simulated_email': {
+                    'to': user.email,
+                    'subject': 'Username Reminder - Language Learning Platform',
+                    'content': email_content,
+                }
+            })
 
         except User.DoesNotExist:
             # Log failed attempt but don't inform user (prevent enumeration)
