@@ -5,9 +5,6 @@ This test module verifies that settings.py behaves correctly under different
 environment configurations (development, production, DevEDU, etc.).
 """
 
-import os
-import sys
-from unittest import mock
 from django.test import TestCase, override_settings
 from django.conf import settings
 

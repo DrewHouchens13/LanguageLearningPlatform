@@ -1,0 +1,175 @@
+[MASTER]
+# Use multiple processes to speed up Pylint
+jobs=4
+
+# Django plugin for Django-specific checks
+load-plugins=pylint_django
+
+# Files or directories to be skipped
+ignore=migrations,venv,.venv,env,build,dist,__pycache__
+
+# Pickle collected data for later comparisons
+persistent=yes
+
+# Django settings module
+django-settings-module=config.settings
+
+[MESSAGES CONTROL]
+# Disable specific warnings that are false positives or not relevant for Django
+disable=
+    # Django-specific false positives
+    no-member,              # E1101: Django models have dynamic attributes (objects, DoesNotExist, etc.)
+    imported-auth-user,     # E5142: Django imports User from django.contrib.auth.models
+    django-not-configured,  # E5110: Django configuration handled by settings
+    # Code style (less critical)
+    missing-module-docstring,  # C0114: Allow missing module docstrings
+    missing-class-docstring,   # C0115: Allow missing class docstrings (can add later)
+    too-few-public-methods,    # R0903: Django models/forms often have few methods
+    # Import warnings (can fix but not critical)
+    wrong-import-order,     # C0411: Import order (can fix incrementally)
+    import-outside-toplevel, # C0415: Some Django patterns use late imports
+    wrong-import-position,  # C0413: Import position
+    # Less critical warnings
+    unused-argument,        # W0613: Django admin actions require specific signature
+    reimported,             # W0404: Reimported modules
+    protected-access,       # W0212: Tests need to access _test_password
+    # Formatting (can fix but not critical initially)
+    trailing-whitespace,    # C0303: Trailing whitespace
+    line-too-long,          # C0301: Line length (temporarily disabled)
+    trailing-newlines,      # C0305: Trailing newlines
+
+[REPORTS]
+# Set the output format (text, parseable, colorized, json, etc.)
+output-format=colorized
+
+# Activate the evaluation score
+score=yes
+
+[BASIC]
+# Good variable names
+good-names=i,j,k,ex,Run,_,pk,id,setUp,tearDown
+
+# Regular expression for constant names
+const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))$
+
+# Regular expression for function/method names
+function-rgx=[a-z_][a-z0-9_]{2,50}$
+
+# Regular expression for method names
+method-rgx=[a-z_][a-z0-9_]{2,50}$
+
+# Regular expression for class names
+class-rgx=[A-Z_][a-zA-Z0-9]+$
+
+# Regular expression for module names
+module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$
+
+# Django settings often use UPPERCASE names
+const-naming-style=UPPER_CASE
+
+[FORMAT]
+# Maximum number of characters on a single line
+max-line-length=120
+
+# Maximum number of lines in a module
+max-module-lines=1000
+
+# String used as indentation unit (4 spaces for Python)
+indent-string='    '
+
+# Number of spaces of indent required inside a hanging or continued line
+indent-after-paren=4
+
+[DESIGN]
+# Maximum number of arguments for function / method
+max-args=10
+
+# Maximum number of attributes for a class
+max-attributes=15
+
+# Minimum number of public methods for a class (Django models often have 0-1)
+min-public-methods=0
+
+# Maximum number of public methods for a class
+max-public-methods=30
+
+# Maximum number of return / yield for function / method body
+max-returns=6
+
+# Maximum number of branch for function / method body
+max-branches=15
+
+# Maximum number of statements in function / method body
+max-statements=60
+
+# Maximum number of parents for a class
+max-parents=7
+
+# Maximum number of boolean expressions in an if statement
+max-bool-expr=5
+
+[LOGGING]
+# Format style used to check logging format string (old, new, fstr)
+# Set to 'old' to enforce lazy % formatting
+logging-format-style=old
+
+[TYPECHECK]
+# List of class names for which member attributes should not be checked
+ignored-classes=
+    optparse.Values,
+    thread._local,
+    _thread._local,
+    SQLObject,
+    WSGIRequest,
+    HttpRequest,
+    HttpResponse,
+    QuerySet
+
+# List of module names for which member attributes should not be checked
+ignored-modules=
+    django.db.models.fields.related,
+    django.db.models.fields
+
+# List of decorators that produce context managers
+contextmanager-decorators=contextlib.contextmanager
+
+[SIMILARITIES]
+# Minimum lines number of a similarity
+min-similarity-lines=4
+
+# Ignore comments when computing similarities
+ignore-comments=yes
+
+# Ignore docstrings when computing similarities
+ignore-docstrings=yes
+
+# Ignore imports when computing similarities
+ignore-imports=yes
+
+[VARIABLES]
+# Tells whether we should check for unused import in __init__ files
+init-import=no
+
+# A regular expression matching the name of dummy variables
+dummy-variables-rgx=_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_
+
+[CLASSES]
+# List of method names used to declare (i.e. assign) instance attributes
+defining-attr-methods=__init__,__new__,setUp
+
+# List of valid names for the first argument in a class method
+valid-classmethod-first-arg=cls
+
+# List of valid names for the first argument in a metaclass class method
+valid-metaclass-classmethod-first-arg=mcs
+
+[IMPORTS]
+# Allow wildcard imports from modules
+allow-wildcard-with-all=no
+
+# Analyse import fallback blocks
+analyse-fallback-blocks=no
+
+[EXCEPTIONS]
+# Exceptions that will emit a warning when caught
+overgeneral-exceptions=builtins.Exception,builtins.BaseException
