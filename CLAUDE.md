@@ -738,7 +738,7 @@ If you're stuck:
   - Gravatar fallback using MD5 email hash (usedforsecurity=False)
   - Form validation for file type and size
 - **Avatar Display** (templates, CSS):
-  - Navigation bar: 32px circular avatars
+  - Navigation bar: 32px circular avatars (positioned left of Home button)
   - Account page: 80px avatar with upload form
   - Progress page: 120px header avatar
   - Dashboard: 200px hero avatar
@@ -759,6 +759,14 @@ If you're stuck:
 - **Admin Updates**:
   - UserProfile inline added to User admin
   - Avatar management in admin interface
+  - **Content Moderation** for offensive/obscene avatars:
+    - Admin action to delete avatars from UserProfile admin
+    - Admin action to delete avatars from User admin (convenience wrapper)
+    - Avatar preview in admin (100x100px, shows Gravatar fallback)
+    - "Has Avatar" column in UserProfile list view
+    - Security logging for deletions with admin username
+    - Proper file deletion from storage
+    - Users automatically fall back to Gravatar
 - **Documentation**:
   - Updated CLAUDE.md with avatar system and simulated emails
   - Updated testing workflow with lint and security requirements
