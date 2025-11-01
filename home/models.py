@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.conf import settings
 
 
 class UserProgress(models.Model):
@@ -104,3 +105,56 @@ class QuizResult(models.Model):
         if self.total_questions == 0:
             return 0.0
         return round((self.score / self.total_questions) * 100, 1)
+class Lesson(models.Model):
+    slug = models.SlugField(max_length=100, unique=True)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    duration_minutes = models.IntegerField(default=5)
+    next_lesson = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='previous_lesson')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
+class LessonCard(models.Model):
+    CARD_TYPES = (('info', 'Info'), ('image', 'Image'))
+    lesson = models.ForeignKey(Lesson, related_name='cards', on_delete=models.CASCADE)
+    order = models.PositiveIntegerField(default=0)
+    card_type = models.CharField(max_length=10, choices=CARD_TYPES, default='info')
+    content = models.TextField(help_text='For images, store path or URL; for info, markdown/HTML allowed', blank=True)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"{self.lesson.slug} - card #{self.order} ({self.card_type})"
+
+class LessonQuizQuestion(models.Model):
+    lesson = models.ForeignKey(Lesson, related_name='quiz_questions', on_delete=models.CASCADE)
+    order = models.PositiveIntegerField(default=0)
+    question = models.TextField()
+    # options as list in JSONField: ["A","B","C","D"] — UI will display them
+    options = models.JSONField(default=list)
+    correct_index = models.PositiveIntegerField(help_text='0-based index into options')
+    explanation = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"{self.lesson.slug} - Q{self.order}: {self.question[:40]}"
+
+class LessonAttempt(models.Model):
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+    score = models.IntegerField()
+    total = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def percentage(self):
+        return round((self.score / self.total) * 100, 1) if self.total else 0.0
+
+    def __str__(self):
+        who = self.user.username if self.user else f"guest-{self.id}"
+        return f"{who} - {self.lesson.slug} {self.score}/{self.total}"

@@ -1,0 +1,115 @@
+[
+  {
+    "model": "home.lesson",
+    "pk": 1,
+    "fields": {
+      "slug": "shapes-part-1",
+      "title": "Spanish Shapes - Part 1",
+      "description": "Learn how to say basic shapes in Spanish: circle, square, triangle, and rectangle. Practice with flashcards and test your knowledge with a quiz!",
+      "duration_minutes": 5,
+      "next_lesson": null,
+      "created_at": "2025-11-01T00:00:00Z",
+      "updated_at": "2025-11-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "home.lessoncard",
+    "pk": 1,
+    "fields": {
+      "lesson": 1,
+      "order": 1,
+      "card_type": "info",
+      "content": "<h3>El Círculo - The Circle</h3><p>In Spanish, a circle is called <strong>el círculo</strong>.</p><p>Pronunciation: el SEER-koo-loh</p><p>Example: <em>La luna es un círculo.</em> (The moon is a circle.)</p>"
+    }
+  },
+  {
+    "model": "home.lessoncard",
+    "pk": 2,
+    "fields": {
+      "lesson": 1,
+      "order": 2,
+      "card_type": "info",
+      "content": "<h3>El Cuadrado - The Square</h3><p>In Spanish, a square is called <strong>el cuadrado</strong>.</p><p>Pronunciation: el kwah-DRAH-doh</p><p>Example: <em>La ventana es un cuadrado.</em> (The window is a square.)</p>"
+    }
+  },
+  {
+    "model": "home.lessoncard",
+    "pk": 3,
+    "fields": {
+      "lesson": 1,
+      "order": 3,
+      "card_type": "info",
+      "content": "<h3>El Triángulo - The Triangle</h3><p>In Spanish, a triangle is called <strong>el triángulo</strong>.</p><p>Pronunciation: el tree-AHN-goo-loh</p><p>Example: <em>El techo es un triángulo.</em> (The roof is a triangle.)</p>"
+    }
+  },
+  {
+    "model": "home.lessoncard",
+    "pk": 4,
+    "fields": {
+      "lesson": 1,
+      "order": 4,
+      "card_type": "info",
+      "content": "<h3>El Rectángulo - The Rectangle</h3><p>In Spanish, a rectangle is called <strong>el rectángulo</strong>.</p><p>Pronunciation: el rek-TAHN-goo-loh</p><p>Example: <em>La puerta es un rectángulo.</em> (The door is a rectangle.)</p>"
+    }
+  },
+  {
+    "model": "home.lessonquizquestion",
+    "pk": 1,
+    "fields": {
+      "lesson": 1,
+      "order": 1,
+      "question": "How do you say 'circle' in Spanish?",
+      "options": ["el círculo", "el cuadrado", "el triángulo", "el rectángulo"],
+      "correct_index": 0,
+      "explanation": "Circle in Spanish is 'el círculo'. Remember: circular objects like the moon are 'círculos'."
+    }
+  },
+  {
+    "model": "home.lessonquizquestion",
+    "pk": 2,
+    "fields": {
+      "lesson": 1,
+      "order": 2,
+      "question": "What does 'el cuadrado' mean in English?",
+      "options": ["Circle", "Square", "Triangle", "Rectangle"],
+      "correct_index": 1,
+      "explanation": "'El cuadrado' means square. It has four equal sides (cuatro lados)."
+    }
+  },
+  {
+    "model": "home.lessonquizquestion",
+    "pk": 3,
+    "fields": {
+      "lesson": 1,
+      "order": 3,
+      "question": "How do you say 'triangle' in Spanish?",
+      "options": ["el círculo", "el rectángulo", "el triángulo", "el cuadrado"],
+      "correct_index": 2,
+      "explanation": "Triangle in Spanish is 'el triángulo'. It has three sides (tres lados)."
+    }
+  },
+  {
+    "model": "home.lessonquizquestion",
+    "pk": 4,
+    "fields": {
+      "lesson": 1,
+      "order": 4,
+      "question": "Which shape is 'el rectángulo'?",
+      "options": ["Circle", "Square", "Triangle", "Rectangle"],
+      "correct_index": 3,
+      "explanation": "'El rectángulo' is rectangle. Like doors and windows, it has four sides with two pairs of equal lengths."
+    }
+  },
+  {
+    "model": "home.lessonquizquestion",
+    "pk": 5,
+    "fields": {
+      "lesson": 1,
+      "order": 5,
+      "question": "What is the Spanish word for a shape with no corners?",
+      "options": ["el triángulo", "el círculo", "el cuadrado", "el rectángulo"],
+      "correct_index": 1,
+      "explanation": "A shape with no corners is 'el círculo' (circle). It's perfectly round."
+    }
+  }
+]

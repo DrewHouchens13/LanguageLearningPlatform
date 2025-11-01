@@ -24,18 +24,44 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dv##fju3puju_bg4otr!stbh)0y==ql!cf=^o87+li&k&)u!1w')
 
+# Development environment detection
+# Set IS_DEVEDU=True environment variable when running in development proxies
+# IMPORTANT: This must be explicitly set via environment variable - it will NOT
+# auto-enable in production, ensuring CSRF and other security settings remain strict
+#
+# Accepts: 'True', 'true', '1', 'yes' as truthy values (case-insensitive)
+# All other values (including unset) default to False
+# Strips whitespace to handle ' true ', ' 1 ', etc.
+import sys
+IS_DEVEDU = os.environ.get('IS_DEVEDU', '').strip().lower() in ('true', '1', 'yes')
+
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+# Enable DEBUG in tests and development environments
+# Also enable DEBUG by default for local development (can be overridden with DEBUG=False)
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+
+# Force DEBUG=True in test mode
+if 'pytest' in sys.modules or 'test' in sys.argv:
+    DEBUG = True
 
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "[::1]",
-    "editor-jmanchester-20.devedu.io",  # your DevEdu editor host
-    ".devedu.io",                       # any other DevEdu subdomain if needed
+    "testserver",  # For Django test client
     "languagelearningplatform.org",     # Custom domain
     "www.languagelearningplatform.org", # Custom domain with www
+    ".devedu.io",  # Allow all devedu.io subdomains
 ]
+
+# Add development proxy hosts if IS_DEVEDU is set
+if IS_DEVEDU:
+    # Add specific host if provided
+    devedu_host = os.environ.get('DEVEDU_HOST', '')
+    if devedu_host:
+        ALLOWED_HOSTS.append(devedu_host)
+    # Also allow all hosts when in dev mode (needed for proxy forwarding)
+    ALLOWED_HOSTS.append('*')
 
 # Add Render.com host if RENDER environment variable exists
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -45,13 +71,13 @@ if RENDER_EXTERNAL_HOSTNAME:
 # Application definition
 
 INSTALLED_APPS = [
+    "home",  # Must be before django.contrib.admin to override admin templates
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "home",
 ]
 
 MIDDLEWARE = [
@@ -148,10 +174,18 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-# For DevEDU development environment
-if os.environ.get('DEVEDU_ENVIRONMENT'):
-    STATIC_URL = '/proxy/8000/static/'
-    FORCE_SCRIPT_NAME = '/proxy/8000'  # Tell Django it's running under /proxy/8000/
+# Static files configuration
+# For development proxies - use STATIC_URL_PREFIX environment variable
+if IS_DEVEDU:
+    proxy_prefix = os.environ.get('STATIC_URL_PREFIX', '/proxy/8000')
+    STATIC_URL = f'{proxy_prefix}/static/'
+    # Set FORCE_SCRIPT_NAME to make Django prepend proxy prefix to all URLs
+    FORCE_SCRIPT_NAME = proxy_prefix
+    USE_X_FORWARDED_HOST = True
+    USE_X_FORWARDED_PORT = True
+    # Relax CSRF for DevEDU (development only - not for production!)
+    CSRF_COOKIE_SECURE = False
+    CSRF_COOKIE_SAMESITE = 'Lax'
 else:
     # For local development and production (Render)
     STATIC_URL = '/static/'
@@ -160,14 +194,26 @@ else:
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # WhiteNoise configuration for efficient static file serving
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+# Use simpler storage for tests (avoids manifest file requirement)
+import sys
+if 'pytest' in sys.modules or 'test' in sys.argv:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+else:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -175,9 +221,18 @@ STORAGES = {
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://editor-jmanchester-20.devedu.io",
-    "https://*.devedu.io",
+    "https://*.devedu.io",  # Allow all DevEDU subdomains by default
+    "http://*.devedu.io",   # Also allow HTTP for development
 ]
+
+# Add development proxy origins if IS_DEVEDU is set
+if IS_DEVEDU:
+    devedu_host = os.environ.get('DEVEDU_HOST', '')
+    if devedu_host:
+        CSRF_TRUSTED_ORIGINS.append(f'https://{devedu_host}')
+        CSRF_TRUSTED_ORIGINS.append(f'http://{devedu_host}')
+    # Set CSRF cookie path to root so it works with proxy prefix
+    CSRF_COOKIE_PATH = '/'
 
 # Add Render hostname to CSRF trusted origins
 if RENDER_EXTERNAL_HOSTNAME:
@@ -193,14 +248,108 @@ LOGIN_URL = 'login'  # Where to redirect if login is required
 LOGIN_REDIRECT_URL = 'landing'  # Where to redirect after successful login
 LOGOUT_REDIRECT_URL = 'landing'  # Where to redirect after logout
 
-# Email backend (for development - prints emails to console)
-# In production, configure a real email backend for sending actual emails
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# =============================================================================
+# EMAIL SETTINGS
+# =============================================================================
+
+# Email configuration for password reset and account notifications
+# Development: Print emails to console
+# Production: Use SMTP (configure via environment variables)
+
+if DEBUG:
+    # Development - print emails to console for testing
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    # Production - use SMTP
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+
+# From email for all messages (used by both development and production)
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Language Learning Platform <noreply@languagelearningplatform.org>')
+
+# Password reset token expiration (in seconds) - 20 minutes for security
+PASSWORD_RESET_TIMEOUT = 1200  # 20 minutes in seconds
+
+# =============================================================================
+# CACHE SETTINGS
+# =============================================================================
+
+# Cache configuration for rate limiting and performance
+#
+# DEVELOPMENT ONLY: Currently using local memory cache
+# This configuration is suitable for development and testing but NOT for production.
+#
+# For production deployment, configure a robust caching backend:
+# - Redis: Recommended for high-performance caching and rate limiting
+#   * SECURITY: Use password authentication (requirepass in redis.conf)
+#   * SECURITY: Bind Redis to localhost or use firewall rules
+#   * SECURITY: Use TLS for connections over public networks
+#   * SECURITY: Regularly update Redis to patch security vulnerabilities
+# - Memcached: Alternative high-performance distributed caching
+#   * SECURITY: Bind to localhost or use firewall to restrict access
+#   * SECURITY: Use SASL authentication if available
+#
+# Local memory cache limitations:
+# - Not shared across multiple server processes/instances
+# - Lost when server restarts
+# - Not suitable for load-balanced deployments
+#
+# To use Redis in production, install django-redis and configure:
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django_redis.cache.RedisCache',
+#         'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+#         'OPTIONS': {
+#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#             'PASSWORD': os.environ.get('REDIS_PASSWORD'),  # Strongly recommended
+#         }
+#     }
+# }
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        }
+    }
+}
+
+# Production cache backend validation
+if not DEBUG and CACHES['default']['BACKEND'] == 'django.core.cache.backends.locmem.LocMemCache':
+    import warnings
+    warnings.warn(
+        'WARNING: Using local memory cache in production! '
+        'This cache is not shared across processes and will cause issues with '
+        'rate limiting and session management in multi-process deployments. '
+        'Configure Redis or Memcached for production use.',
+        RuntimeWarning,
+        stacklevel=2
+    )
 
 # Session settings
 SESSION_COOKIE_AGE = 86400  # Session expires after 1 day (86400 seconds)
 SESSION_SAVE_EVERY_REQUEST = True  # Update session on every request to extend expiry
 
+# =============================================================================
+# TRUSTED PROXY CONFIGURATION
+# =============================================================================
+
+# Control whether to trust X-Forwarded-For header for IP address detection
+# SECURITY: Only enable this if you're behind a trusted reverse proxy
+#
+# Options:
+# - 'always': Always trust X-Forwarded-For (suitable for Render, Heroku, etc.)
+# - 'debug': Only trust in DEBUG mode (suitable for development with DevEDU)
+# - 'never': Never trust, always use REMOTE_ADDR (most secure, but won't work behind proxies)
+#
+# Default: 'always' for production deployments on cloud platforms
+# For self-hosted deployments, consider 'never' or implement IP-based trust validation
+TRUST_X_FORWARDED_FOR = os.environ.get('TRUST_X_FORWARDED_FOR', 'always')
 
 # =============================================================================
 # SECURITY SETTINGS (Production Only)
@@ -219,3 +368,8 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
     # Trust the X-Forwarded-Proto header from Render's proxy
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Trust proxy headers in DevEDU environment
+if IS_DEVEDU:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    X_FRAME_OPTIONS = 'SAMEORIGIN'  # Allow framing from same origin

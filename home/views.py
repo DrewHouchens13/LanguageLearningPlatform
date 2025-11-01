@@ -1,9 +1,14 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import IntegrityError
+import json
+from django.http import JsonResponse, HttpResponseBadRequest
+from django.urls import reverse
+from .models import Lesson, LessonQuizQuestion, LessonAttempt
+from django.views.decorators.http import require_http_methods
 
 
 def landing(request):
@@ -149,3 +154,88 @@ def progress_view(request):
         }
     
     return render(request, 'progress.html', context)
+
+def lesson_detail(request, lesson_id):
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    return render(request, "lessons/shapes/lesson_detail.html", {"lesson": lesson})
+
+
+
+def lesson_quiz(request, lesson_id):
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    questions = lesson.quiz_questions.all()
+    qlist = []
+    for q in questions:
+        qlist.append({
+            'id': q.id,
+            'order': q.order,
+            'question': q.question,
+            'options': q.options,
+        })
+    return render(request, 'lessons/shapes/quiz.html', {'lesson': lesson, 'questions': qlist})
+
+
+@require_http_methods(["POST"])
+def submit_lesson_quiz(request, lesson_id):
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    # Accept JSON body or regular POST
+    try:
+        if request.content_type == 'application/json':
+            payload = json.loads(request.body.decode('utf-8'))
+        else:
+            payload = request.POST.dict()
+    except Exception:
+        return HttpResponseBadRequest("Invalid payload")
+
+    answers = payload.get('answers')
+    # answers expected as list of {question_id: int, selected_index: int}
+    if not answers:
+        # try JSON string in 'answers' param
+        raw = payload.get('answers')
+        if raw:
+            answers = json.loads(raw)
+    if not answers or not isinstance(answers, list):
+        return HttpResponseBadRequest("No answers provided")
+
+    # Evaluate
+    score = 0
+    total = 0
+    for a in answers:
+        qid = a.get('question_id') or a.get('id')
+        sel = a.get('selected_index') if 'selected_index' in a else a.get('selected')
+        try:
+            q = LessonQuizQuestion.objects.get(id=qid, lesson=lesson)
+        except LessonQuizQuestion.DoesNotExist:
+            continue
+        total += 1
+        if int(sel) == int(q.correct_index):
+            score += 1
+
+    attempt = LessonAttempt.objects.create(
+        lesson=lesson,
+        user=request.user if request.user.is_authenticated else None,
+        score=score,
+        total=total
+    )
+
+    # If request from JS expect JSON; else redirect to results
+    if request.content_type == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': True, 'score': score, 'total': total, 'attempt_id': attempt.id, 'redirect_url': reverse('lesson_results', args=[lesson.id, attempt.id])})
+    return redirect('lesson_results', lesson_id=lesson.id, attempt_id=attempt.id)
+
+def lesson_results(request, lesson_id, attempt_id):
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    attempt = get_object_or_404(LessonAttempt, id=attempt_id, lesson=lesson)
+    next_lesson = lesson.next_lesson
+    context = {'lesson': lesson, 'attempt': attempt, 'next_lesson': next_lesson}
+    return render(request, 'lessons/shapes/results.html', context)
+
+def lessons_list(request):
+    lessons = Lesson.objects.all().order_by('id')
+    return render(request, 'lessons_list.html', {'lessons': lessons})
+
+def lesson_detail(request, lesson_id):
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    cards = lesson.cards.all()
+    context = {'lesson': lesson, 'cards': cards}
+    return render(request, 'lessons/lesson_detail.html', context)

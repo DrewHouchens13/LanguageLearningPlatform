@@ -1,0 +1,91 @@
+{% load static %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>{{ lesson.title }} — Quiz</title>
+  <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+</head>
+<body>
+{% include '_nav.html' %}
+<main class="container">
+  <h1>{{ lesson.title }} — Quiz</h1>
+  <form id="quizForm">
+    {% csrf_token %}
+    <div id="questions">
+      {% for q in questions %}
+        <div class="question" data-qid="{{ q.id }}" data-order="{{ q.order }}">
+          <h3>{{ q.order }}. {{ q.question }}</h3>
+          <div>
+            {% for opt in q.options %}
+              <label style="display:block; margin:6px 0;">
+                <input type="radio" name="q{{ q.id }}" value="{{ forloop.counter0 }}">
+                {{ opt }}
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <div style="margin-top:1rem;">
+      <button type="submit" class="auth-button" id="submitBtn" disabled>Submit</button>
+      <a href="{% url 'lesson_detail' lesson.id %}" class="link-button">Back to Lesson</a>
+    </div>
+  </form>
+  <div id="resultArea" style="display:none; margin-top:1rem;"></div>
+</main>
+<script>
+const totalQuestions = document.querySelectorAll('.question').length;
+function updateSubmitState(){
+  let answered = 0;
+  document.querySelectorAll('.question').forEach(q=>{
+    if (q.querySelector('input[type="radio"]:checked')) answered++;
+  });
+  document.getElementById('submitBtn').disabled = (answered !== totalQuestions);
+}
+document.querySelectorAll('input[type="radio"]').forEach(r=>{
+  r.addEventListener('change', updateSubmitState);
+});
+document.getElementById('quizForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const answers = [];
+  document.querySelectorAll('.question').forEach(q=>{
+    const qid = q.dataset.qid;
+    const sel = q.querySelector('input[type="radio"]:checked');
+    answers.push({question_id: Number(qid), selected_index: sel ? Number(sel.value) : null});
+  });
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting...';
+  const resp = await fetch("{% url 'submit_lesson_quiz' lesson.id %}", {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-CSRFToken': getCookie('csrftoken')},
+    body: JSON.stringify({answers})
+  });
+  const data = await resp.json();
+  if (data.success){
+    window.location.href = data.redirect_url;
+  } else {
+    document.getElementById('resultArea').style.display='block';
+    document.getElementById('resultArea').textContent = 'Error submitting quiz';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit';
+  }
+});
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>
+</body>
+</html>

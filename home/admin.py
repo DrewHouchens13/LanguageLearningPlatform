@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import UserProgress, LessonCompletion, QuizResult
+from .models import UserProgress, LessonCompletion, QuizResult, Lesson, LessonCard, LessonQuizQuestion, LessonAttempt
 
 
 @admin.register(UserProgress)
@@ -24,3 +24,21 @@ class QuizResultAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'quiz_title', 'quiz_id')
     list_filter = ('completed_at',)
     readonly_fields = ('completed_at',)
+
+class LessonCardInline(admin.TabularInline):
+    model = LessonCard
+    extra = 0
+
+class LessonQuizInline(admin.TabularInline):
+    model = LessonQuizQuestion
+    extra = 0
+
+@admin.register(Lesson)
+class LessonAdmin(admin.ModelAdmin):
+    list_display = ('slug', 'title', 'duration_minutes', 'next_lesson')
+    inlines = [LessonCardInline, LessonQuizInline]
+
+@admin.register(LessonAttempt)
+class LessonAttemptAdmin(admin.ModelAdmin):
+    list_display = ('lesson', 'user', 'score', 'total', 'created_at')
+    readonly_fields = ('created_at',)
