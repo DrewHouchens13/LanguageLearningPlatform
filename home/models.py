@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-from django.conf import settings
 
 
 class UserProgress(models.Model):
@@ -35,20 +34,20 @@ class UserProgress(models.Model):
         return round((total_score / total_possible) * 100, 1)
 
     def get_weekly_stats(self):
-        """Get statistics for the current week"""
+        """
+        Get statistics for the current week.
+
+        Optimized to minimize database queries by reusing querysets.
+        """
         one_week_ago = timezone.now() - timezone.timedelta(days=7)
-        
-        # Weekly lessons
-        weekly_lessons = self.user.lesson_completions.filter(
-            completed_at__gte=one_week_ago
-        ).count()
-        
-        # Weekly minutes (sum of all lesson durations this week)
+
+        # Fetch weekly lessons once and reuse (avoids duplicate query)
         weekly_completions = self.user.lesson_completions.filter(
             completed_at__gte=one_week_ago
         )
+        weekly_lessons = weekly_completions.count()
         weekly_minutes = sum(completion.duration_minutes for completion in weekly_completions)
-        
+
         # Weekly quiz accuracy
         weekly_quizzes = self.user.quiz_results.filter(
             completed_at__gte=one_week_ago
@@ -59,7 +58,7 @@ class UserProgress(models.Model):
             weekly_accuracy = round((total_score / total_possible) * 100, 1) if total_possible > 0 else 0.0
         else:
             weekly_accuracy = 0.0
-        
+
         return {
             'weekly_minutes': weekly_minutes,
             'weekly_lessons': weekly_lessons,
@@ -105,56 +104,158 @@ class QuizResult(models.Model):
         if self.total_questions == 0:
             return 0.0
         return round((self.score / self.total_questions) * 100, 1)
-class Lesson(models.Model):
-    slug = models.SlugField(max_length=100, unique=True)
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    duration_minutes = models.IntegerField(default=5)
-    next_lesson = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='previous_lesson')
 
+
+class UserProfile(models.Model):
+    """Extended user profile with language learning specifics"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='language_profile')
+    
+    # Proficiency tracking (capped at B1 for new users)
+    proficiency_level = models.CharField(
+        max_length=2,
+        choices=[
+            ('A1', 'Beginner (A1)'),
+            ('A2', 'Elementary (A2)'),
+            ('B1', 'Intermediate (B1)'),
+        ],
+        null=True,
+        blank=True,
+        help_text="CEFR proficiency level determined by onboarding assessment"
+    )
+    
+    # Onboarding state
+    has_completed_onboarding = models.BooleanField(default=False)
+    onboarding_completed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Learning preferences
+    target_language = models.CharField(max_length=50, default='Spanish')
+    daily_goal_minutes = models.IntegerField(default=15)
+    learning_motivation = models.TextField(blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    
     def __str__(self):
-        return self.title
-class LessonCard(models.Model):
-    CARD_TYPES = (('info', 'Info'), ('image', 'Image'))
-    lesson = models.ForeignKey(Lesson, related_name='cards', on_delete=models.CASCADE)
-    order = models.PositiveIntegerField(default=0)
-    card_type = models.CharField(max_length=10, choices=CARD_TYPES, default='info')
-    content = models.TextField(help_text='For images, store path or URL; for info, markdown/HTML allowed', blank=True)
-
+        level_display = self.get_proficiency_level_display() if self.proficiency_level else 'Not assessed'
+        return f"{self.user.username}'s Profile - {level_display}"
+    
     class Meta:
-        ordering = ['order']
+        verbose_name = "User Profile"
+        verbose_name_plural = "User Profiles"
 
-    def __str__(self):
-        return f"{self.lesson.slug} - card #{self.order} ({self.card_type})"
 
-class LessonQuizQuestion(models.Model):
-    lesson = models.ForeignKey(Lesson, related_name='quiz_questions', on_delete=models.CASCADE)
-    order = models.PositiveIntegerField(default=0)
-    question = models.TextField()
-    # options as list in JSONField: ["A","B","C","D"] — UI will display them
-    options = models.JSONField(default=list)
-    correct_index = models.PositiveIntegerField(help_text='0-based index into options')
+class OnboardingQuestion(models.Model):
+    """Cached multiple choice questions for onboarding assessment"""
+    question_number = models.IntegerField()
+    question_text = models.TextField()
+    language = models.CharField(max_length=50, default='Spanish')
+    
+    # Difficulty level (capped at B1)
+    difficulty_level = models.CharField(
+        max_length=2,
+        choices=[
+            ('A1', 'Beginner'),
+            ('A2', 'Elementary'),
+            ('B1', 'Intermediate')
+        ]
+    )
+    
+    # Multiple choice options
+    option_a = models.CharField(max_length=500)
+    option_b = models.CharField(max_length=500)
+    option_c = models.CharField(max_length=500)
+    option_d = models.CharField(max_length=500)
+    
+    # Answer and explanation
+    correct_answer = models.CharField(max_length=1, help_text="Store 'A', 'B', 'C', or 'D'")
     explanation = models.TextField(blank=True)
-
-    class Meta:
-        ordering = ['order']
-
-    def __str__(self):
-        return f"{self.lesson.slug} - Q{self.order}: {self.question[:40]}"
-
-class LessonAttempt(models.Model):
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
-    score = models.IntegerField()
-    total = models.IntegerField()
+    
+    # Scoring (A1=1, A2=2, B1=3)
+    difficulty_points = models.IntegerField(default=1)
+    
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def percentage(self):
-        return round((self.score / self.total) * 100, 1) if self.total else 0.0
-
+    
     def __str__(self):
-        who = self.user.username if self.user else f"guest-{self.id}"
-        return f"{who} - {self.lesson.slug} {self.score}/{self.total}"
+        return f"Q{self.question_number} ({self.language} - {self.difficulty_level}): {self.question_text[:50]}..."
+    
+    class Meta:
+        verbose_name = "Onboarding Question"
+        verbose_name_plural = "Onboarding Questions"
+        ordering = ['language', 'question_number']
+        unique_together = ['language', 'question_number']
+
+
+class OnboardingAttempt(models.Model):
+    """Track onboarding assessment attempts (for both guests and authenticated users)"""
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='onboarding_attempts',
+        null=True, 
+        blank=True
+    )
+    session_key = models.CharField(max_length=100, blank=True, help_text="For guest tracking")
+    language = models.CharField(max_length=50, default='Spanish')
+    
+    # Timing
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Results
+    calculated_level = models.CharField(
+        max_length=2,
+        choices=[
+            ('A1', 'Beginner'),
+            ('A2', 'Elementary'),
+            ('B1', 'Intermediate')
+        ],
+        blank=True
+    )
+    total_score = models.IntegerField(default=0)
+    total_possible = models.IntegerField(default=0)
+    
+    def __str__(self):
+        user_display = self.user.username if self.user else f"Guest-{self.session_key[:8]}"
+        return f"{user_display} - {self.language} ({self.calculated_level or 'In Progress'})"
+    
+    @property
+    def score_percentage(self):
+        """Calculate percentage score"""
+        if self.total_possible == 0:
+            return 0.0
+        return round((self.total_score / self.total_possible) * 100, 1)
+    
+    class Meta:
+        verbose_name = "Onboarding Attempt"
+        verbose_name_plural = "Onboarding Attempts"
+        ordering = ['-started_at']
+
+
+class OnboardingAnswer(models.Model):
+    """Individual answers within an onboarding attempt"""
+    attempt = models.ForeignKey(
+        OnboardingAttempt, 
+        on_delete=models.CASCADE, 
+        related_name='answers'
+    )
+    question = models.ForeignKey(
+        OnboardingQuestion, 
+        on_delete=models.CASCADE,
+        related_name='user_answers'
+    )
+    
+    # User's response
+    user_answer = models.CharField(max_length=1, help_text="A, B, C, or D")
+    is_correct = models.BooleanField()
+    time_taken_seconds = models.IntegerField(default=0)
+    
+    answered_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        status = "✓" if self.is_correct else "✗"
+        return f"{status} Q{self.question.question_number} - {self.user_answer}"
+    
+    class Meta:
+        verbose_name = "Onboarding Answer"
+        verbose_name_plural = "Onboarding Answers"
+        ordering = ['question__question_number']

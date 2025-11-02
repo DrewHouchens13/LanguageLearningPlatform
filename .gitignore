@@ -21,7 +21,8 @@ ENV/
 *.secret
 secrets.json
 
-# SQLite database (optional)
+# SQLite database - DO NOT DEPLOY - LOCAL ONLY
+# Production uses PostgreSQL, this file must never reach production
 db.sqlite3
 db.sqlite3-journal
 

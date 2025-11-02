@@ -1,0 +1,98 @@
+{% extends "admin/base.html" %}
+{% load static %}
+{% load i18n %}
+
+{# Custom title for admin pages with platform branding #}
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Language Learning Platform Admin{% endblock %}
+
+{% block extrastyle %}
+<style>
+    /*
+     * Custom Admin Navigation Styling
+     * This overrides Django's default admin header with our unified site navigation
+     * to provide a consistent user experience across the entire platform.
+     */
+
+    /* Hide the default Django admin header to replace with our unified navigation */
+    #header {
+        display: none;
+    }
+
+    /* Unified navigation bar styling (matches main site design) */
+    .main-nav {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 0;
+        margin: 0;
+    }
+    .main-nav .navbar {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2rem;
+    }
+    .main-nav .nav-brand h1 {
+        color: white;
+        margin: 0;
+        font-size: 1.5rem;
+    }
+    .main-nav .nav-menu {
+        display: flex;
+        list-style: none;
+        gap: 1.5rem;
+        margin: 0;
+        padding: 0;
+    }
+    .main-nav .nav-link {
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        transition: opacity 0.3s;
+    }
+    .main-nav .nav-link:hover {
+        opacity: 0.8;
+    }
+    .main-nav .nav-button {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+    }
+    .main-nav .admin-link {
+        color: #ffd700;  /* Gold color to highlight admin link */
+        font-weight: bold;
+    }
+
+    /* Adjust main content to account for removed header */
+    #content {
+        margin-top: 0;  /* No extra margin since we removed default header */
+    }
+</style>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} custom-nav{% endblock %}
+
+{#
+    Override Django's default admin header with our custom navigation
+    This provides consistent navigation across admin and non-admin pages
+    including links to: Home, My Progress, Dashboard, Admin, and Logout
+#}
+{% block header %}
+<!-- Main site navigation (replaces Django admin header) -->
+<div class="main-nav">
+    <nav class="navbar">
+        <div class="nav-brand">
+            <h1>Language Learning Platform</h1>
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item"><a href="{% url 'landing' %}" class="nav-link">Home</a></li>
+            <li class="nav-item"><a href="{% url 'progress' %}" class="nav-link">My Progress</a></li>
+            <li class="nav-item"><a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a></li>
+            {% if user.is_staff %}
+                <li class="nav-item"><a href="{% url 'admin:index' %}" class="nav-link admin-link">Admin</a></li>
+            {% endif %}
+            <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link nav-button">Logout</a></li>
+        </ul>
+    </nav>
+</div>
+{% endblock %}

@@ -8,6 +8,20 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
     path("dashboard/", views.dashboard, name="dashboard"),
     path("progress/", views.progress_view, name="progress"),
+    
+    # Account and password reset (from main)
+    path("account/", views.account_view, name="account"),
+    path("forgot-password/", views.forgot_password_view, name="forgot_password"),
+    path("reset-password/<uidb64>/<token>/", views.reset_password_view, name="reset_password"),
+    path("forgot-username/", views.forgot_username_view, name="forgot_username"),
+    
+    # Onboarding assessment paths (from main)
+    path("onboarding/", views.onboarding_welcome, name="onboarding_welcome"),
+    path("onboarding/quiz/", views.onboarding_quiz, name="onboarding_quiz"),
+    path("onboarding/submit/", views.submit_onboarding, name="submit_onboarding"),
+    path("onboarding/results/", views.onboarding_results, name="onboarding_results"),
+    
+    # Lesson paths (from your feature branch)
     path("lessons/", views.lessons_list, name="lessons_list"),
     path("lessons/<int:lesson_id>/", views.lesson_detail, name="lesson_detail"),
     path("lessons/<int:lesson_id>/quiz/", views.lesson_quiz, name="lesson_quiz"),

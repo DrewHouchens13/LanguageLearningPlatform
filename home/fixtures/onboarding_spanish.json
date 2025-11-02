@@ -1,0 +1,182 @@
+[
+  {
+    "model": "home.onboardingquestion",
+    "pk": 1,
+    "fields": {
+      "question_number": 1,
+      "question_text": "What is the Spanish word for 'hello'?",
+      "language": "Spanish",
+      "difficulty_level": "A1",
+      "option_a": "Adiós",
+      "option_b": "Hola",
+      "option_c": "Gracias",
+      "option_d": "Por favor",
+      "correct_answer": "B",
+      "explanation": "Hola is the most common greeting in Spanish, equivalent to 'hello' in English.",
+      "difficulty_points": 1,
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "home.onboardingquestion",
+    "pk": 2,
+    "fields": {
+      "question_number": 2,
+      "question_text": "How do you say 'thank you' in Spanish?",
+      "language": "Spanish",
+      "difficulty_level": "A1",
+      "option_a": "Perdón",
+      "option_b": "Hasta luego",
+      "option_c": "Gracias",
+      "option_d": "Buenos días",
+      "correct_answer": "C",
+      "explanation": "Gracias means 'thank you' in Spanish. It's one of the most basic and essential words to know.",
+      "difficulty_points": 1,
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "home.onboardingquestion",
+    "pk": 3,
+    "fields": {
+      "question_number": 3,
+      "question_text": "What is the Spanish word for 'I am'?",
+      "language": "Spanish",
+      "difficulty_level": "A1",
+      "option_a": "Yo soy",
+      "option_b": "Tú eres",
+      "option_c": "Él es",
+      "option_d": "Nosotros somos",
+      "correct_answer": "A",
+      "explanation": "Yo soy means 'I am' in Spanish. 'Yo' means 'I' and 'soy' is the first person singular form of the verb 'ser' (to be).",
+      "difficulty_points": 1,
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "home.onboardingquestion",
+    "pk": 4,
+    "fields": {
+      "question_number": 4,
+      "question_text": "Which of these is a color in Spanish?",
+      "language": "Spanish",
+      "difficulty_level": "A1",
+      "option_a": "Mesa",
+      "option_b": "Rojo",
+      "option_c": "Casa",
+      "option_d": "Libro",
+      "correct_answer": "B",
+      "explanation": "Rojo means 'red' in Spanish. Mesa means 'table', casa means 'house', and libro means 'book'.",
+      "difficulty_points": 1,
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "home.onboardingquestion",
+    "pk": 5,
+    "fields": {
+      "question_number": 5,
+      "question_text": "How do you say 'I ate' in Spanish?",
+      "language": "Spanish",
+      "difficulty_level": "A2",
+      "option_a": "Yo como",
+      "option_b": "Yo comeré",
+      "option_c": "Yo comí",
+      "option_d": "Yo comía",
+      "correct_answer": "C",
+      "explanation": "Yo comí is the preterite (simple past) form meaning 'I ate'. Como is present tense, comeré is future, and comía is imperfect past.",
+      "difficulty_points": 2,
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "home.onboardingquestion",
+    "pk": 6,
+    "fields": {
+      "question_number": 6,
+      "question_text": "Complete the sentence: 'Mañana _____ al parque.' (Tomorrow I will go to the park.)",
+      "language": "Spanish",
+      "difficulty_level": "A2",
+      "option_a": "voy",
+      "option_b": "fui",
+      "option_c": "iré",
+      "option_d": "iba",
+      "correct_answer": "C",
+      "explanation": "Iré is the future tense of 'ir' (to go) for 'I'. Since the sentence says 'mañana' (tomorrow), we need the future tense.",
+      "difficulty_points": 2,
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "home.onboardingquestion",
+    "pk": 7,
+    "fields": {
+      "question_number": 7,
+      "question_text": "What does 'Hace buen tiempo' mean?",
+      "language": "Spanish",
+      "difficulty_level": "A2",
+      "option_a": "It's raining",
+      "option_b": "The weather is nice",
+      "option_c": "It's very cold",
+      "option_d": "It's snowing",
+      "correct_answer": "B",
+      "explanation": "'Hace buen tiempo' literally translates to 'It makes good weather', which means 'The weather is nice' in English. This is a common weather expression.",
+      "difficulty_points": 2,
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "home.onboardingquestion",
+    "pk": 8,
+    "fields": {
+      "question_number": 8,
+      "question_text": "Choose the correct comparative: 'Mi hermana es _____ que yo.' (My sister is taller than me.)",
+      "language": "Spanish",
+      "difficulty_level": "B1",
+      "option_a": "más alta",
+      "option_b": "más alto",
+      "option_c": "tan alta",
+      "option_d": "muy alta",
+      "correct_answer": "A",
+      "explanation": "'Más alta' is correct because we need the comparative form (más...que) and the adjective must agree with 'hermana' (feminine). 'Tan alta' would be 'as tall as' not 'taller than'.",
+      "difficulty_points": 3,
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "home.onboardingquestion",
+    "pk": 9,
+    "fields": {
+      "question_number": 9,
+      "question_text": "Complete with the subjunctive: 'Espero que tú _____ bien.' (I hope that you are well.)",
+      "language": "Spanish",
+      "difficulty_level": "B1",
+      "option_a": "estás",
+      "option_b": "estés",
+      "option_c": "estar",
+      "option_d": "estarás",
+      "correct_answer": "B",
+      "explanation": "Estés is the present subjunctive form of 'estar'. The verb 'esperar que' (to hope that) triggers the subjunctive mood in Spanish.",
+      "difficulty_points": 3,
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "home.onboardingquestion",
+    "pk": 10,
+    "fields": {
+      "question_number": 10,
+      "question_text": "Which sentence correctly uses a complex structure?",
+      "language": "Spanish",
+      "difficulty_level": "B1",
+      "option_a": "Yo tengo un libro.",
+      "option_b": "Si tuviera dinero, compraría una casa.",
+      "option_c": "Ella come una manzana.",
+      "option_d": "Nosotros somos estudiantes.",
+      "correct_answer": "B",
+      "explanation": "Option B uses the conditional tense with the imperfect subjunctive (Si tuviera... compraría...) meaning 'If I had money, I would buy a house.' This is a complex B1-level structure.",
+      "difficulty_points": 3,
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  }
+]
