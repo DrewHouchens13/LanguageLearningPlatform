@@ -18,4 +18,14 @@ urlpatterns = [
     path("onboarding/quiz/", views.onboarding_quiz, name="onboarding_quiz"),
     path("onboarding/submit/", views.submit_onboarding, name="submit_onboarding"),
     path("onboarding/results/", views.onboarding_results, name="onboarding_results"),
+
+  # Lesson paths
+    path("lessons/", views.lessons_list, name="lessons_list"),
+    path("lessons/<int:lesson_id>/", views.lesson_detail, name="lesson_detail"),
+    path("lessons/<int:lesson_id>/quiz/", views.lesson_quiz, name="lesson_quiz"),
+    path("lessons/<int:lesson_id>/submit/", views.submit_lesson_quiz, name="submit_lesson_quiz"),
+    path("lessons/<int:lesson_id>/results/<int:attempt_id>/", views.lesson_results, name="lesson_results"),
 ]
+
+
+

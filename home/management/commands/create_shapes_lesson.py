@@ -1,0 +1,96 @@
+from django.core.management.base import BaseCommand
+from home.models import Lesson, Flashcard, LessonQuizQuestion
+
+
+class Command(BaseCommand):
+    help = 'Creates the Shapes lesson with flashcards and quiz'
+
+    def handle(self, *args, **kwargs):
+        # Create or get the lesson
+        lesson, created = Lesson.objects.get_or_create(
+            title='Shapes in Spanish',
+            defaults={
+                'description': 'Learn basic shape names in Spanish',
+                'language': 'Spanish',
+                'difficulty_level': 'A1',
+                'order': 1,
+                'is_published': True,
+            }
+        )
+
+        if created:
+            self.stdout.write(self.style.SUCCESS(f'Created lesson: {lesson.title}'))
+        else:
+            self.stdout.write(self.style.WARNING(f'Lesson already exists: {lesson.title}'))
+            # Clear existing data to recreate
+            lesson.cards.all().delete()
+            lesson.quiz_questions.all().delete()
+            self.stdout.write('Cleared existing flashcards and questions')
+
+        # Create flashcards
+        flashcards_data = [
+            {'front': 'Circle', 'back': 'Círculo', 'order': 1},
+            {'front': 'Square', 'back': 'Cuadrado', 'order': 2},
+            {'front': 'Triangle', 'back': 'Triángulo', 'order': 3},
+            {'front': 'Rectangle', 'back': 'Rectángulo', 'order': 4},
+            {'front': 'Oval', 'back': 'Óvalo', 'order': 5},
+            {'front': 'Star', 'back': 'Estrella', 'order': 6},
+            {'front': 'Heart', 'back': 'Corazón', 'order': 7},
+            {'front': 'Diamond', 'back': 'Diamante', 'order': 8},
+        ]
+
+        for card_data in flashcards_data:
+            card = Flashcard.objects.create(
+                lesson=lesson,
+                front_text=card_data['front'],
+                back_text=card_data['back'],
+                order=card_data['order'],
+            )
+            self.stdout.write(f'  Created flashcard: {card.front_text} → {card.back_text}')
+
+        # Create quiz questions
+        quiz_questions = [
+            {
+                'question': 'What is "Circle" in Spanish?',
+                'options': ['Cuadrado', 'Círculo', 'Triángulo', 'Rectángulo'],
+                'correct_index': 1,
+                'order': 1,
+            },
+            {
+                'question': 'What is "Square" in Spanish?',
+                'options': ['Estrella', 'Óvalo', 'Cuadrado', 'Corazón'],
+                'correct_index': 2,
+                'order': 2,
+            },
+            {
+                'question': 'What is "Triangle" in Spanish?',
+                'options': ['Triángulo', 'Círculo', 'Diamante', 'Rectángulo'],
+                'correct_index': 0,
+                'order': 3,
+            },
+            {
+                'question': 'What is "Rectangle" in Spanish?',
+                'options': ['Cuadrado', 'Óvalo', 'Triángulo', 'Rectángulo'],
+                'correct_index': 3,
+                'order': 4,
+            },
+            {
+                'question': 'What is "Star" in Spanish?',
+                'options': ['Estrella', 'Corazón', 'Diamante', 'Óvalo'],
+                'correct_index': 0,
+                'order': 5,
+            },
+        ]
+
+        for q_data in quiz_questions:
+            question = LessonQuizQuestion.objects.create(
+                lesson=lesson,
+                question=q_data['question'],
+                options=q_data['options'],
+                correct_index=q_data['correct_index'],
+                order=q_data['order'],
+            )
+            self.stdout.write(f'  Created question: {question.question}')
+
+        self.stdout.write(self.style.SUCCESS('\n✅ Shapes lesson created successfully!'))
+        self.stdout.write(f'Visit http://localhost:8000/lessons/{lesson.id}/ to view the lesson')

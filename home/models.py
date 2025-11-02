@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-
 class UserProgress(models.Model):
     """Track overall user learning progress and statistics"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='progress')
@@ -259,3 +258,102 @@ class OnboardingAnswer(models.Model):
         verbose_name = "Onboarding Answer"
         verbose_name_plural = "Onboarding Answers"
         ordering = ['question__question_number']
+# =============================================================================
+# LESSON MODELS
+# =============================================================================
+
+class Lesson(models.Model):
+    """A language learning lesson"""
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    language = models.CharField(max_length=50, default='Spanish')
+    difficulty_level = models.CharField(
+        max_length=2,
+        choices=[
+            ('A1', 'Beginner'),
+            ('A2', 'Elementary'),
+            ('B1', 'Intermediate')
+        ],
+        default='A1'
+    )
+    order = models.IntegerField(default=0, help_text="Order in lesson sequence")
+    is_published = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # Link to next lesson
+    next_lesson = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='previous_lesson'
+    )
+    
+    class Meta:
+        ordering = ['order', 'id']
+        verbose_name = "Lesson"
+        verbose_name_plural = "Lessons"
+    
+    def __str__(self):
+        return f"{self.title} ({self.difficulty_level})"
+
+
+class Flashcard(models.Model):
+    """Flashcards for lessons"""
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='cards')
+    front_text = models.CharField(max_length=200)
+    back_text = models.CharField(max_length=200)
+    image_url = models.URLField(blank=True)
+    audio_url = models.URLField(blank=True)
+    order = models.IntegerField(default=0)
+    
+    class Meta:
+        ordering = ['order']
+        verbose_name = "Flashcard"
+        verbose_name_plural = "Flashcards"
+    
+    def __str__(self):
+        return f"{self.front_text} → {self.back_text}"
+
+
+class LessonQuizQuestion(models.Model):
+    """Quiz questions for lessons"""
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='quiz_questions')
+    question = models.CharField(max_length=500)
+    options = models.JSONField(help_text="List of answer options")
+    correct_index = models.IntegerField(help_text="Index of correct answer (0-based)")
+    explanation = models.TextField(blank=True)
+    order = models.IntegerField(default=0)
+    
+    class Meta:
+        ordering = ['order']
+        verbose_name = "Lesson Quiz Question"
+        verbose_name_plural = "Lesson Quiz Questions"
+    
+    def __str__(self):
+        return f"Q{self.order}: {self.question[:50]}..."
+
+
+class LessonAttempt(models.Model):
+    """Track user attempts at lesson quizzes"""
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='attempts')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='lesson_attempts')
+    score = models.IntegerField(default=0)
+    total = models.IntegerField(default=0)
+    completed_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-completed_at']
+        verbose_name = "Lesson Attempt"
+        verbose_name_plural = "Lesson Attempts"
+    
+    def __str__(self):
+        user_display = self.user.username if self.user else "Guest"
+        return f"{user_display} - {self.lesson.title}: {self.score}/{self.total}"
+    
+    @property
+    def percentage(self):
+        if self.total == 0:
+            return 0
+        return round((self.score / self.total) * 100, 1)

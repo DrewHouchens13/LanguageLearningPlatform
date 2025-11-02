@@ -1,0 +1,116 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Results - {{ lesson.title }}</title>
+    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+    <style>
+        .results-container {
+            max-width: 700px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            text-align: center;
+        }
+        .results-card {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .score-display {
+            font-size: 4rem;
+            font-weight: 700;
+            color: #667eea;
+            margin: 1rem 0;
+        }
+        .percentage {
+            font-size: 2rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        .message {
+            font-size: 1.25rem;
+            color: #333;
+            margin: 1.5rem 0;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        .congrats {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    {% include '_nav.html' %}
+    
+    <main class="results-container">
+        <div class="results-card">
+            <div class="congrats">🎉</div>
+            <h1>Quiz Complete!</h1>
+            <div class="score-display">{{ attempt.score }}/{{ attempt.total }}</div>
+            <div class="percentage">{{ attempt.percentage }}%</div>
+            
+            {% if attempt.percentage >= 80 %}
+            <div class="message">
+                Excellent work! You've mastered {{ lesson.title }}!
+            </div>
+            {% elif attempt.percentage >= 60 %}
+            <div class="message">
+                Good job! Keep practicing to improve your skills.
+            </div>
+            {% else %}
+            <div class="message">
+                Keep learning! Review the lesson and try again.
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="action-buttons">
+<a href="{% url 'lesson_detail' lesson.id %}" class="btn btn-secondary">
+                Review Lesson
+            </a>
+            <a href="{% url 'lesson_quiz' lesson.id %}" class="btn btn-secondary">
+                Retake Quiz
+            </a>
+            {% if next_lesson %}
+            <a href="{% url 'lesson_detail' next_lesson.id %}" class="btn btn-primary">
+                Next Lesson →
+            </a>
+            {% else %}
+            <a href="{% url 'lessons_list' %}" class="btn btn-primary">
+                Back to Lessons
+            </a>
+            {% endif %}
+        </div>
+    </main>
+</body>
+</html>
