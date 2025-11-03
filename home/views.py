@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email as django_validate_email
 from django.contrib import messages
 from django.db import IntegrityError
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
 from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import url_has_allowed_host_and_scheme, urlsafe_base64_encode, urlsafe_base64_decode
