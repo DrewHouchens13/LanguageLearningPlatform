@@ -1,4 +1,5 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
@@ -17,10 +18,13 @@ from functools import wraps
 import json
 import logging
 
+
 from .models import (
     UserProgress, QuizResult, UserProfile, 
-    OnboardingAttempt, OnboardingAnswer, OnboardingQuestion
+    OnboardingAttempt, OnboardingAnswer, OnboardingQuestion,
+    Lesson, LessonQuizQuestion, LessonAttempt, Flashcard
 )
+
 from .services.onboarding_service import OnboardingService
 
 # Configure logger for security events
@@ -1461,3 +1465,102 @@ def onboarding_results(request):
     }
     
     return render(request, 'onboarding/results.html', context)
+
+# =============================================================================
+# LESSON VIEWS
+# =============================================================================
+
+def lessons_list(request):
+    """Display list of all available lessons."""
+    lessons = Lesson.objects.filter(is_published=True).order_by('order', 'id')
+    return render(request, 'lessons_list.html', {'lessons': lessons})
+
+
+def lesson_detail(request, lesson_id):
+    """Display lesson detail with flashcards."""
+    lesson = get_object_or_404(Lesson, id=lesson_id, is_published=True)
+    cards = lesson.cards.all()
+    context = {'lesson': lesson, 'cards': cards}
+    return render(request, 'lessons/lesson_detail.html', context)
+
+
+def lesson_quiz(request, lesson_id):
+    """Display quiz for a specific lesson."""
+    lesson = get_object_or_404(Lesson, id=lesson_id, is_published=True)
+    questions = lesson.quiz_questions.all()
+    qlist = []
+    for q in questions:
+        qlist.append({
+            'id': q.id,
+            'order': q.order,
+            'question': q.question,
+            'options': q.options,
+        })
+    return render(request, 'lessons/shapes/quiz.html', {'lesson': lesson, 'questions': qlist})
+
+
+@require_http_methods(["POST"])
+def submit_lesson_quiz(request, lesson_id):
+    """Process lesson quiz submission."""
+    lesson = get_object_or_404(Lesson, id=lesson_id, is_published=True)
+    
+    # Accept JSON body or regular POST
+    try:
+        if request.content_type == 'application/json':
+            payload = json.loads(request.body.decode('utf-8'))
+        else:
+            payload = request.POST.dict()
+    except Exception:
+        return HttpResponseBadRequest("Invalid payload")
+
+    answers = payload.get('answers')
+    if not answers:
+        raw = payload.get('answers')
+        if raw:
+            try:
+                answers = json.loads(raw)
+            except:
+                pass
+    if not answers or not isinstance(answers, list):
+        return HttpResponseBadRequest("No answers provided")
+
+    # Evaluate
+    score = 0
+    total = 0
+    for a in answers:
+        qid = a.get('question_id') or a.get('id')
+        sel = a.get('selected_index') if 'selected_index' in a else a.get('selected')
+        try:
+            q = LessonQuizQuestion.objects.get(id=qid, lesson=lesson)
+        except LessonQuizQuestion.DoesNotExist:
+            continue
+        total += 1
+        if int(sel) == int(q.correct_index):
+            score += 1
+
+    attempt = LessonAttempt.objects.create(
+        lesson=lesson,
+        user=request.user if request.user.is_authenticated else None,
+        score=score,
+        total=total
+    )
+
+    # If request from JS expect JSON
+    if request.content_type == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'score': score,
+            'total': total,
+            'attempt_id': attempt.id,
+            'redirect_url': reverse('lesson_results', args=[lesson.id, attempt.id])
+        })
+    return redirect('lesson_results', lesson_id=lesson.id, attempt_id=attempt.id)
+
+
+def lesson_results(request, lesson_id, attempt_id):
+    """Display results for a completed lesson quiz."""
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    attempt = get_object_or_404(LessonAttempt, id=attempt_id, lesson=lesson)
+    next_lesson = lesson.next_lesson
+    context = {'lesson': lesson, 'attempt': attempt, 'next_lesson': next_lesson}
+    return render(request, 'lessons/shapes/results.html', context)

@@ -1,0 +1,99 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lessons - Language Learning Platform</title>
+    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+    <style>
+        .lessons-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .lessons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .lesson-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .lesson-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .lesson-title {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        .lesson-description {
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        .lesson-meta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        .lesson-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .badge-a1 { background: #e3f2fd; color: #1976d2; }
+        .badge-a2 { background: #fff3e0; color: #f57c00; }
+        .badge-b1 { background: #f3e5f5; color: #7b1fa2; }
+        .lesson-button {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        .lesson-button:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    {% include '_nav.html' %}
+    
+    <main class="lessons-container">
+        <h1>Available Lessons</h1>
+        <p>Choose a lesson to begin learning</p>
+        
+        <div class="lessons-grid">
+            {% for lesson in lessons %}
+            <div class="lesson-card">
+                <h2 class="lesson-title">{{ lesson.title }}</h2>
+                <p class="lesson-description">{{ lesson.description }}</p>
+                <div class="lesson-meta">
+                    <span class="lesson-badge badge-{{ lesson.difficulty_level|lower }}">
+                        {{ lesson.get_difficulty_level_display }}
+                    </span>
+                    <span>{{ lesson.language }}</span>
+                </div>
+                <a href="{% url 'lesson_detail' lesson.id %}" class="lesson-button">
+                    Start Lesson
+                </a>
+            </div>
+            {% empty %}
+            <p>No lessons available yet.</p>
+            {% endfor %}
+        </div>
+    </main>
+</body>
+</html>
