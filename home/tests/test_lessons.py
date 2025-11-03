@@ -607,12 +607,16 @@ class TestSubmitLessonQuizView(TestCase):
         self.assertEqual(attempt.total, 2)
 
     def test_submit_quiz_no_answers(self):
-        """Test submit quiz with no answers returns 400"""
+        """Test submit quiz with no answers returns 400 JSON error"""
         response = self.client.post(self.url, {})
         self.assertEqual(response.status_code, 400)
+        # Verify JSON error response
+        json_response = response.json()
+        self.assertIn('error', json_response)
+        self.assertIn('No answers provided', json_response['error'])
 
     def test_submit_quiz_invalid_json(self):
-        """Test submit quiz with invalid JSON returns 400 and logs error"""
+        """Test submit quiz with invalid JSON returns 400 JSON error and logs error"""
         with self.assertLogs('home.views', level='WARNING') as log_context:
             response = self.client.post(
                 self.url,
@@ -621,10 +625,98 @@ class TestSubmitLessonQuizView(TestCase):
             )
             self.assertEqual(response.status_code, 400)
 
-            # Verify error was logged
+            # Verify JSON error response
+            json_response = response.json()
+            self.assertIn('error', json_response)
+            self.assertEqual(json_response['error'], 'Invalid JSON format')
+
+            # Verify error was logged (without sensitive details)
             self.assertEqual(len(log_context.output), 1)
             self.assertIn('Invalid JSON payload', log_context.output[0])
             self.assertIn(f'lesson {self.lesson.id}', log_context.output[0])
+            # Ensure no sensitive exception details in log
+            self.assertNotIn('Traceback', log_context.output[0])
+
+    def test_submit_quiz_answers_not_list(self):
+        """Test submit quiz with answers as non-list returns 400 JSON error"""
+        # Test with answers as string
+        response = self.client.post(
+            self.url,
+            json.dumps({'answers': 'not a list'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        json_response = response.json()
+        self.assertIn('error', json_response)
+        self.assertIn('invalid format', json_response['error'])
+
+        # Test with answers as dict
+        response = self.client.post(
+            self.url,
+            json.dumps({'answers': {'question_id': 1}}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        json_response = response.json()
+        self.assertIn('error', json_response)
+
+        # Test with answers as number
+        response = self.client.post(
+            self.url,
+            json.dumps({'answers': 42}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        json_response = response.json()
+        self.assertIn('error', json_response)
+
+    def test_submit_quiz_answers_with_invalid_types(self):
+        """Test submit quiz with answers containing invalid element types"""
+        self.client.login(username='testuser', password='testpass123')
+
+        # Test with non-dict elements in answers list
+        data = {
+            'answers': ['string', 123, None, True]
+        }
+        response = self.client.post(
+            self.url,
+            json.dumps(data),
+            content_type='application/json'
+        )
+        # Should handle gracefully and return success (skips invalid answers)
+        self.assertEqual(response.status_code, 200)
+
+    def test_submit_quiz_answers_missing_required_keys(self):
+        """Test submit quiz with answers missing question_id or selected_index"""
+        self.client.login(username='testuser', password='testpass123')
+
+        # Test with missing question_id
+        data = {
+            'answers': [
+                {'selected_index': 1}  # Missing question_id
+            ]
+        }
+        response = self.client.post(
+            self.url,
+            json.dumps(data),
+            content_type='application/json'
+        )
+        # Should handle gracefully and return success (skips invalid answers)
+        self.assertEqual(response.status_code, 200)
+
+        # Test with missing selected_index
+        data = {
+            'answers': [
+                {'question_id': self.q1.id}  # Missing selected_index
+            ]
+        }
+        response = self.client.post(
+            self.url,
+            json.dumps(data),
+            content_type='application/json'
+        )
+        # Should handle gracefully and return success (skips invalid answers)
+        self.assertEqual(response.status_code, 200)
 
     def test_submit_quiz_invalid_question_id(self):
         """Test submit quiz with invalid question ID skips that answer"""

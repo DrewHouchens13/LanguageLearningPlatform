@@ -6,7 +6,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from io import BytesIO
 import hashlib
 import os
@@ -167,10 +167,14 @@ class UserProfile(models.Model):
                 # Handle corrupted or invalid image files
                 logger.error('Failed to process avatar image for user %s: %s', self.user.username, str(e))
                 raise ValidationError('Invalid or corrupted image file. Please upload a valid PNG or JPG image.') from e
-            except Exception as e:
-                # Catch any other unexpected errors during image processing
-                logger.error('Unexpected error processing avatar for user %s: %s', self.user.username, str(e))
-                raise ValidationError('An error occurred while processing your image. Please try a different file.') from e
+            except UnidentifiedImageError as e:
+                # Handle unrecognized image formats
+                logger.error('Unidentified image format for user %s: %s', self.user.username, str(e))
+                raise ValidationError('Unrecognized image format. Please upload a valid PNG or JPG image.') from e
+            except ValueError as e:
+                # Handle invalid parameter values during image processing
+                logger.error('Invalid image parameters for user %s: %s', self.user.username, str(e))
+                raise ValidationError('Invalid image data. Please upload a different PNG or JPG image.') from e
 
         super().save(*args, **kwargs)
 
@@ -187,7 +191,11 @@ def create_user_profile(sender, instance, created, **kwargs):
         **kwargs: Additional keyword arguments
     """
     if created:
-        UserProfile.objects.create(user=instance)
+        try:
+            UserProfile.objects.create(user=instance)
+        except Exception as e:
+            # Log error but don't crash user creation
+            logger.error('Failed to create profile for user %s: %s', instance.username, str(e))
 
 
 @receiver(post_save, sender=User)
@@ -201,7 +209,11 @@ def save_user_profile(sender, instance, **kwargs):
         **kwargs: Additional keyword arguments
     """
     if hasattr(instance, 'profile'):
-        instance.profile.save()
+        try:
+            instance.profile.save()
+        except Exception as e:
+            # Log error but don't crash user save operation
+            logger.error('Failed to save profile for user %s: %s', instance.username, str(e))
 
 class UserProgress(models.Model):
     """Track overall user learning progress and statistics"""

@@ -1540,16 +1540,16 @@ def lesson_quiz(request, lesson_id):
 def submit_lesson_quiz(request, lesson_id):
     """Process lesson quiz submission."""
     lesson = get_object_or_404(Lesson, id=lesson_id, is_published=True)
-    
+
     # Accept JSON body or regular POST
     try:
         if request.content_type == 'application/json':
             payload = json.loads(request.body.decode('utf-8'))
         else:
             payload = request.POST.dict()
-    except Exception as e:
-        logger.warning(f"Invalid JSON payload in quiz submission for lesson {lesson_id}: {str(e)}")
-        return HttpResponseBadRequest("Invalid payload")
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        logger.warning(f"Invalid JSON payload in quiz submission for lesson {lesson_id}")
+        return JsonResponse({'error': 'Invalid JSON format'}, status=400)
 
     answers = payload.get('answers')
     if not answers:
@@ -1557,17 +1557,26 @@ def submit_lesson_quiz(request, lesson_id):
         if raw:
             try:
                 answers = json.loads(raw)
-            except:
-                pass
+            except (json.JSONDecodeError, TypeError):
+                logger.warning(f"Failed to parse answers JSON for lesson {lesson_id}")
     if not answers or not isinstance(answers, list):
-        return HttpResponseBadRequest("No answers provided")
+        return JsonResponse({'error': 'No answers provided or invalid format'}, status=400)
 
     # Evaluate
     score = 0
     total = 0
     for a in answers:
+        # Skip non-dict elements (security: handle malformed payloads gracefully)
+        if not isinstance(a, dict):
+            continue
+
         qid = a.get('question_id') or a.get('id')
         sel = a.get('selected_index') if 'selected_index' in a else a.get('selected')
+
+        # Skip if missing required fields
+        if qid is None or sel is None:
+            continue
+
         try:
             q = LessonQuizQuestion.objects.get(id=qid, lesson=lesson)
         except LessonQuizQuestion.DoesNotExist:
