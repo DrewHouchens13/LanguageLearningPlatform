@@ -56,6 +56,10 @@ media/
 *.sublime-workspace
 *.sublime-project
 
+# Claude Code specific files (not needed for non-Claude users)
+CLAUDE.md
+agents.md
+
 # OS-specific files
 .DS_Store
 Thumbs.db
@@ -69,3 +73,7 @@ Thumbs.db
 .pytest_cache/
 .tox/
 .mypy_cache
+
+# ai code reviews ( no need to push these )
+*code.review*.txt
+*code.review*.md

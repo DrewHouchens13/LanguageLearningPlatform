@@ -1,30 +1,39 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse
+# Standard library imports
+import json
+import logging
+from functools import wraps
+
+# Django imports
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email as django_validate_email
-from django.contrib import messages
 from django.db import IntegrityError
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import url_has_allowed_host_and_scheme, urlsafe_base64_encode, urlsafe_base64_decode
 from django.views.decorators.http import require_http_methods
-from functools import wraps
-import json
-import logging
 
-
+# Local application imports
 from .models import (
-    UserProgress, QuizResult, UserProfile, 
-    OnboardingAttempt, OnboardingAnswer, OnboardingQuestion,
-    Lesson, LessonQuizQuestion, LessonAttempt, Flashcard
+    Flashcard,
+    Lesson,
+    LessonAttempt,
+    LessonQuizQuestion,
+    OnboardingAnswer,
+    OnboardingAttempt,
+    OnboardingQuestion,
+    QuizResult,
+    UserProfile,
+    UserProgress,
 )
-
 from .services.onboarding_service import OnboardingService
 
 # Configure logger for security events
@@ -1538,7 +1547,8 @@ def submit_lesson_quiz(request, lesson_id):
             payload = json.loads(request.body.decode('utf-8'))
         else:
             payload = request.POST.dict()
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Invalid JSON payload in quiz submission for lesson {lesson_id}: {str(e)}")
         return HttpResponseBadRequest("Invalid payload")
 
     answers = payload.get('answers')

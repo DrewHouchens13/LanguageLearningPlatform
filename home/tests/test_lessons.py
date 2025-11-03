@@ -7,7 +7,9 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.http import HttpResponseBadRequest
 from django.core.exceptions import ValidationError
+from unittest.mock import patch
 import json
+import logging
 
 from home.models import (
     Lesson, Flashcard, LessonQuizQuestion, LessonAttempt
@@ -610,13 +612,19 @@ class TestSubmitLessonQuizView(TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_submit_quiz_invalid_json(self):
-        """Test submit quiz with invalid JSON returns 400"""
-        response = self.client.post(
-            self.url,
-            'invalid json',
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 400)
+        """Test submit quiz with invalid JSON returns 400 and logs error"""
+        with self.assertLogs('home.views', level='WARNING') as log_context:
+            response = self.client.post(
+                self.url,
+                'invalid json',
+                content_type='application/json'
+            )
+            self.assertEqual(response.status_code, 400)
+
+            # Verify error was logged
+            self.assertEqual(len(log_context.output), 1)
+            self.assertIn('Invalid JSON payload', log_context.output[0])
+            self.assertIn(f'lesson {self.lesson.id}', log_context.output[0])
 
     def test_submit_quiz_invalid_question_id(self):
         """Test submit quiz with invalid question ID skips that answer"""
@@ -739,20 +747,24 @@ class TestLessonResultsView(TestCase):
 class TestLessonSecurityTests(TestCase):
     """Test security aspects of lesson views"""
 
-    def setUp(self):
-        """Create test data"""
-        self.client = Client()
-        self.lesson = Lesson.objects.create(
+    @classmethod
+    def setUpTestData(cls):
+        """Create test data once for all tests (read-only test class)"""
+        cls.lesson = Lesson.objects.create(
             title='Test Lesson',
             is_published=True
         )
-        self.question = LessonQuizQuestion.objects.create(
-            lesson=self.lesson,
+        cls.question = LessonQuizQuestion.objects.create(
+            lesson=cls.lesson,
             question='Test question',
             options=['A', 'B', 'C', 'D'],
             correct_index=0,
             order=1
         )
+
+    def setUp(self):
+        """Set up test client for each test"""
+        self.client = Client()
 
     def test_xss_attempt_in_quiz_submission(self):
         """Test XSS attack attempt in quiz submission is handled safely"""
@@ -767,6 +779,59 @@ class TestLessonSecurityTests(TestCase):
 
         # Should handle gracefully (no crash)
         self.assertIn(response.status_code, [200, 302, 400])
+
+    def test_xss_with_event_handlers(self):
+        """Test XSS using event handlers (onerror, onload, onclick)"""
+        url = reverse('submit_lesson_quiz', args=[self.lesson.id])
+        xss_payloads = [
+            '<img src=x onerror=alert("XSS")>',
+            '<body onload=alert("XSS")>',
+            '<div onclick=alert("XSS")>Click</div>',
+            '<svg onload=alert("XSS")></svg>'
+        ]
+        for payload in xss_payloads:
+            data = {
+                'answers': json.dumps([
+                    {'question_id': payload, 'selected_index': 0}
+                ])
+            }
+            response = self.client.post(url, data)
+            # Should handle safely without executing script
+            self.assertIn(response.status_code, [200, 302, 400])
+
+    def test_xss_with_javascript_uri(self):
+        """Test XSS using javascript: URI schemes"""
+        url = reverse('submit_lesson_quiz', args=[self.lesson.id])
+        xss_payloads = [
+            'javascript:alert("XSS")',
+            '<a href="javascript:alert(1)">Click</a>',
+            '<iframe src="javascript:alert(1)"></iframe>'
+        ]
+        for payload in xss_payloads:
+            data = {
+                'answers': json.dumps([
+                    {'question_id': payload, 'selected_index': 0}
+                ])
+            }
+            response = self.client.post(url, data)
+            self.assertIn(response.status_code, [200, 302, 400])
+
+    def test_xss_with_encoded_payloads(self):
+        """Test XSS using HTML entity encoding and obfuscation"""
+        url = reverse('submit_lesson_quiz', args=[self.lesson.id])
+        xss_payloads = [
+            '&lt;script&gt;alert("XSS")&lt;/script&gt;',
+            '&#60;script&#62;alert("XSS")&#60;/script&#62;',
+            '%3Cscript%3Ealert("XSS")%3C/script%3E'
+        ]
+        for payload in xss_payloads:
+            data = {
+                'answers': json.dumps([
+                    {'question_id': payload, 'selected_index': 0}
+                ])
+            }
+            response = self.client.post(url, data)
+            self.assertIn(response.status_code, [200, 302, 400])
 
     def test_sql_injection_attempt_in_lesson_detail(self):
         """Test SQL injection attempt in lesson_detail URL parameter"""
