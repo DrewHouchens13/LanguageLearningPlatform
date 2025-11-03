@@ -10,8 +10,13 @@ from .models import (
     UserProfile,
     OnboardingQuestion,
     OnboardingAttempt,
-    OnboardingAnswer
+    OnboardingAnswer,
+    Lesson,
+    Flashcard,
+    LessonQuizQuestion,
+    LessonAttempt
 )
+
 import secrets
 import string
 import logging
@@ -542,3 +547,42 @@ class OnboardingAnswerAdmin(admin.ModelAdmin):
         """Display question information"""
         return f'Q{obj.question.question_number} ({obj.question.difficulty_level})'
     question_info.short_description = 'Question'
+
+# =============================================================================
+# LESSON ADMIN
+# =============================================================================
+
+class FlashcardInline(admin.TabularInline):
+    model = Flashcard
+    extra = 1
+    fields = ['order', 'front_text', 'back_text', 'image_url']
+
+
+class LessonQuizQuestionInline(admin.TabularInline):
+    model = LessonQuizQuestion
+    extra = 1
+    fields = ['order', 'question', 'options', 'correct_index', 'explanation']
+
+
+@admin.register(Lesson)
+class LessonAdmin(admin.ModelAdmin):
+    list_display = ['title', 'difficulty_level', 'language', 'order', 'is_published', 'created_at']
+    list_filter = ['difficulty_level', 'language', 'is_published']
+    search_fields = ['title', 'description']
+    inlines = [FlashcardInline, LessonQuizQuestionInline]
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'description', 'language', 'difficulty_level')
+        }),
+        ('Organization', {
+            'fields': ('order', 'is_published', 'next_lesson')
+        }),
+    )
+
+
+@admin.register(LessonAttempt)
+class LessonAttemptAdmin(admin.ModelAdmin):
+    list_display = ['lesson', 'user', 'score', 'total', 'percentage', 'completed_at']
+    list_filter = ['lesson', 'completed_at']
+    search_fields = ['user__username', 'lesson__title']
+    readonly_fields = ['completed_at']

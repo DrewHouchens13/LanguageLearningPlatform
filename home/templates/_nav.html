@@ -1,3 +1,4 @@
+{% load static %}
 <header>
   <nav class="navbar">
     <div class="nav-brand">
@@ -26,11 +27,7 @@
         {% endif %}
       </li>
       <li class="nav-item">
-        {% if user.is_authenticated %}
-          <a href="#" class="nav-link">Lessons</a>
-        {% else %}
-          <a href="{% url 'onboarding_welcome' %}" class="nav-link">Lessons</a>
-        {% endif %}
+        <a href="{% url 'lessons_list' %}" class="nav-link {% if '/lessons/' in request.path %}active{% endif %}">Lessons</a>
       </li>
       <li class="nav-item">
         <a href="{% url 'progress' %}" class="nav-link {% if request.path == '/progress/' %}active{% endif %}">My Progress</a>
@@ -58,4 +55,3 @@
     </ul>
   </nav>
 </header>
-
