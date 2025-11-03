@@ -639,7 +639,7 @@ class TestSubmitLessonQuizView(TestCase):
 
     def test_submit_quiz_answers_not_list(self):
         """Test submit quiz with answers as non-list returns 400 JSON error"""
-        # Test with answers as string
+        # Test with answers as string (attempts JSON parse, fails)
         response = self.client.post(
             self.url,
             json.dumps({'answers': 'not a list'}),
@@ -648,7 +648,8 @@ class TestSubmitLessonQuizView(TestCase):
         self.assertEqual(response.status_code, 400)
         json_response = response.json()
         self.assertIn('error', json_response)
-        self.assertIn('invalid format', json_response['error'])
+        # New logic tries to parse string as JSON, fails with specific error
+        self.assertIn('Invalid answers format', json_response['error'])
 
         # Test with answers as dict
         response = self.client.post(

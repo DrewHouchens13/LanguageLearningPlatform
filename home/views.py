@@ -1552,17 +1552,23 @@ def submit_lesson_quiz(request, lesson_id):
         return JsonResponse({'error': 'Invalid JSON format'}, status=400)
 
     answers = payload.get('answers')
-    if not answers:
-        raw = payload.get('answers')
-        if raw:
-            try:
-                answers = json.loads(raw)
-            except (json.JSONDecodeError, TypeError):
-                logger.warning(f"Failed to parse answers JSON for lesson {lesson_id}")
+
+    # Handle answers as JSON string (for backwards compatibility with form-encoded submissions)
+    if answers and isinstance(answers, str):
+        try:
+            answers = json.loads(answers)
+        except (json.JSONDecodeError, TypeError):
+            logger.warning(f"Failed to parse answers JSON string for lesson {lesson_id}")
+            return JsonResponse({'error': 'Invalid answers format - must be valid JSON'}, status=400)
+
     if not answers or not isinstance(answers, list):
         return JsonResponse({'error': 'No answers provided or invalid format'}, status=400)
 
-    # Evaluate
+    # Fetch all quiz questions for this lesson in one query (performance optimization)
+    # Create a dictionary for O(1) lookup by question ID
+    questions = {q.id: q for q in LessonQuizQuestion.objects.filter(lesson=lesson)}
+
+    # Evaluate answers
     score = 0
     total = 0
     for a in answers:
@@ -1577,10 +1583,12 @@ def submit_lesson_quiz(request, lesson_id):
         if qid is None or sel is None:
             continue
 
-        try:
-            q = LessonQuizQuestion.objects.get(id=qid, lesson=lesson)
-        except LessonQuizQuestion.DoesNotExist:
+        # Lookup question from pre-fetched dictionary (O(1) instead of database query)
+        q = questions.get(qid)
+        if not q:
+            # Question ID not found or doesn't belong to this lesson
             continue
+
         total += 1
         if int(sel) == int(q.correct_index):
             score += 1

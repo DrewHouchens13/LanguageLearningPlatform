@@ -193,9 +193,10 @@ def create_user_profile(sender, instance, created, **kwargs):
     if created:
         try:
             UserProfile.objects.create(user=instance)
-        except Exception as e:
-            # Log error but don't crash user creation
-            logger.error('Failed to create profile for user %s: %s', instance.username, str(e))
+        except Exception:
+            # Log error with full traceback but don't crash user creation
+            # Using generic Exception is intentional - catch ANY error to prevent user creation failure
+            logger.exception('Failed to create profile for user %s', instance.username)
 
 
 @receiver(post_save, sender=User)
@@ -211,9 +212,10 @@ def save_user_profile(sender, instance, **kwargs):
     if hasattr(instance, 'profile'):
         try:
             instance.profile.save()
-        except Exception as e:
-            # Log error but don't crash user save operation
-            logger.error('Failed to save profile for user %s: %s', instance.username, str(e))
+        except Exception:
+            # Log error with full traceback but don't crash user save operation
+            # Using generic Exception is intentional - catch ANY error to prevent user save failure
+            logger.exception('Failed to save profile for user %s', instance.username)
 
 class UserProgress(models.Model):
     """Track overall user learning progress and statistics"""
