@@ -14,3 +14,6 @@ python manage.py migrate
 # Load onboarding questions fixtures
 python manage.py loaddata home/fixtures/onboarding_spanish.json
 
+# Create shapes lesson with flashcards and quiz
+python manage.py create_shapes_lesson
+
