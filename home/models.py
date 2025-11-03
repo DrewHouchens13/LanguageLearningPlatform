@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Sum, Count, Q
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models.signals import post_save
@@ -220,44 +221,58 @@ class UserProgress(models.Model):
         return f"Progress for {self.user.username}"
 
     def calculate_quiz_accuracy(self):
-        """Calculate overall quiz accuracy from all quiz results"""
-        quiz_results = self.user.quiz_results.all()
-        if not quiz_results.exists():
-            return 0.0
-        
-        total_score = sum(result.score for result in quiz_results)
-        total_possible = sum(result.total_questions for result in quiz_results)
-        
+        """
+        Calculate overall quiz accuracy from all quiz results.
+
+        Performance optimized: Uses database aggregation instead of loading
+        all quiz objects into memory.
+        """
+        # Use database aggregation for performance (single query)
+        aggregates = self.user.quiz_results.aggregate(
+            total_score=Sum('score'),
+            total_questions=Sum('total_questions')
+        )
+
+        total_score = aggregates['total_score'] or 0
+        total_possible = aggregates['total_questions'] or 0
+
         if total_possible == 0:
             return 0.0
-        
+
         return round((total_score / total_possible) * 100, 1)
 
     def get_weekly_stats(self):
         """
         Get statistics for the current week.
 
-        Optimized to minimize database queries by reusing querysets.
+        Performance optimized: Uses database aggregation to calculate stats
+        in the database rather than loading all objects into Python memory.
+        This reduces memory usage and improves speed, especially with large datasets.
         """
         one_week_ago = timezone.now() - timezone.timedelta(days=7)
 
-        # Fetch weekly lessons once and reuse (avoids duplicate query)
-        weekly_completions = self.user.lesson_completions.filter(
+        # Use database aggregation for lesson stats (single query)
+        lesson_aggregates = self.user.lesson_completions.filter(
             completed_at__gte=one_week_ago
+        ).aggregate(
+            count=Count('id'),
+            total_minutes=Sum('duration_minutes')
         )
-        weekly_lessons = weekly_completions.count()
-        weekly_minutes = sum(completion.duration_minutes for completion in weekly_completions)
 
-        # Weekly quiz accuracy
-        weekly_quizzes = self.user.quiz_results.filter(
+        weekly_lessons = lesson_aggregates['count'] or 0
+        weekly_minutes = lesson_aggregates['total_minutes'] or 0
+
+        # Use database aggregation for quiz accuracy (single query)
+        quiz_aggregates = self.user.quiz_results.filter(
             completed_at__gte=one_week_ago
+        ).aggregate(
+            total_score=Sum('score'),
+            total_questions=Sum('total_questions')
         )
-        if weekly_quizzes.exists():
-            total_score = sum(result.score for result in weekly_quizzes)
-            total_possible = sum(result.total_questions for result in weekly_quizzes)
-            weekly_accuracy = round((total_score / total_possible) * 100, 1) if total_possible > 0 else 0.0
-        else:
-            weekly_accuracy = 0.0
+
+        total_score = quiz_aggregates['total_score'] or 0
+        total_possible = quiz_aggregates['total_questions'] or 0
+        weekly_accuracy = round((total_score / total_possible) * 100, 1) if total_possible > 0 else 0.0
 
         return {
             'weekly_minutes': weekly_minutes,
