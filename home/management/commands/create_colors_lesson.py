@@ -42,14 +42,18 @@ class Command(BaseCommand):
             {'front': 'White', 'back': 'Blanco', 'order': 10},
         ]
 
-        for card_data in flashcards_data:
-            card = Flashcard.objects.create(
+        # Use bulk_create for better performance
+        flashcards = [
+            Flashcard(
                 lesson=lesson,
                 front_text=card_data['front'],
                 back_text=card_data['back'],
                 order=card_data['order'],
             )
-            self.stdout.write(f'  Created flashcard: {card.front_text} -> {card.back_text}')
+            for card_data in flashcards_data
+        ]
+        Flashcard.objects.bulk_create(flashcards)
+        self.stdout.write(f'  Created {len(flashcards)} flashcards')
 
         # Create quiz questions
         quiz_questions = [
@@ -103,15 +107,19 @@ class Command(BaseCommand):
             },
         ]
 
-        for q_data in quiz_questions:
-            question = LessonQuizQuestion.objects.create(
+        # Use bulk_create for better performance
+        questions = [
+            LessonQuizQuestion(
                 lesson=lesson,
                 question=q_data['question'],
                 options=q_data['options'],
                 correct_index=q_data['correct_index'],
                 order=q_data['order'],
             )
-            self.stdout.write(f'  Created question: {question.question}')
+            for q_data in quiz_questions
+        ]
+        LessonQuizQuestion.objects.bulk_create(questions)
+        self.stdout.write(f'  Created {len(questions)} quiz questions')
 
         # Link shapes lesson to colors lesson for progression
         try:
@@ -123,4 +131,4 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING('  Shapes lesson not found, skipping link'))
 
         self.stdout.write(self.style.SUCCESS('\nColors lesson created successfully!'))
-        self.stdout.write(f'Visit http://localhost:8000/lessons/{lesson.id}/ to view the lesson')
+        self.stdout.write(f'Visit https://www.languagelearningplatform.org/lessons/{lesson.id}/ to view the lesson')

@@ -1,7 +1,8 @@
-from django.db import models
+from django.db import models, IntegrityError, DatabaseError
 from django.db.models import Sum, Count, Q
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.utils.text import slugify
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.files.base import ContentFile
@@ -193,10 +194,13 @@ def create_user_profile(sender, instance, created, **kwargs):
     if created:
         try:
             UserProfile.objects.create(user=instance)
-        except Exception:
-            # Log error with full traceback but don't crash user creation
-            # Using generic Exception is intentional - catch ANY error to prevent user creation failure
-            logger.exception('Failed to create profile for user %s', instance.username)
+        except (IntegrityError, ValidationError, ValueError, DatabaseError) as e:
+            # Log specific errors but don't crash user creation
+            # IntegrityError: Profile already exists (duplicate)
+            # ValidationError: Model validation failed
+            # ValueError: Invalid field value
+            # DatabaseError: Database connection/query issues
+            logger.exception('Failed to create profile for user %s: %s', instance.username, str(e))
 
 
 @receiver(post_save, sender=User)
@@ -212,10 +216,13 @@ def save_user_profile(sender, instance, **kwargs):
     if hasattr(instance, 'profile'):
         try:
             instance.profile.save()
-        except Exception:
-            # Log error with full traceback but don't crash user save operation
-            # Using generic Exception is intentional - catch ANY error to prevent user save failure
-            logger.exception('Failed to save profile for user %s', instance.username)
+        except (IntegrityError, ValidationError, ValueError, DatabaseError) as e:
+            # Log specific errors but don't crash user save operation
+            # IntegrityError: Database constraint violation
+            # ValidationError: Model validation failed
+            # ValueError: Invalid field value
+            # DatabaseError: Database connection/query issues
+            logger.exception('Failed to save profile for user %s: %s', instance.username, str(e))
 
 class UserProgress(models.Model):
     """Track overall user learning progress and statistics"""
@@ -491,6 +498,26 @@ class Lesson(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.difficulty_level})"
+
+    def save(self, *args, **kwargs):
+        """
+        Override save to auto-generate slug from title if not provided.
+        Ensures unique slugs by appending a number if slug already exists.
+        """
+        if not self.slug:
+            # Generate base slug from title
+            base_slug = slugify(self.title)
+            slug = base_slug
+            counter = 1
+
+            # Ensure slug is unique by appending a number if needed
+            while Lesson.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            self.slug = slug
+
+        super().save(*args, **kwargs)
 
 
 class Flashcard(models.Model):

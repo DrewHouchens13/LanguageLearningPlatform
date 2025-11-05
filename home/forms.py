@@ -4,6 +4,7 @@ Forms for the home app, including user profile avatar upload.
 import os
 from django import forms
 from django.core.exceptions import ValidationError
+from PIL import Image
 from .models import UserProfile
 
 
@@ -28,18 +29,19 @@ class AvatarUploadForm(forms.ModelForm):
 
     def clean_avatar(self):
         """
-        Validate avatar upload for file type, MIME type, and size.
+        Validate avatar upload for file type, MIME type, size, and binary content.
 
         Multi-layer validation prevents malicious file uploads:
         1. File extension check
         2. MIME type validation
-        3. File size enforcement (both form and server-side)
+        3. Binary content verification (validates actual image data)
+        4. File size enforcement (both form and server-side)
 
         Returns:
             File: The validated avatar file
 
         Raises:
-            ValidationError: If file type, MIME type, or size is invalid
+            ValidationError: If file type, MIME type, content, or size is invalid
         """
         avatar = self.cleaned_data.get('avatar')
 
@@ -66,7 +68,28 @@ class AvatarUploadForm(forms.ModelForm):
                     'Invalid file format detected. Only PNG and JPG images are allowed.'
                 )
 
-        # Layer 3: Validate file size (5MB = 5 * 1024 * 1024 bytes)
+        # Layer 3: Validate binary content by attempting to open with Pillow
+        # This prevents uploading non-image files with spoofed extensions/MIME types
+        try:
+            img = Image.open(avatar)
+            img.verify()
+            # Verify returns valid image formats: PNG, JPEG, etc.
+            if img.format not in ['PNG', 'JPEG']:
+                raise ValidationError(
+                    'Invalid image format. Only PNG and JPG images are allowed.'
+                )
+            # Reset file pointer after verify() as it consumes the file
+            avatar.seek(0)
+        except ValidationError:
+            # Re-raise our own validation errors
+            raise
+        except (IOError, SyntaxError, ValueError) as e:
+            # PIL raises IOError/SyntaxError for invalid images, ValueError for other issues
+            raise ValidationError(
+                'File is corrupted or not a valid image. Please upload a valid PNG or JPG image.'
+            )
+
+        # Layer 4: Validate file size (5MB = 5 * 1024 * 1024 bytes)
         # Server-side enforcement in addition to form-level validation
         max_size = 5 * 1024 * 1024
         if avatar.size > max_size:
