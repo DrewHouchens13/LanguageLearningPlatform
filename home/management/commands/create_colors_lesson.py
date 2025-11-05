@@ -19,6 +19,12 @@ class Command(BaseCommand):
             }
         )
 
+        # IMPORTANT: Always update slug even if lesson exists (fixes production bug)
+        if not created and lesson.slug != 'colors':
+            lesson.slug = 'colors'
+            lesson.save()
+            self.stdout.write(self.style.WARNING(f'Fixed missing slug for existing lesson: {lesson.title}'))
+
         if created:
             self.stdout.write(self.style.SUCCESS(f'Created lesson: {lesson.title}'))
         else:
