@@ -469,6 +469,7 @@ class Lesson(models.Model):
         ],
         default='A1'
     )
+    slug = models.SlugField(max_length=200, unique=True, blank=True, null=True, help_text="URL-friendly identifier for template paths (e.g., 'shapes', 'colors')")
     order = models.IntegerField(default=0, help_text="Order in lesson sequence")
     is_published = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

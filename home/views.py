@@ -1533,7 +1533,9 @@ def lesson_quiz(request, lesson_id):
             'question': q.question,
             'options': q.options,
         })
-    return render(request, 'lessons/shapes/quiz.html', {'lesson': lesson, 'questions': qlist})
+    # Use dynamic template based on lesson slug
+    template_name = f'lessons/{lesson.slug}/quiz.html'
+    return render(request, template_name, {'lesson': lesson, 'questions': qlist})
 
 
 @require_http_methods(["POST"])
@@ -1618,4 +1620,6 @@ def lesson_results(request, lesson_id, attempt_id):
     attempt = get_object_or_404(LessonAttempt, id=attempt_id, lesson=lesson)
     next_lesson = lesson.next_lesson
     context = {'lesson': lesson, 'attempt': attempt, 'next_lesson': next_lesson}
-    return render(request, 'lessons/shapes/results.html', context)
+    # Use dynamic template based on lesson slug
+    template_name = f'lessons/{lesson.slug}/results.html'
+    return render(request, template_name, context)

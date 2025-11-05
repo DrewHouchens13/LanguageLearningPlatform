@@ -17,3 +17,6 @@ python manage.py loaddata home/fixtures/onboarding_spanish.json
 # Create shapes lesson with flashcards and quiz
 python manage.py create_shapes_lesson
 
+# Create colors lesson with flashcards and quiz
+python manage.py create_colors_lesson
+

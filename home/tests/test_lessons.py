@@ -415,6 +415,7 @@ class TestLessonQuizView(TestCase):
         self.client = Client()
         self.lesson = Lesson.objects.create(
             title='Spanish Shapes',
+            slug='shapes',
             is_published=True
         )
         self.q1 = LessonQuizQuestion.objects.create(
@@ -475,6 +476,7 @@ class TestSubmitLessonQuizView(TestCase):
         )
         self.lesson = Lesson.objects.create(
             title='Spanish Shapes',
+            slug='shapes',
             is_published=True
         )
         self.q1 = LessonQuizQuestion.objects.create(
@@ -770,6 +772,7 @@ class TestLessonResultsView(TestCase):
         )
         self.lesson = Lesson.objects.create(
             title='Spanish Shapes',
+            slug='shapes',
             is_published=True
         )
         self.next_lesson = Lesson.objects.create(
@@ -845,6 +848,7 @@ class TestLessonSecurityTests(TestCase):
         """Create test data once for all tests (read-only test class)"""
         cls.lesson = Lesson.objects.create(
             title='Test Lesson',
+            slug='test',
             is_published=True
         )
         cls.question = LessonQuizQuestion.objects.create(
