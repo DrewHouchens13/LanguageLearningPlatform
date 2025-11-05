@@ -26,6 +26,7 @@ from .models import (
     Flashcard,
     Lesson,
     LessonAttempt,
+    LessonCompletion,
     LessonQuizQuestion,
     OnboardingAnswer,
     OnboardingAttempt,
@@ -1601,6 +1602,34 @@ def submit_lesson_quiz(request, lesson_id):
         score=score,
         total=total
     )
+
+    # Track stats for authenticated users
+    if request.user.is_authenticated:
+        # Create QuizResult for stats tracking
+        QuizResult.objects.create(
+            user=request.user,
+            quiz_id=f'lesson_{lesson.id}',
+            quiz_title=lesson.title,
+            score=score,
+            total_questions=total
+        )
+        
+        # Create LessonCompletion record
+        LessonCompletion.objects.create(
+            user=request.user,
+            lesson_id=str(lesson.id),
+            lesson_title=lesson.title,
+            duration_minutes=5  # Estimated time per lesson quiz
+        )
+        
+        # Update UserProgress
+        user_progress, _ = UserProgress.objects.get_or_create(user=request.user)
+        user_progress.total_quizzes_taken += 1
+        user_progress.total_lessons_completed += 1
+        user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
+        user_progress.save()
+        
+        logger.info(f'Lesson quiz completed: {request.user.username} - {lesson.title}: {score}/{total}')
 
     # If request from JS expect JSON
     if request.content_type == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':

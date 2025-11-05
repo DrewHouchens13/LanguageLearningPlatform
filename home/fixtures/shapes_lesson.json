@@ -1,0 +1,199 @@
+[
+{
+  "model": "home.lesson",
+  "pk": 1,
+  "fields": {
+    "title": "Shapes in Spanish",
+    "description": "Learn basic shape names in Spanish",
+    "language": "Spanish",
+    "difficulty_level": "A1",
+    "slug": "shapes",
+    "order": 1,
+    "is_published": true,
+    "created_at": "2025-11-03T20:16:46.248Z",
+    "updated_at": "2025-11-03T20:16:46.248Z",
+    "next_lesson": null
+  }
+},
+{
+  "model": "home.flashcard",
+  "pk": 1,
+  "fields": {
+    "lesson": 1,
+    "front_text": "Circle",
+    "back_text": "C�rculo",
+    "image_url": "",
+    "audio_url": "",
+    "order": 1
+  }
+},
+{
+  "model": "home.flashcard",
+  "pk": 2,
+  "fields": {
+    "lesson": 1,
+    "front_text": "Square",
+    "back_text": "Cuadrado",
+    "image_url": "",
+    "audio_url": "",
+    "order": 2
+  }
+},
+{
+  "model": "home.flashcard",
+  "pk": 3,
+  "fields": {
+    "lesson": 1,
+    "front_text": "Triangle",
+    "back_text": "Tri�ngulo",
+    "image_url": "",
+    "audio_url": "",
+    "order": 3
+  }
+},
+{
+  "model": "home.flashcard",
+  "pk": 4,
+  "fields": {
+    "lesson": 1,
+    "front_text": "Rectangle",
+    "back_text": "Rect�ngulo",
+    "image_url": "",
+    "audio_url": "",
+    "order": 4
+  }
+},
+{
+  "model": "home.flashcard",
+  "pk": 5,
+  "fields": {
+    "lesson": 1,
+    "front_text": "Oval",
+    "back_text": "�valo",
+    "image_url": "",
+    "audio_url": "",
+    "order": 5
+  }
+},
+{
+  "model": "home.flashcard",
+  "pk": 6,
+  "fields": {
+    "lesson": 1,
+    "front_text": "Star",
+    "back_text": "Estrella",
+    "image_url": "",
+    "audio_url": "",
+    "order": 6
+  }
+},
+{
+  "model": "home.flashcard",
+  "pk": 7,
+  "fields": {
+    "lesson": 1,
+    "front_text": "Heart",
+    "back_text": "Coraz�n",
+    "image_url": "",
+    "audio_url": "",
+    "order": 7
+  }
+},
+{
+  "model": "home.flashcard",
+  "pk": 8,
+  "fields": {
+    "lesson": 1,
+    "front_text": "Diamond",
+    "back_text": "Diamante",
+    "image_url": "",
+    "audio_url": "",
+    "order": 8
+  }
+},
+{
+  "model": "home.lessonquizquestion",
+  "pk": 1,
+  "fields": {
+    "lesson": 1,
+    "question": "What is \"Circle\" in Spanish?",
+    "options": [
+      "Cuadrado",
+      "C�rculo",
+      "Tri�ngulo",
+      "Rect�ngulo"
+    ],
+    "correct_index": 1,
+    "explanation": "",
+    "order": 1
+  }
+},
+{
+  "model": "home.lessonquizquestion",
+  "pk": 2,
+  "fields": {
+    "lesson": 1,
+    "question": "What is \"Square\" in Spanish?",
+    "options": [
+      "Estrella",
+      "�valo",
+      "Cuadrado",
+      "Coraz�n"
+    ],
+    "correct_index": 2,
+    "explanation": "",
+    "order": 2
+  }
+},
+{
+  "model": "home.lessonquizquestion",
+  "pk": 3,
+  "fields": {
+    "lesson": 1,
+    "question": "What is \"Triangle\" in Spanish?",
+    "options": [
+      "Tri�ngulo",
+      "C�rculo",
+      "Diamante",
+      "Rect�ngulo"
+    ],
+    "correct_index": 0,
+    "explanation": "",
+    "order": 3
+  }
+},
+{
+  "model": "home.lessonquizquestion",
+  "pk": 4,
+  "fields": {
+    "lesson": 1,
+    "question": "What is \"Rectangle\" in Spanish?",
+    "options": [
+      "Cuadrado",
+      "�valo",
+      "Tri�ngulo",
+      "Rect�ngulo"
+    ],
+    "correct_index": 3,
+    "explanation": "",
+    "order": 4
+  }
+},
+{
+  "model": "home.lessonquizquestion",
+  "pk": 5,
+  "fields": {
+    "lesson": 1,
+    "question": "What is \"Star\" in Spanish?",
+    "options": [
+      "Estrella",
+      "Coraz�n",
+      "Diamante",
+      "�valo"
+    ],
+    "correct_index": 0,
+    "explanation": "",
+    "order": 5
+  }
+}
+]

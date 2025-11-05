@@ -12,7 +12,8 @@ import json
 import logging
 
 from home.models import (
-    Lesson, Flashcard, LessonQuizQuestion, LessonAttempt
+    Lesson, Flashcard, LessonQuizQuestion, LessonAttempt,
+    QuizResult, LessonCompletion, UserProgress
 )
 
 
@@ -522,6 +523,104 @@ class TestSubmitLessonQuizView(TestCase):
         self.assertEqual(attempt.score, 2)
         self.assertEqual(attempt.total, 2)
 
+    def test_submit_quiz_tracks_statistics(self):
+        """Test submit quiz tracks QuizResult, LessonCompletion, and UserProgress"""
+        self.client.login(username='testuser', password='testpass123')
+        
+        # Verify no stats exist before quiz
+        self.assertEqual(QuizResult.objects.filter(user=self.user).count(), 0)
+        self.assertEqual(LessonCompletion.objects.filter(user=self.user).count(), 0)
+        
+        # Submit quiz
+        data = {
+            'answers': [
+                {'question_id': self.q1.id, 'selected_index': 1},
+                {'question_id': self.q2.id, 'selected_index': 0}
+            ]
+        }
+        response = self.client.post(
+            self.url,
+            json.dumps(data),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify QuizResult was created
+        quiz_result = QuizResult.objects.get(user=self.user)
+        self.assertEqual(quiz_result.quiz_id, f'lesson_{self.lesson.id}')
+        self.assertEqual(quiz_result.quiz_title, self.lesson.title)
+        self.assertEqual(quiz_result.score, 2)
+        self.assertEqual(quiz_result.total_questions, 2)
+        
+        # Verify LessonCompletion was created
+        lesson_completion = LessonCompletion.objects.get(user=self.user)
+        self.assertEqual(lesson_completion.lesson_id, str(self.lesson.id))
+        self.assertEqual(lesson_completion.lesson_title, self.lesson.title)
+        self.assertEqual(lesson_completion.duration_minutes, 5)
+        
+        # Verify UserProgress was updated
+        user_progress = UserProgress.objects.get(user=self.user)
+        self.assertEqual(user_progress.total_quizzes_taken, 1)
+        self.assertEqual(user_progress.total_lessons_completed, 1)
+        self.assertEqual(user_progress.overall_quiz_accuracy, 100.0)
+
+    def test_submit_quiz_updates_accuracy_correctly(self):
+        """Test that quiz accuracy is calculated correctly across multiple quizzes"""
+        self.client.login(username='testuser', password='testpass123')
+        
+        # Submit first quiz with perfect score
+        data = {
+            'answers': [
+                {'question_id': self.q1.id, 'selected_index': 1},
+                {'question_id': self.q2.id, 'selected_index': 0}
+            ]
+        }
+        self.client.post(
+            self.url,
+            json.dumps(data),
+            content_type='application/json'
+        )
+        
+        # Create second lesson and submit with partial score
+        lesson2 = Lesson.objects.create(
+            title='Spanish Numbers',
+            slug='numbers',
+            is_published=True
+        )
+        q3 = LessonQuizQuestion.objects.create(
+            lesson=lesson2,
+            question='What is one?',
+            options=['Uno', 'Dos', 'Tres', 'Cuatro'],
+            correct_index=0,
+            order=1
+        )
+        q4 = LessonQuizQuestion.objects.create(
+            lesson=lesson2,
+            question='What is two?',
+            options=['Uno', 'Dos', 'Tres', 'Cuatro'],
+            correct_index=1,
+            order=2
+        )
+        
+        url2 = reverse('submit_lesson_quiz', args=[lesson2.id])
+        data2 = {
+            'answers': [
+                {'question_id': q3.id, 'selected_index': 0},  # Correct
+                {'question_id': q4.id, 'selected_index': 2}   # Wrong
+            ]
+        }
+        self.client.post(
+            url2,
+            json.dumps(data2),
+            content_type='application/json'
+        )
+        
+        # Verify overall accuracy is correct: (2+1)/(2+2) = 3/4 = 75%
+        user_progress = UserProgress.objects.get(user=self.user)
+        self.assertEqual(user_progress.total_quizzes_taken, 2)
+        self.assertEqual(user_progress.total_lessons_completed, 2)
+        self.assertEqual(user_progress.overall_quiz_accuracy, 75.0)
+
     def test_submit_quiz_guest_user(self):
         """Test submit quiz as guest (not logged in)"""
         data = {
@@ -545,6 +644,11 @@ class TestSubmitLessonQuizView(TestCase):
         attempt = LessonAttempt.objects.get(lesson=self.lesson)
         self.assertIsNone(attempt.user)
         self.assertEqual(attempt.score, 2)
+        
+        # Verify no statistics are created for guest users
+        self.assertEqual(QuizResult.objects.count(), 0)
+        self.assertEqual(LessonCompletion.objects.count(), 0)
+        self.assertEqual(UserProgress.objects.count(), 0)
 
     def test_submit_quiz_json_request(self):
         """Test submit quiz with JSON content type"""
