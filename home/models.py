@@ -503,21 +503,28 @@ class Lesson(models.Model):
         """
         Override save to auto-generate slug from title if not provided.
         Ensures unique slugs by appending a number if slug already exists.
+        Handles race conditions by catching IntegrityError and retrying.
         """
         if not self.slug:
             # Generate base slug from title
             base_slug = slugify(self.title)
-            slug = base_slug
-            counter = 1
+            self.slug = base_slug
 
-            # Ensure slug is unique by appending a number if needed
-            while Lesson.objects.filter(slug=slug).exclude(pk=self.pk).exists():
-                slug = f"{base_slug}-{counter}"
-                counter += 1
-
-            self.slug = slug
-
-        super().save(*args, **kwargs)
+        # Handle race conditions where multiple threads try to create same slug
+        max_retries = 10
+        for attempt in range(max_retries):
+            try:
+                super().save(*args, **kwargs)
+                return  # Success, exit method
+            except IntegrityError:
+                # Slug collision occurred, generate a new unique slug
+                if attempt == max_retries - 1:
+                    # Max retries reached, re-raise the error
+                    raise
+                # Generate new slug with counter
+                base_slug = slugify(self.title)
+                self.slug = f"{base_slug}-{attempt + 1}"
+                # Loop will retry save with new slug
 
 
 class Flashcard(models.Model):

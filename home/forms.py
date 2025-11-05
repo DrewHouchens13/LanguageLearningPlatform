@@ -32,10 +32,10 @@ class AvatarUploadForm(forms.ModelForm):
         Validate avatar upload for file type, MIME type, size, and binary content.
 
         Multi-layer validation prevents malicious file uploads:
-        1. File extension check
-        2. MIME type validation
-        3. Binary content verification (validates actual image data)
-        4. File size enforcement (both form and server-side)
+        1. File size check (prevents DoS attacks before processing)
+        2. File extension check
+        3. MIME type validation
+        4. Binary content verification (validates actual image data)
 
         Returns:
             File: The validated avatar file
@@ -49,7 +49,15 @@ class AvatarUploadForm(forms.ModelForm):
         if not avatar:
             return avatar
 
-        # Layer 1: Validate file extension using os.path.splitext for robust parsing
+        # Layer 1: Validate file size FIRST (5MB = 5 * 1024 * 1024 bytes)
+        # This prevents DoS attacks by checking size before resource-intensive operations
+        max_size = 5 * 1024 * 1024
+        if avatar.size > max_size:
+            raise ValidationError(
+                f'File size too large. Maximum size is 5MB. Your file is {avatar.size / (1024 * 1024):.1f}MB.'
+            )
+
+        # Layer 2: Validate file extension using os.path.splitext for robust parsing
         # This handles edge cases like multiple dots, no extension, etc.
         valid_extensions = ['.png', '.jpg', '.jpeg']
         _, file_extension = os.path.splitext(avatar.name.lower())
@@ -59,7 +67,7 @@ class AvatarUploadForm(forms.ModelForm):
                 'Invalid file type. Only PNG and JPG images are allowed.'
             )
 
-        # Layer 2: Validate MIME type to prevent executable files disguised as images
+        # Layer 3: Validate MIME type to prevent executable files disguised as images
         # This prevents attacks where malicious files use image extensions
         valid_mime_types = ['image/png', 'image/jpeg', 'image/jpg']
         if hasattr(avatar, 'content_type'):
@@ -68,7 +76,7 @@ class AvatarUploadForm(forms.ModelForm):
                     'Invalid file format detected. Only PNG and JPG images are allowed.'
                 )
 
-        # Layer 3: Validate binary content by attempting to open with Pillow
+        # Layer 4: Validate binary content by attempting to open with Pillow
         # This prevents uploading non-image files with spoofed extensions/MIME types
         try:
             img = Image.open(avatar)
@@ -78,23 +86,14 @@ class AvatarUploadForm(forms.ModelForm):
                 raise ValidationError(
                     'Invalid image format. Only PNG and JPG images are allowed.'
                 )
-            # Reset file pointer after verify() as it consumes the file
-            avatar.seek(0)
-        except ValidationError:
-            # Re-raise our own validation errors
-            raise
-        except (IOError, SyntaxError, ValueError) as e:
+        except (IOError, SyntaxError, ValueError):
             # PIL raises IOError/SyntaxError for invalid images, ValueError for other issues
             raise ValidationError(
                 'File is corrupted or not a valid image. Please upload a valid PNG or JPG image.'
             )
-
-        # Layer 4: Validate file size (5MB = 5 * 1024 * 1024 bytes)
-        # Server-side enforcement in addition to form-level validation
-        max_size = 5 * 1024 * 1024
-        if avatar.size > max_size:
-            raise ValidationError(
-                f'File size too large. Maximum size is 5MB. Your file is {avatar.size / (1024 * 1024):.1f}MB.'
-            )
+        finally:
+            # Always reset file pointer after verify() as it consumes the file
+            # This ensures the file can be read again for saving, even if exceptions occur
+            avatar.seek(0)
 
         return avatar
