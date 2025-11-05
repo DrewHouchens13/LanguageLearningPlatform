@@ -47,7 +47,7 @@ class Command(BaseCommand):
                 back_text=card_data['back'],
                 order=card_data['order'],
             )
-            self.stdout.write(f'  Created flashcard: {card.front_text} → {card.back_text}')
+            self.stdout.write(f'  Created flashcard: {card.front_text} -> {card.back_text}')
 
         # Create quiz questions
         quiz_questions = [
@@ -93,5 +93,5 @@ class Command(BaseCommand):
             )
             self.stdout.write(f'  Created question: {question.question}')
 
-        self.stdout.write(self.style.SUCCESS('\n✅ Shapes lesson created successfully!'))
+        self.stdout.write(self.style.SUCCESS('\nShapes lesson created successfully!'))
         self.stdout.write(f'Visit http://localhost:8000/lessons/{lesson.id}/ to view the lesson')
