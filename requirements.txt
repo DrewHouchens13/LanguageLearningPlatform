@@ -7,11 +7,13 @@ gunicorn==22.0.0           # WSGI HTTP server for production (fixes CVE-2024-682
 whitenoise==6.6.0          # Serve static files in production
 psycopg2-binary==2.9.9     # PostgreSQL adapter
 dj-database-url==2.1.0     # Parse database URL from environment
+Pillow==11.0.0             # Image processing for user avatars
 
 # Testing dependencies
 pytest==8.3.4              # Testing framework
 pytest-django==4.9.0       # Django integration for pytest
 pytest-cov==6.0.0          # Coverage plugin for pytest
+pytest-xdist==3.6.1        # Parallel test execution (use -n auto flag)
 
 # Code Quality & Linting (Sprint 3)
 pylint==3.3.9              # Python linter for code quality

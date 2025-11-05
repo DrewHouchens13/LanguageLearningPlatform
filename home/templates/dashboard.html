@@ -39,8 +39,14 @@
           <p><strong>Username:</strong> {{ user.username }}</p>
           <p><strong>Member since:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
         </div>
-        <div class="hero-image">
-          <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80" alt="Dashboard">
+        <div class="hero-image dashboard-avatar-container">
+          {% if user.profile %}
+            <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="dashboard-avatar">
+            <p class="avatar-source">{% if user.profile.avatar %}Custom Avatar{% else %}Gravatar{% endif %}</p>
+          {% else %}
+            <img src="https://www.gravatar.com/avatar/?s=200&d=identicon" alt="{{ user.username }}'s avatar" class="dashboard-avatar">
+            <p class="avatar-source">Gravatar (default)</p>
+          {% endif %}
         </div>
       </section>
       

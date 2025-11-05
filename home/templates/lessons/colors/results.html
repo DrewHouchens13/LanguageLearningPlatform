@@ -1,0 +1,189 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Results - {{ lesson.title }}</title>
+    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+    <style>
+        .results-container {
+            max-width: 700px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            text-align: center;
+        }
+        .results-card {
+            background: white;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .results-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, 
+                #ef4444 0%, 
+                #f97316 16.67%, 
+                #fbbf24 33.33%, 
+                #10b981 50%, 
+                #3b82f6 66.67%, 
+                #8b5cf6 83.33%, 
+                #ec4899 100%);
+        }
+        .score-display {
+            font-size: 4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 1rem 0;
+        }
+        .percentage {
+            font-size: 2rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        .message {
+            font-size: 1.25rem;
+            color: #333;
+            margin: 1.5rem 0;
+        }
+        .color-badge-container {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+        }
+        .color-badge {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            animation: fadeInScale 0.5s ease-out;
+        }
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        .color-badge:nth-child(1) { animation-delay: 0.1s; background: #ef4444; }
+        .color-badge:nth-child(2) { animation-delay: 0.2s; background: #f97316; }
+        .color-badge:nth-child(3) { animation-delay: 0.3s; background: #fbbf24; }
+        .color-badge:nth-child(4) { animation-delay: 0.4s; background: #10b981; }
+        .color-badge:nth-child(5) { animation-delay: 0.5s; background: #3b82f6; }
+        .color-badge:nth-child(6) { animation-delay: 0.6s; background: #8b5cf6; }
+        .color-badge:nth-child(7) { animation-delay: 0.7s; background: #ec4899; }
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        .congrats {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .achievement-message {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-weight: 600;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    {% include '_nav.html' %}
+    
+    <main class="results-container">
+        <div class="results-card">
+            <div class="congrats">🎨</div>
+            <h1>Color Quiz Complete!</h1>
+            <div class="score-display">{{ attempt.score }}/{{ attempt.total }}</div>
+            <div class="percentage">{{ attempt.percentage }}%</div>
+            
+            <div class="color-badge-container">
+                <div class="color-badge"></div>
+                <div class="color-badge"></div>
+                <div class="color-badge"></div>
+                <div class="color-badge"></div>
+                <div class="color-badge"></div>
+                <div class="color-badge"></div>
+                <div class="color-badge"></div>
+            </div>
+            
+            {% if attempt.percentage >= 80 %}
+            <div class="message">
+                Brilliant! You've mastered the colors in {{ lesson.title }}! 🌈
+            </div>
+            <div class="achievement-message">
+                ⭐ Achievement Unlocked: Color Master!
+            </div>
+            {% elif attempt.percentage >= 60 %}
+            <div class="message">
+                Good job! You're getting there. Keep practicing your color vocabulary! 🎨
+            </div>
+            {% else %}
+            <div class="message">
+                Keep learning! Review the lesson and practice the flashcards again. 📚
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="action-buttons">
+            <a href="{% url 'lesson_detail' lesson.id %}" class="btn btn-secondary">
+                Review Flashcards
+            </a>
+            <a href="{% url 'lesson_quiz' lesson.id %}" class="btn btn-secondary">
+                Retake Quiz
+            </a>
+            {% if next_lesson %}
+            <a href="{% url 'lesson_detail' next_lesson.id %}" class="btn btn-primary">
+                Next Lesson →
+            </a>
+            {% else %}
+            <a href="{% url 'lessons_list' %}" class="btn btn-primary">
+                Back to Color Lessons
+            </a>
+            {% endif %}
+        </div>
+    </main>
+</body>
+</html>

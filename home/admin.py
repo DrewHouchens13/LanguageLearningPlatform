@@ -2,11 +2,11 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from django.contrib import messages
-
+from django.utils.html import format_html
 from .models import (
-    UserProgress, 
-    LessonCompletion, 
-    QuizResult, 
+    UserProgress,
+    LessonCompletion,
+    QuizResult,
     UserProfile,
     OnboardingQuestion,
     OnboardingAttempt,
@@ -129,17 +129,86 @@ def reset_user_progress(modeladmin, request, queryset):
 reset_user_progress.short_description = "Reset all user progress"
 
 
+def delete_user_avatars_from_users(modeladmin, request, queryset):
+    """
+    Delete avatars for selected users (wrapper for User admin).
+
+    This is a convenience wrapper that allows admins to delete avatars
+    directly from the User admin list view instead of navigating to
+    UserProfile admin.
+
+    Args:
+        modeladmin: The ModelAdmin instance
+        request: HttpRequest object
+        queryset: QuerySet of User objects
+    """
+    deleted_count = 0
+    failed_users = []
+    no_avatar_count = 0
+
+    for user in queryset:
+        try:
+            if hasattr(user, 'profile') and user.profile.avatar:
+                # Get username before deletion for logging
+                username = user.username
+
+                # Delete the file from storage
+                user.profile.avatar.delete(save=False)
+
+                # Clear the field and save
+                user.profile.avatar = None
+                user.profile.save()
+
+                deleted_count += 1
+
+                # Log admin action for audit trail
+                admin_user = getattr(request, 'user', None)
+                admin_username = admin_user.username if admin_user else 'Unknown'
+                logger.info(
+                    'Admin %s deleted avatar for user: %s (content moderation)',
+                    admin_username, username
+                )
+            else:
+                # User has no custom avatar (using Gravatar)
+                no_avatar_count += 1
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Handle deletion failures gracefully (catch all to avoid breaking batch operation)
+            failed_users.append(user.username)
+            logger.error(
+                'Failed to delete avatar for user %s: %s', user.username, str(e)
+            )
+
+    # Display success message
+    if deleted_count > 0:
+        messages.success(
+            request,
+            f'Successfully deleted {deleted_count} avatar(s). Users will now use Gravatar.'
+        )
+    if no_avatar_count > 0:
+        messages.info(
+            request,
+            f'{no_avatar_count} user(s) had no custom avatar (already using Gravatar).'
+        )
+
+    # Report any failures
+    if failed_users:
+        messages.error(
+            request,
+            f'Failed to delete avatars for: {", ".join(failed_users)}'
+        )
+delete_user_avatars_from_users.short_description = "Delete user avatars (content moderation)"
+
+
 # Unregister the default User admin and register custom one
 admin.site.unregister(User)
 
 
-# UserProfile inline for User admin
 class UserProfileInline(admin.StackedInline):
-    """Inline for UserProfile in User admin"""
+    """Inline admin for UserProfile to show avatar and language profile in User admin"""
     model = UserProfile
     can_delete = False
-    verbose_name_plural = 'Language Profile'
-    fields = ('proficiency_level', 'has_completed_onboarding', 'onboarding_completed_at', 'target_language', 'daily_goal_minutes', 'learning_motivation')
+    verbose_name_plural = 'Profile & Language Settings'
+    fields = ('avatar', 'proficiency_level', 'has_completed_onboarding', 'onboarding_completed_at', 'target_language', 'daily_goal_minutes', 'learning_motivation')
     readonly_fields = ('onboarding_completed_at',)
 
 
@@ -150,8 +219,9 @@ class CustomUserAdmin(BaseUserAdmin):
     list_filter = ('is_staff', 'is_superuser', 'is_active', 'date_joined')
     search_fields = ('username', 'email', 'first_name', 'last_name')
     ordering = ('-date_joined',)
+    inlines = (UserProfileInline,)
 
-    actions = [reset_password_to_default, make_staff_admin, remove_admin_privileges, reset_user_progress]
+    actions = [reset_password_to_default, make_staff_admin, remove_admin_privileges, reset_user_progress, delete_user_avatars_from_users]
 
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Progress Information', {
@@ -254,17 +324,94 @@ class QuizResultAdmin(admin.ModelAdmin):
 # ONBOARDING ASSESSMENT ADMIN
 # =============================================================================
 
+# Custom actions for UserProfile admin
+def delete_user_avatars(modeladmin, request, queryset):
+    """
+    Delete avatars for selected user profiles (content moderation).
+
+    SECURITY NOTE: This action is for content moderation purposes to remove
+    offensive, obscene, or inappropriate avatars. The action:
+    1. Deletes the physical avatar file from storage
+    2. Clears the avatar field in the database
+    3. User will fall back to Gravatar
+    4. Logs the action for audit trail
+
+    Args:
+        modeladmin: The ModelAdmin instance
+        request: HttpRequest object
+        queryset: QuerySet of UserProfile objects
+    """
+    deleted_count = 0
+    failed_users = []
+
+    for profile in queryset:
+        try:
+            if profile.avatar:
+                # Get username before deletion for logging
+                username = profile.user.username
+
+                # Delete the file from storage
+                profile.avatar.delete(save=False)
+
+                # Clear the field and save
+                profile.avatar = None
+                profile.save()
+
+                deleted_count += 1
+
+                # Log admin action for audit trail
+                admin_user = getattr(request, 'user', None)
+                admin_username = admin_user.username if admin_user else 'Unknown'
+                logger.info(
+                    'Admin %s deleted avatar for user: %s (content moderation)',
+                    admin_username, username
+                )
+            else:
+                # User has no custom avatar (using Gravatar)
+                pass
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Handle deletion failures gracefully (catch all to avoid breaking batch operation)
+            failed_users.append(profile.user.username)
+            logger.error(
+                'Failed to delete avatar for user %s: %s', profile.user.username, str(e)
+            )
+
+    # Display success message
+    if deleted_count > 0:
+        messages.success(
+            request,
+            f'Successfully deleted {deleted_count} avatar(s). Users will now use Gravatar.'
+        )
+    else:
+        messages.info(
+            request,
+            'No custom avatars found in selection. Selected users are using Gravatar.'
+        )
+
+    # Report any failures
+    if failed_users:
+        messages.error(
+            request,
+            f'Failed to delete avatars for: {", ".join(failed_users)}'
+        )
+delete_user_avatars.short_description = "Delete avatars (content moderation)"
+
+
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     """Admin for UserProfile model"""
-    list_display = ('user', 'proficiency_level', 'target_language', 'has_completed_onboarding', 'onboarding_completed_at', 'daily_goal_minutes')
+    list_display = ('user', 'has_avatar', 'proficiency_level', 'target_language', 'has_completed_onboarding', 'onboarding_completed_at', 'daily_goal_minutes')
     search_fields = ('user__username', 'user__email', 'target_language')
     list_filter = ('proficiency_level', 'target_language', 'has_completed_onboarding', 'created_at')
-    readonly_fields = ('created_at', 'updated_at', 'onboarding_completed_at')
-    
+    readonly_fields = ('created_at', 'updated_at', 'onboarding_completed_at', 'avatar_preview')
+    actions = [delete_user_avatars]
+
     fieldsets = (
         ('User', {
             'fields': ('user',)
+        }),
+        ('Avatar', {
+            'fields': ('avatar', 'avatar_preview')
         }),
         ('Proficiency', {
             'fields': ('proficiency_level', 'has_completed_onboarding', 'onboarding_completed_at')
@@ -277,6 +424,27 @@ class UserProfileAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+    def has_avatar(self, obj):
+        """Display whether user has custom avatar"""
+        return bool(obj.avatar)
+    has_avatar.boolean = True
+    has_avatar.short_description = "Custom Avatar"
+
+    def avatar_preview(self, obj):
+        """Display avatar preview in admin (XSS-safe with format_html)"""
+        if obj.avatar:
+            return format_html(
+                '<img src="{}" width="100" height="100" style="border-radius: 50%;" />'
+                '<br><small>Custom Upload</small>',
+                obj.avatar.url
+            )
+        return format_html(
+            '<img src="{}" width="100" height="100" style="border-radius: 50%;" />'
+            '<br><small>Gravatar (default)</small>',
+            obj.get_gravatar_url(size=100)
+        )
+    avatar_preview.short_description = "Avatar Preview"
 
 
 @admin.register(OnboardingQuestion)

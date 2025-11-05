@@ -32,6 +32,18 @@
           <!-- Current Account Info -->
           <div class="account-info-box">
             <h3>Current Information</h3>
+            <div class="info-row avatar-row">
+              <span class="info-label">Avatar:</span>
+              <span class="info-value">
+                {% if user.profile %}
+                  <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="account-avatar-display">
+                  <span class="avatar-hint">Using {% if user.profile.avatar %}custom upload{% else %}Gravatar{% endif %}</span>
+                {% else %}
+                  <img src="https://www.gravatar.com/avatar/?s=200&d=identicon" alt="{{ user.username }}'s avatar" class="account-avatar-display">
+                  <span class="avatar-hint">Using Gravatar (default)</span>
+                {% endif %}
+              </span>
+            </div>
             <div class="info-row">
               <span class="info-label">Email:</span>
               <span class="info-value">{{ user.email }}</span>
@@ -181,6 +193,38 @@
 
               <button type="submit" class="account-button">Change Password</button>
             </form>
+          </div>
+
+          <!-- Update Avatar -->
+          <div class="account-card">
+            <h3>Update Profile Picture</h3>
+            <p class="form-help-text">Upload a custom avatar or use your Gravatar (based on email)</p>
+            <form method="POST" enctype="multipart/form-data" class="account-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_avatar">
+
+              <div class="form-group">
+                <label for="avatar-upload">Choose Image</label>
+                <input
+                  type="file"
+                  id="avatar-upload"
+                  name="avatar"
+                  accept="image/png,image/jpeg,image/jpg"
+                  class="file-input"
+                >
+                <p class="form-help-text">PNG or JPG only, max 5MB. Image will be resized to 200x200px.</p>
+              </div>
+
+              <button type="submit" class="account-button">Upload Avatar</button>
+            </form>
+
+            <div class="avatar-info">
+              <p class="form-help-text">
+                <strong>Don't have a custom image?</strong> We'll use your
+                <a href="https://gravatar.com" target="_blank" rel="noopener noreferrer">Gravatar</a>
+                based on your email address.
+              </p>
+            </div>
           </div>
         </div>
       </div>

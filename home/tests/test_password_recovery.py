@@ -34,21 +34,21 @@ class ForgotPasswordTests(TestCase):
         self.assertContains(response, 'Send Reset Link')
 
     def test_forgot_password_sends_email_for_existing_user(self):
-        """Test password reset email is sent for existing user"""
-        from django.core import mail
-
+        """Test password reset email is displayed for existing user (simulated for college project)"""
         response = self.client.post(reverse('forgot_password'), {
             'email': self.user.email
         })
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'password reset link has been sent')
 
-        # Check email was sent
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to, [self.user.email])
-        self.assertIn('Password Reset', mail.outbox[0].subject)
-        self.assertIn('reset-password', mail.outbox[0].body)
+        # Check simulated email is displayed (not actually sent via SMTP for college project)
+        self.assertContains(response, 'Simulated Email')
+        self.assertContains(response, 'Password Reset')
+        self.assertContains(response, self.user.email)
+        self.assertContains(response, '/reset-password/')
+
+        # Verify email contains user's username
+        self.assertContains(response, self.user.username)
 
     def test_forgot_password_no_email_for_nonexistent_user(self):
         """Test no email sent for non-existent user but same message shown"""
@@ -187,21 +187,19 @@ class ForgotUsernameTests(TestCase):
         self.assertContains(response, 'Send Username')
 
     def test_forgot_username_sends_email_for_existing_user(self):
-        """Test username reminder email is sent for existing user"""
-        from django.core import mail
-
+        """Test username reminder email is displayed for existing user (simulated for college project)"""
         response = self.client.post(reverse('forgot_username'), {
             'email': self.user.email
         })
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'username reminder has been sent')
 
-        # Check email was sent
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].to, [self.user.email])
-        self.assertIn('Username Reminder', mail.outbox[0].subject)
-        self.assertIn(self.user.username, mail.outbox[0].body)
+        # Check simulated email is displayed (not actually sent via SMTP for college project)
+        self.assertContains(response, 'Simulated Email')
+        self.assertContains(response, 'Username Reminder')
+        self.assertContains(response, self.user.email)
+        self.assertContains(response, self.user.username)
+        self.assertContains(response, '/login/')
 
     def test_forgot_username_no_email_for_nonexistent_user(self):
         """Test no email sent for non-existent user but same message shown"""

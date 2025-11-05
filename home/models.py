@@ -1,6 +1,228 @@
-from django.db import models
+from django.db import models, IntegrityError, DatabaseError
+from django.db.models import Sum, Count
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.utils.text import slugify
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.core.files.base import ContentFile
+from django.core.exceptions import ValidationError
+from PIL import Image, UnidentifiedImageError
+from io import BytesIO
+import hashlib
+import os
+import logging
+
+# Configure logger for error tracking
+logger = logging.getLogger(__name__)
+
+
+def user_avatar_path(instance, filename):
+    """
+    Generate upload path for user avatars.
+
+    Args:
+        instance: UserProfile instance
+        filename: Original filename
+
+    Returns:
+        str: Upload path in format 'avatars/user_<id>/<filename>'
+    """
+    ext = os.path.splitext(filename)[1]
+    new_filename = f"avatar{ext}"
+    return os.path.join('avatars', f'user_{instance.user.id}', new_filename)
+
+
+class UserProfile(models.Model):
+    """
+    Extended user profile with avatar support and language learning settings.
+
+    Features:
+    - Avatar: Gravatar as default (based on email) with optional custom upload
+    - Proficiency: CEFR level tracking from onboarding assessment
+    - Learning preferences: Target language, daily goals, motivation
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+
+    # Avatar support
+    avatar = models.ImageField(
+        upload_to=user_avatar_path,
+        blank=True,
+        null=True,
+        help_text="Profile picture (max 5MB, PNG/JPG only)"
+    )
+
+    # Proficiency tracking (capped at B1 for new users)
+    proficiency_level = models.CharField(
+        max_length=2,
+        choices=[
+            ('A1', 'Beginner (A1)'),
+            ('A2', 'Elementary (A2)'),
+            ('B1', 'Intermediate (B1)'),
+        ],
+        null=True,
+        blank=True,
+        help_text="CEFR proficiency level determined by onboarding assessment"
+    )
+
+    # Onboarding state
+    has_completed_onboarding = models.BooleanField(default=False)
+    onboarding_completed_at = models.DateTimeField(null=True, blank=True)
+
+    # Learning preferences
+    target_language = models.CharField(max_length=50, default='Spanish')
+    daily_goal_minutes = models.IntegerField(default=15)
+    learning_motivation = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        level_display = self.get_proficiency_level_display() if self.proficiency_level else 'Not assessed'
+        return f"{self.user.username}'s Profile - {level_display}"
+
+    class Meta:
+        verbose_name = "User Profile"
+        verbose_name_plural = "User Profiles"
+
+    def get_gravatar_url(self, size=200):
+        """
+        Get Gravatar URL for user's email.
+
+        Args:
+            size: Image size in pixels (default 200)
+
+        Returns:
+            str: Gravatar URL with default fallback
+        """
+        email = self.user.email.lower().encode('utf-8')
+        email_hash = hashlib.md5(email, usedforsecurity=False).hexdigest()
+        return f"https://www.gravatar.com/avatar/{email_hash}?s={size}&d=identicon"
+
+    def get_avatar_url(self):
+        """
+        Get avatar URL with fallback to Gravatar.
+
+        Returns:
+            str: URL to user's avatar (custom upload or Gravatar)
+        """
+        if self.avatar:
+            return self.avatar.url
+        return self.get_gravatar_url()
+
+    def get_avatar_thumbnail_url(self):
+        """
+        Get small avatar URL for navigation bar (40x40).
+
+        Returns:
+            str: URL to thumbnail avatar
+        """
+        if self.avatar:
+            return self.avatar.url
+        return self.get_gravatar_url(size=40)
+
+    def save(self, *args, **kwargs):
+        """
+        Override save to resize avatar images to 200x200 pixels.
+
+        Automatically resizes uploaded avatars to a maximum of 200x200 pixels
+        while maintaining aspect ratio. Images are saved in their original format
+        (PNG or JPEG) with high quality.
+        """
+        if self.avatar:
+            try:
+                # Open and validate the uploaded image
+                img = Image.open(self.avatar)
+
+                # Verify it's a valid image by attempting to load it
+                img.verify()
+
+                # Re-open after verify (verify() closes the file)
+                self.avatar.seek(0)
+                img = Image.open(self.avatar)
+
+                # Convert RGBA to RGB for JPEG compatibility
+                if img.mode in ('RGBA', 'LA', 'P'):
+                    background = Image.new('RGB', img.size, (255, 255, 255))
+                    background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+                    img = background
+
+                # Resize image if larger than 200x200
+                max_size = (200, 200)
+                if img.height > max_size[1] or img.width > max_size[0]:
+                    img.thumbnail(max_size, Image.Resampling.LANCZOS)
+
+                # Save resized image to BytesIO
+                output = BytesIO()
+                img_format = 'JPEG' if self.avatar.name.lower().endswith('.jpg') or self.avatar.name.lower().endswith('.jpeg') else 'PNG'
+                img.save(output, format=img_format, quality=95)
+                output.seek(0)
+
+                # Replace avatar with resized version
+                self.avatar.save(
+                    self.avatar.name,
+                    ContentFile(output.read()),
+                    save=False
+                )
+            except UnidentifiedImageError as e:
+                # Handle unrecognized image formats (must be before OSError as it's a subclass)
+                logger.error('Unidentified image format for user %s: %s', self.user.username, str(e))
+                raise ValidationError('Unrecognized image format. Please upload a valid PNG or JPG image.') from e
+            except (IOError, OSError) as e:
+                # Handle corrupted or invalid image files
+                logger.error('Failed to process avatar image for user %s: %s', self.user.username, str(e))
+                raise ValidationError('Invalid or corrupted image file. Please upload a valid PNG or JPG image.') from e
+            except ValueError as e:
+                # Handle invalid parameter values during image processing
+                logger.error('Invalid image parameters for user %s: %s', self.user.username, str(e))
+                raise ValidationError('Invalid image data. Please upload a different PNG or JPG image.') from e
+
+        super().save(*args, **kwargs)
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """
+    Signal to automatically create UserProfile when User is created.
+
+    Args:
+        sender: The model class (User)
+        instance: The User instance being saved
+        created: Boolean - True if this is a new User
+        **kwargs: Additional keyword arguments
+    """
+    if created:
+        try:
+            UserProfile.objects.create(user=instance)
+        except (IntegrityError, ValidationError, ValueError, DatabaseError) as e:
+            # Log specific errors but don't crash user creation
+            # IntegrityError: Profile already exists (duplicate)
+            # ValidationError: Model validation failed
+            # ValueError: Invalid field value
+            # DatabaseError: Database connection/query issues
+            logger.exception('Failed to create profile for user %s: %s', instance.username, str(e))
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """
+    Signal to save UserProfile when User is saved.
+
+    Args:
+        sender: The model class (User)
+        instance: The User instance being saved
+        **kwargs: Additional keyword arguments
+    """
+    if hasattr(instance, 'profile'):
+        try:
+            instance.profile.save()
+        except (IntegrityError, ValidationError, ValueError, DatabaseError) as e:
+            # Log specific errors but don't crash user save operation
+            # IntegrityError: Database constraint violation
+            # ValidationError: Model validation failed
+            # ValueError: Invalid field value
+            # DatabaseError: Database connection/query issues
+            logger.exception('Failed to save profile for user %s: %s', instance.username, str(e))
 
 class UserProgress(models.Model):
     """Track overall user learning progress and statistics"""
@@ -19,44 +241,58 @@ class UserProgress(models.Model):
         return f"Progress for {self.user.username}"
 
     def calculate_quiz_accuracy(self):
-        """Calculate overall quiz accuracy from all quiz results"""
-        quiz_results = self.user.quiz_results.all()
-        if not quiz_results.exists():
-            return 0.0
-        
-        total_score = sum(result.score for result in quiz_results)
-        total_possible = sum(result.total_questions for result in quiz_results)
-        
+        """
+        Calculate overall quiz accuracy from all quiz results.
+
+        Performance optimized: Uses database aggregation instead of loading
+        all quiz objects into memory.
+        """
+        # Use database aggregation for performance (single query)
+        aggregates = self.user.quiz_results.aggregate(
+            total_score=Sum('score'),
+            total_questions=Sum('total_questions')
+        )
+
+        total_score = aggregates['total_score'] or 0
+        total_possible = aggregates['total_questions'] or 0
+
         if total_possible == 0:
             return 0.0
-        
+
         return round((total_score / total_possible) * 100, 1)
 
     def get_weekly_stats(self):
         """
         Get statistics for the current week.
 
-        Optimized to minimize database queries by reusing querysets.
+        Performance optimized: Uses database aggregation to calculate stats
+        in the database rather than loading all objects into Python memory.
+        This reduces memory usage and improves speed, especially with large datasets.
         """
         one_week_ago = timezone.now() - timezone.timedelta(days=7)
 
-        # Fetch weekly lessons once and reuse (avoids duplicate query)
-        weekly_completions = self.user.lesson_completions.filter(
+        # Use database aggregation for lesson stats (single query)
+        lesson_aggregates = self.user.lesson_completions.filter(
             completed_at__gte=one_week_ago
+        ).aggregate(
+            count=Count('id'),
+            total_minutes=Sum('duration_minutes')
         )
-        weekly_lessons = weekly_completions.count()
-        weekly_minutes = sum(completion.duration_minutes for completion in weekly_completions)
 
-        # Weekly quiz accuracy
-        weekly_quizzes = self.user.quiz_results.filter(
+        weekly_lessons = lesson_aggregates['count'] or 0
+        weekly_minutes = lesson_aggregates['total_minutes'] or 0
+
+        # Use database aggregation for quiz accuracy (single query)
+        quiz_aggregates = self.user.quiz_results.filter(
             completed_at__gte=one_week_ago
+        ).aggregate(
+            total_score=Sum('score'),
+            total_questions=Sum('total_questions')
         )
-        if weekly_quizzes.exists():
-            total_score = sum(result.score for result in weekly_quizzes)
-            total_possible = sum(result.total_questions for result in weekly_quizzes)
-            weekly_accuracy = round((total_score / total_possible) * 100, 1) if total_possible > 0 else 0.0
-        else:
-            weekly_accuracy = 0.0
+
+        total_score = quiz_aggregates['total_score'] or 0
+        total_possible = quiz_aggregates['total_questions'] or 0
+        weekly_accuracy = round((total_score / total_possible) * 100, 1) if total_possible > 0 else 0.0
 
         return {
             'weekly_minutes': weekly_minutes,
@@ -103,44 +339,6 @@ class QuizResult(models.Model):
         if self.total_questions == 0:
             return 0.0
         return round((self.score / self.total_questions) * 100, 1)
-
-
-class UserProfile(models.Model):
-    """Extended user profile with language learning specifics"""
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='language_profile')
-    
-    # Proficiency tracking (capped at B1 for new users)
-    proficiency_level = models.CharField(
-        max_length=2,
-        choices=[
-            ('A1', 'Beginner (A1)'),
-            ('A2', 'Elementary (A2)'),
-            ('B1', 'Intermediate (B1)'),
-        ],
-        null=True,
-        blank=True,
-        help_text="CEFR proficiency level determined by onboarding assessment"
-    )
-    
-    # Onboarding state
-    has_completed_onboarding = models.BooleanField(default=False)
-    onboarding_completed_at = models.DateTimeField(null=True, blank=True)
-    
-    # Learning preferences
-    target_language = models.CharField(max_length=50, default='Spanish')
-    daily_goal_minutes = models.IntegerField(default=15)
-    learning_motivation = models.TextField(blank=True)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def __str__(self):
-        level_display = self.get_proficiency_level_display() if self.proficiency_level else 'Not assessed'
-        return f"{self.user.username}'s Profile - {level_display}"
-    
-    class Meta:
-        verbose_name = "User Profile"
-        verbose_name_plural = "User Profiles"
 
 
 class OnboardingQuestion(models.Model):
@@ -253,11 +451,13 @@ class OnboardingAnswer(models.Model):
     def __str__(self):
         status = "✓" if self.is_correct else "✗"
         return f"{status} Q{self.question.question_number} - {self.user_answer}"
-    
+
     class Meta:
         verbose_name = "Onboarding Answer"
         verbose_name_plural = "Onboarding Answers"
         ordering = ['question__question_number']
+
+
 # =============================================================================
 # LESSON MODELS
 # =============================================================================
@@ -276,11 +476,12 @@ class Lesson(models.Model):
         ],
         default='A1'
     )
+    slug = models.SlugField(max_length=200, unique=True, blank=True, null=True, help_text="URL-friendly identifier for template paths (e.g., 'shapes', 'colors')")
     order = models.IntegerField(default=0, help_text="Order in lesson sequence")
     is_published = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     # Link to next lesson
     next_lesson = models.ForeignKey(
         'self',
@@ -289,14 +490,41 @@ class Lesson(models.Model):
         blank=True,
         related_name='previous_lesson'
     )
-    
+
     class Meta:
         ordering = ['order', 'id']
         verbose_name = "Lesson"
         verbose_name_plural = "Lessons"
-    
+
     def __str__(self):
         return f"{self.title} ({self.difficulty_level})"
+
+    def save(self, *args, **kwargs):
+        """
+        Override save to auto-generate slug from title if not provided.
+        Ensures unique slugs by appending a number if slug already exists.
+        Handles race conditions by catching IntegrityError and retrying.
+        """
+        if not self.slug:
+            # Generate base slug from title
+            base_slug = slugify(self.title)
+            self.slug = base_slug
+
+        # Handle race conditions where multiple threads try to create same slug
+        max_retries = 10
+        for attempt in range(max_retries):
+            try:
+                super().save(*args, **kwargs)
+                return  # Success, exit method
+            except IntegrityError:
+                # Slug collision occurred, generate a new unique slug
+                if attempt == max_retries - 1:
+                    # Max retries reached, re-raise the error
+                    raise
+                # Generate new slug with counter
+                base_slug = slugify(self.title)
+                self.slug = f"{base_slug}-{attempt + 1}"
+                # Loop will retry save with new slug
 
 
 class Flashcard(models.Model):
@@ -307,12 +535,12 @@ class Flashcard(models.Model):
     image_url = models.URLField(blank=True)
     audio_url = models.URLField(blank=True)
     order = models.IntegerField(default=0)
-    
+
     class Meta:
         ordering = ['order']
         verbose_name = "Flashcard"
         verbose_name_plural = "Flashcards"
-    
+
     def __str__(self):
         return f"{self.front_text} → {self.back_text}"
 
@@ -325,12 +553,12 @@ class LessonQuizQuestion(models.Model):
     correct_index = models.IntegerField(help_text="Index of correct answer (0-based)")
     explanation = models.TextField(blank=True)
     order = models.IntegerField(default=0)
-    
+
     class Meta:
         ordering = ['order']
         verbose_name = "Lesson Quiz Question"
         verbose_name_plural = "Lesson Quiz Questions"
-    
+
     def __str__(self):
         return f"Q{self.order}: {self.question[:50]}..."
 
@@ -342,18 +570,19 @@ class LessonAttempt(models.Model):
     score = models.IntegerField(default=0)
     total = models.IntegerField(default=0)
     completed_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         ordering = ['-completed_at']
         verbose_name = "Lesson Attempt"
         verbose_name_plural = "Lesson Attempts"
-    
+
     def __str__(self):
         user_display = self.user.username if self.user else "Guest"
         return f"{user_display} - {self.lesson.title}: {self.score}/{self.total}"
-    
+
     @property
     def percentage(self):
+        """Calculate the percentage score for this lesson attempt."""
         if self.total == 0:
             return 0
         return round((self.score / self.total) * 100, 1)

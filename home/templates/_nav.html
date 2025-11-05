@@ -10,6 +10,15 @@
       <span></span>
     </button>
     <ul class="nav-menu">
+      {% if user.is_authenticated %}
+        <li class="nav-item nav-avatar">
+          {% if user.profile %}
+            <img src="{{ user.profile.get_avatar_thumbnail_url }}" alt="{{ user.username }}" class="nav-avatar-img">
+          {% else %}
+            <img src="https://www.gravatar.com/avatar/?s=40&d=identicon" alt="{{ user.username }}" class="nav-avatar-img">
+          {% endif %}
+        </li>
+      {% endif %}
       <li class="nav-item">
         {% if user.is_authenticated %}
           <a href="{% url 'dashboard' %}" class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}">Home</a>
@@ -24,14 +33,14 @@
         <a href="{% url 'progress' %}" class="nav-link {% if request.path == '/progress/' %}active{% endif %}">My Progress</a>
       </li>
       {% if user.is_authenticated %}
-        <li class="nav-item">
-          <a href="{% url 'account' %}" class="nav-link {% if request.path == '/account/' %}active{% endif %}">Account</a>
-        </li>
         {% if user.is_staff %}
         <li class="nav-item">
           <a href="/admin/" class="nav-link admin-link">Admin</a>
         </li>
         {% endif %}
+        <li class="nav-item">
+          <a href="{% url 'account' %}" class="nav-link {% if request.path == '/account/' %}active{% endif %}">Account</a>
+        </li>
         <li class="nav-item">
           <a href="{% url 'logout' %}" class="nav-link nav-button">Logout</a>
         </li>

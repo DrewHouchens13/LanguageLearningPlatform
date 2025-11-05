@@ -1,0 +1,529 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ lesson.title }} Quiz - Color Learning Platform</title>
+    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+    <style>
+        .quiz-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .question-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+        .color-question-display {
+            width: 120px;
+            height: 120px;
+            border-radius: 12px;
+            margin: 1rem auto 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 3px solid #e5e7eb;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .option {
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+        .option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        .option.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        .submit-btn {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 2rem auto;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .color-option {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            border: 2px solid #d1d5db;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    {% include '_nav.html' %}
+    
+    <main class="quiz-container">
+        <div class="quiz-header">
+            <h1>{{ lesson.title }} Quiz</h1>
+            <p>Test your knowledge of colors - Answer all questions to complete the lesson</p>
+        </div>
+        
+        <form id="quiz-form">
+            {% csrf_token %}
+            
+            <!-- Question 1: Translation -->
+            <div class="question-card">
+                <div class="question-text">
+                    1. What is "Red" in Spanish?
+                </div>
+                <div class="options">
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_1" 
+                               value="0"
+                               data-question-id="1"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Azul
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_1" 
+                               value="1"
+                               data-question-id="1"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Rojo
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_1" 
+                               value="2"
+                               data-question-id="1"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Verde
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_1" 
+                               value="3"
+                               data-question-id="1"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Amarillo
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Question 2: Color Identification -->
+            <div class="question-card">
+                <div class="question-text">
+                    2. What color is this?
+                </div>
+                <div class="color-question-display" style="background-color: #3b82f6;"></div>
+                <div class="options">
+                    <label class="option color-option">
+                        <input type="radio" 
+                               name="question_2" 
+                               value="0"
+                               data-question-id="2"
+                               required
+                               style="margin-right: 0.5rem;">
+                        <div class="color-swatch" style="background-color: #ef4444;"></div>
+                        <span>Red (Rojo)</span>
+                    </label>
+                    <label class="option color-option">
+                        <input type="radio" 
+                               name="question_2" 
+                               value="1"
+                               data-question-id="2"
+                               required
+                               style="margin-right: 0.5rem;">
+                        <div class="color-swatch" style="background-color: #3b82f6;"></div>
+                        <span>Blue (Azul)</span>
+                    </label>
+                    <label class="option color-option">
+                        <input type="radio" 
+                               name="question_2" 
+                               value="2"
+                               data-question-id="2"
+                               required
+                               style="margin-right: 0.5rem;">
+                        <div class="color-swatch" style="background-color: #10b981;"></div>
+                        <span>Green (Verde)</span>
+                    </label>
+                    <label class="option color-option">
+                        <input type="radio" 
+                               name="question_2" 
+                               value="3"
+                               data-question-id="2"
+                               required
+                               style="margin-right: 0.5rem;">
+                        <div class="color-swatch" style="background-color: #fbbf24;"></div>
+                        <span>Yellow (Amarillo)</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Question 3: Translation -->
+            <div class="question-card">
+                <div class="question-text">
+                    3. "Verde" means...
+                </div>
+                <div class="options">
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_3" 
+                               value="0"
+                               data-question-id="3"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Purple
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_3" 
+                               value="1"
+                               data-question-id="3"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Green
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_3" 
+                               value="2"
+                               data-question-id="3"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Orange
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_3" 
+                               value="3"
+                               data-question-id="3"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Pink
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Question 4: Color Match -->
+            <div class="question-card">
+                <div class="question-text">
+                    4. What color is "Amarillo"?
+                </div>
+                <div class="options">
+                    <label class="option color-option">
+                        <input type="radio" 
+                               name="question_4" 
+                               value="0"
+                               data-question-id="4"
+                               required
+                               style="margin-right: 0.5rem;">
+                        <div class="color-swatch" style="background-color: #8b5cf6;"></div>
+                        <span>Purple</span>
+                    </label>
+                    <label class="option color-option">
+                        <input type="radio" 
+                               name="question_4" 
+                               value="1"
+                               data-question-id="4"
+                               required
+                               style="margin-right: 0.5rem;">
+                        <div class="color-swatch" style="background-color: #fbbf24;"></div>
+                        <span>Yellow</span>
+                    </label>
+                    <label class="option color-option">
+                        <input type="radio" 
+                               name="question_4" 
+                               value="2"
+                               data-question-id="4"
+                               required
+                               style="margin-right: 0.5rem;">
+                        <div class="color-swatch" style="background-color: #f97316;"></div>
+                        <span>Orange</span>
+                    </label>
+                    <label class="option color-option">
+                        <input type="radio" 
+                               name="question_4" 
+                               value="3"
+                               data-question-id="4"
+                               required
+                               style="margin-right: 0.5rem;">
+                        <div class="color-swatch" style="background-color: #ec4899;"></div>
+                        <span>Pink</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Question 5: Translation -->
+            <div class="question-card">
+                <div class="question-text">
+                    5. What is "Black" in Spanish?
+                </div>
+                <div class="options">
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_5" 
+                               value="0"
+                               data-question-id="5"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Blanco
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_5" 
+                               value="1"
+                               data-question-id="5"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Negro
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_5" 
+                               value="2"
+                               data-question-id="5"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Marrón
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_5" 
+                               value="3"
+                               data-question-id="5"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Gris
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Question 6: Color Identification -->
+            <div class="question-card">
+                <div class="question-text">
+                    6. Identify this color in Spanish
+                </div>
+                <div class="color-question-display" style="background-color: #ec4899;"></div>
+                <div class="options">
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_6" 
+                               value="0"
+                               data-question-id="6"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Rosa
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_6" 
+                               value="1"
+                               data-question-id="6"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Rojo
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_6" 
+                               value="2"
+                               data-question-id="6"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Morado
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_6" 
+                               value="3"
+                               data-question-id="6"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Naranja
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Question 7: Translation -->
+            <div class="question-card">
+                <div class="question-text">
+                    7. "Morado" means...
+                </div>
+                <div class="options">
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_7" 
+                               value="0"
+                               data-question-id="7"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Purple
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_7" 
+                               value="1"
+                               data-question-id="7"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Brown
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_7" 
+                               value="2"
+                               data-question-id="7"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Orange
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_7" 
+                               value="3"
+                               data-question-id="7"
+                               required
+                               style="margin-right: 0.5rem;">
+                        White
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Question 8: Multiple Meanings -->
+            <div class="question-card">
+                <div class="question-text">
+                    8. Which word means both "orange" (the color) and "orange" (the fruit) in Spanish?
+                </div>
+                <div class="options">
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_8" 
+                               value="0"
+                               data-question-id="8"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Naranja
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_8" 
+                               value="1"
+                               data-question-id="8"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Anaranjado
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_8" 
+                               value="2"
+                               data-question-id="8"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Rosa
+                    </label>
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_8" 
+                               value="3"
+                               data-question-id="8"
+                               required
+                               style="margin-right: 0.5rem;">
+                        Rojo
+                    </label>
+                </div>
+            </div>
+            
+            <button type="submit" class="submit-btn">Submit Quiz</button>
+        </form>
+    </main>
+    
+    <script>
+        document.querySelectorAll('.option input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const questionCard = this.closest('.question-card');
+                questionCard.querySelectorAll('.option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                this.closest('.option').classList.add('selected');
+            });
+        });
+        
+        document.getElementById('quiz-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const answers = [];
+            document.querySelectorAll('input[type="radio"]:checked').forEach(input => {
+                answers.push({
+                    question_id: parseInt(input.dataset.questionId),
+                    selected_index: parseInt(input.value)
+                });
+            });
+            
+            try {
+                const response = await fetch('{% url "submit_lesson_quiz" lesson.id %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({ answers: answers })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.href = result.redirect_url;
+                } else {
+                    alert('Error submitting quiz. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error submitting quiz. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>

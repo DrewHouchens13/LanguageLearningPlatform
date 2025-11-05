@@ -1,30 +1,39 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse
+# Standard library imports
+import json
+import logging
+from functools import wraps
+
+# Django imports
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email as django_validate_email
-from django.contrib import messages
 from django.db import IntegrityError
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import url_has_allowed_host_and_scheme, urlsafe_base64_encode, urlsafe_base64_decode
 from django.views.decorators.http import require_http_methods
-from functools import wraps
-import json
-import logging
 
-
+# Local application imports
 from .models import (
-    UserProgress, QuizResult, UserProfile, 
-    OnboardingAttempt, OnboardingAnswer, OnboardingQuestion,
-    Lesson, LessonQuizQuestion, LessonAttempt, Flashcard
+    Flashcard,
+    Lesson,
+    LessonAttempt,
+    LessonQuizQuestion,
+    OnboardingAnswer,
+    OnboardingAttempt,
+    OnboardingQuestion,
+    QuizResult,
+    UserProfile,
+    UserProgress,
 )
-
 from .services.onboarding_service import OnboardingService
 
 # Configure logger for security events
@@ -970,6 +979,28 @@ def account_view(request):
             logger.info('Password updated for user: %s from IP: %s',
                        request.user.username, get_client_ip(request))
 
+        elif action == 'update_avatar':
+            from .forms import AvatarUploadForm
+
+            # Get or create user profile
+            profile, _created = request.user.profile, False
+            if not hasattr(request.user, 'profile'):
+                from .models import UserProfile
+                profile = UserProfile.objects.create(user=request.user)
+                _created = True
+
+            form = AvatarUploadForm(request.POST, request.FILES, instance=profile)
+
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Avatar updated successfully!')
+                logger.info('Avatar updated for user: %s from IP: %s',
+                           request.user.username, get_client_ip(request))
+            else:
+                for error_list in form.errors.values():
+                    for error in error_list:
+                        messages.error(request, error)
+
     return render(request, 'account.html')
 
 
@@ -1015,19 +1046,22 @@ def forgot_password_view(request):
                 f'/reset-password/{uid}/{token}/'
             )
 
-            # Send password reset email
-            send_template_email(
-                request,
-                'emails/password_reset_email.txt',
-                {
-                    'user': user,
-                    'reset_url': reset_url,
-                    'site_name': 'Language Learning Platform',
-                },
-                'Password Reset - Language Learning Platform',
-                user.email,
-                'Password reset email'
-            )
+            # Render simulated email (for college project - no real SMTP)
+            from django.template.loader import render_to_string
+            email_content = render_to_string('emails/password_reset_email.txt', {
+                'user': user,
+                'reset_url': reset_url,
+                'site_name': 'Language Learning Platform',
+            })
+
+            # Show simulated email in styled box
+            return render(request, 'forgot_password.html', {
+                'simulated_email': {
+                    'to': user.email,
+                    'subject': 'Password Reset - Language Learning Platform',
+                    'content': email_content,
+                }
+            })
 
         except User.DoesNotExist:
             # Log failed attempt but don't inform user (prevent enumeration)
@@ -1128,19 +1162,22 @@ def forgot_username_view(request):
             # Build login URL
             login_url = request.build_absolute_uri('/login/')
 
-            # Send username reminder email
-            send_template_email(
-                request,
-                'emails/username_reminder_email.txt',
-                {
-                    'user': user,
-                    'site_name': 'Language Learning Platform',
-                    'login_url': login_url,
-                },
-                'Username Reminder - Language Learning Platform',
-                user.email,
-                'Username reminder'
-            )
+            # Render simulated email (for college project - no real SMTP)
+            from django.template.loader import render_to_string
+            email_content = render_to_string('emails/username_reminder_email.txt', {
+                'user': user,
+                'site_name': 'Language Learning Platform',
+                'login_url': login_url,
+            })
+
+            # Show simulated email in styled box
+            return render(request, 'forgot_username.html', {
+                'simulated_email': {
+                    'to': user.email,
+                    'subject': 'Username Reminder - Language Learning Platform',
+                    'content': email_content,
+                }
+            })
 
         except User.DoesNotExist:
             # Log failed attempt but don't inform user (prevent enumeration)
@@ -1496,44 +1533,64 @@ def lesson_quiz(request, lesson_id):
             'question': q.question,
             'options': q.options,
         })
-    return render(request, 'lessons/shapes/quiz.html', {'lesson': lesson, 'questions': qlist})
+    # Use dynamic template based on lesson slug
+    template_name = f'lessons/{lesson.slug}/quiz.html'
+    return render(request, template_name, {'lesson': lesson, 'questions': qlist})
 
 
 @require_http_methods(["POST"])
 def submit_lesson_quiz(request, lesson_id):
     """Process lesson quiz submission."""
     lesson = get_object_or_404(Lesson, id=lesson_id, is_published=True)
-    
+
     # Accept JSON body or regular POST
     try:
         if request.content_type == 'application/json':
             payload = json.loads(request.body.decode('utf-8'))
         else:
             payload = request.POST.dict()
-    except Exception:
-        return HttpResponseBadRequest("Invalid payload")
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        logger.warning(f"Invalid JSON payload in quiz submission for lesson {lesson_id}")
+        return JsonResponse({'error': 'Invalid JSON format'}, status=400)
 
     answers = payload.get('answers')
-    if not answers:
-        raw = payload.get('answers')
-        if raw:
-            try:
-                answers = json.loads(raw)
-            except:
-                pass
-    if not answers or not isinstance(answers, list):
-        return HttpResponseBadRequest("No answers provided")
 
-    # Evaluate
+    # Handle answers as JSON string (for backwards compatibility with form-encoded submissions)
+    if answers and isinstance(answers, str):
+        try:
+            answers = json.loads(answers)
+        except (json.JSONDecodeError, TypeError):
+            logger.warning(f"Failed to parse answers JSON string for lesson {lesson_id}")
+            return JsonResponse({'error': 'Invalid answers format - must be valid JSON'}, status=400)
+
+    if not answers or not isinstance(answers, list):
+        return JsonResponse({'error': 'No answers provided or invalid format'}, status=400)
+
+    # Fetch all quiz questions for this lesson in one query (performance optimization)
+    # Create a dictionary for O(1) lookup by question ID
+    questions = {q.id: q for q in LessonQuizQuestion.objects.filter(lesson=lesson)}
+
+    # Evaluate answers
     score = 0
     total = 0
     for a in answers:
+        # Skip non-dict elements (security: handle malformed payloads gracefully)
+        if not isinstance(a, dict):
+            continue
+
         qid = a.get('question_id') or a.get('id')
         sel = a.get('selected_index') if 'selected_index' in a else a.get('selected')
-        try:
-            q = LessonQuizQuestion.objects.get(id=qid, lesson=lesson)
-        except LessonQuizQuestion.DoesNotExist:
+
+        # Skip if missing required fields
+        if qid is None or sel is None:
             continue
+
+        # Lookup question from pre-fetched dictionary (O(1) instead of database query)
+        q = questions.get(qid)
+        if not q:
+            # Question ID not found or doesn't belong to this lesson
+            continue
+
         total += 1
         if int(sel) == int(q.correct_index):
             score += 1
@@ -1563,4 +1620,6 @@ def lesson_results(request, lesson_id, attempt_id):
     attempt = get_object_or_404(LessonAttempt, id=attempt_id, lesson=lesson)
     next_lesson = lesson.next_lesson
     context = {'lesson': lesson, 'attempt': attempt, 'next_lesson': next_lesson}
-    return render(request, 'lessons/shapes/results.html', context)
+    # Use dynamic template based on lesson slug
+    template_name = f'lessons/{lesson.slug}/results.html'
+    return render(request, template_name, context)
