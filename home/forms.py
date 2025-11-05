@@ -86,11 +86,11 @@ class AvatarUploadForm(forms.ModelForm):
                 raise ValidationError(
                     'Invalid image format. Only PNG and JPG images are allowed.'
                 )
-        except (IOError, SyntaxError, ValueError):
+        except (IOError, SyntaxError, ValueError) as exc:
             # PIL raises IOError/SyntaxError for invalid images, ValueError for other issues
             raise ValidationError(
                 'File is corrupted or not a valid image. Please upload a valid PNG or JPG image.'
-            )
+            ) from exc
         finally:
             # Always reset file pointer after verify() as it consumes the file
             # This ensures the file can be read again for saving, even if exceptions occur

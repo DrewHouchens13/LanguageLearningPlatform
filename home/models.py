@@ -1,5 +1,5 @@
 from django.db import models, IntegrityError, DatabaseError
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.utils.text import slugify
@@ -164,14 +164,14 @@ class UserProfile(models.Model):
                     ContentFile(output.read()),
                     save=False
                 )
+            except UnidentifiedImageError as e:
+                # Handle unrecognized image formats (must be before OSError as it's a subclass)
+                logger.error('Unidentified image format for user %s: %s', self.user.username, str(e))
+                raise ValidationError('Unrecognized image format. Please upload a valid PNG or JPG image.') from e
             except (IOError, OSError) as e:
                 # Handle corrupted or invalid image files
                 logger.error('Failed to process avatar image for user %s: %s', self.user.username, str(e))
                 raise ValidationError('Invalid or corrupted image file. Please upload a valid PNG or JPG image.') from e
-            except UnidentifiedImageError as e:
-                # Handle unrecognized image formats
-                logger.error('Unidentified image format for user %s: %s', self.user.username, str(e))
-                raise ValidationError('Unrecognized image format. Please upload a valid PNG or JPG image.') from e
             except ValueError as e:
                 # Handle invalid parameter values during image processing
                 logger.error('Invalid image parameters for user %s: %s', self.user.username, str(e))
@@ -582,6 +582,7 @@ class LessonAttempt(models.Model):
 
     @property
     def percentage(self):
+        """Calculate the percentage score for this lesson attempt."""
         if self.total == 0:
             return 0
         return round((self.score / self.total) * 100, 1)
