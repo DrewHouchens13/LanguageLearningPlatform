@@ -78,9 +78,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cloudinary_storage',  # Cloudinary storage for media files
-    'cloudinary',  # Cloudinary SDK
 ]
+
+# Conditionally add Cloudinary apps only if credentials are configured
+# This prevents 500 errors when Cloudinary is not set up in production
+if os.environ.get('CLOUDINARY_CLOUD_NAME'):
+    INSTALLED_APPS += [
+        'cloudinary_storage',  # Cloudinary storage for media files
+        'cloudinary',  # Cloudinary SDK
+    ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
