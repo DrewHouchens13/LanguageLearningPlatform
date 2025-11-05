@@ -78,6 +78,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary_storage',  # Cloudinary storage for media files
+    'cloudinary',  # Cloudinary SDK
 ]
 
 MIDDLEWARE = [
@@ -193,6 +195,25 @@ else:
 # Directory where collectstatic will collect static files for production
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# =============================================================================
+# CLOUDINARY CONFIGURATION (for user-uploaded media files like avatars)
+# =============================================================================
+# Cloudinary provides free cloud storage for images with CDN delivery
+# Free tier: 25GB storage, 25GB bandwidth/month (more than enough for college project)
+#
+# Required environment variables (set in Render dashboard):
+# - CLOUDINARY_CLOUD_NAME: Your Cloudinary cloud name
+# - CLOUDINARY_API_KEY: Your Cloudinary API key
+# - CLOUDINARY_API_SECRET: Your Cloudinary API secret
+#
+# Get these from: https://cloudinary.com/console (free account)
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
 # Media files configuration (user uploaded content - avatars, etc.)
 # SECURITY CONSIDERATIONS:
 # - MEDIA_ROOT stores user-uploaded files which should NEVER be directly web-accessible
@@ -223,6 +244,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Use simpler storage for tests (avoids manifest file requirement)
 import sys
 if 'pytest' in sys.modules or 'test' in sys.argv:
+    # Tests: Use filesystem storage for simplicity
     STORAGES = {
         "default": {
             "BACKEND": "django.core.files.storage.FileSystemStorage",
@@ -231,7 +253,18 @@ if 'pytest' in sys.modules or 'test' in sys.argv:
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
+elif CLOUDINARY_STORAGE.get('CLOUD_NAME'):
+    # Production with Cloudinary: Use cloud storage for media files
+    STORAGES = {
+        "default": {
+            "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 else:
+    # Local development: Use filesystem storage
     STORAGES = {
         "default": {
             "BACKEND": "django.core.files.storage.FileSystemStorage",

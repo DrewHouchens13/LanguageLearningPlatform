@@ -8,6 +8,8 @@ whitenoise==6.6.0          # Serve static files in production
 psycopg2-binary==2.9.9     # PostgreSQL adapter
 dj-database-url==2.1.0     # Parse database URL from environment
 Pillow==11.0.0             # Image processing for user avatars
+cloudinary==1.41.0         # Cloudinary SDK for cloud media storage
+django-cloudinary-storage==0.3.0  # Django storage backend for Cloudinary
 
 # Testing dependencies
 pytest==8.3.4              # Testing framework
