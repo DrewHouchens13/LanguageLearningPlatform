@@ -3,7 +3,8 @@
   <nav class="navbar">
     <div class="nav-brand">
       <h1>Language Learning Platform</h1>
-      <span class="version-badge">v2.0 - Sprint 3</span>
+      {# COLLEGE PROJECT: Version badge intentionally visible to demonstrate CD pipeline deployment #}
+      {% if show_version %}<span class="version-badge" role="status" aria-label="Application version">{{ app_version }}</span>{% endif %}
     </div>
     <button class="nav-toggle" aria-label="Toggle navigation">
       <span></span>

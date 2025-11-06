@@ -24,6 +24,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dv##fju3puju_bg4otr!stbh)0y==ql!cf=^o87+li&k&)u!1w')
 
+# Application Version
+# COLLEGE PROJECT DEMO: Version badge is intentionally displayed to demonstrate
+# the CD pipeline deployment process. In a production commercial application,
+# you would typically set SHOW_VERSION=False to prevent version disclosure.
+# For this educational project, we want version visible to prove deployment worked.
+APP_VERSION = os.environ.get('APP_VERSION', 'v2.0 - Sprint 3')
+SHOW_VERSION = os.environ.get('SHOW_VERSION', 'True') == 'True'
+
 # Development environment detection
 # Set IS_DEVEDU=True environment variable when running in development proxies
 # IMPORTANT: This must be explicitly set via environment variable - it will NOT
@@ -112,6 +120,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'home.context_processors.app_version',  # Add app version to all templates
             ],
         },
     },

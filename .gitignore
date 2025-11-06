@@ -77,3 +77,14 @@ Thumbs.db
 # ai code reviews ( no need to push these )
 *code.review*.txt
 *code.review*.md
+
+# Local testing scripts (root level only - manual testing, not part of CI/CD)
+# Note: Leading slash (/) means "root directory only" - does NOT exclude home/tests/test_*.py
+/test_avatar_upload_live.py
+/test_cloudinary_setup.py
+/test_cloudinary_simple.py
+/test_live_features.py
+/.env.example
+
+# Windows curl redirect artifact
+/nul

@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse, resolve
 from django.utils import timezone
 from django.core.cache import cache
+from django.conf import settings
 from datetime import timedelta
 from enum import Enum
 from unittest.mock import patch
@@ -795,14 +796,14 @@ class TestNavigationBar(TestCase):
         self.assertEqual(response.status_code, 200)
         # Check version badge HTML is present
         self.assertContains(response, 'class="version-badge"')
-        self.assertContains(response, 'v2.0 - Sprint 3')
+        self.assertContains(response, settings.APP_VERSION)
 
     def test_version_badge_appears_on_login_page(self):
         """Test version badge appears in navigation on login page"""
         response = self.client.get(reverse('login'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'class="version-badge"')
-        self.assertContains(response, 'v2.0 - Sprint 3')
+        self.assertContains(response, settings.APP_VERSION)
 
     def test_version_badge_appears_on_dashboard(self):
         """Test version badge appears in navigation on dashboard (authenticated)"""
@@ -810,7 +811,7 @@ class TestNavigationBar(TestCase):
         response = self.client.get(reverse('dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'class="version-badge"')
-        self.assertContains(response, 'v2.0 - Sprint 3')
+        self.assertContains(response, settings.APP_VERSION)
 
     def test_version_badge_appears_on_progress_page(self):
         """Test version badge appears in navigation on progress page"""
@@ -818,7 +819,7 @@ class TestNavigationBar(TestCase):
         response = self.client.get(reverse('progress'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'class="version-badge"')
-        self.assertContains(response, 'v2.0 - Sprint 3')
+        self.assertContains(response, settings.APP_VERSION)
 
     def test_navigation_structure_with_version(self):
         """Test navigation structure includes version badge correctly"""
