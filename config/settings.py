@@ -29,7 +29,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dv##fju3puju_bg4otr!s
 # the CD pipeline deployment process. In a production commercial application,
 # you would typically set SHOW_VERSION=False to prevent version disclosure.
 # For this educational project, we want version visible to prove deployment worked.
-APP_VERSION = os.environ.get('APP_VERSION', 'v2.0 - Sprint 3')
+APP_VERSION = os.environ.get('APP_VERSION', 'v2.0 - Sprint 2')
 SHOW_VERSION = os.environ.get('SHOW_VERSION', 'True') == 'True'
 
 # Development environment detection
