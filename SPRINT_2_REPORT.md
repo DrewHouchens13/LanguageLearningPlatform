@@ -624,3 +624,22 @@ TOTAL                                    4299    286    93%
 **Report Generated**: November 6, 2025
 **Sprint Tag**: `sprint2`
 **Submitted By**: Josh (DrewHouchens13)
+
+---
+
+## Sprint 2 Velocity
+
+**Sprint 2 Velocity**: [TO BE ADDED FROM ZENHUB]
+
+*Note: This velocity metric should be obtained from Zenhub/GitHub Projects and represents the total story points completed during Sprint 2. This will be used for sprint planning in future iterations.*
+
+**How to find velocity in Zenhub:**
+1. Go to ZenHub board
+2. Navigate to Reports → Velocity Tracking
+3. Record the velocity value for Sprint 2
+4. Update this section before final submission
+
+**Velocity Calculation**:
+- Story points of all user stories moved to "Done" during Sprint 2
+- Used for capacity planning in Sprint 3 and beyond
+- Helps team understand sustainable pace

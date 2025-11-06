@@ -291,6 +291,75 @@ For application issues, please open an issue on GitHub.
 - [ ] Social features and leaderboards
 - [ ] Advanced analytics and insights dashboard
 
+## AI Assistance Documentation
+
+This project was developed with assistance from Claude Code (Anthropic's AI coding assistant). Below is documentation of when and where AI assistance was used, as required for academic integrity and Sprint 2 submission.
+
+### Sprint 0-1: Initial Setup & Core Features
+- **Feature**: Initial Django project setup, user authentication, progress tracking
+- **AI Tool**: Claude Code (claude.ai/code)
+- **Transcript**: [Sprint 0-1 Initial Development](https://claude.ai/share) *(Note: Specific transcript URLs to be added)*
+- **Scope**: Project structure, model design, authentication system, basic views
+
+### Sprint 2: User Profile & Password Recovery
+- **Feature**: User profile system with avatar uploads, password recovery, username recovery
+- **AI Tool**: Claude Code (claude.ai/code)
+- **Date**: October-November 2025
+- **Transcript**: [Sprint 2 User Profile Development](https://claude.ai/share) *(Note: Specific transcript URLs to be added)*
+- **Scope**:
+  - User profile models and views (home/models.py, home/views.py)
+  - Avatar upload system with Cloudinary integration
+  - Password reset flow with email tokens
+  - Username recovery system
+  - Account management views (email, password, username updates)
+  - Security logging (LoginAttempt, AccountChange models)
+  - Test suite expansion (372 tests, 93% coverage)
+
+### Sprint 2: Bug Fixes & Deployment Issues (November 6, 2025)
+- **Issue**: Avatar upload HTTP 500 errors on Render production
+- **AI Tool**: Claude Code (claude.ai/code)
+- **Transcript**: [Avatar Upload Bug Fix Session](https://claude.ai/share) *(Current session)*
+- **Scope**:
+  - Created diagnostic script to test Cloudinary configuration layers
+  - Identified incorrect Cloudinary API credentials (typo in secret key)
+  - Fixed missing UserProfile exception handling in avatar upload view
+  - Added comprehensive error logging with exc_info=True
+  - Fixed DEBUG security issue (now defaults to False in production)
+  - Updated Sprint 2 report to document resolution
+
+### Sprint 2: Code Quality Improvements (November 6, 2025)
+- **Feature**: Pylint refactoring to achieve 9.5+ code quality score
+- **AI Tool**: Claude Code (claude.ai/code)
+- **Branch**: `pylint_refactor`
+- **Transcript**: [Pylint Refactoring Session](https://claude.ai/share) *(Current session)*
+- **Scope**:
+  - Fixed 18 logging f-string warnings (W1203)
+  - Removed 2 unused imports (W0611)
+  - Fixed unused variable warnings (W0612)
+  - Score improvement: 9.40/10 → 9.55/10
+  - All 372 tests maintained at 93% coverage
+
+### AI Assistance Guidelines Followed
+- **Transparency**: All AI-assisted code is documented here
+- **Review Process**: All AI-generated code reviewed by human developers
+- **Testing**: Comprehensive test suite ensures AI-generated code meets quality standards
+- **Version Control**: All changes tracked in Git with detailed commit messages
+- **Team Collaboration**: AI used as development tool, not replacement for human judgment
+
+### Areas Where AI Was Most Helpful
+1. **Django Best Practices**: Model relationships, view patterns, security configurations
+2. **Test Suite Development**: Writing comprehensive unit and integration tests
+3. **Debugging**: Systematic troubleshooting of production issues
+4. **Code Quality**: Refactoring to meet pylint and security standards
+5. **Documentation**: Writing clear documentation and code comments
+6. **CI/CD Pipeline**: GitHub Actions workflow configuration
+
+### Limitations & Human Oversight
+- **Architecture Decisions**: Made by development team, not AI
+- **Business Logic**: Designed by team based on requirements
+- **Security Review**: All security-critical code manually reviewed
+- **Production Deployment**: Managed by team with AI assistance for troubleshooting
+
 ---
 
 Made with ❤️ for language learners
