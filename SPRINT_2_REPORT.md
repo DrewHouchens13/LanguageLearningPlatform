@@ -266,14 +266,14 @@ Sprint 2 successfully delivered all planned features with comprehensive testing 
 
 ### Completed User Stories:
 
-| Feature | Story Points | Status |
-|---------|--------------|--------|
-| User Authentication/Profiles | 13 | ✅ Complete |
-| Progress Dashboard | 8 | ✅ Complete |
-| Onboarding Feature | 8 | ✅ Complete |
-| Lesson Plan Feature (Colors & Shapes) | 8 | ✅ Complete |
-| Deployment to Render + CI/CD | 5 | ✅ Complete |
-| **Total** | **42** | |
+| Feature                                | Story Points | Status            |
+|:---------------------------------------|:------------:|:------------------|
+| User Authentication/Profiles           | 13           | ✅ Complete       |
+| Progress Dashboard                     | 8            | ✅ Complete       |
+| Onboarding Feature                     | 8            | ✅ Complete       |
+| Lesson Plan Feature (Colors & Shapes) | 8            | ✅ Complete       |
+| Deployment to Render + CI/CD           | 5            | ✅ Complete       |
+| **Total**                              | **42**       |                   |
 
 ### Story Point Estimation Method:
 - **Large (13 pts)**: User profile system with authentication, password recovery, avatar uploads, security logging
