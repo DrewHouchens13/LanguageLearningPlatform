@@ -629,17 +629,27 @@ TOTAL                                    4299    286    93%
 
 ## Sprint 2 Velocity
 
-**Sprint 2 Velocity**: [TO BE ADDED FROM ZENHUB]
+**Sprint 2 Velocity**: **42 story points** (estimated)
 
-*Note: This velocity metric should be obtained from Zenhub/GitHub Projects and represents the total story points completed during Sprint 2. This will be used for sprint planning in future iterations.*
+*Note: Velocity calculated retroactively based on completed features. Team did not use ZenHub or formal story point tracking during Sprint 2.*
 
-**How to find velocity in Zenhub:**
-1. Go to ZenHub board
-2. Navigate to Reports → Velocity Tracking
-3. Record the velocity value for Sprint 2
-4. Update this section before final submission
+### Completed User Stories (Sprint 2):
 
-**Velocity Calculation**:
-- Story points of all user stories moved to "Done" during Sprint 2
-- Used for capacity planning in Sprint 3 and beyond
-- Helps team understand sustainable pace
+| Feature | Story Points | Status |
+|---------|--------------|--------|
+| User Authentication/Profiles | 13 | ✅ Complete |
+| Progress Dashboard | 8 | ✅ Complete |
+| Onboarding Feature | 8 | ✅ Complete |
+| Lesson Plan Feature (Colors & Shapes) | 8 | ✅ Complete |
+| Deployment to Render + CI/CD | 5 | ✅ Complete |
+| **Total** | **42** | |
+
+### Story Point Estimation Method:
+- **Large (13 pts)**: User profile system with authentication, password recovery, avatar uploads, security logging
+- **Medium (8 pts)**: Onboarding quiz, progress dashboard, lesson system
+- **Small-Medium (5 pts)**: Deployment configuration, CI/CD pipeline setup
+
+### Notes for Sprint 3:
+- **Recommendation**: Set up GitHub Projects or ZenHub for formal velocity tracking
+- **Expected Capacity**: ~40-45 points per sprint (based on Sprint 2 performance)
+- **Team Size**: 4 members (Josh, Drew, Vincent, Wade)
