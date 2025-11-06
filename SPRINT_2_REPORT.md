@@ -95,7 +95,7 @@ Coverage breakdown:
 
 This sprint was a collaborative team effort with distributed responsibilities:
 
-**Josh Manchester (Team Lead)**:
+**Josh (Team Lead)**:
 - User profile & account management system
 - Password recovery & username recovery features
 - Avatar upload integration (Cloudinary/Gravatar)
@@ -121,7 +121,7 @@ This sprint was a collaborative team effort with distributed responsibilities:
 
 ### 1. User Profile & Account Management
 **Status**: ✅ Complete and Tested (except avatar upload on production)
-**Developer**: Josh Manchester
+**Developer**: Josh
 
 **Implementation**:
 - User profile page at `/account/`
@@ -146,7 +146,7 @@ This sprint was a collaborative team effort with distributed responsibilities:
 
 ### 2. Password Recovery System
 **Status**: ✅ Complete and Tested
-**Developer**: Josh Manchester
+**Developer**: Josh
 
 **Implementation**:
 - Forgot password page at `/forgot-password/`
@@ -225,7 +225,7 @@ This sprint was a collaborative team effort with distributed responsibilities:
 
 ### 6. CI/CD Pipeline Enhancement
 **Status**: ✅ Complete and Working
-**Developer**: Josh Manchester
+**Developer**: Josh
 
 **CI Pipeline**:
 - OpenAI-powered code reviews on all PRs
@@ -241,7 +241,7 @@ This sprint was a collaborative team effort with distributed responsibilities:
 
 ### 7. Version Badge (CD Demo)
 **Status**: ✅ Complete
-**Developer**: Josh Manchester
+**Developer**: Josh
 
 **Implementation**:
 - Dynamic version badge in navigation
@@ -466,17 +466,17 @@ This sprint was a collaborative team effort with distributed responsibilities:
 **[TO BE ADDED FROM ZENHUB]**
 
 ### Stories Completed
-1. ✅ User Profile Management (Josh Manchester)
-2. ✅ Avatar Upload System (Josh Manchester)
-3. ✅ Password Recovery (Josh Manchester)
-4. ✅ Username Recovery (Josh Manchester)
+1. ✅ User Profile Management (Josh)
+2. ✅ Avatar Upload System (Josh)
+3. ✅ Password Recovery (Josh)
+4. ✅ Username Recovery (Josh)
 5. ✅ Onboarding Quiz System (Drew)
 6. ✅ Colors Lesson (Wade)
 7. ✅ Shapes Lesson (Vincent)
 8. ✅ Progress Tracking Integration (Drew)
-9. ✅ CD Pipeline Integration (Josh Manchester)
-10. ✅ Version Badge (Demo) (Josh Manchester)
-11. ✅ Login Greeting Bug Fix (Josh Manchester)
+9. ✅ CD Pipeline Integration (Josh)
+10. ✅ Version Badge (Demo) (Josh)
+11. ✅ Login Greeting Bug Fix (Josh)
 
 ### Stories In Progress
 - None (all planned stories completed)
@@ -558,4 +558,4 @@ TOTAL                                    4299    286    93%
 
 **Report Generated**: November 6, 2025
 **Sprint Tag**: `sprint2`
-**Submitted By**: Josh Manchester (DrewHouchens13)
+**Submitted By**: Josh (DrewHouchens13)
