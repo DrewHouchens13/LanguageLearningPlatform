@@ -1,14 +1,5 @@
-from django.test import TestCase, Client
-from django.contrib.auth.models import User
+from django.test import TestCase
 from django.urls import reverse, resolve
-from django.utils import timezone
-from django.core.cache import cache
-from datetime import timedelta
-from enum import Enum
-from unittest.mock import patch
-
-from home.models import UserProgress, LessonCompletion, QuizResult
-from .test_utils import create_test_user, create_test_superuser, AdminTestCase
 
 from home.views import account_view, forgot_password_view, reset_password_view, forgot_username_view
 

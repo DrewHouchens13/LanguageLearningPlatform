@@ -8,8 +8,7 @@ from datetime import timedelta
 from enum import Enum
 from unittest.mock import patch
 
-from home.models import UserProgress, LessonCompletion, QuizResult
-from .test_utils import create_test_user, create_test_superuser, AdminTestCase
+from home.models import UserProgress, LessonCompletion
 
 from home.views import landing, login_view, signup_view, logout_view, dashboard, progress_view
 
@@ -407,7 +406,7 @@ class TestLoginView(TestCase):
         }
 
         # Make 5 failed login attempts (should all be allowed)
-        for i in range(5):
+        for _ in range(5):
             response = self.client.post(self.login_url, data)
             self.assertEqual(response.status_code, 200)
 
@@ -463,6 +462,34 @@ class TestLoginView(TestCase):
         self.assertEqual(len(messages2), 1)
         self.assertEqual(str(messages1[0]), str(messages2[0]))
         self.assertIn('Invalid username/email or password', str(messages1[0]))
+
+    def test_login_greeting_shows_welcome_on_initial_page(self):
+        """Test login page shows 'Welcome Back!' greeting on initial load"""
+        response = self.client.get(self.login_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Welcome Back!')
+        self.assertContains(response, 'Login to continue your learning journey')
+        # Should NOT show the error greeting
+        self.assertNotContains(response, 'Please check your credentials and try again')
+
+    def test_login_greeting_changes_on_failed_login(self):
+        """Test login page shows different greeting after failed login attempt"""
+        data = {
+            'username_or_email': 'test@example.com',
+            'password': 'wrongpassword'
+        }
+        response = self.client.post(self.login_url, data)
+
+        self.assertEqual(response.status_code, 200)
+        # Should NOT show "Welcome Back!" when there's an error
+        self.assertNotContains(response, 'Welcome Back!')
+        self.assertNotContains(response, 'Login to continue your learning journey')
+        # Should show the error-specific greeting
+        self.assertContains(response, '<h2>Login</h2>')
+        self.assertContains(response, 'Please check your credentials and try again')
+        # Should also show the error message
+        self.assertContains(response, 'Invalid username/email or password')
 
 class TestLogoutView(TestCase):
     """Test user logout functionality"""
@@ -524,9 +551,9 @@ class TestProgressView(TestCase):
     def test_progress_view_authenticated_user(self):
         """Test authenticated user sees their progress data"""
         self.client.force_login(self.user)
-        
+
         # Create progress data
-        progress = UserProgress.objects.create(
+        _ = UserProgress.objects.create(
             user=self.user,
             total_minutes_studied=150,
             total_lessons_completed=10,
@@ -577,8 +604,8 @@ class TestProgressView(TestCase):
     def test_progress_view_weekly_stats(self):
         """Test weekly stats calculation integration"""
         self.client.force_login(self.user)
-        
-        progress = UserProgress.objects.create(user=self.user)
+
+        _ = UserProgress.objects.create(user=self.user)
         
         # Create recent lesson completions
         LessonCompletion.objects.create(

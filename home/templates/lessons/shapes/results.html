@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Results - {{ lesson.title }}</title>
+    {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
     <link rel="stylesheet" href="{% static 'home/styles.css' %}">
     <style>
         .results-container {
@@ -95,18 +96,18 @@
         </div>
         
         <div class="action-buttons">
-<a href="{% url 'lesson_detail' lesson.id %}" class="btn btn-secondary">
+<a href="{% if IS_DEVEDU %}../../{% else %}{% url 'lesson_detail' lesson.id %}{% endif %}" class="btn btn-secondary">
                 Review Lesson
             </a>
-            <a href="{% url 'lesson_quiz' lesson.id %}" class="btn btn-secondary">
+            <a href="{% if IS_DEVEDU %}../{% else %}{% url 'lesson_quiz' lesson.id %}{% endif %}" class="btn btn-secondary">
                 Retake Quiz
             </a>
             {% if next_lesson %}
-            <a href="{% url 'lesson_detail' next_lesson.id %}" class="btn btn-primary">
+            <a href="{% if IS_DEVEDU %}../../{{ next_lesson.id }}/{% else %}{% url 'lesson_detail' next_lesson.id %}{% endif %}" class="btn btn-primary">
                 Next Lesson →
             </a>
             {% else %}
-            <a href="{% url 'lessons_list' %}" class="btn btn-primary">
+            <a href="{% if IS_DEVEDU %}../../../lessons/{% else %}{% url 'lessons_list' %}{% endif %}" class="btn btn-primary">
                 Back to Lessons
             </a>
             {% endif %}

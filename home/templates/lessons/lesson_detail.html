@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ lesson.title }} - Language Learning Platform</title>
+    {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
     <link rel="stylesheet" href="{% static 'home/styles.css' %}">
     <style>
         .lesson-container {
@@ -137,7 +138,7 @@
         {% endif %}
         
         <div style="text-align: center;">
-            <a href="{% url 'lesson_quiz' lesson.id %}" class="quiz-button">Take Quiz</a>
+            <a href="{% if IS_DEVEDU %}quiz/{% else %}{% url 'lesson_quiz' lesson.id %}{% endif %}" class="quiz-button">Take Quiz</a>
         </div>
     </main>
     

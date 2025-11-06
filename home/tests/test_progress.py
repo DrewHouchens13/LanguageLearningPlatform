@@ -8,8 +8,8 @@ from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
 from home.models import (
-    UserProgress, UserProfile, QuizResult, LessonCompletion,
-    OnboardingAttempt, OnboardingAnswer, OnboardingQuestion
+    UserProgress, QuizResult, LessonCompletion,
+    OnboardingAttempt, OnboardingQuestion
 )
 import json
 

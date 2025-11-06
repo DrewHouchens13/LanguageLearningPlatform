@@ -46,7 +46,9 @@ IS_DEVEDU = os.environ.get('IS_DEVEDU', '').strip().lower() in ('true', '1', 'ye
 # SECURITY WARNING: don't run with debug turned on in production!
 # Enable DEBUG in tests and development environments
 # Also enable DEBUG by default for local development (can be overridden with DEBUG=False)
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+# SECURITY: Default to False for production safety
+# Only enable DEBUG if explicitly set to 'True' in environment
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Force DEBUG=True in test mode
 if 'pytest' in sys.modules or 'test' in sys.argv:
@@ -196,8 +198,8 @@ USE_TZ = True
 if IS_DEVEDU:
     proxy_prefix = os.environ.get('STATIC_URL_PREFIX', '/proxy/8000')
     STATIC_URL = f'{proxy_prefix}/static/'
-    # Set FORCE_SCRIPT_NAME to make Django prepend proxy prefix to all URLs
-    FORCE_SCRIPT_NAME = proxy_prefix
+    # Don't use FORCE_SCRIPT_NAME - it causes double proxy prefix issues
+    # Django will generate relative URLs which work fine through the proxy
     USE_X_FORWARDED_HOST = True
     USE_X_FORWARDED_PORT = True
     # Relax CSRF for DevEDU (development only - not for production!)

@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Language Learning Platform</title>
+    {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
     <link rel="stylesheet" href="{% static 'home/styles.css' %}">
   </head>
   <body>
@@ -52,8 +53,13 @@
           <!-- Login Form -->
           <form id="login-form" class="auth-form active" method="POST" action="{% url 'login' %}">
             {% csrf_token %}
+            {% if not messages %}
             <h2>Welcome Back!</h2>
             <p class="auth-subtitle">Login to continue your learning journey</p>
+            {% else %}
+            <h2>Login</h2>
+            <p class="auth-subtitle">Please check your credentials and try again</p>
+            {% endif %}
             
             <div class="form-group">
               <label for="login-username-or-email">Username or Email</label>

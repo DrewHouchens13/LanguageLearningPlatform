@@ -23,35 +23,35 @@
       {% endif %}
       <li class="nav-item">
         {% if user.is_authenticated %}
-          <a href="{% url 'dashboard' %}" class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}">Home</a>
+          <a href="{% if IS_DEVEDU %}../dashboard/{% else %}{% url 'dashboard' %}{% endif %}" class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}">Home</a>
         {% else %}
-          <a href="{% url 'landing' %}" class="nav-link {% if request.path == '/' %}active{% endif %}">Home</a>
+          <a href="{% if IS_DEVEDU %}../{% else %}{% url 'landing' %}{% endif %}" class="nav-link {% if request.path == '/' %}active{% endif %}">Home</a>
         {% endif %}
       </li>
       <li class="nav-item">
-        <a href="{% url 'lessons_list' %}" class="nav-link {% if '/lessons/' in request.path %}active{% endif %}">Lessons</a>
+        <a href="{% if IS_DEVEDU %}../lessons/{% else %}{% url 'lessons_list' %}{% endif %}" class="nav-link {% if '/lessons/' in request.path %}active{% endif %}">Lessons</a>
       </li>
       <li class="nav-item">
-        <a href="{% url 'progress' %}" class="nav-link {% if request.path == '/progress/' %}active{% endif %}">My Progress</a>
+        <a href="{% if IS_DEVEDU %}../progress/{% else %}{% url 'progress' %}{% endif %}" class="nav-link {% if request.path == '/progress/' %}active{% endif %}">My Progress</a>
       </li>
       {% if user.is_authenticated %}
         {% if user.is_staff %}
         <li class="nav-item">
-          <a href="/admin/" class="nav-link admin-link">Admin</a>
+          <a href="{% if IS_DEVEDU %}../admin/{% else %}/admin/{% endif %}" class="nav-link admin-link">Admin</a>
         </li>
         {% endif %}
         <li class="nav-item">
-          <a href="{% url 'account' %}" class="nav-link {% if request.path == '/account/' %}active{% endif %}">Account</a>
+          <a href="{% if IS_DEVEDU %}../account/{% else %}{% url 'account' %}{% endif %}" class="nav-link {% if request.path == '/account/' %}active{% endif %}">Account</a>
         </li>
         <li class="nav-item">
-          <a href="{% url 'logout' %}" class="nav-link nav-button">Logout</a>
+          <a href="{% if IS_DEVEDU %}../logout/{% else %}{% url 'logout' %}{% endif %}" class="nav-link nav-button">Logout</a>
         </li>
       {% else %}
         <li class="nav-item">
-          <a href="{% url 'login' %}" class="nav-link">Login</a>
+          <a href="{% if IS_DEVEDU %}../login/{% else %}{% url 'login' %}{% endif %}" class="nav-link">Login</a>
         </li>
         <li class="nav-item">
-          <a href="{% url 'login' %}" class="nav-link nav-button">Sign Up</a>
+          <a href="{% if IS_DEVEDU %}../login/{% else %}{% url 'login' %}{% endif %}" class="nav-link nav-button">Sign Up</a>
         </li>
       {% endif %}
     </ul>
