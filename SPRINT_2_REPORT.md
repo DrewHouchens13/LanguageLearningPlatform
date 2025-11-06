@@ -2,6 +2,7 @@
 **Course**: CS 4300/5300
 **Sprint Period**: Sprint 2
 **GitHub Repository**: https://github.com/DrewHouchens13/LanguageLearningPlatform
+**Production URL**: https://www.languagelearningplatform.org
 **Production URL (Render)**: https://language-learning-platform.onrender.com
 **DevEDU URL**: https://editor-jmanchester-20.devedu.io/proxy/8000/
 
@@ -106,8 +107,9 @@ Coverage breakdown:
 - **Current Coverage**: 93%
 
 ### ✅ 5. Deployed to Production Environment (10pts)
-- **Primary Production**: Render.com at https://language-learning-platform.onrender.com
-- **Secondary Deployment**: DevEDU (pending deployment steps)
+- **Primary Production**: https://www.languagelearningplatform.org (custom domain)
+- **Render URL**: https://language-learning-platform.onrender.com
+- **DevEDU Deployment**: https://editor-jmanchester-20.devedu.io/proxy/8000/
 - PostgreSQL database in production
 - WhiteNoise serving static files
 - HTTPS enforced with secure cookies
@@ -609,8 +611,9 @@ TOTAL                                    4299    286    93%
 - **Tags**: sprint2
 
 ### Production URLs
+- **Primary Production**: https://www.languagelearningplatform.org
 - **Render**: https://language-learning-platform.onrender.com
-- **DevEDU**: [TO BE ADDED]
+- **DevEDU**: https://editor-jmanchester-20.devedu.io/proxy/8000/
 - **GitHub**: https://github.com/DrewHouchens13/LanguageLearningPlatform
 
 ---
