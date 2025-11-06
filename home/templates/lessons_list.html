@@ -87,7 +87,7 @@
                     </span>
                     <span>{{ lesson.language }}</span>
                 </div>
-                <a href="{% url 'lesson_detail' lesson.id %}" class="lesson-button">
+                <a href="{% if IS_DEVEDU %}../lessons/{{ lesson.id }}/{% else %}{% url 'lesson_detail' lesson.id %}{% endif %}" class="lesson-button">
                     Start Lesson
                 </a>
             </div>
