@@ -77,3 +77,10 @@ Thumbs.db
 # ai code reviews ( no need to push these )
 *code.review*.txt
 *code.review*.md
+
+# Live testing files (for manual local testing only, not part of test suite)
+test_live_features.py
+test_avatar_upload_live.py
+test_cloudinary_setup.py
+test_cloudinary_simple.py
+setup_test_data.py
