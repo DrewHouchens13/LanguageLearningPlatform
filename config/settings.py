@@ -187,8 +187,8 @@ USE_TZ = True
 if IS_DEVEDU:
     proxy_prefix = os.environ.get('STATIC_URL_PREFIX', '/proxy/8000')
     STATIC_URL = f'{proxy_prefix}/static/'
-    # Set FORCE_SCRIPT_NAME to make Django prepend proxy prefix to all URLs
-    FORCE_SCRIPT_NAME = proxy_prefix
+    # Don't use FORCE_SCRIPT_NAME - it causes double proxy prefix issues
+    # Django will generate relative URLs which work fine through the proxy
     USE_X_FORWARDED_HOST = True
     USE_X_FORWARDED_PORT = True
     # Relax CSRF for DevEDU (development only - not for production!)
