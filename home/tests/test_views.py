@@ -463,6 +463,34 @@ class TestLoginView(TestCase):
         self.assertEqual(str(messages1[0]), str(messages2[0]))
         self.assertIn('Invalid username/email or password', str(messages1[0]))
 
+    def test_login_greeting_shows_welcome_on_initial_page(self):
+        """Test login page shows 'Welcome Back!' greeting on initial load"""
+        response = self.client.get(self.login_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Welcome Back!')
+        self.assertContains(response, 'Login to continue your learning journey')
+        # Should NOT show the error greeting
+        self.assertNotContains(response, 'Please check your credentials and try again')
+
+    def test_login_greeting_changes_on_failed_login(self):
+        """Test login page shows different greeting after failed login attempt"""
+        data = {
+            'username_or_email': 'test@example.com',
+            'password': 'wrongpassword'
+        }
+        response = self.client.post(self.login_url, data)
+
+        self.assertEqual(response.status_code, 200)
+        # Should NOT show "Welcome Back!" when there's an error
+        self.assertNotContains(response, 'Welcome Back!')
+        self.assertNotContains(response, 'Login to continue your learning journey')
+        # Should show the error-specific greeting
+        self.assertContains(response, '<h2>Login</h2>')
+        self.assertContains(response, 'Please check your credentials and try again')
+        # Should also show the error message
+        self.assertContains(response, 'Invalid username/email or password')
+
 class TestLogoutView(TestCase):
     """Test user logout functionality"""
 

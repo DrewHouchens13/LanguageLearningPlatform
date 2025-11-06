@@ -51,8 +51,13 @@
           <!-- Login Form -->
           <form id="login-form" class="auth-form active" method="POST" action="{% url 'login' %}">
             {% csrf_token %}
+            {% if not messages %}
             <h2>Welcome Back!</h2>
             <p class="auth-subtitle">Login to continue your learning journey</p>
+            {% else %}
+            <h2>Login</h2>
+            <p class="auth-subtitle">Please check your credentials and try again</p>
+            {% endif %}
             
             <div class="form-group">
               <label for="login-username-or-email">Username or Email</label>
