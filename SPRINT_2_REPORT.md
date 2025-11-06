@@ -27,7 +27,7 @@ Sprint 2 was a collaborative team effort that delivered a comprehensive language
 
 All features are fully tested with **372 tests** achieving **93% code coverage**, exceeding the 80% requirement. The team followed agile development practices with feature branches, pull request reviews, and continuous integration.
 
-**Known Issue**: Avatar upload returns HTTP 500 on Render production (suspected Cloudinary API credential configuration); Gravatar fallback works correctly.
+**Note**: Avatar upload initially had issues on Render production but has been resolved (see Known Issues section for details).
 
 ---
 
@@ -130,7 +130,7 @@ Coverage breakdown:
 
 This sprint was a collaborative team effort with distributed responsibilities:
 
-**Josh (Team Lead)**:
+**Josh**:
 - User profile & account management system
 - Password recovery & username recovery features
 - Avatar upload integration (Cloudinary/Gravatar)
@@ -172,12 +172,12 @@ This sprint was a collaborative team effort with distributed responsibilities:
 - Validation testing: invalid inputs rejected
 - Success path testing: valid updates work correctly
 
-**Known Issues**:
-- ⚠️ **Avatar upload returns 500 error on Render production**
-  - Works perfectly in local development
-  - Issue suspected: Cloudinary API credentials may not be properly configured on Render
-  - Gravatar fallback works correctly in production
-  - Awaiting access to Render logs to debug
+**Post-Sprint Resolution**:
+- ✅ **Avatar upload 500 error resolved** (November 6, 2025)
+  - Root cause: Incorrect Cloudinary API credentials (typo: letter 'I' vs number '1')
+  - Additional fix: Missing UserProfile handling for avatar uploads
+  - Solution: Generated new API credentials and added proper exception handling
+  - Status: Fully functional in production with Cloudinary cloud storage
 
 ### 2. Password Recovery System
 **Status**: ✅ Complete and Tested
@@ -319,17 +319,21 @@ This sprint was a collaborative team effort with distributed responsibilities:
 
 ## Known Issues & Limitations
 
-### 1. Avatar Upload on Render (In Progress)
-**Issue**: HTTP 500 error when uploading avatars on production
-**Status**: Debugging in progress
-**Root Cause**: Suspected Cloudinary API credential configuration issue on Render
-**Impact**: Users can still use Gravatar avatars (automatic fallback)
-**Next Steps**:
-- Access Render logs to identify exact error
-- Verify Cloudinary environment variables
-- Test with updated credentials
+### 1. Avatar Upload on Render - ✅ RESOLVED (November 6, 2025)
+**Original Issue**: HTTP 500 error when uploading avatars on production
+**Status**: ✅ **Resolved and deployed**
+**Root Causes Identified**:
+1. Cloudinary API credentials had typo (letter 'I' instead of number '1' in API secret)
+2. Missing UserProfile exception handling for users without profiles
 
-**Workaround**: Gravatar integration works perfectly - users get avatar based on email
+**Solution Implemented**:
+- Created diagnostic script (`test_cloudinary_connection.py`) to test all 5 Cloudinary configuration layers
+- Generated fresh API credentials to avoid ambiguous characters
+- Added proper exception handling for UserProfile.DoesNotExist
+- Added comprehensive error logging for production debugging
+- Verified all 5 diagnostic tests passing on Render
+
+**Current Status**: Avatar uploads fully functional in production with Cloudinary cloud storage
 
 ### 2. Forms.py Coverage
 **Issue**: 0% coverage on `home/forms.py`
@@ -575,10 +579,9 @@ Sprint 2 was a successful collaborative effort that delivered a fully functional
 - Pylint score ≥9.5/10
 - Zero critical security issues
 - Production deployment to Render and DevEDU
+- All known issues resolved post-sprint
 
-**Known Issue**: Avatar upload returns HTTP 500 on Render production (Cloudinary credentials); Gravatar fallback works correctly.
-
-The team followed agile practices with feature branches, pull request reviews, and continuous integration. All planned features were completed, tested, and deployed successfully.
+The team followed agile practices with feature branches, pull request reviews, and continuous integration. All planned features were completed, tested, and deployed successfully. The avatar upload issue discovered during sprint submission was diagnosed and resolved using systematic debugging (diagnostic scripts, log analysis, and targeted fixes).
 
 **Recommendation**: Approve for Sprint 2 submission. Cloudinary debugging to continue in Sprint 3.
 
