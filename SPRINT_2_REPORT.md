@@ -91,8 +91,26 @@ Coverage breakdown:
 
 ## Features Implemented This Sprint
 
+### Team Contributions
+
+This sprint was a collaborative team effort with distributed responsibilities:
+
+**Josh Manchester (Team Lead)**:
+- User profile & account management system
+- Password recovery & username recovery features
+- Avatar upload integration (Cloudinary/Gravatar)
+- CI/CD pipeline enhancements
+- Version badge for deployment demo
+- DevEDU deployment configuration
+
+**Team Partners**:
+- **Shapes & Colors Lessons**: Interactive lesson content with flashcards and quizzes
+- **Onboarding Quiz System**: Spanish proficiency assessment (10 questions, CEFR level determination)
+- **Lesson Infrastructure**: Dynamic template system and lesson management
+
 ### 1. User Profile & Account Management
 **Status**: ✅ Complete and Tested (except avatar upload on production)
+**Developer**: Josh Manchester
 
 **Implementation**:
 - User profile page at `/account/`
@@ -117,6 +135,7 @@ Coverage breakdown:
 
 ### 2. Password Recovery System
 **Status**: ✅ Complete and Tested
+**Developer**: Josh Manchester
 
 **Implementation**:
 - Forgot password page at `/forgot-password/`
@@ -138,8 +157,57 @@ Coverage breakdown:
 - Generic success messages (don't reveal if user exists)
 - Rate limiting on authentication endpoints
 
-### 3. CI/CD Pipeline Enhancement
+### 3. Onboarding Quiz System
+**Status**: ✅ Complete and Tested
+**Developer**: Team Partners
+
+**Implementation**:
+- Spanish proficiency assessment quiz
+- 10 questions testing vocabulary, grammar, and comprehension
+- Progressive difficulty (A1 Beginner → A2 Elementary → B1 Intermediate)
+- CEFR level determination based on score
+- Immediate results with proficiency level display
+- Integration with user profile system
+
+**Testing**:
+- Comprehensive test coverage for quiz logic
+- Score calculation and level assignment validation
+- User flow testing from welcome to results
+
+**User Flow**:
+- `/onboarding/welcome/` - Assessment introduction
+- `/onboarding/quiz/` - Interactive 10-question quiz
+- `/onboarding/results/` - Proficiency level results
+
+### 4. Interactive Lessons (Shapes & Colors)
+**Status**: ✅ Complete and Tested
+**Developer**: Team Partners
+
+**Implementation**:
+- **Colors Lesson**: Spanish color vocabulary with visual flashcards
+  - 10 flashcards with color names and visual examples
+  - 8 quiz questions testing color recognition
+  - Dynamic template system using lesson slug
+
+- **Shapes Lesson**: Basic geometric shapes in Spanish
+  - Interactive flashcard learning system
+  - Quiz-based assessment
+  - Progress tracking integration
+
+**Features**:
+- Lesson management system with difficulty levels
+- FlashCard model for vocabulary learning
+- Quiz model for assessment
+- LessonCompletion tracking
+- Dynamic template paths (`lessons/<slug>/`)
+
+**Management Commands**:
+- `create_colors_lesson` - Creates Colors lesson with content
+- `create_shapes_lesson` - Creates Shapes lesson with content
+
+### 5. CI/CD Pipeline Enhancement
 **Status**: ✅ Complete and Working
+**Developer**: Josh Manchester
 
 **CI Pipeline**:
 - OpenAI-powered code reviews on all PRs
@@ -153,8 +221,9 @@ Coverage breakdown:
 - Zero-downtime deployments
 - Database migrations run automatically
 
-### 4. Version Badge (CD Demo)
+### 6. Version Badge (CD Demo)
 **Status**: ✅ Complete
+**Developer**: Josh Manchester
 
 **Implementation**:
 - Dynamic version badge in navigation
@@ -379,13 +448,16 @@ Coverage breakdown:
 **[TO BE ADDED FROM ZENHUB]**
 
 ### Stories Completed
-1. ✅ User Profile Management
-2. ✅ Avatar Upload System
-3. ✅ Password Recovery
-4. ✅ Username Recovery
-5. ✅ CD Pipeline Integration
-6. ✅ Version Badge (Demo)
-7. ✅ Login Greeting Bug Fix
+1. ✅ User Profile Management (Josh)
+2. ✅ Avatar Upload System (Josh)
+3. ✅ Password Recovery (Josh)
+4. ✅ Username Recovery (Josh)
+5. ✅ Onboarding Quiz System (Team Partners)
+6. ✅ Colors Lesson (Team Partners)
+7. ✅ Shapes Lesson (Team Partners)
+8. ✅ CD Pipeline Integration (Josh)
+9. ✅ Version Badge (Demo) (Josh)
+10. ✅ Login Greeting Bug Fix (Josh)
 
 ### Stories In Progress
 - None (all planned stories completed)
