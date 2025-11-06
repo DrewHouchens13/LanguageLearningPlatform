@@ -44,4 +44,9 @@ if settings.DEBUG:
         re_path(r'^static/(?P<path>.*)$', serve),
     ]
     # Serve media files in development (user uploaded content)
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # Use hardcoded /media/ pattern so it works with DevEDU proxy
+    # (proxy strips /proxy/8000 before Django sees the request)
+    from django.views.static import serve as media_serve
+    urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', media_serve, {'document_root': settings.MEDIA_ROOT}),
+    ]
