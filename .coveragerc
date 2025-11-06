@@ -1,0 +1,25 @@
+[run]
+source = home,config
+omit =
+    */migrations/*
+    */manage.py
+    */asgi.py
+    */wsgi.py
+    */setup_test_data.py
+    */test_avatar_upload_live.py
+    */test_cloudinary_setup.py
+    */test_cloudinary_simple.py
+    */test_live_features.py
+    *conftest.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+precision = 2
+
+[html]
+directory = htmlcov
