@@ -776,3 +776,59 @@ class TestURLRouting(TestCase):
             with self.subTest(url_name=name):
                 self.assertEqual(reverse(name), expected_path)
 
+
+# ============================================================================
+# NAVIGATION BAR TESTS
+# ============================================================================
+
+class TestNavigationBar(TestCase):
+    """Test navigation bar components including version badge"""
+
+    def setUp(self):
+        """Set up test client and test user"""
+        self.client = Client()
+        self.user = create_test_user()
+
+    def test_version_badge_appears_on_landing_page(self):
+        """Test version badge appears in navigation on landing page"""
+        response = self.client.get(reverse('landing'))
+        self.assertEqual(response.status_code, 200)
+        # Check version badge HTML is present
+        self.assertContains(response, 'class="version-badge"')
+        self.assertContains(response, 'v2.0 - Sprint 3')
+
+    def test_version_badge_appears_on_login_page(self):
+        """Test version badge appears in navigation on login page"""
+        response = self.client.get(reverse('login'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="version-badge"')
+        self.assertContains(response, 'v2.0 - Sprint 3')
+
+    def test_version_badge_appears_on_dashboard(self):
+        """Test version badge appears in navigation on dashboard (authenticated)"""
+        self.client.login(username=self.user.username, password=self.user._test_password)
+        response = self.client.get(reverse('dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="version-badge"')
+        self.assertContains(response, 'v2.0 - Sprint 3')
+
+    def test_version_badge_appears_on_progress_page(self):
+        """Test version badge appears in navigation on progress page"""
+        self.client.login(username=self.user.username, password=self.user._test_password)
+        response = self.client.get(reverse('progress'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="version-badge"')
+        self.assertContains(response, 'v2.0 - Sprint 3')
+
+    def test_navigation_structure_with_version(self):
+        """Test navigation structure includes version badge correctly"""
+        response = self.client.get(reverse('landing'))
+        # Check nav-brand div contains both h1 and version badge
+        content = response.content.decode('utf-8')
+        self.assertIn('nav-brand', content)
+        self.assertIn('Language Learning Platform', content)
+        # Version badge should appear after the h1 title
+        h1_index = content.find('<h1>Language Learning Platform</h1>')
+        version_index = content.find('class="version-badge"')
+        self.assertTrue(h1_index < version_index,
+                       "Version badge should appear after h1 title in nav-brand")
