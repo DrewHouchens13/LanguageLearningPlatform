@@ -131,7 +131,7 @@ def get_client_ip(request):
 
     # Trusted proxy IP ranges (adjust for your deployment)
     # Render.com uses various IPs, DevEDU varies, localhost for development
-    TRUSTED_PROXIES = [
+    _ = [
         '127.0.0.1',  # Localhost (development)
         '::1',  # Localhost IPv6
         # Add your production proxy IPs here when deploying
@@ -499,7 +499,7 @@ def login_view(request):
                         attempt.save()
                         
                         # Create/update user profile with onboarding data
-                        user_profile, created = UserProfile.objects.get_or_create(user=user)
+                        user_profile, _ = UserProfile.objects.get_or_create(user=user)
                         
                         # Only update if user hasn't completed onboarding or this is newer
                         if not user_profile.has_completed_onboarding or not user_profile.onboarding_completed_at or attempt.completed_at > user_profile.onboarding_completed_at:
@@ -682,7 +682,7 @@ def signup_view(request):
                 attempt.save()
                 
                 # Create user profile with onboarding data
-                user_profile, created = UserProfile.objects.get_or_create(user=user)
+                user_profile, _ = UserProfile.objects.get_or_create(user=user)
                 user_profile.proficiency_level = attempt.calculated_level
                 user_profile.has_completed_onboarding = True
                 user_profile.onboarding_completed_at = attempt.completed_at or timezone.now()
@@ -808,7 +808,7 @@ def progress_view(request):
     """
     if request.user.is_authenticated:
         # Get or create user progress record
-        user_progress, created = UserProgress.objects.get_or_create(user=request.user)
+        user_progress, _ = UserProgress.objects.get_or_create(user=request.user)
 
         # Get weekly stats
         weekly_stats = user_progress.get_weekly_stats()
@@ -1207,7 +1207,7 @@ def onboarding_welcome(request):
     """
     user_profile = None
     if request.user.is_authenticated:
-        user_profile, created = UserProfile.objects.get_or_create(user=request.user)
+        user_profile, _ = UserProfile.objects.get_or_create(user=request.user)
     
     context = {
         'user_profile': user_profile
@@ -1326,7 +1326,7 @@ def submit_onboarding(request):
                 return JsonResponse({'success': False, 'error': f'Invalid question ID: {question_id}'}, status=400)
             
             # Check if answer is correct
-            is_correct = (user_answer == question.correct_answer.upper())
+            is_correct = user_answer == question.correct_answer.upper()
             
             # Save answer
             OnboardingAnswer.objects.create(

@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db import IntegrityError
 from home.models import (
-    UserProfile, OnboardingQuestion, OnboardingAttempt, OnboardingAnswer
+    OnboardingQuestion, OnboardingAttempt, OnboardingAnswer
 )
 
 
@@ -346,13 +346,13 @@ class TestOnboardingAnswerModel(TestCase):
             difficulty_points=1
         )
         
-        answer2 = OnboardingAnswer.objects.create(
+        _ = OnboardingAnswer.objects.create(
             attempt=self.attempt,
             question=question2,
             user_answer='A',
             is_correct=True
         )
-        answer1 = OnboardingAnswer.objects.create(
+        _ = OnboardingAnswer.objects.create(
             attempt=self.attempt,
             question=self.question,
             user_answer='B',

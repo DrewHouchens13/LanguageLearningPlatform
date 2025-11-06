@@ -758,13 +758,13 @@ class TestOnboardingAnswerModel(TestCase):
             difficulty_points=1
         )
         
-        answer2 = OnboardingAnswer.objects.create(
+        _ = OnboardingAnswer.objects.create(
             attempt=self.attempt,
             question=question2,
             user_answer='A',
             is_correct=True
         )
-        answer1 = OnboardingAnswer.objects.create(
+        _ = OnboardingAnswer.objects.create(
             attempt=self.attempt,
             question=self.question,
             user_answer='B',

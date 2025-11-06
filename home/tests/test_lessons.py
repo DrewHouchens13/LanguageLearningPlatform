@@ -7,9 +7,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.http import HttpResponseBadRequest
 from django.core.exceptions import ValidationError
-from unittest.mock import patch
 import json
-import logging
 
 from home.models import (
     Lesson, Flashcard, LessonQuizQuestion, LessonAttempt,

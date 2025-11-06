@@ -1,14 +1,8 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse, resolve
-from django.utils import timezone
-from django.core.cache import cache
-from datetime import timedelta
-from enum import Enum
-from unittest.mock import patch
 
-from home.models import UserProgress, LessonCompletion, QuizResult
-from .test_utils import create_test_user, create_test_superuser, AdminTestCase
+from home.models import UserProgress, LessonCompletion
 
 from home.views import landing, login_view, signup_view, logout_view, dashboard, progress_view
 
@@ -406,7 +400,7 @@ class TestLoginView(TestCase):
         }
 
         # Make 5 failed login attempts (should all be allowed)
-        for i in range(5):
+        for _ in range(5):
             response = self.client.post(self.login_url, data)
             self.assertEqual(response.status_code, 200)
 
@@ -551,9 +545,9 @@ class TestProgressView(TestCase):
     def test_progress_view_authenticated_user(self):
         """Test authenticated user sees their progress data"""
         self.client.force_login(self.user)
-        
+
         # Create progress data
-        progress = UserProgress.objects.create(
+        _ = UserProgress.objects.create(
             user=self.user,
             total_minutes_studied=150,
             total_lessons_completed=10,
@@ -604,8 +598,8 @@ class TestProgressView(TestCase):
     def test_progress_view_weekly_stats(self):
         """Test weekly stats calculation integration"""
         self.client.force_login(self.user)
-        
-        progress = UserProgress.objects.create(user=self.user)
+
+        _ = UserProgress.objects.create(user=self.user)
         
         # Create recent lesson completions
         LessonCompletion.objects.create(

@@ -22,7 +22,7 @@ class TestOnboardingWelcomeView(TestCase):
 
     def test_welcome_accessible_to_authenticated(self):
         """Test onboarding welcome accessible to authenticated users"""
-        user = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
+        _ = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
         self.client.login(username='testuser', password='pass123')
         
         response = self.client.get(self.url)
@@ -100,8 +100,8 @@ class TestOnboardingQuizView(TestCase):
 
     def test_quiz_stores_attempt_id_in_session(self):
         """Test attempt ID is stored in session"""
-        response = self.client.get(self.url)
-        
+        _ = self.client.get(self.url)
+
         self.assertIn('onboarding_attempt_id', self.client.session)
 
     def test_quiz_with_insufficient_questions(self):
@@ -333,7 +333,6 @@ class TestOnboardingResultsView(TestCase):
 
     def test_results_redirects_if_not_completed(self):
         """Test results redirects if attempt not completed"""
-        from django.utils import timezone
         incomplete_attempt = OnboardingAttempt.objects.create(
             user=self.user,
             language='Spanish'

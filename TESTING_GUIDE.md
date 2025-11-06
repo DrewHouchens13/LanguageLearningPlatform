@@ -20,19 +20,21 @@ pytest home/tests.py::TestClassName::test_method_name
 **REQUIRED WORKFLOW**: When making code changes, follow this exact order:
 
 1. **Write/modify code** - Implement features or fixes
-2. **Run Pylint** - Check code quality on modified files
+2. **Run Pylint** - Check code quality on ALL project files
    ```bash
-   pylint home/views.py home/models.py home/forms.py --rcfile=.pylintrc
+   pylint home/ config/ --rcfile=.pylintrc
    ```
    - Target: 9.5+/10 score (current: 9.71-10.00/10)
    - Fix any critical issues before proceeding
+   - Runs on entire home/ and config/ directories, not just modified files
 
-3. **Run Bandit** - Security scan on modified files
+3. **Run Bandit** - Security scan on ALL project files
    ```bash
-   bandit -r home/views.py home/models.py home/forms.py -f txt
+   bandit -r home/ config/ -f txt
    ```
    - Target: 0 high/critical security issues
    - Address any security warnings before proceeding
+   - Runs on entire home/ and config/ directories, not just modified files
 
 4. **Fix linting/security issues** - Address any problems found in steps 2-3
 
@@ -43,11 +45,12 @@ pytest home/tests.py::TestClassName::test_method_name
 
 6. **Check coverage** - Ensure coverage remains high
    ```bash
-   pytest --cov=. --cov-report=term-missing
+   pytest --cov=home --cov=config --cov-report=term-missing
    ```
    - Target: 90%+ coverage
+   - Only measures coverage for home/ and config/ apps (excludes local test files)
 
-7. **Manual testing** - Test in browser when UI changes are involved
+7. **Live testing** - Run local server and run all live testing
 
 8. **Commit & push** - Once everything passes
 
@@ -211,15 +214,12 @@ Use `hypothesis` to generate random test inputs and discover edge cases.
 ```bash
 # Pylint is included in requirements.txt
 
-# Run pylint on specific files
-pylint home/views.py
-pylint home/models.py
+# STANDARD WORKFLOW: Run on entire project (home and config apps)
+# This is what you should run during the testing workflow
+pylint home/ config/ --rcfile=.pylintrc
 
-# Run on entire app
+# Run on entire app (alternative)
 pylint home/
-
-# Run on entire project (home and config apps)
-pylint home/ config/
 
 # Run with specific score threshold
 pylint home/ --fail-under=8.0
