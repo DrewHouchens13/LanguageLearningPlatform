@@ -104,19 +104,20 @@ This sprint was a collaborative team effort with distributed responsibilities:
 - DevEDU deployment configuration
 
 **Wade**:
-- Shapes lesson with interactive flashcards and quiz questions
-- Lesson management system integration
-
-**Vincent**:
 - Colors lesson with visual flashcards (10 color vocabulary cards)
 - Colors quiz (8 assessment questions)
 - Dynamic template implementation for color learning
+
+**Vincent**:
+- Shapes lesson with interactive flashcards and quiz questions
+- Lesson management system integration
 
 **Drew**:
 - Onboarding quiz system (Spanish proficiency assessment)
 - 10-question progressive difficulty quiz (A1 → A2 → B1)
 - CEFR level determination and results display
 - User profile integration for proficiency tracking
+- Progress tracking integration (colors, shapes, onboarding)
 
 ### 1. User Profile & Account Management
 **Status**: ✅ Complete and Tested (except avatar upload on production)
@@ -191,7 +192,7 @@ This sprint was a collaborative team effort with distributed responsibilities:
 
 ### 4. Colors Lesson
 **Status**: ✅ Complete and Tested
-**Developer**: Vincent
+**Developer**: Wade
 
 **Implementation**:
 - Spanish color vocabulary with visual flashcards
@@ -202,7 +203,7 @@ This sprint was a collaborative team effort with distributed responsibilities:
 
 ### 5. Shapes Lesson
 **Status**: ✅ Complete and Tested
-**Developer**: Wade
+**Developer**: Vincent
 
 **Implementation**:
 - Basic geometric shapes in Spanish
@@ -219,8 +220,8 @@ This sprint was a collaborative team effort with distributed responsibilities:
 - Dynamic template paths (`lessons/<slug>/`)
 
 **Management Commands**:
-- `create_colors_lesson` - Creates Colors lesson with content (Vincent)
-- `create_shapes_lesson` - Creates Shapes lesson with content (Wade)
+- `create_colors_lesson` - Creates Colors lesson with content (Wade)
+- `create_shapes_lesson` - Creates Shapes lesson with content (Vincent)
 
 ### 6. CI/CD Pipeline Enhancement
 **Status**: ✅ Complete and Working
@@ -470,11 +471,12 @@ This sprint was a collaborative team effort with distributed responsibilities:
 3. ✅ Password Recovery (Josh Manchester)
 4. ✅ Username Recovery (Josh Manchester)
 5. ✅ Onboarding Quiz System (Drew)
-6. ✅ Colors Lesson (Vincent)
-7. ✅ Shapes Lesson (Wade)
-8. ✅ CD Pipeline Integration (Josh Manchester)
-9. ✅ Version Badge (Demo) (Josh Manchester)
-10. ✅ Login Greeting Bug Fix (Josh Manchester)
+6. ✅ Colors Lesson (Wade)
+7. ✅ Shapes Lesson (Vincent)
+8. ✅ Progress Tracking Integration (Drew)
+9. ✅ CD Pipeline Integration (Josh Manchester)
+10. ✅ Version Badge (Demo) (Josh Manchester)
+11. ✅ Login Greeting Bug Fix (Josh Manchester)
 
 ### Stories In Progress
 - None (all planned stories completed)
