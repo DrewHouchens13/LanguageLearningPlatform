@@ -85,13 +85,13 @@
             <h1>Language Learning Platform</h1>
         </div>
         <ul class="nav-menu">
-            <li class="nav-item"><a href="{% if IS_DEVEDU %}../../{% else %}{% url 'landing' %}{% endif %}" class="nav-link">Home</a></li>
-            <li class="nav-item"><a href="{% if IS_DEVEDU %}../../progress/{% else %}{% url 'progress' %}{% endif %}" class="nav-link">My Progress</a></li>
-            <li class="nav-item"><a href="{% if IS_DEVEDU %}../../dashboard/{% else %}{% url 'dashboard' %}{% endif %}" class="nav-link">Dashboard</a></li>
+            <li class="nav-item"><a href="{% if IS_DEVEDU %}../{% else %}{% url 'landing' %}{% endif %}" class="nav-link">Home</a></li>
+            <li class="nav-item"><a href="{% if IS_DEVEDU %}../progress/{% else %}{% url 'progress' %}{% endif %}" class="nav-link">My Progress</a></li>
+            <li class="nav-item"><a href="{% if IS_DEVEDU %}../dashboard/{% else %}{% url 'dashboard' %}{% endif %}" class="nav-link">Dashboard</a></li>
             {% if user.is_staff %}
-                <li class="nav-item"><a href="{% if IS_DEVEDU %}../{% else %}{% url 'admin:index' %}{% endif %}" class="nav-link admin-link">Admin</a></li>
+                <li class="nav-item"><a href="{% if IS_DEVEDU %}../admin/{% else %}{% url 'admin:index' %}{% endif %}" class="nav-link admin-link">Admin</a></li>
             {% endif %}
-            <li class="nav-item"><a href="{% if IS_DEVEDU %}../../logout/{% else %}{% url 'logout' %}{% endif %}" class="nav-link nav-button">Logout</a></li>
+            <li class="nav-item"><a href="{% if IS_DEVEDU %}../logout/{% else %}{% url 'logout' %}{% endif %}" class="nav-link nav-button">Logout</a></li>
         </ul>
     </nav>
 </div>
