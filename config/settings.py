@@ -38,7 +38,9 @@ IS_DEVEDU = os.environ.get('IS_DEVEDU', '').strip().lower() in ('true', '1', 'ye
 # SECURITY WARNING: don't run with debug turned on in production!
 # Enable DEBUG in tests and development environments
 # Also enable DEBUG by default for local development (can be overridden with DEBUG=False)
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+# SECURITY: Default to False for production safety
+# Only enable DEBUG if explicitly set to 'True' in environment
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Force DEBUG=True in test mode
 if 'pytest' in sys.modules or 'test' in sys.argv:
