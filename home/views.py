@@ -985,11 +985,11 @@ def account_view(request):
 
             try:
                 # Get or create user profile
-                profile, _created = request.user.profile, False
-                if not hasattr(request.user, 'profile'):
-                    from .models import UserProfile
+                from .models import UserProfile
+                try:
+                    profile = request.user.profile
+                except UserProfile.DoesNotExist:
                     profile = UserProfile.objects.create(user=request.user)
-                    _created = True
 
                 form = AvatarUploadForm(request.POST, request.FILES, instance=profile)
 
