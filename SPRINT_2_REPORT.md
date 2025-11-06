@@ -103,10 +103,20 @@ This sprint was a collaborative team effort with distributed responsibilities:
 - Version badge for deployment demo
 - DevEDU deployment configuration
 
-**Team Partners**:
-- **Shapes & Colors Lessons**: Interactive lesson content with flashcards and quizzes
-- **Onboarding Quiz System**: Spanish proficiency assessment (10 questions, CEFR level determination)
-- **Lesson Infrastructure**: Dynamic template system and lesson management
+**Wade**:
+- Shapes lesson with interactive flashcards and quiz questions
+- Lesson management system integration
+
+**Vincent**:
+- Colors lesson with visual flashcards (10 color vocabulary cards)
+- Colors quiz (8 assessment questions)
+- Dynamic template implementation for color learning
+
+**Drew**:
+- Onboarding quiz system (Spanish proficiency assessment)
+- 10-question progressive difficulty quiz (A1 → A2 → B1)
+- CEFR level determination and results display
+- User profile integration for proficiency tracking
 
 ### 1. User Profile & Account Management
 **Status**: ✅ Complete and Tested (except avatar upload on production)
@@ -159,7 +169,7 @@ This sprint was a collaborative team effort with distributed responsibilities:
 
 ### 3. Onboarding Quiz System
 **Status**: ✅ Complete and Tested
-**Developer**: Team Partners
+**Developer**: Drew
 
 **Implementation**:
 - Spanish proficiency assessment quiz
@@ -179,20 +189,27 @@ This sprint was a collaborative team effort with distributed responsibilities:
 - `/onboarding/quiz/` - Interactive 10-question quiz
 - `/onboarding/results/` - Proficiency level results
 
-### 4. Interactive Lessons (Shapes & Colors)
+### 4. Colors Lesson
 **Status**: ✅ Complete and Tested
-**Developer**: Team Partners
+**Developer**: Vincent
 
 **Implementation**:
-- **Colors Lesson**: Spanish color vocabulary with visual flashcards
-  - 10 flashcards with color names and visual examples
-  - 8 quiz questions testing color recognition
-  - Dynamic template system using lesson slug
+- Spanish color vocabulary with visual flashcards
+- 10 flashcards with color names and visual examples
+- 8 quiz questions testing color recognition
+- Dynamic template system using lesson slug
+- Integration with lesson completion tracking
 
-- **Shapes Lesson**: Basic geometric shapes in Spanish
-  - Interactive flashcard learning system
-  - Quiz-based assessment
-  - Progress tracking integration
+### 5. Shapes Lesson
+**Status**: ✅ Complete and Tested
+**Developer**: Wade
+
+**Implementation**:
+- Basic geometric shapes in Spanish
+- Interactive flashcard learning system
+- Quiz-based assessment
+- Progress tracking integration
+- Lesson management system integration
 
 **Features**:
 - Lesson management system with difficulty levels
@@ -202,10 +219,10 @@ This sprint was a collaborative team effort with distributed responsibilities:
 - Dynamic template paths (`lessons/<slug>/`)
 
 **Management Commands**:
-- `create_colors_lesson` - Creates Colors lesson with content
-- `create_shapes_lesson` - Creates Shapes lesson with content
+- `create_colors_lesson` - Creates Colors lesson with content (Vincent)
+- `create_shapes_lesson` - Creates Shapes lesson with content (Wade)
 
-### 5. CI/CD Pipeline Enhancement
+### 6. CI/CD Pipeline Enhancement
 **Status**: ✅ Complete and Working
 **Developer**: Josh Manchester
 
@@ -221,7 +238,7 @@ This sprint was a collaborative team effort with distributed responsibilities:
 - Zero-downtime deployments
 - Database migrations run automatically
 
-### 6. Version Badge (CD Demo)
+### 7. Version Badge (CD Demo)
 **Status**: ✅ Complete
 **Developer**: Josh Manchester
 
@@ -448,16 +465,16 @@ This sprint was a collaborative team effort with distributed responsibilities:
 **[TO BE ADDED FROM ZENHUB]**
 
 ### Stories Completed
-1. ✅ User Profile Management (Josh)
-2. ✅ Avatar Upload System (Josh)
-3. ✅ Password Recovery (Josh)
-4. ✅ Username Recovery (Josh)
-5. ✅ Onboarding Quiz System (Team Partners)
-6. ✅ Colors Lesson (Team Partners)
-7. ✅ Shapes Lesson (Team Partners)
-8. ✅ CD Pipeline Integration (Josh)
-9. ✅ Version Badge (Demo) (Josh)
-10. ✅ Login Greeting Bug Fix (Josh)
+1. ✅ User Profile Management (Josh Manchester)
+2. ✅ Avatar Upload System (Josh Manchester)
+3. ✅ Password Recovery (Josh Manchester)
+4. ✅ Username Recovery (Josh Manchester)
+5. ✅ Onboarding Quiz System (Drew)
+6. ✅ Colors Lesson (Vincent)
+7. ✅ Shapes Lesson (Wade)
+8. ✅ CD Pipeline Integration (Josh Manchester)
+9. ✅ Version Badge (Demo) (Josh Manchester)
+10. ✅ Login Greeting Bug Fix (Josh Manchester)
 
 ### Stories In Progress
 - None (all planned stories completed)
