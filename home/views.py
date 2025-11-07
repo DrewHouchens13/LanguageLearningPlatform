@@ -19,7 +19,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import url_has_allowed_host_and_scheme, urlsafe_base64_encode, urlsafe_base64_decode
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 
 # Local application imports
 from .models import (
@@ -537,7 +537,8 @@ def login_view(request):
                         
                         # Redirect to results page with attempt ID in URL
                         messages.success(request, f'Welcome back, {user.first_name or user.username}! Your assessment results have been saved.')
-                        return redirect(f'/onboarding/results/?attempt={attempt.id}')
+                        results_url = f"{reverse('onboarding_results')}?attempt={attempt.id}"
+                        return redirect(results_url)
 
                     # Attempt already linked - clear stale session data and continue normal flow
                     request.session.pop('onboarding_attempt_id', None)
@@ -718,7 +719,8 @@ def signup_view(request):
                 
                 # Redirect to results page with attempt ID in URL
                 messages.success(request, f'Welcome to Language Learning Platform, {first_name}! Your assessment results have been saved.')
-                return redirect(f'/onboarding/results/?attempt={attempt.id}')
+                results_url = f"{reverse('onboarding_results')}?attempt={attempt.id}"
+                return redirect(results_url)
             except OnboardingAttempt.DoesNotExist:
                 logger.warning('Onboarding attempt %s not found for new user %s', onboarding_attempt_id, user.username)
                 # Continue with normal signup flow
@@ -734,11 +736,11 @@ def signup_view(request):
     return render(request, 'login.html')
 
 
-@require_http_methods(["GET", "POST"])
+@require_POST
 def logout_view(request):
     """
-    Logout view that accepts both GET and POST for compatibility.
-    GET is allowed for navigation links, but POST is recommended for security.
+    Logout view that only accepts POST requests for CSRF protection.
+    Use a form with method="POST" to log out users securely.
     """
     logout(request)
     messages.success(request, 'You have been successfully logged out.')
@@ -779,6 +781,7 @@ def dashboard(request):
                 logger.info('Cleared stale onboarding session for user %s on dashboard', request.user.username)
         except OnboardingAttempt.DoesNotExist:
             # Invalid attempt ID, clear it
+            logger.warning('Invalid onboarding attempt ID in session for user %s, clearing', request.user.username)
             request.session.pop('onboarding_attempt_id', None)
         except (KeyError, AttributeError, ValueError) as e:
             # Any other error, clear it to be safe

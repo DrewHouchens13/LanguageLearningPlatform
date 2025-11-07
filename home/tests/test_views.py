@@ -504,8 +504,8 @@ class TestLogoutView(TestCase):
         self.client.force_login(self.user)
         self.assertTrue(self.user.is_authenticated)
 
-        # Logout
-        response = self.client.get(self.logout_url)
+        # Logout (POST-only for CSRF protection)
+        response = self.client.post(self.logout_url)
 
         # Should redirect to landing page (absolute URL now)
         self.assertEqual(response.status_code, 302)
@@ -518,7 +518,7 @@ class TestLogoutView(TestCase):
     def test_logout_redirect_to_landing(self):
         """Test logout redirects to landing page"""
         self.client.force_login(self.user)
-        response = self.client.get(self.logout_url)
+        response = self.client.post(self.logout_url)
         # Logout now uses absolute URL redirect to avoid double prefix in admin
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.endswith(reverse('landing')))

@@ -1,4 +1,4 @@
-from django.db import models, IntegrityError, DatabaseError
+from django.db import models, IntegrityError, DatabaseError, transaction
 from django.db.models import Sum, Count
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -257,9 +257,11 @@ class UserProfile(models.Model):
         progress = (xp_in_current_level / level_xp_range) * 100
         return min(100.0, max(0.0, progress))
 
+    @transaction.atomic
     def award_xp(self, amount):
         """
         Award XP to user and check for level up.
+        Uses atomic transaction to ensure data integrity.
 
         Args:
             amount: XP to award (must be positive integer/float)
@@ -293,6 +295,7 @@ class UserProfile(models.Model):
 
         # Zero XP is valid but no-op
         if amount == 0:
+            logger.debug('Zero XP award attempted for user %s', self.user.username)
             return {
                 'xp_awarded': 0,
                 'total_xp': self.total_xp,
@@ -302,6 +305,7 @@ class UserProfile(models.Model):
             }
 
         old_level = self.current_level
+        old_xp = self.total_xp
         self.total_xp += amount
 
         # Recalculate level based on new XP
@@ -312,9 +316,13 @@ class UserProfile(models.Model):
             self.current_level = new_level
             # Save both fields if level changed
             self.save(update_fields=['total_xp', 'current_level'])
+            logger.info('User %s leveled up! %d → %d (awarded %d XP, total %d)',
+                       self.user.username, old_level, new_level, amount, self.total_xp)
         else:
             # Only save XP if no level change (performance optimization)
             self.save(update_fields=['total_xp'])
+            logger.debug('User %s awarded %d XP (%d → %d, level %d)',
+                        self.user.username, amount, old_xp, self.total_xp, self.current_level)
 
         return {
             'xp_awarded': amount,
