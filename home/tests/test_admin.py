@@ -40,10 +40,7 @@ class TestAdminCustomActions(TestCase):
         """Test admin action to reset user password to secure random password"""
         from home.admin import reset_password_to_default
         from django.contrib.admin.sites import AdminSite
-        from django.http import HttpRequest
         from django.contrib.auth.admin import UserAdmin
-        from django.contrib.messages.storage.fallback import FallbackStorage
-        from django.contrib.messages import get_messages
 
         # Store old password
         old_password = self.test_user.password
@@ -73,9 +70,7 @@ class TestAdminCustomActions(TestCase):
         """Test admin action to make user an administrator"""
         from home.admin import make_staff_admin
         from django.contrib.admin.sites import AdminSite
-        from django.http import HttpRequest
         from django.contrib.auth.admin import UserAdmin
-        from django.contrib.messages.storage.fallback import FallbackStorage
 
         # Verify user is not admin initially
         self.assertFalse(self.test_user.is_staff)
@@ -99,9 +94,7 @@ class TestAdminCustomActions(TestCase):
         """Test admin action to remove admin privileges"""
         from home.admin import remove_admin_privileges
         from django.contrib.admin.sites import AdminSite
-        from django.http import HttpRequest
         from django.contrib.auth.admin import UserAdmin
-        from django.contrib.messages.storage.fallback import FallbackStorage
 
         # Make user admin first
         self.test_user.is_staff = True
@@ -126,9 +119,7 @@ class TestAdminCustomActions(TestCase):
         """Test admin action to reset user progress"""
         from home.admin import reset_user_progress
         from django.contrib.admin.sites import AdminSite
-        from django.http import HttpRequest
         from django.contrib.auth.admin import UserAdmin
-        from django.contrib.messages.storage.fallback import FallbackStorage
 
         # Create progress data for user
         progress = UserProgress.objects.create(
@@ -174,9 +165,7 @@ class TestAdminCustomActions(TestCase):
         """Test admin action to reset UserProgress statistics"""
         from home.admin import reset_progress_stats
         from django.contrib.admin.sites import AdminSite
-        from django.http import HttpRequest
         from home.admin import UserProgressAdmin
-        from django.contrib.messages.storage.fallback import FallbackStorage
 
         # Create progress data
         progress = UserProgress.objects.create(
@@ -284,9 +273,6 @@ class TestAdminCustomActions(TestCase):
         """
         from home.admin import delete_selected_lessons, LessonCompletionAdmin
         from django.contrib.admin.sites import AdminSite
-        from django.http import HttpRequest
-        from django.contrib.messages.storage.fallback import FallbackStorage
-        from django.contrib.messages import get_messages
 
         # Create lesson completions
         _lesson1 = LessonCompletion.objects.create(
@@ -331,9 +317,6 @@ class TestAdminCustomActions(TestCase):
         """
         from home.admin import delete_selected_quizzes, QuizResultAdmin
         from django.contrib.admin.sites import AdminSite
-        from django.http import HttpRequest
-        from django.contrib.messages.storage.fallback import FallbackStorage
-        from django.contrib.messages import get_messages
 
         # Create quiz results
         _quiz1 = QuizResult.objects.create(

@@ -132,7 +132,7 @@ class Command(BaseCommand):
             shapes_lesson = Lesson.objects.get(title='Shapes in Spanish')
             shapes_lesson.next_lesson = lesson
             shapes_lesson.save()
-            self.stdout.write(f'  Linked Shapes lesson -> Colors lesson')
+            self.stdout.write('  Linked Shapes lesson -> Colors lesson')
         except Lesson.DoesNotExist:
             self.stdout.write(self.style.WARNING('  Shapes lesson not found, skipping link'))
 

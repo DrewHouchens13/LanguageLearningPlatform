@@ -286,7 +286,7 @@ def send_template_email(request, template_name, context, subject, recipient_emai
     """
     from django.core.mail import send_mail, BadHeaderError
     from django.template.loader import render_to_string
-    from django.core.exceptions import ImproperlyConfigured, ValidationError
+    from django.core.exceptions import ImproperlyConfigured
     from django.core.validators import validate_email
     from django.conf import settings
     from smtplib import SMTPException
@@ -348,6 +348,9 @@ def send_template_email(request, template_name, context, subject, recipient_emai
             wait_time = 2 ** attempt
             logger.info('Retrying email send in %s seconds...', wait_time)
             time.sleep(wait_time)
+
+    # If loop completes without success, return False
+    return False
 
 
 def landing(request):
@@ -737,15 +740,13 @@ def logout_view(request):
     Logout view that accepts both GET and POST for compatibility.
     GET is allowed for navigation links, but POST is recommended for security.
     """
-    if request.method in ('POST', 'GET'):
-        logout(request)
-        messages.success(request, 'You have been successfully logged out.')
-        # Use absolute redirect to avoid double prefix issue in admin
-        # Build absolute URL using request scheme and host
-        from django.urls import reverse  # Keep inline - only used here
-        landing_url = reverse('landing')
-        absolute_url = request.build_absolute_uri(landing_url)
-        return HttpResponseRedirect(absolute_url)
+    logout(request)
+    messages.success(request, 'You have been successfully logged out.')
+    # Use absolute redirect to avoid double prefix issue in admin
+    # Build absolute URL using request scheme and host
+    landing_url = reverse('landing')
+    absolute_url = request.build_absolute_uri(landing_url)
+    return HttpResponseRedirect(absolute_url)
 
 
 @login_required
@@ -984,7 +985,6 @@ def account_view(request):
 
             try:
                 # Get or create user profile
-                from .models import UserProfile
                 try:
                     profile = request.user.profile
                 except UserProfile.DoesNotExist:
@@ -1475,10 +1475,10 @@ def onboarding_results(request):
             breakdown[level]['correct'] += 1
     
     # Calculate percentages for each level
-    for level in breakdown:
-        if breakdown[level]['total'] > 0:
-            breakdown[level]['percentage'] = round(
-                (breakdown[level]['correct'] / breakdown[level]['total']) * 100, 1
+    for level, data in breakdown.items():
+        if data['total'] > 0:
+            data['percentage'] = round(
+                (data['correct'] / data['total']) * 100, 1
             )
         else:
             breakdown[level]['percentage'] = 0

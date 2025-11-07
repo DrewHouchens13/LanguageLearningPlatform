@@ -1032,7 +1032,7 @@ class TestLessonSecurityTests(TestCase):
 
     def test_sql_injection_attempt_in_lesson_detail(self):
         """Test SQL injection attempt in lesson_detail URL parameter"""
-        url = f"/lessons/1' OR '1'='1/"
+        url = "/lessons/1' OR '1'='1/"
         response = self.client.get(url)
 
         # Should return 404 (Django's ORM prevents SQL injection)

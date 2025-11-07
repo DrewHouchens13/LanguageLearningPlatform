@@ -29,7 +29,7 @@ class TestOnboardingWelcomeView(TestCase):
         
         self.assertEqual(response.status_code, 200)
 
-    def test_welcome_shows_profile_for_authenticated_without_onboarding(self):
+    def test_welcome_shows_profile_for_auth_no_onboarding(self):
         """Test welcome page shows user profile for authenticated users who haven't completed onboarding"""
         user = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
         # Profile is auto-created by signal, just get it and ensure onboarding is not completed
@@ -367,7 +367,7 @@ class TestOnboardingRetakeBlocking(TestCase):
                 difficulty_points=points
             )
 
-    def test_authenticated_user_blocked_from_retaking_welcome(self):
+    def test_auth_user_cant_retake_welcome(self):
         """Authenticated users who completed onboarding are redirected from welcome page"""
         # Use auto-created profile and mark as completed
         profile = self.user.profile
@@ -395,7 +395,7 @@ class TestOnboardingRetakeBlocking(TestCase):
 
         self.assertRedirects(response, reverse('dashboard'))
         
-    def test_guest_with_completed_session_blocked_from_retaking(self):
+    def test_guest_with_session_done_cant_retake(self):
         """Guests who completed in same session are blocked from retaking"""
         from django.utils import timezone
         
@@ -426,7 +426,7 @@ class TestOnboardingRetakeBlocking(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'onboarding/welcome.html')
         
-    def test_results_page_still_accessible_after_completion(self):
+    def test_results_page_accessible_after_done(self):
         """Users can still view their results page after completion"""
         from django.utils import timezone
 
