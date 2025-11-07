@@ -1629,7 +1629,20 @@ def submit_lesson_quiz(request, lesson_id):
             lesson_title=lesson.title,
             duration_minutes=5  # Estimated time per lesson quiz
         )
-        
+
+        # Award XP for lesson completion (Sprint 3 - Issue #17)
+        base_xp = 50  # Base XP per lesson
+        bonus_xp = 10 if total > 0 and score == total else 0  # Bonus for perfect score
+        total_xp_awarded = base_xp + bonus_xp
+
+        profile = request.user.profile
+        xp_result = profile.award_xp(total_xp_awarded)
+
+        logger.info(
+            f'XP awarded: {request.user.username} earned {xp_result["xp_awarded"]} XP '
+            f'(Level {xp_result["old_level"]} -> {xp_result["new_level"] or xp_result["old_level"]})'
+        )
+
         # Update UserProgress
         user_progress, _ = UserProgress.objects.get_or_create(user=request.user)
         user_progress.total_quizzes_taken += 1
@@ -1642,13 +1655,25 @@ def submit_lesson_quiz(request, lesson_id):
 
     # If request from JS expect JSON
     if request.content_type == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({
+        response_data = {
             'success': True,
             'score': score,
             'total': total,
             'attempt_id': attempt.id,
             'redirect_url': reverse('lesson_results', args=[lesson.id, attempt.id])
-        })
+        }
+
+        # Add XP info for authenticated users (Sprint 3 - Issue #17)
+        if request.user.is_authenticated:
+            response_data['xp'] = {
+                'awarded': xp_result['xp_awarded'],
+                'total': xp_result['total_xp'],
+                'leveled_up': xp_result['leveled_up'],
+                'new_level': xp_result['new_level'],
+                'old_level': xp_result['old_level']
+            }
+
+        return JsonResponse(response_data)
     return redirect('lesson_results', lesson_id=lesson.id, attempt_id=attempt.id)
 
 
