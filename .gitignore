@@ -50,6 +50,9 @@ static_collected/
 # Media uploads (user-generated content)
 media/
 
+# ai code reviews
+AI_code_reviews/
+
 # IDE / Editor files
 .vscode/
 .idea/
@@ -84,3 +87,11 @@ test_avatar_upload_live.py
 test_cloudinary_setup.py
 test_cloudinary_simple.py
 setup_test_data.py
+test_cloudinary_connection.py
+
+# other files to not push (assignment specs and reports are local only)
+SPRINT_2_ASSIGNMENT.md
+SPRINT_2_REPORT.md
+SPRINT_3_ASSIGNMENT.md
+SPRINT_3_REPORT.md
+SPRINT3_PLAN.md
