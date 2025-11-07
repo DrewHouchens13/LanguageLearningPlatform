@@ -75,11 +75,11 @@ class UserProfile(models.Model):
     learning_motivation = models.TextField(blank=True)
 
     # XP and Leveling System (Sprint 3 - Issue #17)
-    total_xp = models.IntegerField(
+    total_xp = models.PositiveIntegerField(
         default=0,
         help_text="Total experience points earned from completing lessons and quests"
     )
-    current_level = models.IntegerField(
+    current_level = models.PositiveIntegerField(
         default=1,
         help_text="Current level based on total XP earned"
     )
@@ -310,8 +310,11 @@ class UserProfile(models.Model):
 
         if leveled_up:
             self.current_level = new_level
-
-        self.save()
+            # Save both fields if level changed
+            self.save(update_fields=['total_xp', 'current_level'])
+        else:
+            # Only save XP if no level change (performance optimization)
+            self.save(update_fields=['total_xp'])
 
         return {
             'xp_awarded': amount,

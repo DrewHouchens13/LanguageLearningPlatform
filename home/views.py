@@ -533,18 +533,18 @@ def login_view(request):
                         logger.info('Linked onboarding attempt %s to user %s', attempt.id, user.username)
                         
                         # Clear session AFTER getting the ID
-                        del request.session['onboarding_attempt_id']
+                        request.session.pop('onboarding_attempt_id', None)
                         
                         # Redirect to results page with attempt ID in URL
                         messages.success(request, f'Welcome back, {user.first_name or user.username}! Your assessment results have been saved.')
                         return redirect(f'/onboarding/results/?attempt={attempt.id}')
 
                     # Attempt already linked - clear stale session data and continue normal flow
-                    del request.session['onboarding_attempt_id']
+                    request.session.pop('onboarding_attempt_id', None)
                     logger.info('Cleared stale onboarding session for user %s', user.username)
                 except OnboardingAttempt.DoesNotExist:
                     # Clear invalid session data
-                    del request.session['onboarding_attempt_id']
+                    request.session.pop('onboarding_attempt_id', None)
                     logger.warning('Onboarding attempt %s not found, cleared session', onboarding_attempt_id)
                 except (ValueError, TypeError, AttributeError) as e:
                     # Handle data/attribute errors gracefully
@@ -714,7 +714,7 @@ def signup_view(request):
                 logger.info('Linked onboarding attempt %s to new user %s', attempt.id, user.username)
                 
                 # Clear session AFTER getting the ID
-                del request.session['onboarding_attempt_id']
+                request.session.pop('onboarding_attempt_id', None)
                 
                 # Redirect to results page with attempt ID in URL
                 messages.success(request, f'Welcome to Language Learning Platform, {first_name}! Your assessment results have been saved.')
@@ -775,16 +775,16 @@ def dashboard(request):
             
             # If attempt is already linked to this user, clear the session
             if attempt.user == request.user:
-                del request.session['onboarding_attempt_id']
+                request.session.pop('onboarding_attempt_id', None)
                 logger.info('Cleared stale onboarding session for user %s on dashboard', request.user.username)
         except OnboardingAttempt.DoesNotExist:
             # Invalid attempt ID, clear it
-            del request.session['onboarding_attempt_id']
+            request.session.pop('onboarding_attempt_id', None)
         except (KeyError, AttributeError, ValueError) as e:
             # Any other error, clear it to be safe
             logger.error('Error checking onboarding session on dashboard: %s', str(e))
             if 'onboarding_attempt_id' in request.session:
-                del request.session['onboarding_attempt_id']
+                request.session.pop('onboarding_attempt_id', None)
     
     context = {
         'has_completed_onboarding': has_completed_onboarding,
