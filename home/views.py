@@ -12,8 +12,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email as django_validate_email
-from django.db import IntegrityError
-from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
+from django.db import DatabaseError, IntegrityError
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -23,7 +23,6 @@ from django.views.decorators.http import require_http_methods
 
 # Local application imports
 from .models import (
-    Flashcard,
     Lesson,
     LessonAttempt,
     LessonCompletion,
@@ -480,9 +479,7 @@ def login_view(request):
         if user is not None:
             login(request, user)
             # Log successful login
-            logger.info(
-                f'Successful login: {username} from IP: {get_client_ip(request)}'
-            )
+            logger.info('Successful login: %s from IP: %s', username, get_client_ip(request))
             
             # Check if user completed onboarding as a guest (only redirect if it's unlinked)
             onboarding_attempt_id = request.session.get('onboarding_attempt_id')
@@ -530,7 +527,7 @@ def login_view(request):
                             user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
                             user_progress.save()
                         
-                        logger.info(f'Linked onboarding attempt {attempt.id} to user {user.username}')
+                        logger.info('Linked onboarding attempt %s to user %s', attempt.id, user.username)
                         
                         # Clear session AFTER getting the ID
                         del request.session['onboarding_attempt_id']
@@ -538,16 +535,17 @@ def login_view(request):
                         # Redirect to results page with attempt ID in URL
                         messages.success(request, f'Welcome back, {user.first_name or user.username}! Your assessment results have been saved.')
                         return redirect(f'/onboarding/results/?attempt={attempt.id}')
-                    else:
-                        # Attempt already linked - clear stale session data and continue normal flow
-                        del request.session['onboarding_attempt_id']
-                        logger.info(f'Cleared stale onboarding session for user {user.username}')
+
+                    # Attempt already linked - clear stale session data and continue normal flow
+                    del request.session['onboarding_attempt_id']
+                    logger.info('Cleared stale onboarding session for user %s', user.username)
                 except OnboardingAttempt.DoesNotExist:
                     # Clear invalid session data
                     del request.session['onboarding_attempt_id']
-                    logger.warning(f'Onboarding attempt {onboarding_attempt_id} not found, cleared session')
-                except Exception as e:
-                    logger.error(f'Error linking onboarding attempt to user: {str(e)}')
+                    logger.warning('Onboarding attempt %s not found, cleared session', onboarding_attempt_id)
+                except (ValueError, TypeError, AttributeError) as e:
+                    # Handle data/attribute errors gracefully
+                    logger.error('Error linking onboarding attempt to user: %s', str(e))
             
             messages.success(request, f'Welcome back, {user.first_name or user.username}!')
 
@@ -559,16 +557,16 @@ def login_view(request):
                 require_https=request.is_secure()
             ):
                 return HttpResponseRedirect(next_page)
-            else:
-                # Redirect to dashboard (home for authenticated users)
-                return redirect('dashboard')
-        else:
-            # Log failed login attempt (incorrect password)
-            logger.warning(
-                'Failed login attempt - incorrect password for: %s from IP: %s',
-                username, get_client_ip(request)
-            )
-            messages.error(request, 'Invalid username/email or password.')
+
+            # Redirect to dashboard (home for authenticated users)
+            return redirect('dashboard')
+
+        # Log failed login attempt (incorrect password)
+        logger.warning(
+            'Failed login attempt - incorrect password for: %s from IP: %s',
+            username, get_client_ip(request)
+        )
+        messages.error(request, 'Invalid username/email or password.')
 
     return render(request, 'login.html')
 
@@ -650,20 +648,20 @@ def signup_view(request):
                 first_name=first_name,
                 last_name=last_name
             )
-            logger.info(f'New user created: {user.username} ({email}) from IP: {get_client_ip(request)}')
+            logger.info('New user created: %s (%s) from IP: %s', user.username, email, get_client_ip(request))
 
         except IntegrityError as e:
             # This shouldn't happen since we checked, but handle it anyway
-            logger.error(f'IntegrityError during user creation: {str(e)} from IP: {get_client_ip(request)}')
+            logger.error('IntegrityError during user creation: %s from IP: %s', str(e), get_client_ip(request))
             messages.error(request, 'An error occurred while creating your account. Please try again.')
             return render(request, 'login.html')
-        except Exception as e:
-            # Log unexpected errors for debugging (don't expose details to user)
+        except (ValueError, TypeError, ValidationError, DatabaseError) as e:
+            # Log unexpected validation/data/database errors for debugging (don't expose details to user)
             from django.conf import settings
             exception_type = type(e).__name__
-            logger.error(f'Unexpected error during user creation: {exception_type} from IP: {get_client_ip(request)}')
+            logger.error('Unexpected error during user creation: %s from IP: %s', exception_type, get_client_ip(request))
             if settings.DEBUG:
-                logger.debug(f'User creation error details (DEBUG only): {str(e)}')
+                logger.debug('User creation error details (DEBUG only): %s', str(e))
             messages.error(request, 'An error occurred while creating your account. Please try again.')
             return render(request, 'login.html')
 
@@ -710,7 +708,7 @@ def signup_view(request):
                 user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
                 user_progress.save()
                 
-                logger.info(f'Linked onboarding attempt {attempt.id} to new user {user.username}')
+                logger.info('Linked onboarding attempt %s to new user %s', attempt.id, user.username)
                 
                 # Clear session AFTER getting the ID
                 del request.session['onboarding_attempt_id']
@@ -719,10 +717,11 @@ def signup_view(request):
                 messages.success(request, f'Welcome to Language Learning Platform, {first_name}! Your assessment results have been saved.')
                 return redirect(f'/onboarding/results/?attempt={attempt.id}')
             except OnboardingAttempt.DoesNotExist:
-                logger.warning(f'Onboarding attempt {onboarding_attempt_id} not found for new user {user.username}')
+                logger.warning('Onboarding attempt %s not found for new user %s', onboarding_attempt_id, user.username)
                 # Continue with normal signup flow
-            except Exception as e:
-                logger.error(f'Error linking onboarding attempt to new user {user.username}: {str(e)}')
+            except (ValueError, TypeError, AttributeError) as e:
+                # Handle data/attribute errors gracefully
+                logger.error('Error linking onboarding attempt to new user %s: %s', user.username, str(e))
                 # Continue with normal signup flow - user is created, just onboarding link failed
         
         messages.success(request, f'Welcome to Language Learning Platform, {first_name}!')
@@ -738,7 +737,7 @@ def logout_view(request):
     Logout view that accepts both GET and POST for compatibility.
     GET is allowed for navigation links, but POST is recommended for security.
     """
-    if request.method == 'POST' or request.method == 'GET':
+    if request.method in ('POST', 'GET'):
         logout(request)
         messages.success(request, 'You have been successfully logged out.')
         # Use absolute redirect to avoid double prefix issue in admin
@@ -776,13 +775,13 @@ def dashboard(request):
             # If attempt is already linked to this user, clear the session
             if attempt.user == request.user:
                 del request.session['onboarding_attempt_id']
-                logger.info(f'Cleared stale onboarding session for user {request.user.username} on dashboard')
+                logger.info('Cleared stale onboarding session for user %s on dashboard', request.user.username)
         except OnboardingAttempt.DoesNotExist:
             # Invalid attempt ID, clear it
             del request.session['onboarding_attempt_id']
-        except Exception as e:
+        except (KeyError, AttributeError, ValueError) as e:
             # Any other error, clear it to be safe
-            logger.error(f'Error checking onboarding session on dashboard: {str(e)}')
+            logger.error('Error checking onboarding session on dashboard: %s', str(e))
             if 'onboarding_attempt_id' in request.session:
                 del request.session['onboarding_attempt_id']
     
@@ -1002,7 +1001,7 @@ def account_view(request):
                     for error_list in form.errors.values():
                         for error in error_list:
                             messages.error(request, error)
-            except Exception as e:
+            except (IOError, OSError, ValidationError, ValueError) as e:
                 # Log the full exception for debugging
                 logger.error('Avatar upload failed for user %s: %s',
                            request.user.username, str(e), exc_info=True)
@@ -1369,7 +1368,7 @@ def submit_onboarding(request):
         
         # For authenticated users, update profile AND stats
         if request.user.is_authenticated:
-            user_profile, created = UserProfile.objects.get_or_create(user=request.user)
+            user_profile, _created = UserProfile.objects.get_or_create(user=request.user)
             user_profile.proficiency_level = calculated_level
             user_profile.has_completed_onboarding = True
             user_profile.onboarding_completed_at = timezone.now()
@@ -1396,11 +1395,11 @@ def submit_onboarding(request):
             user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
             user_progress.save()
             
-            logger.info(f'Onboarding completed for user {request.user.username}: {calculated_level} ({total_score}/{total_possible})')
+            logger.info('Onboarding completed for user %s: %s (%s/%s)', request.user.username, calculated_level, total_score, total_possible)
         else:
             # For guests, store attempt_id in session
             request.session['onboarding_attempt_id'] = attempt.id
-            logger.info(f'Onboarding completed for guest session {attempt.session_key}: {calculated_level} ({total_score}/{total_possible})')
+            logger.info('Onboarding completed for guest session %s: %s (%s/%s)', attempt.session_key, calculated_level, total_score, total_possible)
         
         # Calculate percentage
         percentage = round((total_score / total_possible * 100), 1) if total_possible > 0 else 0
@@ -1416,8 +1415,8 @@ def submit_onboarding(request):
         
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
-    except Exception as e:
-        logger.error(f'Error processing onboarding submission: {str(e)}')
+    except (KeyError, ValueError, AttributeError, TypeError) as e:
+        logger.error('Error processing onboarding submission: %s', str(e))
         return JsonResponse({'success': False, 'error': 'Internal server error'}, status=500)
 
 
@@ -1556,8 +1555,8 @@ def submit_lesson_quiz(request, lesson_id):
             payload = json.loads(request.body.decode('utf-8'))
         else:
             payload = request.POST.dict()
-    except (json.JSONDecodeError, UnicodeDecodeError) as e:
-        logger.warning(f"Invalid JSON payload in quiz submission for lesson {lesson_id}")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        logger.warning("Invalid JSON payload in quiz submission for lesson %s", lesson_id)
         return JsonResponse({'error': 'Invalid JSON format'}, status=400)
 
     answers = payload.get('answers')
@@ -1567,7 +1566,7 @@ def submit_lesson_quiz(request, lesson_id):
         try:
             answers = json.loads(answers)
         except (json.JSONDecodeError, TypeError):
-            logger.warning(f"Failed to parse answers JSON string for lesson {lesson_id}")
+            logger.warning("Failed to parse answers JSON string for lesson %s", lesson_id)
             return JsonResponse({'error': 'Invalid answers format - must be valid JSON'}, status=400)
 
     if not answers or not isinstance(answers, list):
@@ -1627,25 +1626,65 @@ def submit_lesson_quiz(request, lesson_id):
             lesson_title=lesson.title,
             duration_minutes=5  # Estimated time per lesson quiz
         )
-        
+
+        # Award XP for lesson completion (Sprint 3 - Issue #17)
+        base_xp = 50  # Base XP per lesson
+        bonus_xp = 10 if total > 0 and score == total else 0  # Bonus for perfect score
+        total_xp_awarded = base_xp + bonus_xp
+
+        # Safely get or create profile (defensive programming)
+        try:
+            profile = request.user.profile
+        except UserProfile.DoesNotExist:
+            # Profile should exist (auto-created by signal), but create if missing
+            profile = UserProfile.objects.create(user=request.user)
+            logger.warning('UserProfile was missing for user %s, created new profile', request.user.username)
+
+        # Award XP with error handling
+        try:
+            xp_result = profile.award_xp(total_xp_awarded)
+            logger.info(
+                'XP awarded: %s earned %s XP (Level %s -> %s)',
+                request.user.username,
+                xp_result["xp_awarded"],
+                xp_result["old_level"],
+                xp_result["new_level"] or xp_result["old_level"]
+            )
+        except (ValueError, TypeError) as e:
+            # XP awarding failed, log but don't block lesson completion
+            logger.error('Failed to award XP for user %s: %s', request.user.username, str(e))
+            xp_result = None
+
         # Update UserProgress
         user_progress, _ = UserProgress.objects.get_or_create(user=request.user)
         user_progress.total_quizzes_taken += 1
         user_progress.total_lessons_completed += 1
         user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
         user_progress.save()
-        
-        logger.info(f'Lesson quiz completed: {request.user.username} - {lesson.title}: {score}/{total}')
+
+        logger.info('Lesson quiz completed: %s - %s: %s/%s', request.user.username, lesson.title, score, total)
 
     # If request from JS expect JSON
     if request.content_type == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({
+        response_data = {
             'success': True,
             'score': score,
             'total': total,
             'attempt_id': attempt.id,
             'redirect_url': reverse('lesson_results', args=[lesson.id, attempt.id])
-        })
+        }
+
+        # Add XP info for authenticated users (Sprint 3 - Issue #17)
+        if request.user.is_authenticated and xp_result is not None:
+            response_data['xp'] = {
+                'awarded': xp_result['xp_awarded'],
+                'total': xp_result['total_xp'],
+                'leveled_up': xp_result['leveled_up'],
+                'new_level': xp_result['new_level'],
+                'old_level': xp_result['old_level']
+            }
+
+        return JsonResponse(response_data)
     return redirect('lesson_results', lesson_id=lesson.id, attempt_id=attempt.id)
 
 

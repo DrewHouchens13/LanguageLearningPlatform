@@ -5,8 +5,6 @@ Tests for Lesson, Flashcard, LessonQuizQuestion, LessonAttempt models and all le
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.http import HttpResponseBadRequest
-from django.core.exceptions import ValidationError
 import json
 
 from home.models import (
@@ -685,7 +683,7 @@ class TestSubmitLessonQuizView(TestCase):
             content_type='application/json'
         )
 
-        json_response = response.json()
+        _json_response = response.json()  # pylint: disable=unused-variable
         attempt = LessonAttempt.objects.get(lesson=self.lesson, user=self.user)
         self.assertEqual(attempt.score, 0)
         self.assertEqual(attempt.total, 2)
@@ -705,7 +703,7 @@ class TestSubmitLessonQuizView(TestCase):
             content_type='application/json'
         )
 
-        json_response = response.json()
+        _json_response = response.json()  # pylint: disable=unused-variable
         attempt = LessonAttempt.objects.get(lesson=self.lesson, user=self.user)
         self.assertEqual(attempt.score, 1)
         self.assertEqual(attempt.total, 2)
@@ -838,7 +836,7 @@ class TestSubmitLessonQuizView(TestCase):
             content_type='application/json'
         )
 
-        json_response = response.json()
+        _json_response = response.json()  # pylint: disable=unused-variable
         attempt = LessonAttempt.objects.get(lesson=self.lesson, user=self.user)
         self.assertEqual(attempt.score, 1)
         self.assertEqual(attempt.total, 1)  # Only valid question counted

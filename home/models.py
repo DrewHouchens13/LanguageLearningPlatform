@@ -74,6 +74,16 @@ class UserProfile(models.Model):
     daily_goal_minutes = models.IntegerField(default=15)
     learning_motivation = models.TextField(blank=True)
 
+    # XP and Leveling System (Sprint 3 - Issue #17)
+    total_xp = models.IntegerField(
+        default=0,
+        help_text="Total experience points earned from completing lessons and quests"
+    )
+    current_level = models.IntegerField(
+        default=1,
+        help_text="Current level based on total XP earned"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -178,6 +188,138 @@ class UserProfile(models.Model):
                 raise ValidationError('Invalid image data. Please upload a different PNG or JPG image.') from e
 
         super().save(*args, **kwargs)
+
+    # XP and Leveling System Methods (Sprint 3 - Issue #17)
+
+    @staticmethod
+    def get_xp_for_level(level):
+        """
+        Calculate total XP required to reach a specific level.
+
+        Uses a balanced progression formula: XP = 100 * (level - 1)^1.5
+        This creates a smooth difficulty curve for leveling up.
+
+        Args:
+            level: Target level (1, 2, 3, etc.)
+
+        Returns:
+            int: Total XP required to reach that level
+
+        Examples:
+            Level 1: 0 XP
+            Level 2: 100 XP
+            Level 3: 282 XP
+            Level 4: 519 XP
+            Level 5: 800 XP
+        """
+        if level <= 1:
+            return 0
+        return int(100 * ((level - 1) ** 1.5))
+
+    def calculate_level_from_xp(self):
+        """
+        Calculate current level based on total XP.
+
+        Returns:
+            int: Level based on total XP (minimum 1)
+        """
+        level = 1
+        while self.total_xp >= self.get_xp_for_level(level + 1):
+            level += 1
+        return level
+
+    def get_xp_to_next_level(self):
+        """
+        Calculate XP needed to reach next level.
+
+        Returns:
+            int: XP required for next level
+        """
+        next_level = self.current_level + 1
+        xp_for_next_level = self.get_xp_for_level(next_level)
+        return xp_for_next_level - self.total_xp
+
+    def get_progress_to_next_level(self):
+        """
+        Calculate progress percentage to next level.
+
+        Returns:
+            float: Percentage (0-100) of progress to next level
+        """
+        current_level_xp = self.get_xp_for_level(self.current_level)
+        next_level_xp = self.get_xp_for_level(self.current_level + 1)
+        level_xp_range = next_level_xp - current_level_xp
+
+        if level_xp_range == 0:
+            return 100.0
+
+        xp_in_current_level = self.total_xp - current_level_xp
+        progress = (xp_in_current_level / level_xp_range) * 100
+        return min(100.0, max(0.0, progress))
+
+    def award_xp(self, amount):
+        """
+        Award XP to user and check for level up.
+
+        Args:
+            amount: XP to award (must be positive integer/float)
+
+        Returns:
+            dict: {
+                'xp_awarded': int,
+                'total_xp': int,
+                'leveled_up': bool,
+                'new_level': int or None,
+                'old_level': int
+            }
+
+        Raises:
+            TypeError: If amount is not a number
+            ValueError: If amount is negative or unreasonably large
+        """
+        # Type validation
+        if not isinstance(amount, (int, float)):
+            raise TypeError(f"XP amount must be numeric, got {type(amount).__name__}")
+
+        # Convert to int for consistency
+        amount = int(amount)
+
+        # Range validation
+        if amount < 0:
+            raise ValueError(f"XP amount must be non-negative, got {amount}")
+
+        if amount > 100000:  # Sanity check: prevent abuse with unreasonable values
+            raise ValueError(f"XP amount {amount} exceeds maximum allowed (100000)")
+
+        # Zero XP is valid but no-op
+        if amount == 0:
+            return {
+                'xp_awarded': 0,
+                'total_xp': self.total_xp,
+                'leveled_up': False,
+                'new_level': None,
+                'old_level': self.current_level
+            }
+
+        old_level = self.current_level
+        self.total_xp += amount
+
+        # Recalculate level based on new XP
+        new_level = self.calculate_level_from_xp()
+        leveled_up = new_level > old_level
+
+        if leveled_up:
+            self.current_level = new_level
+
+        self.save()
+
+        return {
+            'xp_awarded': amount,
+            'total_xp': self.total_xp,
+            'leveled_up': leveled_up,
+            'new_level': new_level if leveled_up else None,
+            'old_level': old_level
+        }
 
 
 @receiver(post_save, sender=User)

@@ -1,26 +1,14 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
-from django.urls import reverse, resolve
-from django.utils import timezone
-from django.core.cache import cache
-from datetime import timedelta
-from enum import Enum
-from unittest.mock import patch
-
-from home.models import UserProgress, LessonCompletion, QuizResult
-from .test_utils import create_test_user, create_test_superuser, AdminTestCase
-
 from django.http import HttpRequest
-from django.contrib.admin.sites import AdminSite
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.messages import get_messages
 
+from home.models import UserProgress, LessonCompletion, QuizResult
 from home.admin import (
-    CustomUserAdmin, UserProgressAdmin, LessonCompletionAdmin, QuizResultAdmin,
-    reset_password_to_default, make_staff_admin, remove_admin_privileges,
-    reset_user_progress, reset_progress_stats, delete_selected_lessons, delete_selected_quizzes,
     delete_user_avatars, delete_user_avatars_from_users
 )
+from .test_utils import create_test_user, create_test_superuser, AdminTestCase
 
 
 # ============================================================================
@@ -244,7 +232,7 @@ class TestAdminCustomActions(TestCase):
         from django.contrib.admin.sites import AdminSite
 
         # Create user with progress
-        progress = UserProgress.objects.create(
+        _progress = UserProgress.objects.create(
             user=self.test_user,
             total_minutes_studied=150,
             total_lessons_completed=10,
@@ -301,12 +289,12 @@ class TestAdminCustomActions(TestCase):
         from django.contrib.messages import get_messages
 
         # Create lesson completions
-        lesson1 = LessonCompletion.objects.create(
+        _lesson1 = LessonCompletion.objects.create(
             user=self.test_user,
             lesson_id='lesson1',
             duration_minutes=30
         )
-        lesson2 = LessonCompletion.objects.create(
+        _lesson2 = LessonCompletion.objects.create(
             user=self.test_user,
             lesson_id='lesson2',
             duration_minutes=45
@@ -348,13 +336,13 @@ class TestAdminCustomActions(TestCase):
         from django.contrib.messages import get_messages
 
         # Create quiz results
-        quiz1 = QuizResult.objects.create(
+        _quiz1 = QuizResult.objects.create(
             user=self.test_user,
             quiz_id='quiz1',
             score=8,
             total_questions=10
         )
-        quiz2 = QuizResult.objects.create(
+        _quiz2 = QuizResult.objects.create(
             user=self.test_user,
             quiz_id='quiz2',
             score=15,
@@ -537,7 +525,7 @@ class TestAdminCRUDOperations(AdminTestCase):
             total_minutes_studied=50
         )
 
-        response = self.client.post(f'/admin/home/userprogress/{progress.pk}/change/', {
+        _response = self.client.post(f'/admin/home/userprogress/{progress.pk}/change/', {
             'user': test_user.pk,
             'total_minutes_studied': 150,
             'total_lessons_completed': 10,
@@ -653,7 +641,7 @@ class TestAdminSearchAndFilters(AdminTestCase):
 
     def test_user_progress_search(self):
         """Test searching user progress by username"""
-        progress = UserProgress.objects.create(
+        _progress = UserProgress.objects.create(
             user=self.user1,
             total_minutes_studied=100
         )
@@ -665,7 +653,7 @@ class TestAdminSearchAndFilters(AdminTestCase):
 
     def test_lesson_completion_search(self):
         """Test searching lesson completions"""
-        lesson = LessonCompletion.objects.create(
+        _lesson = LessonCompletion.objects.create(
             user=self.user1,
             lesson_id='spanish_101',
             lesson_title='Spanish Basics'
@@ -678,7 +666,7 @@ class TestAdminSearchAndFilters(AdminTestCase):
 
     def test_quiz_result_search(self):
         """Test searching quiz results"""
-        quiz = QuizResult.objects.create(
+        _quiz = QuizResult.objects.create(
             user=self.user1,
             quiz_id='quiz_spanish_001',
             quiz_title='Spanish Vocabulary Quiz',
