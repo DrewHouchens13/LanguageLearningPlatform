@@ -4,79 +4,154 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Language Learning Platform</title>
+    <title>LinguaLearn - Master Any Language</title>
     {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
-    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
-    <style>
-      .hero-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-      }
-    </style>
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
   </head>
   <body>
     {% include '_nav.html' %}
 
-    <main>
-      <!-- Django Messages -->
-      {% if messages %}
-        <div class="page-messages">
-          {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">
-              {{ message }}
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
+    <!-- Django Messages -->
+    {% if messages %}
+      <div class="container" style="padding-top: var(--space-xl);">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
 
-      <section class="hero">
-        <div class="hero-content">
-          <h2>Welcome to Your Journey</h2>
-          <p>Embark on an exciting adventure to master new languages. Our platform makes learning engaging, effective, and enjoyable for learners at the beginner level.</p>
-          <a href="{% url 'onboarding_welcome' %}" class="hero-button" style="display: inline-block; margin-top: 1rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: transform 0.2s;">Take Onboarding Test</a>
+    <!-- Hero Section -->
+    <section class="hero-section fade-in">
+      <div class="hero-content">
+        <span class="hero-accent">Start Your Journey Today</span>
+        <h1 class="hero-title">Master Languages Through AI-Powered Learning</h1>
+        <p class="hero-subtitle">Join thousands of learners discovering the joy of language mastery with our adaptive, engaging platform designed for real results.</p>
+        
+        <div class="hero-cta">
+          <a href="{% url 'onboarding_welcome' %}" class="btn btn-primary btn-lg">
+            🚀 Start Learning Free
+          </a>
+          <a href="{% url 'lessons_list' %}" class="btn btn-secondary btn-lg">
+            Browse Lessons
+          </a>
         </div>
-        <div class="hero-image">
-          <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80" alt="Students learning together">
-        </div>
-      </section>
+      </div>
+      
+      <div class="scroll-indicator">
+        <div class="scroll-arrow"></div>
+      </div>
+    </section>
 
-      <section class="features">
-        <div class="feature-card">
-          <h3>Interactive Lessons</h3>
-          <p>Engage with dynamic content designed to help you learn naturally and effectively.</p>
+    <!-- Features Section -->
+    <section class="features-section">
+      <div class="container">
+        <div class="text-center mb-3xl">
+          <span class="text-accent">Why Choose LinguaLearn</span>
+          <h2 class="text-5xl font-black mt-md mb-md">Everything You Need to Succeed</h2>
+          <p class="lead">Built by learners, for learners. Our platform combines cutting-edge AI with proven learning methods.</p>
         </div>
-        <div class="feature-card">
-          <h3>Track Progress</h3>
-          <p>Monitor your achievements and celebrate milestones as you advance through your learning journey.</p>
+
+        <div class="features-grid">
+          <div class="feature-item fade-in-up delay-100">
+            <div class="feature-icon">🎯</div>
+            <h3>Personalized Lessons</h3>
+            <p>AI-powered content that adapts to your unique learning style and pace. Never feel overwhelmed or bored again.</p>
+          </div>
+
+          <div class="feature-item fade-in-up delay-200">
+            <div class="feature-icon">📊</div>
+            <h3>Track Your Progress</h3>
+            <p>Visualize your improvement with detailed analytics. Celebrate milestones and stay motivated every step of the way.</p>
+          </div>
+
+          <div class="feature-item fade-in-up delay-300">
+            <div class="feature-icon">🎮</div>
+            <h3>Gamified Experience</h3>
+            <p>Turn learning into an adventure with interactive quizzes, achievements, and challenges that make studying fun.</p>
+          </div>
+
+          <div class="feature-item fade-in-up delay-400">
+            <div class="feature-icon">🌐</div>
+            <h3>Multiple Languages</h3>
+            <p>Start with Spanish, French, German, or Japanese. Expand your horizons with our growing language library.</p>
+          </div>
+
+          <div class="feature-item fade-in-up delay-500">
+            <div class="feature-icon">⚡</div>
+            <h3>Bite-Sized Lessons</h3>
+            <p>Learn in just 10-15 minutes a day. Perfect for busy schedules without sacrificing learning quality.</p>
+          </div>
+
+          <div class="feature-item fade-in-up delay-600">
+            <div class="feature-icon">🏆</div>
+            <h3>Proven Results</h3>
+            <p>Join learners who've achieved fluency using our science-backed curriculum and immersive approach.</p>
+          </div>
         </div>
-        <div class="feature-card">
-          <h3>Adaptive Learning</h3>
-          <p>Experience personalized lessons that adapt to your pace and learning style.</p>
+
+        <!-- Final CTA -->
+        <div class="text-center mt-4xl">
+          <h3 class="text-4xl font-bold mb-lg">Ready to Start Your Language Journey?</h3>
+          <p class="lead mb-xl">Take our quick placement test and get personalized recommendations.</p>
+          <div class="flex gap-lg justify-center flex-wrap">
+            <a href="{% url 'onboarding_welcome' %}" class="btn btn-accent btn-lg">
+              Take Placement Test →
+            </a>
+            {% if not user.is_authenticated %}
+            <a href="{% url 'login' %}" class="btn btn-secondary btn-lg">
+              Sign Up Free
+            </a>
+            {% endif %}
+          </div>
         </div>
-      </section>
-    </main>
+
+        <!-- Stats Section -->
+        <div class="grid grid-cols-3 gap-xl mt-4xl" style="max-width: 900px; margin: 4rem auto 0;">
+          <div class="text-center">
+            <div class="text-6xl font-black text-primary">1000+</div>
+            <div class="text-secondary mt-sm">Active Learners</div>
+          </div>
+          <div class="text-center">
+            <div class="text-6xl font-black text-primary">50+</div>
+            <div class="text-secondary mt-sm">Lessons Available</div>
+          </div>
+          <div class="text-center">
+            <div class="text-6xl font-black text-primary">95%</div>
+            <div class="text-secondary mt-sm">Success Rate</div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <footer>
-      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+      <p>&copy; 2025 LinguaLearn. Empowering language learners worldwide.</p>
     </footer>
 
     <script>
       // Mobile menu toggle
       const navToggle = document.querySelector('.nav-toggle');
-      const navMenu = document.querySelector('.nav-menu');
+      const navCenter = document.querySelector('.nav-center');
 
-      navToggle.addEventListener('click', () => {
-        navMenu.classList.toggle('active');
-        navToggle.classList.toggle('active');
-      });
+      if (navToggle && navCenter) {
+        navToggle.addEventListener('click', () => {
+          navCenter.classList.toggle('active');
+          navToggle.classList.toggle('active');
+        });
 
-      // Close menu when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
-          navMenu.classList.remove('active');
-          navToggle.classList.remove('active');
-        }
-      });
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!navToggle.contains(e.target) && !navCenter.contains(e.target)) {
+            navCenter.classList.remove('active');
+            navToggle.classList.remove('active');
+          }
+        });
+      }
     </script>
   </body>
 </html>

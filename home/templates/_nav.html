@@ -1,57 +1,73 @@
 {% load static %}
 <header>
   <nav class="navbar">
-    <div class="nav-brand">
-      <h1>Language Learning Platform</h1>
-    </div>
+    <!-- Brand Logo -->
+    <a href="{% if IS_DEVEDU %}../{% else %}{% url 'landing' %}{% endif %}" class="nav-brand">
+      <h1>🌍 LinguaLearn</h1>
+    </a>
+
+    <!-- Mobile Menu Toggle -->
     <button class="nav-toggle" aria-label="Toggle navigation">
       <span></span>
       <span></span>
       <span></span>
     </button>
-    <ul class="nav-menu">
+
+    <!-- Center Navigation Links -->
+    <div class="nav-center">
+      <a href="{% if user.is_authenticated %}{% if IS_DEVEDU %}../dashboard/{% else %}{% url 'dashboard' %}{% endif %}{% else %}{% if IS_DEVEDU %}../{% else %}{% url 'landing' %}{% endif %}{% endif %}" 
+         class="nav-link {% if request.path == '/dashboard/' or request.path == '/' %}active{% endif %}">
+        Home
+      </a>
+      <a href="{% if IS_DEVEDU %}../lessons/{% else %}{% url 'lessons_list' %}{% endif %}" 
+         class="nav-link {% if '/lessons/' in request.path %}active{% endif %}">
+        Lessons
+      </a>
+      <a href="{% if IS_DEVEDU %}../progress/{% else %}{% url 'progress' %}{% endif %}" 
+         class="nav-link {% if request.path == '/progress/' %}active{% endif %}">
+        Progress
+      </a>
+      {% if user.is_authenticated and user.is_staff %}
+        <a href="{% if IS_DEVEDU %}../admin/{% else %}/admin/{% endif %}" 
+           class="nav-link admin-link">
+          Admin
+        </a>
+      {% endif %}
+    </div>
+
+    <!-- Right Side - User Section -->
+    <div class="nav-right">
       {% if user.is_authenticated %}
-        <li class="nav-item nav-avatar">
+        <div class="nav-user">
           {% if user.profile %}
-            <img src="{{ user.profile.get_avatar_thumbnail_url }}" alt="{{ user.username }}" class="nav-avatar-img">
+            <img src="{{ user.profile.get_avatar_thumbnail_url }}" 
+                 alt="{{ user.username }}" 
+                 class="avatar avatar-sm">
           {% else %}
-            <img src="https://www.gravatar.com/avatar/?s=40&d=identicon" alt="{{ user.username }}" class="nav-avatar-img">
+            <img src="https://www.gravatar.com/avatar/?s=40&d=identicon" 
+                 alt="{{ user.username }}" 
+                 class="avatar avatar-sm">
           {% endif %}
-        </li>
-      {% endif %}
-      <li class="nav-item">
-        {% if user.is_authenticated %}
-          <a href="{% if IS_DEVEDU %}../dashboard/{% else %}{% url 'dashboard' %}{% endif %}" class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}">Home</a>
-        {% else %}
-          <a href="{% if IS_DEVEDU %}../{% else %}{% url 'landing' %}{% endif %}" class="nav-link {% if request.path == '/' %}active{% endif %}">Home</a>
-        {% endif %}
-      </li>
-      <li class="nav-item">
-        <a href="{% if IS_DEVEDU %}../lessons/{% else %}{% url 'lessons_list' %}{% endif %}" class="nav-link {% if '/lessons/' in request.path %}active{% endif %}">Lessons</a>
-      </li>
-      <li class="nav-item">
-        <a href="{% if IS_DEVEDU %}../progress/{% else %}{% url 'progress' %}{% endif %}" class="nav-link {% if request.path == '/progress/' %}active{% endif %}">My Progress</a>
-      </li>
-      {% if user.is_authenticated %}
-        {% if user.is_staff %}
-        <li class="nav-item">
-          <a href="{% if IS_DEVEDU %}../admin/{% else %}/admin/{% endif %}" class="nav-link admin-link">Admin</a>
-        </li>
-        {% endif %}
-        <li class="nav-item">
-          <a href="{% if IS_DEVEDU %}../account/{% else %}{% url 'account' %}{% endif %}" class="nav-link {% if request.path == '/account/' %}active{% endif %}">Account</a>
-        </li>
-        <li class="nav-item">
-          <a href="{% if IS_DEVEDU %}../logout/{% else %}{% url 'logout' %}{% endif %}" class="nav-link nav-button">Logout</a>
-        </li>
+          <span class="nav-username hide-mobile">{{ user.username }}</span>
+        </div>
+        <a href="{% if IS_DEVEDU %}../account/{% else %}{% url 'account' %}{% endif %}" 
+           class="btn btn-ghost btn-sm">
+          Account
+        </a>
+        <a href="{% if IS_DEVEDU %}../logout/{% else %}{% url 'logout' %}{% endif %}" 
+           class="btn btn-primary btn-sm">
+          Logout
+        </a>
       {% else %}
-        <li class="nav-item">
-          <a href="{% if IS_DEVEDU %}../login/{% else %}{% url 'login' %}{% endif %}" class="nav-link">Login</a>
-        </li>
-        <li class="nav-item">
-          <a href="{% if IS_DEVEDU %}../login/{% else %}{% url 'login' %}{% endif %}" class="nav-link nav-button">Sign Up</a>
-        </li>
+        <a href="{% if IS_DEVEDU %}../login/{% else %}{% url 'login' %}{% endif %}" 
+           class="btn btn-ghost btn-sm">
+          Login
+        </a>
+        <a href="{% if IS_DEVEDU %}../login/{% else %}{% url 'login' %}{% endif %}" 
+           class="btn btn-primary btn-sm">
+          Get Started
+        </a>
       {% endif %}
-    </ul>
+    </div>
   </nav>
 </header>

@@ -4,17 +4,21 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Language Learning Platform</title>
+    <title>Dashboard - LinguaLearn</title>
     {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
-    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
   </head>
   <body>
     {% include '_nav.html' %}
     
-    <main>
+    <main class="container">
       <!-- Django Messages -->
       {% if messages %}
-        <div class="page-messages">
+        <div class="mt-xl">
           {% for message in messages %}
             <div class="alert alert-{{ message.tags }}">
               {{ message }}
@@ -23,71 +27,152 @@
         </div>
       {% endif %}
       
-      <section class="hero">
-        <div class="hero-content">
-          <h2>Welcome, {{ user.first_name }}! 👋</h2>
-          <p>This is your personal dashboard. Here you can track your progress, manage your courses, and continue your language learning journey.</p>
-          {% if not has_completed_onboarding %}
-            <div style="margin: 1.5rem 0; padding: 1rem; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-              <p style="margin: 0 0 0.5rem 0; font-weight: 600; color: #856404;">📝 Take Your Placement Test</p>
-              <p style="margin: 0 0 1rem 0; color: #856404;">Discover your Spanish proficiency level to unlock personalized lessons tailored to your skills!</p>
-              <a href="{% url 'onboarding_welcome' %}" style="display: inline-block; padding: 0.5rem 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Take Assessment Now</a>
-            </div>
-          {% else %}
-            <p><strong>Your Level:</strong> <span style="display: inline-block; padding: 0.25rem 0.75rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">{{ user_profile.get_proficiency_level_display }}</span></p>
-          {% endif %}
-          <p><strong>Email:</strong> {{ user.email }}</p>
-          <p><strong>Username:</strong> {{ user.username }}</p>
-          <p><strong>Member since:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
-        </div>
-        <div class="hero-image dashboard-avatar-container">
-          {% if user.profile %}
-            <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="dashboard-avatar">
-            <p class="avatar-source">{% if user.profile.avatar %}Custom Avatar{% else %}Gravatar{% endif %}</p>
-          {% else %}
-            <img src="https://www.gravatar.com/avatar/?s=200&d=identicon" alt="{{ user.username }}'s avatar" class="dashboard-avatar">
-            <p class="avatar-source">Gravatar (default)</p>
-          {% endif %}
+      <!-- Dashboard Header -->
+      <section class="dashboard-header fade-in">
+        <div class="dashboard-welcome">
+          <div>
+            <h2 class="dashboard-title">Welcome back, {{ user.first_name }}! 👋</h2>
+            <p class="dashboard-subtitle">Ready to continue your learning journey?</p>
+          </div>
+          <div>
+            {% if user.profile %}
+              <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="avatar avatar-2xl">
+            {% else %}
+              <img src="https://www.gravatar.com/avatar/?s=200&d=identicon" alt="{{ user.username }}'s avatar" class="avatar avatar-2xl">
+            {% endif %}
+          </div>
         </div>
       </section>
       
-      <section class="features">
-        <div class="feature-card">
-          <h3>Your Courses</h3>
-          <p>View and manage all your enrolled courses in one place.</p>
+      <!-- Placement Test CTA -->
+      {% if not has_completed_onboarding %}
+        <section class="card card-bordered fade-in-up delay-100" style="background: linear-gradient(135deg, #fff3cd 0%, #fef3c7 100%);">
+          <div class="card-body text-center">
+            <h3 class="text-3xl font-bold mb-md" style="color: #92400e;">📝 Discover Your Spanish Level</h3>
+            <p class="text-lg mb-xl" style="color: #92400e;">Take our quick placement test to unlock personalized lessons tailored to your proficiency!</p>
+            <a href="{% url 'onboarding_welcome' %}" class="btn btn-accent btn-lg">
+              Start Placement Test →
+            </a>
+          </div>
+        </section>
+      {% else %}
+        <!-- Current Level Badge -->
+        <div class="text-center mb-xl fade-in-up delay-100">
+          <span class="text-muted text-sm uppercase tracking-wide">Your Current Level</span>
+          <div class="mt-sm">
+            <span class="badge badge-primary" style="font-size: var(--text-xl); padding: var(--space-md) var(--space-2xl);">
+              {{ user_profile.get_proficiency_level_display }}
+            </span>
+          </div>
         </div>
-        <div class="feature-card">
-          <h3>Learning Progress</h3>
-          <p>Track your achievements and see how far you've come.</p>
+      {% endif %}
+      
+      <!-- Stats Grid -->
+      <section class="stats-grid">
+        <div class="stat-card fade-in-up delay-200">
+          <div class="stat-icon">
+            📚
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Lessons Completed</div>
+          </div>
         </div>
-        <div class="feature-card">
-          <h3>Study Schedule</h3>
-          <p>Stay on track with your personalized study plan.</p>
+
+        <div class="stat-card fade-in-up delay-300">
+          <div class="stat-icon">
+            🎯
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Quiz Score</div>
+          </div>
+        </div>
+
+        <div class="stat-card fade-in-up delay-400">
+          <div class="stat-icon">
+            🔥
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Day Streak</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Actions -->
+      <section class="mt-3xl">
+        <h3 class="text-3xl font-bold mb-xl text-center">Quick Actions</h3>
+        <div class="features-grid">
+          <a href="{% url 'lessons_list' %}" class="feature-item hover-lift" style="text-decoration: none;">
+            <div class="feature-icon">📖</div>
+            <h3>Browse Lessons</h3>
+            <p>Explore our catalog of interactive language lessons designed for your level.</p>
+          </a>
+
+          <a href="{% url 'progress' %}" class="feature-item hover-lift" style="text-decoration: none;">
+            <div class="feature-icon">📊</div>
+            <h3>View Progress</h3>
+            <p>Track your learning journey with detailed statistics and achievements.</p>
+          </a>
+
+          <a href="{% url 'account' %}" class="feature-item hover-lift" style="text-decoration: none;">
+            <div class="feature-icon">⚙️</div>
+            <h3>Account Settings</h3>
+            <p>Update your profile, change password, and customize your experience.</p>
+          </a>
+        </div>
+      </section>
+
+      <!-- User Info Card -->
+      <section class="mt-3xl">
+        <div class="card">
+          <div class="card-header">
+            <h3>Account Information</h3>
+          </div>
+          <div class="card-body">
+            <div class="info-grid">
+              <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ user.email }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Username</span>
+                <span class="info-value">{{ user.username }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Member Since</span>
+                <span class="info-value">{{ user.date_joined|date:"F d, Y" }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
     
     <footer>
-      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+      <p>&copy; 2025 LinguaLearn. Empowering language learners worldwide.</p>
     </footer>
 
     <script>
       // Mobile menu toggle
       const navToggle = document.querySelector('.nav-toggle');
-      const navMenu = document.querySelector('.nav-menu');
+      const navCenter = document.querySelector('.nav-center');
       
-      navToggle.addEventListener('click', () => {
-        navMenu.classList.toggle('active');
-        navToggle.classList.toggle('active');
-      });
+      if (navToggle && navCenter) {
+        navToggle.addEventListener('click', () => {
+          navCenter.classList.toggle('active');
+          navToggle.classList.toggle('active');
+        });
 
-      // Close menu when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
-          navMenu.classList.remove('active');
-          navToggle.classList.remove('active');
-        }
-      });
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!navToggle.contains(e.target) && !navCenter.contains(e.target)) {
+            navCenter.classList.remove('active');
+            navToggle.classList.remove('active');
+          }
+        });
+      }
     </script>
   </body>
 </html>
