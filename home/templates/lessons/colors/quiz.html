@@ -56,12 +56,12 @@
             background: white;
         }
         .option:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
+            border-color: var(--primary);
+            background: rgba(20, 184, 166, 0.05);
         }
         .option.selected {
-            border-color: #667eea;
-            background: #f8f9ff;
+            border-color: var(--primary);
+            background: rgba(20, 184, 166, 0.1);
         }
         .submit-btn {
             display: block;
@@ -69,17 +69,17 @@
             max-width: 300px;
             margin: 2rem auto;
             padding: 1rem 2rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--gradient-primary);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: var(--radius-xl);
             font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
         }
         .submit-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 12px rgba(20, 184, 166, 0.4);
         }
         .submit-btn:disabled {
             background: #ccc;

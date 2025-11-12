@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lessons - LinguaLearn</title>
+    <title>Lessons - Language Learning Platform</title>
     {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
     <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
     <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
@@ -15,7 +15,26 @@
 <body>
     {% include '_nav.html' %}
     
-    <main class="container">
+    <main class="container" style="padding-top: var(--space-3xl);">
+        {% if not user.is_authenticated %}
+        <!-- Guest View - Login Required -->
+        <div class="text-center fade-in" style="padding: var(--space-4xl) 0;">
+            <div class="empty-state">
+                <div class="empty-state-icon">🔒</div>
+                <h2 class="text-5xl font-black mb-lg">Premium Lessons Await</h2>
+                <p class="lead mb-xl">Our interactive language lessons are exclusively available to registered members.<br>Complete your placement test to unlock personalized learning content!</p>
+                <div class="flex gap-lg justify-center flex-wrap">
+                    <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
+                        Login to Access Lessons
+                    </a>
+                    <a href="{% url 'onboarding_welcome' %}" class="btn btn-accent btn-lg">
+                        Take Placement Test
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Logged In User View -->
         <!-- Header -->
         <div class="lessons-header fade-in">
             <h2>Explore Lessons</h2>
@@ -57,10 +76,11 @@
             </div>
             {% endfor %}
         </div>
+        {% endif %}
     </main>
 
     <footer>
-      <p>&copy; 2025 LinguaLearn. Empowering language learners worldwide.</p>
+      <p>&copy; 2025 Language Learning Platform. Empowering language learners worldwide.</p>
     </footer>
 
     <script>

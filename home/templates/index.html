@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinguaLearn - Master Any Language</title>
+    <title>Language Learning Platform - Master Any Language</title>
     {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
     <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
     <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
@@ -35,10 +35,7 @@
         
         <div class="hero-cta">
           <a href="{% url 'onboarding_welcome' %}" class="btn btn-primary btn-lg">
-            🚀 Start Learning Free
-          </a>
-          <a href="{% url 'lessons_list' %}" class="btn btn-secondary btn-lg">
-            Browse Lessons
+            🚀 Take Placement Test
           </a>
         </div>
       </div>
@@ -49,10 +46,10 @@
     </section>
 
     <!-- Features Section -->
-    <section class="features-section">
+    <section class="features-section" style="margin-top: var(--space-4xl);">
       <div class="container">
         <div class="text-center mb-3xl">
-          <span class="text-accent">Why Choose LinguaLearn</span>
+          <span class="text-accent">Why Choose Language Learning Platform</span>
           <h2 class="text-5xl font-black mt-md mb-md">Everything You Need to Succeed</h2>
           <p class="lead">Built by learners, for learners. Our platform combines cutting-edge AI with proven learning methods.</p>
         </div>
@@ -103,11 +100,6 @@
             <a href="{% url 'onboarding_welcome' %}" class="btn btn-accent btn-lg">
               Take Placement Test →
             </a>
-            {% if not user.is_authenticated %}
-            <a href="{% url 'login' %}" class="btn btn-secondary btn-lg">
-              Sign Up Free
-            </a>
-            {% endif %}
           </div>
         </div>
 
@@ -130,7 +122,7 @@
     </section>
 
     <footer>
-      <p>&copy; 2025 LinguaLearn. Empowering language learners worldwide.</p>
+      <p>&copy; 2025 Language Learning Platform. Empowering language learners worldwide.</p>
     </footer>
 
     <script>

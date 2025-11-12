@@ -212,6 +212,15 @@
   background: var(--gradient-primary);
   color: white;
   box-shadow: var(--shadow-lg);
+  transition: all var(--transition-base);
+}
+
+.stat-card:nth-child(even) .stat-icon {
+  background: var(--gradient-accent);
+}
+
+.stat-card:hover .stat-icon {
+  transform: scale(1.1) rotate(5deg);
 }
 
 .stat-value {
@@ -220,6 +229,10 @@
   color: var(--primary);
   line-height: 1;
   margin-bottom: var(--space-sm);
+}
+
+.stat-card:nth-child(even) .stat-value {
+  color: var(--accent);
 }
 
 .stat-label {

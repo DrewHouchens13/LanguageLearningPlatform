@@ -204,11 +204,24 @@ footer p {
   content: '';
   position: absolute;
   top: -50%;
-  right: -50%;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, rgba(20, 184, 166, 0.1) 0%, transparent 70%);
-  animation: float 6s ease-in-out infinite;
+  right: -20%;
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(255, 107, 107, 0.12) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.hero-section::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 .hero-content {
@@ -300,6 +313,14 @@ footer p {
 .feature-icon {
   font-size: 4rem;
   margin-bottom: var(--space-lg);
+  filter: drop-shadow(0 4px 10px rgba(255, 107, 107, 0.2));
+  transition: all var(--transition-base);
+  display: inline-block;
+}
+
+.feature-item:hover .feature-icon {
+  transform: scale(1.15) rotate(5deg);
+  filter: drop-shadow(0 6px 15px rgba(255, 107, 107, 0.4));
 }
 
 .feature-item h3 {
@@ -656,6 +677,10 @@ footer p {
   font-size: 5rem;
   position: relative;
   overflow: hidden;
+}
+
+.lesson-card:nth-child(even) .lesson-card-header {
+  background: var(--gradient-accent);
 }
 
 .lesson-card-header::before {
