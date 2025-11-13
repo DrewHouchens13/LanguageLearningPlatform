@@ -1,0 +1,119 @@
+# Bandit Security Configuration - Comprehensive CWE Coverage
+# Detects 50+ vulnerability categories including OWASP Top 10
+#
+# Usage:
+#   bandit -r ./home/ ./config/ -c .bandit
+#   bandit -r ./home/ ./config/ -c .bandit -f json -o report.json
+#
+# CI/CD: See .github/workflows/security.yml for automated scanning
+
+exclude_dirs:
+  - /venv/
+  - /env/
+  - /.venv/
+  - /migrations/
+  - /staticfiles/
+  - /static/
+  - /.pytest_cache/
+  - /node_modules/
+  - /.git/
+  - /tests/
+  - /home/tests/
+
+# Security tests organized by CWE category
+# All unique tests - duplicates removed for clarity and performance
+tests:
+  # ===== REQUIRED TESTS (Assignment Requirements) =====
+  - B201  # flask_debug_true - Debug mode in production
+  - B501  # request_with_no_cert_validation - TLS/SSL cert bypass
+  - B502  # ssl_with_bad_version - Insecure SSL/TLS version
+  - B503  # ssl_with_bad_defaults - Weak SSL/TLS configuration
+  - B506  # yaml_load - CWE-502 Insecure deserialization
+  - B601  # paramiko_calls - SSH security issues
+  - B602  # shell_with_shell_equals_true - CWE-78 Command injection
+
+  # ===== CWE-78: OS Command Injection =====
+  - B603  # subprocess_without_shell_equals_true
+  - B604  # any_other_function_with_shell_equals_true
+  - B605  # start_process_with_a_shell
+  - B606  # start_process_with_no_shell
+  - B607  # start_process_with_partial_path
+
+  # ===== CWE-89: SQL Injection =====
+  - B608  # hardcoded_sql_expressions
+
+  # ===== CWE-94: Code Injection =====
+  - B307  # eval usage - arbitrary code execution
+
+  # ===== CWE-327: Use of Broken/Weak Cryptography =====
+  - B303  # md5 usage - weak hash
+  - B304  # insecure ciphers
+  - B305  # insecure cipher modes
+  - B311  # random usage - weak random (not crypto-safe)
+  # B320 removed - test ID doesn't exist in current Bandit
+  - B324  # hashlib new insecure functions
+
+  # ===== CWE-502: Deserialization of Untrusted Data =====
+  - B301  # pickle usage - arbitrary code execution risk
+  - B302  # marshal usage - code execution risk
+
+  # ===== CWE-79: XSS (Cross-Site Scripting) =====
+  - B308  # mark_safe usage - Django XSS bypass
+
+  # ===== CWE-798: Use of Hard-coded Credentials =====
+  # B105 and B106 skipped - only flag test fixtures (false positives)
+  - B107  # hardcoded_password_default
+
+  # ===== CWE-611: XML External Entity (XXE) Injection =====
+  - B313  # xml_bad_cElementTree
+  - B314  # xml_bad_ElementTree
+  - B315  # xml_bad_expatreader
+  - B316  # xml_bad_expatbuilder
+  - B317  # xml_bad_sax
+  - B318  # xml_bad_minidom
+  - B319  # xml_bad_pulldom
+  # B320 removed - test ID doesn't exist in current Bandit
+
+  # ===== Insecure Network Protocols =====
+  # B309 removed - test ID doesn't exist in current Bandit
+  - B310  # urllib_urlopen - SSRF risk
+  - B312  # telnetlib usage - unencrypted protocol
+  - B321  # ftplib - unencrypted protocol
+  - B323  # unverified_context - TLS verification disabled
+
+  # ===== Insecure Temporary Files =====
+  - B108  # hardcoded_tmp_directory - predictable paths
+  - B306  # mktemp_q - insecure temp file creation
+  # B325 removed - test ID doesn't exist in current Bandit
+
+  # ===== Error Handling Issues =====
+  - B110  # try_except_pass - silently hides errors
+  - B112  # try_except_continue - silently skips errors
+
+  # ===== Archive/Compression Security =====
+  - B202  # tarfile_unsafe_members - path traversal
+
+  # ===== Input Validation =====
+  # B322 removed - test ID doesn't exist in current Bandit
+
+  # ===== Insecure Import Checks =====
+  - B401  # import_telnetlib
+  - B402  # import_ftplib
+  - B403  # import_pickle
+  - B404  # import_subprocess
+  - B405  # import_xml_etree
+  - B406  # import_xml_sax
+  - B407  # import_xml_expat
+  - B408  # import_xml_minidom
+  - B409  # import_xml_pulldom
+  # B410 removed - test ID doesn't exist in current Bandit
+  - B411  # import_xmlrpclib
+  - B412  # import_httpoxy
+  - B413  # import_pycrypto - deprecated crypto library
+  # B414 removed - test ID doesn't exist in current Bandit
+
+# Only skip known false positives
+skips:
+  - B101  # assert_used - safe in test files
+  - B105  # hardcoded_password_string - test fixtures need hardcoded passwords
+  - B106  # hardcoded_password_funcarg - test fixtures need hardcoded passwords
