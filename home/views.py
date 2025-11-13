@@ -1845,7 +1845,6 @@ def submit_daily_quest(request):
     if 'application/json' in content_type:
         # JSON body (from JavaScript)
         try:
-            import json
             body = json.loads(request.body)
             answers = body.get('answers', {})
         except (json.JSONDecodeError, ValueError):
