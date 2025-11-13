@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quest History - Language Learning Platform</title>
+    {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
+    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+  </head>
+  <body>
+    {% include '_nav.html' %}
+
+    <main>
+      <!-- Django Messages -->
+      {% if messages %}
+        <div class="page-messages">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <section class="hero">
+        <div class="hero-content">
+          <h1>Quest History</h1>
+
+          {% if attempts %}
+            <div class="quest-stats">
+              <p class="total-xp"><strong>Total XP from Quests:</strong> {{ total_quest_xp }}</p>
+            </div>
+
+            <div class="quest-list">
+              {% for attempt in attempts %}
+                <div class="quest-item" style="margin: 1rem 0; padding: 1rem; background-color: #f5f5f5; border-radius: 8px;">
+                  <h3>{{ attempt.daily_quest.title }}</h3>
+                  <p class="quest-date"><strong>Date:</strong> {{ attempt.daily_quest.date|date:"F j, Y" }}</p>
+                  <p class="quest-score"><strong>Score:</strong> {{ attempt.score }}/{{ attempt.total_questions }}</p>
+                  <p class="quest-xp"><strong>XP Earned:</strong> {{ attempt.xp_earned }}</p>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p>No completed quests yet. Visit the Daily Quest page to start!</p>
+          {% endif %}
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+    </footer>
+
+    <script>
+      // Mobile menu toggle
+      const navToggle = document.querySelector('.nav-toggle');
+      const navMenu = document.querySelector('.nav-menu');
+
+      if (navToggle) {
+        navToggle.addEventListener('click', () => {
+          navMenu.classList.toggle('active');
+          navToggle.classList.toggle('active');
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+            navMenu.classList.remove('active');
+            navToggle.classList.remove('active');
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

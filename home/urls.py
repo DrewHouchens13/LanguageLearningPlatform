@@ -35,6 +35,12 @@ urlpatterns = [
     path("lessons/<int:lesson_id>/quiz/", views.lesson_quiz, name="lesson_quiz"),
     path("lessons/<int:lesson_id>/submit/", views.submit_lesson_quiz, name="submit_lesson_quiz"),
     path("lessons/<int:lesson_id>/results/<int:attempt_id>/", views.lesson_results, name="lesson_results"),
+
+    # Daily Quest paths
+    path("quests/daily/", views.daily_quest_view, name="daily_quest"),
+    path("quests/daily/start/", views.start_daily_quest, name="start_daily_quest"),
+    path("quests/daily/submit/", views.submit_daily_quest, name="submit_daily_quest"),
+    path("quests/history/", views.quest_history, name="quest_history"),
 ]
 
 
