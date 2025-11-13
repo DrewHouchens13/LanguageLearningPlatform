@@ -1,8 +1,13 @@
 """
 Service for generating and managing daily quests.
 """
-import random
+import secrets
 from home.models import Lesson, DailyQuest, DailyQuestQuestion
+
+# Use secrets.SystemRandom() for cryptographically secure random selection
+# Even though this is not security-critical (just quiz selection),
+# using secrets is better practice and satisfies Bandit security scanner
+_random = secrets.SystemRandom()
 
 
 class DailyQuestService:
@@ -61,7 +66,7 @@ class DailyQuestService:
         if not lessons:
             raise ValueError("No published lessons available")
 
-        return random.choice(lessons)
+        return _random.choice(lessons)
 
     @staticmethod
     def _generate_questions(quest, lesson):
@@ -97,7 +102,7 @@ class DailyQuestService:
             raise ValueError(f"Lesson {lesson.title} needs at least 3 flashcards")
 
         # Question 1-3: Individual cards (shuffle)
-        selected_cards = random.sample(cards, min(3, len(cards)))
+        selected_cards = _random.sample(cards, min(3, len(cards)))
         for idx, card in enumerate(selected_cards, 1):
             DailyQuestQuestion.objects.create(
                 daily_quest=quest,
@@ -109,7 +114,7 @@ class DailyQuestService:
         # Question 4-5: Combo questions (harder)
         if len(cards) >= 5:
             # Q4: Reverse question (answer -> front)
-            reverse_card = random.choice(cards)
+            reverse_card = _random.choice(cards)
             DailyQuestQuestion.objects.create(
                 daily_quest=quest,
                 question_text=f"What word means '{reverse_card.back_text}'?",
@@ -119,7 +124,7 @@ class DailyQuestService:
             )
 
             # Q5: Multiple items
-            multi_cards = random.sample(cards, min(3, len(cards)))
+            multi_cards = _random.sample(cards, min(3, len(cards)))
             question = "What are these three: " + ", ".join([c.front_text for c in multi_cards])
             answer = ", ".join([c.back_text for c in multi_cards])
             DailyQuestQuestion.objects.create(
@@ -159,13 +164,13 @@ class DailyQuestService:
             raise ValueError(f"Lesson {lesson.title} needs at least 5 quiz questions")
 
         # Select 5 random questions
-        selected = random.sample(quiz_questions, 5)
+        selected = _random.sample(quiz_questions, 5)
 
         for idx, question in enumerate(selected, 1):
             # Shuffle options to make harder
             options = question.options.copy()
             correct_answer = options[question.correct_index]
-            random.shuffle(options)
+            _random.shuffle(options)
             new_correct_index = options.index(correct_answer)
 
             DailyQuestQuestion.objects.create(
