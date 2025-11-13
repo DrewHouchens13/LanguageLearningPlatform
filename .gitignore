@@ -84,8 +84,12 @@ nul
 # ai code reviews ( no need to push these )
 *code.review*.txt
 *code.review*.md
+AI_CODE_REVIEW_FIXES.md
+AI_CODE_REVIEW_LOG.md
+process_ai_reviews.py
 
 # Live testing files (for manual local testing only, not part of test suite)
+live_test*.py
 test_live_features.py
 test_avatar_upload_live.py
 test_cloudinary_setup.py
