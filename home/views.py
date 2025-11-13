@@ -46,6 +46,7 @@ from .models import (
     OnboardingAttempt,
     OnboardingQuestion,
     QuizResult,
+    UserDailyQuestAttempt,
     UserProfile,
     UserProgress,
 )
@@ -1716,3 +1717,184 @@ def lesson_results(request, lesson_id, attempt_id):
     # Use dynamic template based on lesson slug
     template_name = f'lessons/{lesson.slug}/results.html'
     return render(request, template_name, context)
+
+
+# =============================================================================
+# DAILY QUEST VIEWS (Sprint 3 - Issue #18)
+# =============================================================================
+
+@login_required
+def daily_quest_view(request):
+    """
+    Show today's daily quest.
+    If completed: show results
+    If not completed: show start button
+    """
+    from datetime import date
+    from home.services.daily_quest_service import DailyQuestService
+
+    # Generate or get today's quest
+    today = date.today()
+    quest = DailyQuestService.generate_quest_for_date(today)
+
+    # Check if user has attempt for this quest
+    attempt = UserDailyQuestAttempt.objects.filter(
+        user=request.user,
+        daily_quest=quest
+    ).first()
+
+    context = {
+        'quest': quest,
+        'attempt': attempt,
+    }
+
+    return render(request, 'home/daily_quest.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def start_daily_quest(request):
+    """
+    Create UserDailyQuestAttempt and return quest questions.
+    POST only (AJAX).
+    """
+    from datetime import date
+    from home.services.daily_quest_service import DailyQuestService
+
+    # Get today's quest
+    today = date.today()
+    quest = DailyQuestService.generate_quest_for_date(today)
+
+    # Check if attempt already exists
+    existing_attempt = UserDailyQuestAttempt.objects.filter(
+        user=request.user,
+        daily_quest=quest
+    ).first()
+
+    if existing_attempt:
+        return JsonResponse(
+            {'error': 'Quest already started'},
+            status=400
+        )
+
+    # Create attempt
+    attempt = UserDailyQuestAttempt.objects.create(
+        user=request.user,
+        daily_quest=quest
+    )
+
+    # Get questions
+    questions = []
+    for question in quest.questions.all():
+        q_data = {
+            'id': question.id,
+            'order': question.order,
+            'question_text': question.question_text,
+        }
+
+        # Add format-specific fields
+        if quest.quest_type == 'flashcard':
+            q_data['answer_text'] = question.answer_text
+        elif quest.quest_type == 'quiz':
+            q_data['options'] = question.options
+            q_data['correct_index'] = question.correct_index
+
+        questions.append(q_data)
+
+    return JsonResponse({
+        'attempt_id': attempt.id,
+        'questions': questions,
+        'quest_type': quest.quest_type,
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def submit_daily_quest(request):
+    """
+    Validate answers, calculate score, award XP.
+    POST only (AJAX).
+    """
+    from datetime import date
+    from home.services.daily_quest_service import DailyQuestService
+
+    # Get today's quest
+    today = date.today()
+    quest = DailyQuestService.generate_quest_for_date(today)
+
+    # Get user's attempt
+    attempt = UserDailyQuestAttempt.objects.filter(
+        user=request.user,
+        daily_quest=quest
+    ).first()
+
+    if not attempt:
+        return JsonResponse({'error': 'No attempt found'}, status=400)
+
+    if attempt.is_completed:
+        return JsonResponse({'error': 'Quest already completed'}, status=400)
+
+    # Validate answers
+    correct_count = 0
+    total_questions = quest.questions.count()
+
+    for question in quest.questions.all():
+        user_answer = request.POST.get(str(question.id), '').strip()
+
+        if quest.quest_type == 'flashcard':
+            # For flashcards, check if answer matches (case-insensitive)
+            if user_answer.lower() == question.answer_text.lower():
+                correct_count += 1
+        elif quest.quest_type == 'quiz':
+            # For quiz, check if selected index matches correct index
+            try:
+                selected_index = int(user_answer)
+                if selected_index == question.correct_index:
+                    correct_count += 1
+            except (ValueError, TypeError):
+                pass
+
+    # Calculate XP
+    attempt.correct_answers = correct_count
+    attempt.total_questions = total_questions
+    xp_earned = attempt.calculate_xp()
+    attempt.xp_earned = xp_earned
+
+    # Mark as completed
+    from django.utils import timezone as tz
+    attempt.is_completed = True
+    attempt.completed_at = tz.now()
+    attempt.save()
+
+    # Award XP to user
+    request.user.profile.award_xp(xp_earned)
+
+    return JsonResponse({
+        'success': True,
+        'correct_answers': correct_count,
+        'total_questions': total_questions,
+        'xp_earned': xp_earned,
+        'score': attempt.score,
+        'score_percentage': attempt.score_percentage,
+    })
+
+
+@login_required
+def quest_history(request):
+    """
+    Show all completed quests and total XP earned.
+    """
+    attempts = UserDailyQuestAttempt.objects.filter(
+        user=request.user,
+        is_completed=True
+    ).select_related('daily_quest').order_by('-started_at')
+
+    # Calculate total XP from quests
+    total_quest_xp = sum(attempt.xp_earned for attempt in attempts)
+
+    context = {
+        'attempts': attempts,
+        'total_quest_xp': total_quest_xp,
+    }
+
+    return render(request, 'home/quest_history.html', context)

@@ -758,3 +758,143 @@ class LessonAttempt(models.Model):
         if self.total == 0:
             return 0
         return round((self.score / self.total) * 100, 1)
+
+
+# =============================================================================
+# DAILY QUEST MODELS (Sprint 3 - Issue #18)
+# =============================================================================
+
+class DailyQuest(models.Model):
+    """
+    A daily quest generated from an existing lesson.
+    One quest per day, available to all users.
+    """
+    # Identification
+    date = models.DateField(unique=True, db_index=True)
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+
+    # Source and Configuration
+    based_on_lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    quest_type = models.CharField(max_length=20)  # 'flashcard', 'quiz'
+
+    # Rewards
+    xp_reward = models.IntegerField()  # Calculated: lesson.xp_value * 0.75
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date']
+        indexes = [
+            models.Index(fields=['date']),
+        ]
+        verbose_name = "Daily Quest"
+        verbose_name_plural = "Daily Quests"
+
+    def __str__(self):
+        return f"Daily Quest - {self.date} - {self.title}"
+
+
+class DailyQuestQuestion(models.Model):
+    """
+    A single question in a daily quest.
+    Format depends on quest_type (flashcard vs quiz).
+    """
+    # Relationship
+    daily_quest = models.ForeignKey(
+        DailyQuest,
+        on_delete=models.CASCADE,
+        related_name='questions'
+    )
+
+    # Question Content
+    question_text = models.TextField()
+
+    # For flashcard type
+    answer_text = models.CharField(max_length=200, blank=True)
+
+    # For quiz type
+    options = models.JSONField(default=list, blank=True)
+    correct_index = models.IntegerField(null=True, blank=True)
+
+    # Ordering
+    order = models.IntegerField()  # 1-5
+
+    # Metadata
+    difficulty_level = models.CharField(max_length=10, default='medium')
+
+    class Meta:
+        ordering = ['order']
+        unique_together = [['daily_quest', 'order']]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(order__gte=1) & models.Q(order__lte=5),
+                name='valid_question_order'
+            )
+        ]
+        verbose_name = "Daily Quest Question"
+        verbose_name_plural = "Daily Quest Questions"
+
+    def __str__(self):
+        return f"Q{self.order}: {self.question_text[:50]}"
+
+
+class UserDailyQuestAttempt(models.Model):
+    """
+    Tracks a user's attempt at a daily quest.
+    One attempt per user per quest (one per day).
+    """
+    # Relationships
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    daily_quest = models.ForeignKey(
+        DailyQuest,
+        on_delete=models.CASCADE,
+        related_name='attempts'
+    )
+
+    # Progress
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    # Results
+    total_questions = models.IntegerField(default=5)
+    correct_answers = models.IntegerField(default=0)
+
+    # Rewards
+    xp_earned = models.IntegerField(default=0)
+
+    # State
+    is_completed = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = [['user', 'daily_quest']]
+        ordering = ['-started_at']
+        indexes = [
+            models.Index(fields=['user', '-started_at']),
+            models.Index(fields=['daily_quest', 'is_completed']),
+        ]
+        verbose_name = "User Daily Quest Attempt"
+        verbose_name_plural = "User Daily Quest Attempts"
+
+    def __str__(self):
+        return f"{self.user.username} - {self.daily_quest.date} - {self.score}"
+
+    @property
+    def score(self):
+        """Return score as 'X/5' format"""
+        return f"{self.correct_answers}/{self.total_questions}"
+
+    @property
+    def score_percentage(self):
+        """Return score as percentage"""
+        if self.total_questions == 0:
+            return 0
+        return round((self.correct_answers / self.total_questions) * 100, 1)
+
+    def calculate_xp(self):
+        """Calculate XP based on correct answers"""
+        if self.total_questions == 0:
+            return 0
+        max_xp = self.daily_quest.xp_reward
+        return int((self.correct_answers / self.total_questions) * max_xp)
