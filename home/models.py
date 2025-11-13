@@ -1,3 +1,14 @@
+"""
+Django models for the Language Learning Platform.
+
+Includes models for:
+- User profiles and progress tracking (UserProfile, UserProgress)
+- Onboarding assessment system (OnboardingQuestion, OnboardingAttempt, OnboardingAnswer)
+- Lesson system (Lesson, Flashcard, LessonQuizQuestion, LessonAttempt)
+- Quiz results and completion tracking (QuizResult, LessonCompletion)
+- XP and leveling system (integrated in UserProfile)
+- Daily Quest system (DailyQuest, DailyQuestQuestion, UserDailyQuestAttempt)
+"""
 from django.db import models, IntegrityError, DatabaseError
 from django.db.models import Sum, Count
 from django.contrib.auth.models import User
