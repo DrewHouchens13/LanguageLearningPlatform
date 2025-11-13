@@ -1772,16 +1772,20 @@ def start_daily_quest(request):
     ).first()
 
     if existing_attempt:
-        return JsonResponse(
-            {'error': 'Quest already started'},
-            status=400
+        # If quest already completed, return error
+        if existing_attempt.is_completed:
+            return JsonResponse(
+                {'error': 'Quest already completed'},
+                status=400
+            )
+        # If quest started but not completed, return the questions
+        attempt = existing_attempt
+    else:
+        # Create new attempt
+        attempt = UserDailyQuestAttempt.objects.create(
+            user=request.user,
+            daily_quest=quest
         )
-
-    # Create attempt
-    attempt = UserDailyQuestAttempt.objects.create(
-        user=request.user,
-        daily_quest=quest
-    )
 
     # Get questions
     questions = []
@@ -1834,20 +1838,33 @@ def submit_daily_quest(request):
     if attempt.is_completed:
         return JsonResponse({'error': 'Quest already completed'}, status=400)
 
+    # Parse JSON body
+    try:
+        import json
+        body = json.loads(request.body)
+        answers = body.get('answers', {})
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'Invalid request body'}, status=400)
+
     # Validate answers
     correct_count = 0
     total_questions = quest.questions.count()
 
     for question in quest.questions.all():
-        user_answer = request.POST.get(str(question.id), '').strip()
+        user_answer = answers.get(str(question.id))
+
+        if user_answer is None:
+            continue
 
         if quest.quest_type == 'flashcard':
             # For flashcards, check if answer matches (case-insensitive)
-            if user_answer.lower() == question.answer_text.lower():
+            user_answer_str = str(user_answer).strip()
+            if user_answer_str.lower() == question.answer_text.lower():
                 correct_count += 1
         elif quest.quest_type == 'quiz':
             # For quiz, check if selected index matches correct index
             try:
+                # user_answer might be int or string
                 selected_index = int(user_answer)
                 if selected_index == question.correct_index:
                     correct_count += 1

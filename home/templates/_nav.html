@@ -18,6 +18,11 @@
             <img src="https://www.gravatar.com/avatar/?s=40&d=identicon" alt="{{ user.username }}" class="nav-avatar-img">
           {% endif %}
         </li>
+        <li class="nav-item" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; color: white; font-weight: 600;">
+          <span style="font-size: 1.1rem;">Lv {{ user.profile.current_level }}</span>
+          <span style="opacity: 0.8;">|</span>
+          <span style="font-size: 0.95rem;">{{ user.profile.total_xp }} XP</span>
+        </li>
       {% endif %}
       <li class="nav-item">
         {% if user.is_authenticated %}
@@ -32,6 +37,11 @@
       <li class="nav-item">
         <a href="{% if IS_DEVEDU %}../progress/{% else %}{% url 'progress' %}{% endif %}" class="nav-link {% if request.path == '/progress/' %}active{% endif %}">My Progress</a>
       </li>
+      {% if user.is_authenticated %}
+        <li class="nav-item">
+          <a href="{% if IS_DEVEDU %}../quests/daily/{% else %}{% url 'daily_quest' %}{% endif %}" class="nav-link {% if '/quests/' in request.path %}active{% endif %}">Daily Quest</a>
+        </li>
+      {% endif %}
       {% if user.is_authenticated %}
         {% if user.is_staff %}
         <li class="nav-item">
