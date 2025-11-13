@@ -237,7 +237,7 @@ class TestAdminCustomActions(TestCase):
         from django.contrib.admin.sites import AdminSite
 
         # Create user with progress
-        progress = UserProgress.objects.create(
+        _ = UserProgress.objects.create(
             user=self.test_user,
             total_minutes_studied=150,
             total_lessons_completed=10,
@@ -294,12 +294,12 @@ class TestAdminCustomActions(TestCase):
         from django.contrib.messages import get_messages
 
         # Create lesson completions
-        lesson1 = LessonCompletion.objects.create(
+        _ = LessonCompletion.objects.create(
             user=self.test_user,
             lesson_id='lesson1',
             duration_minutes=30
         )
-        lesson2 = LessonCompletion.objects.create(
+        _ = LessonCompletion.objects.create(
             user=self.test_user,
             lesson_id='lesson2',
             duration_minutes=45
@@ -341,13 +341,13 @@ class TestAdminCustomActions(TestCase):
         from django.contrib.messages import get_messages
 
         # Create quiz results
-        quiz1 = QuizResult.objects.create(
+        _ = QuizResult.objects.create(
             user=self.test_user,
             quiz_id='quiz1',
             score=8,
             total_questions=10
         )
-        quiz2 = QuizResult.objects.create(
+        _ = QuizResult.objects.create(
             user=self.test_user,
             quiz_id='quiz2',
             score=15,
@@ -530,7 +530,7 @@ class TestAdminCRUDOperations(AdminTestCase):
             total_minutes_studied=50
         )
 
-        response = self.client.post(f'/admin/home/userprogress/{progress.pk}/change/', {
+        _ = self.client.post(f'/admin/home/userprogress/{progress.pk}/change/', {
             'user': test_user.pk,
             'total_minutes_studied': 150,
             'total_lessons_completed': 10,
@@ -646,7 +646,7 @@ class TestAdminSearchAndFilters(AdminTestCase):
 
     def test_user_progress_search(self):
         """Test searching user progress by username"""
-        progress = UserProgress.objects.create(
+        _ = UserProgress.objects.create(
             user=self.user1,
             total_minutes_studied=100
         )
@@ -658,7 +658,7 @@ class TestAdminSearchAndFilters(AdminTestCase):
 
     def test_lesson_completion_search(self):
         """Test searching lesson completions"""
-        lesson = LessonCompletion.objects.create(
+        _ = LessonCompletion.objects.create(
             user=self.user1,
             lesson_id='spanish_101',
             lesson_title='Spanish Basics'
@@ -671,7 +671,7 @@ class TestAdminSearchAndFilters(AdminTestCase):
 
     def test_quiz_result_search(self):
         """Test searching quiz results"""
-        quiz = QuizResult.objects.create(
+        _ = QuizResult.objects.create(
             user=self.user1,
             quiz_id='quiz_spanish_001',
             quiz_title='Spanish Vocabulary Quiz',

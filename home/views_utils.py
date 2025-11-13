@@ -311,3 +311,6 @@ def send_template_email(request, template_name, context, subject, recipient_emai
             wait_time = 2 ** attempt
             logger.info('Retrying email send in %s seconds...', wait_time)
             time.sleep(wait_time)
+
+    # All retries exhausted (should not reach here as last attempt returns False)
+    return False

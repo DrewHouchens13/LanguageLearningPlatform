@@ -677,7 +677,7 @@ class TestSubmitLessonQuizView(TestCase):
                 {'question_id': self.q2.id, 'selected_index': 3}   # Wrong
             ]
         }
-        response = self.client.post(
+        _ = self.client.post(
             self.url,
             json.dumps(data),
             content_type='application/json'
@@ -697,7 +697,7 @@ class TestSubmitLessonQuizView(TestCase):
                 {'question_id': self.q2.id, 'selected_index': 3}   # Wrong
             ]
         }
-        response = self.client.post(
+        _ = self.client.post(
             self.url,
             json.dumps(data),
             content_type='application/json'
@@ -830,7 +830,7 @@ class TestSubmitLessonQuizView(TestCase):
                 {'question_id': self.q2.id, 'selected_index': 0}  # Valid
             ]
         }
-        response = self.client.post(
+        _ = self.client.post(
             self.url,
             json.dumps(data),
             content_type='application/json'
