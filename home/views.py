@@ -1,3 +1,18 @@
+"""
+View functions for the Language Learning Platform.
+
+Handles all HTTP request processing including:
+- Authentication (login, signup, logout, password recovery)
+- Dashboard and landing pages
+- User profile and account management
+- Onboarding assessment system
+- Lesson viewing and quiz submission
+- Daily Quest system
+- Progress tracking and XP management
+
+All views follow Django best practices with proper decorators,
+authentication checks, and error handling.
+"""
 # Standard library imports
 import json
 import logging
@@ -71,6 +86,7 @@ def block_if_onboarding_completed(view_func):
     """
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
+        """Wrapper function that checks onboarding completion status."""
         # Check authenticated users
         if request.user.is_authenticated:
             try:

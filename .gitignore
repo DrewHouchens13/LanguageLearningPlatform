@@ -96,6 +96,7 @@ test_cloudinary_setup.py
 test_cloudinary_simple.py
 setup_test_data.py
 test_cloudinary_connection.py
+process_ai_reviews.py
 
 # other files to not push (assignment specs and reports are local only)
 manchesterjm_workflow/
@@ -104,3 +105,7 @@ SPRINT_2_REPORT.md
 SPRINT_3_ASSIGNMENT.md
 SPRINT_3_REPORT.md
 SPRINT3_PLAN.md
+AI_CODE_REVIEW_FIXES.md
+AI_CODE_REVIEW_LOG.md
+SESSION_PROGRESS*
+manchesterjm_*
