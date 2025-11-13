@@ -1,15 +1,4 @@
-"""
-Django models for the Language Learning Platform.
-
-Includes models for:
-- User profiles and progress tracking (UserProfile, UserProgress)
-- Onboarding assessment system (OnboardingQuestion, OnboardingAttempt, OnboardingAnswer)
-- Lesson system (Lesson, Flashcard, LessonQuizQuestion, LessonAttempt)
-- Quiz results and completion tracking (QuizResult, LessonCompletion)
-- XP and leveling system (integrated in UserProfile)
-- Daily Quest system (DailyQuest, DailyQuestQuestion, UserDailyQuestAttempt)
-"""
-from django.db import models, IntegrityError, DatabaseError
+from django.db import models, IntegrityError, DatabaseError, transaction
 from django.db.models import Sum, Count
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -86,11 +75,11 @@ class UserProfile(models.Model):
     learning_motivation = models.TextField(blank=True)
 
     # XP and Leveling System (Sprint 3 - Issue #17)
-    total_xp = models.IntegerField(
+    total_xp = models.PositiveIntegerField(
         default=0,
         help_text="Total experience points earned from completing lessons and quests"
     )
-    current_level = models.IntegerField(
+    current_level = models.PositiveIntegerField(
         default=1,
         help_text="Current level based on total XP earned"
     )
@@ -268,12 +257,14 @@ class UserProfile(models.Model):
         progress = (xp_in_current_level / level_xp_range) * 100
         return min(100.0, max(0.0, progress))
 
+    @transaction.atomic
     def award_xp(self, amount):
         """
         Award XP to user and check for level up.
+        Uses atomic transaction to ensure data integrity.
 
         Args:
-            amount: XP to award (must be positive)
+            amount: XP to award (must be positive integer/float)
 
         Returns:
             dict: {
@@ -283,8 +274,29 @@ class UserProfile(models.Model):
                 'new_level': int or None,
                 'old_level': int
             }
+
+        Raises:
+            TypeError: If amount is not a number
+            ValueError: If amount is negative or unreasonably large
+            DatabaseError: If database save operation fails
         """
-        if amount <= 0:
+        # Type validation
+        if not isinstance(amount, (int, float)):
+            raise TypeError(f"XP amount must be numeric, got {type(amount).__name__}")
+
+        # Convert to int for consistency
+        amount = int(amount)
+
+        # Range validation
+        if amount < 0:
+            raise ValueError(f"XP amount must be non-negative, got {amount}")
+
+        if amount > 100000:  # Sanity check: prevent abuse with unreasonable values
+            raise ValueError(f"XP amount {amount} exceeds maximum allowed (100000)")
+
+        # Zero XP is valid but no-op
+        if amount == 0:
+            logger.debug('Zero XP award attempted for user %s', self.user.username)
             return {
                 'xp_awarded': 0,
                 'total_xp': self.total_xp,
@@ -293,25 +305,51 @@ class UserProfile(models.Model):
                 'old_level': self.current_level
             }
 
-        old_level = self.current_level
-        self.total_xp += amount
+        # Overflow protection: Check if adding amount would exceed max PositiveIntegerField
+        max_positive_int = 2147483647  # 2^31 - 1
+        if self.total_xp + amount > max_positive_int:
+            raise ValueError(
+                f"XP overflow: {self.total_xp} + {amount} = {self.total_xp + amount} "
+                f"exceeds maximum ({max_positive_int})"
+            )
 
-        # Recalculate level based on new XP
-        new_level = self.calculate_level_from_xp()
-        leveled_up = new_level > old_level
+        # Use atomic transaction to ensure data integrity
+        try:
+            with transaction.atomic():
+                old_level = self.current_level
+                old_xp = self.total_xp
+                self.total_xp += amount
 
-        if leveled_up:
-            self.current_level = new_level
+                # Recalculate level based on new XP
+                new_level = self.calculate_level_from_xp()
+                leveled_up = new_level > old_level
 
-        self.save()
+                if leveled_up:
+                    self.current_level = new_level
+                    # Save both fields if level changed
+                    self.save(update_fields=['total_xp', 'current_level'])
+                    logger.info('User %s leveled up! %d → %d (awarded %d XP, total %d)',
+                               self.user.username, old_level, new_level, amount, self.total_xp)
+                else:
+                    # Only save XP if no level change (performance optimization)
+                    self.save(update_fields=['total_xp'])
+                    logger.debug('User %s awarded %d XP (%d → %d, level %d)',
+                                self.user.username, amount, old_xp, self.total_xp, self.current_level)
 
-        return {
-            'xp_awarded': amount,
-            'total_xp': self.total_xp,
-            'leveled_up': leveled_up,
-            'new_level': new_level if leveled_up else None,
-            'old_level': old_level
-        }
+                return {
+                    'xp_awarded': amount,
+                    'total_xp': self.total_xp,
+                    'leveled_up': leveled_up,
+                    'new_level': new_level if leveled_up else None,
+                    'old_level': old_level
+                }
+
+        except (DatabaseError, IntegrityError) as e:
+            logger.error(
+                'Database error awarding %d XP to user %s: %s',
+                amount, self.user.username, str(e)
+            )
+            raise DatabaseError(f"Failed to award XP: {str(e)}") from e
 
 
 @receiver(post_save, sender=User)

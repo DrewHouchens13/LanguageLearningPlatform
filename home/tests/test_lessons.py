@@ -683,7 +683,7 @@ class TestSubmitLessonQuizView(TestCase):
             content_type='application/json'
         )
 
-        # Verify quiz was graded correctly
+        _json_response = response.json()  # pylint: disable=unused-variable
         attempt = LessonAttempt.objects.get(lesson=self.lesson, user=self.user)
         self.assertEqual(attempt.score, 0)
         self.assertEqual(attempt.total, 2)
@@ -703,7 +703,7 @@ class TestSubmitLessonQuizView(TestCase):
             content_type='application/json'
         )
 
-        # Verify quiz was graded correctly
+        _json_response = response.json()  # pylint: disable=unused-variable
         attempt = LessonAttempt.objects.get(lesson=self.lesson, user=self.user)
         self.assertEqual(attempt.score, 1)
         self.assertEqual(attempt.total, 2)
@@ -836,7 +836,7 @@ class TestSubmitLessonQuizView(TestCase):
             content_type='application/json'
         )
 
-        # Verify quiz was graded correctly
+        _json_response = response.json()  # pylint: disable=unused-variable
         attempt = LessonAttempt.objects.get(lesson=self.lesson, user=self.user)
         self.assertEqual(attempt.score, 1)
         self.assertEqual(attempt.total, 1)  # Only valid question counted

@@ -271,7 +271,7 @@ class TestQuizResultModel(TestCase):
         )
         self.assertEqual(quiz.accuracy_percentage, 85.0)
 
-    def test_quiz_result_accuracy_percentage_zero_questions(self):
+    def test_quiz_result_accuracy_pct_zero_questions(self):
         """Test accuracy_percentage handles division by zero"""
         quiz = QuizResult.objects.create(
             user=self.user,
@@ -383,7 +383,7 @@ class TestUserProfileModel(TestCase):
         expected = f"{self.user.username}'s Profile - Beginner (A1)"
         self.assertEqual(str(profile), expected)
 
-    def test_user_profile_string_representation_without_level(self):
+    def test_user_profile_str_repr_no_level(self):
         """Test __str__ method for profile without proficiency level"""
         # Use auto-created profile (default has no level)
         profile = self.user.profile
@@ -489,7 +489,7 @@ class TestOnboardingQuestionModel(TestCase):
                 correct_answer='B'
             )
 
-    def test_onboarding_question_different_languages_same_number(self):
+    def test_onboarding_question_diff_langs_same_num(self):
         """Test same question number allowed for different languages"""
         OnboardingQuestion.objects.create(
             question_number=1,
@@ -596,7 +596,7 @@ class TestOnboardingAttemptModel(TestCase):
         # 12/19 = 63.15... rounded to 63.2
         self.assertEqual(attempt.score_percentage, 63.2)
 
-    def test_onboarding_attempt_score_percentage_zero_total(self):
+    def test_onboarding_attempt_score_pct_zero_total(self):
         """Test score_percentage handles zero total_possible"""
         attempt = OnboardingAttempt.objects.create(
             user=self.user,
@@ -605,7 +605,7 @@ class TestOnboardingAttemptModel(TestCase):
         
         self.assertEqual(attempt.score_percentage, 0.0)
 
-    def test_onboarding_attempt_string_representation_authenticated(self):
+    def test_onboarding_attempt_str_repr_auth(self):
         """Test __str__ method for authenticated user"""
         attempt = OnboardingAttempt.objects.create(
             user=self.user,
@@ -616,7 +616,7 @@ class TestOnboardingAttemptModel(TestCase):
         expected = f"{self.user.username} - Spanish (A2)"
         self.assertEqual(str(attempt), expected)
 
-    def test_onboarding_attempt_string_representation_guest(self):
+    def test_onboarding_attempt_str_repr_guest(self):
         """Test __str__ method for guest user"""
         attempt = OnboardingAttempt.objects.create(
             session_key='abc123xyz789',
@@ -627,7 +627,7 @@ class TestOnboardingAttemptModel(TestCase):
         expected = "Guest-abc123xy - Spanish (A1)"
         self.assertEqual(str(attempt), expected)
 
-    def test_onboarding_attempt_string_representation_in_progress(self):
+    def test_onboarding_attempt_str_repr_in_progress(self):
         """Test __str__ method for in-progress attempt"""
         attempt = OnboardingAttempt.objects.create(
             user=self.user,
@@ -710,7 +710,7 @@ class TestOnboardingAnswerModel(TestCase):
         self.assertEqual(answer.user_answer, 'A')
         self.assertFalse(answer.is_correct)
 
-    def test_onboarding_answer_string_representation_correct(self):
+    def test_onboarding_answer_str_repr_correct(self):
         """Test __str__ method for correct answer"""
         answer = OnboardingAnswer.objects.create(
             attempt=self.attempt,
@@ -722,7 +722,7 @@ class TestOnboardingAnswerModel(TestCase):
         expected = "✓ Q1 - B"
         self.assertEqual(str(answer), expected)
 
-    def test_onboarding_answer_string_representation_incorrect(self):
+    def test_onboarding_answer_str_repr_incorrect(self):
         """Test __str__ method for incorrect answer"""
         answer = OnboardingAnswer.objects.create(
             attempt=self.attempt,

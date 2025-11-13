@@ -1,0 +1,51 @@
+# .slugignore - Exclude files/directories from production deployment
+# Used by Render, Heroku, and similar PaaS platforms
+
+# Test directories and files
+/home/tests/
+/config/test_*.py
+**/test_*.py
+**/tests.py
+**/*_test.py
+/features/
+/live_test_*.py
+
+# Development/testing documentation
+/AI_code_reviews/
+TESTING_GUIDE.md
+BDD_TESTING.md
+
+# Coverage reports
+/.coverage
+/htmlcov/
+/.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+
+# Development tools
+/.pylintrc
+/.bandit
+/pytest.ini
+
+# Git files
+/.git/
+/.gitignore
+/.gitattributes
+
+# IDE files
+/.vscode/
+/.idea/
+*.swp
+*.swo
+
+# Local development files
+/.env.local
+/db.sqlite3
+/local_settings.py
+
+# Static files (collected during build)
+/staticfiles/
+
+# Media uploads (should be on external storage in production)
+/media/

@@ -330,7 +330,8 @@ class AccountViewTests(TestCase):
         )
 
         sql_payload = "admin' OR '1'='1"
-        self.client.post(reverse('account'), {
+        _old_username = self.user.username  # pylint: disable=unused-variable
+        _response = self.client.post(reverse('account'), {  # pylint: disable=unused-variable
             'action': AccountAction.UPDATE_USERNAME.value,
             'new_username': sql_payload
         })
