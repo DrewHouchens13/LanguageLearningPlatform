@@ -22,14 +22,15 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: Install Bandit
-        run: pip install bandit[toml]
+        run: pip install --no-cache-dir bandit[toml]
 
       - name: Run Bandit Security Scan
         run: |
-          bandit -r home/ config/ -c .bandit -f json -o bandit-report.json
-          bandit -r home/ config/ -c .bandit -f screen | tee bandit-screen.txt
+          bandit -r ./home/ ./config/ -c .bandit -f json -o bandit-report.json
+          bandit -r ./home/ ./config/ -c .bandit -f screen | tee bandit-screen.txt
 
       - name: Upload Bandit JSON Report
         if: always()
@@ -111,14 +112,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: Install pip-audit
-        run: pip install pip-audit
+        run: pip install --no-cache-dir pip-audit
 
       - name: Run pip-audit
+        continue-on-error: true
         run: |
-          pip-audit -r requirements.txt --desc --format json -o pip-audit-report.json || true
-          pip-audit -r requirements.txt --desc | tee pip-audit-screen.txt || true
+          pip-audit -r requirements.txt --desc --format json -o pip-audit-report.json
+          pip-audit -r requirements.txt --desc | tee pip-audit-screen.txt
 
       - name: Upload pip-audit JSON Report
         if: always()
@@ -171,17 +174,19 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install safety
+          python -m pip install --no-cache-dir --upgrade pip
+          pip install --no-cache-dir -r requirements.txt
+          pip install --no-cache-dir safety
 
       - name: Run Safety Check
+        continue-on-error: true
         run: |
-          safety check --json -o safety-report.json || true
-          safety check | tee safety-screen.txt || true
+          safety check --json -o safety-report.json
+          safety check | tee safety-screen.txt
 
       - name: Upload Safety Reports
         if: always()
