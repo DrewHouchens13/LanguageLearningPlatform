@@ -654,6 +654,23 @@ class Lesson(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Daily Quest System fields (Sprint 3 - Issue #18)
+    category = models.CharField(
+        max_length=50,
+        default='General',
+        help_text='Category of lesson (e.g., Colors, Numbers, Shapes)'
+    )
+    lesson_type = models.CharField(
+        max_length=20,
+        choices=[('flashcard', 'Flashcard'), ('quiz', 'Quiz')],
+        default='flashcard',
+        help_text='Type of lesson content'
+    )
+    xp_value = models.IntegerField(
+        default=100,
+        help_text='XP awarded for completing this lesson'
+    )
+
     # Link to next lesson
     next_lesson = models.ForeignKey(
         'self',
