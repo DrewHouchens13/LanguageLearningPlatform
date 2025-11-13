@@ -9,10 +9,9 @@ Tests cover:
 - Integration with lesson completion
 """
 
-import pytest
 from django.contrib.auth.models import User
 from django.test import TestCase
-from home.models import UserProfile, Lesson, LessonAttempt
+from home.models import UserProfile, Lesson
 
 
 class TestXPCalculations(TestCase):
@@ -338,7 +337,7 @@ class TestXPEdgeCases(TestCase):
         self.profile.save()
 
         # Award XP should recalculate correct level
-        result = self.profile.award_xp(50)
+        self.profile.award_xp(50)
 
         # Should detect we're at wrong level and fix it
         assert self.profile.current_level >= 2

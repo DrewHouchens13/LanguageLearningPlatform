@@ -1,11 +1,5 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
-from django.urls import reverse, resolve
-from django.utils import timezone
-from django.core.cache import cache
-from datetime import timedelta
-from enum import Enum
-from unittest.mock import patch
 
 from home.models import UserProgress, LessonCompletion, QuizResult
 from .test_utils import create_test_user, create_test_superuser, AdminTestCase
@@ -16,7 +10,6 @@ from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.messages import get_messages
 
 from home.admin import (
-    CustomUserAdmin, UserProgressAdmin, LessonCompletionAdmin, QuizResultAdmin,
     reset_password_to_default, make_staff_admin, remove_admin_privileges,
     reset_user_progress, reset_progress_stats, delete_selected_lessons, delete_selected_quizzes,
     delete_user_avatars, delete_user_avatars_from_users

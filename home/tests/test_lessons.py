@@ -5,8 +5,6 @@ Tests for Lesson, Flashcard, LessonQuizQuestion, LessonAttempt models and all le
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.http import HttpResponseBadRequest
-from django.core.exceptions import ValidationError
 import json
 
 from home.models import (
@@ -685,7 +683,7 @@ class TestSubmitLessonQuizView(TestCase):
             content_type='application/json'
         )
 
-        json_response = response.json()
+        # Verify quiz was graded correctly
         attempt = LessonAttempt.objects.get(lesson=self.lesson, user=self.user)
         self.assertEqual(attempt.score, 0)
         self.assertEqual(attempt.total, 2)
@@ -705,7 +703,7 @@ class TestSubmitLessonQuizView(TestCase):
             content_type='application/json'
         )
 
-        json_response = response.json()
+        # Verify quiz was graded correctly
         attempt = LessonAttempt.objects.get(lesson=self.lesson, user=self.user)
         self.assertEqual(attempt.score, 1)
         self.assertEqual(attempt.total, 2)
@@ -838,7 +836,7 @@ class TestSubmitLessonQuizView(TestCase):
             content_type='application/json'
         )
 
-        json_response = response.json()
+        # Verify quiz was graded correctly
         attempt = LessonAttempt.objects.get(lesson=self.lesson, user=self.user)
         self.assertEqual(attempt.score, 1)
         self.assertEqual(attempt.total, 1)  # Only valid question counted
@@ -1034,7 +1032,7 @@ class TestLessonSecurityTests(TestCase):
 
     def test_sql_injection_attempt_in_lesson_detail(self):
         """Test SQL injection attempt in lesson_detail URL parameter"""
-        url = f"/lessons/1' OR '1'='1/"
+        url = "/lessons/1' OR '1'='1/"
         response = self.client.get(url)
 
         # Should return 404 (Django's ORM prevents SQL injection)
