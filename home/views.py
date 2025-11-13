@@ -365,6 +365,9 @@ def send_template_email(request, template_name, context, subject, recipient_emai
             logger.info('Retrying email send in %s seconds...', wait_time)
             time.sleep(wait_time)
 
+    # All retries exhausted (should not reach here as last attempt returns False)
+    return False
+
 
 def landing(request):
     """Render the landing page.
@@ -553,15 +556,16 @@ def login_view(request):
                         # Redirect to results page with attempt ID in URL
                         messages.success(request, f'Welcome back, {user.first_name or user.username}! Your assessment results have been saved.')
                         return redirect(f'/onboarding/results/?attempt={attempt.id}')
-                    else:
-                        # Attempt already linked - clear stale session data and continue normal flow
-                        del request.session['onboarding_attempt_id']
-                        logger.info('Cleared stale onboarding session for user %s', user.username)
+
+                    # Attempt already linked - clear stale session data and continue normal flow
+                    del request.session['onboarding_attempt_id']
+                    logger.info('Cleared stale onboarding session for user %s', user.username)
                 except OnboardingAttempt.DoesNotExist:
                     # Clear invalid session data
                     del request.session['onboarding_attempt_id']
                     logger.warning('Onboarding attempt %s not found, cleared session', onboarding_attempt_id)
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    # Catch-all for safety: log any unexpected errors during onboarding link
                     logger.error('Error linking onboarding attempt to user: %s', str(e))
             
             messages.success(request, f'Welcome back, {user.first_name or user.username}!')
@@ -574,9 +578,9 @@ def login_view(request):
                 require_https=request.is_secure()
             ):
                 return HttpResponseRedirect(next_page)
-            else:
-                # Redirect to dashboard (home for authenticated users)
-                return redirect('dashboard')
+
+            # Redirect to dashboard (home for authenticated users)
+            return redirect('dashboard')
         else:
             # Log failed login attempt (incorrect password)
             logger.warning(
@@ -672,8 +676,8 @@ def signup_view(request):
             logger.error('IntegrityError during user creation: %s from IP: %s', str(e), get_client_ip(request))
             messages.error(request, 'An error occurred while creating your account. Please try again.')
             return render(request, 'login.html')
-        except Exception as e:
-            # Log unexpected errors for debugging (don't expose details to user)
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Catch-all for safety: log unexpected errors without exposing details to user
             from django.conf import settings
             exception_type = type(e).__name__
             logger.error('Unexpected error during user creation: %s from IP: %s', exception_type, get_client_ip(request))
@@ -736,9 +740,10 @@ def signup_view(request):
             except OnboardingAttempt.DoesNotExist:
                 logger.warning('Onboarding attempt %s not found for new user %s', onboarding_attempt_id, user.username)
                 # Continue with normal signup flow
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                # Catch-all for safety: user is created, just onboarding link failed
                 logger.error('Error linking onboarding attempt to new user %s: %s', user.username, str(e))
-                # Continue with normal signup flow - user is created, just onboarding link failed
+                # Continue with normal signup flow
         
         messages.success(request, f'Welcome to Language Learning Platform, {first_name}!')
         # Redirect to dashboard (home for authenticated users)
@@ -753,15 +758,15 @@ def logout_view(request):
     Logout view that accepts both GET and POST for compatibility.
     GET is allowed for navigation links, but POST is recommended for security.
     """
-    if request.method == 'POST' or request.method == 'GET':
-        logout(request)
-        messages.success(request, 'You have been successfully logged out.')
-        # Use absolute redirect to avoid double prefix issue in admin
-        # Build absolute URL using request scheme and host
-        from django.urls import reverse  # Keep inline - only used here
-        landing_url = reverse('landing')
-        absolute_url = request.build_absolute_uri(landing_url)
-        return HttpResponseRedirect(absolute_url)
+    # Decorator ensures only GET or POST reaches here
+    logout(request)
+    messages.success(request, 'You have been successfully logged out.')
+    # Use absolute redirect to avoid double prefix issue in admin
+    # Build absolute URL using request scheme and host
+    from django.urls import reverse  # Keep inline - only used here
+    landing_url = reverse('landing')
+    absolute_url = request.build_absolute_uri(landing_url)
+    return HttpResponseRedirect(absolute_url)
 
 
 @login_required
@@ -796,8 +801,8 @@ def dashboard(request):
         except OnboardingAttempt.DoesNotExist:
             # Invalid attempt ID, clear it
             del request.session['onboarding_attempt_id']
-        except Exception as e:
-            # Any other error, clear it to be safe
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Catch-all for safety: clear session data on any error
             logger.error('Error checking onboarding session on dashboard: %s', str(e))
             if 'onboarding_attempt_id' in request.session:
                 del request.session['onboarding_attempt_id']
@@ -1018,8 +1023,8 @@ def account_view(request):
                     for error_list in form.errors.values():
                         for error in error_list:
                             messages.error(request, error)
-            except Exception as e:
-                # Log the full exception for debugging
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                # Catch-all for safety: log avatar upload failures
                 logger.error('Avatar upload failed for user %s: %s',
                            request.user.username, str(e), exc_info=True)
                 messages.error(request, 'Avatar upload failed. Please try again.')
@@ -1434,7 +1439,8 @@ def submit_onboarding(request):
         
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        # Catch-all for safety: return 500 on unexpected errors
         logger.error('Error processing onboarding submission: %s', str(e))
         return JsonResponse({'success': False, 'error': 'Internal server error'}, status=500)
 
@@ -1655,8 +1661,11 @@ def submit_lesson_quiz(request, lesson_id):
         xp_result = profile.award_xp(total_xp_awarded)
 
         logger.info(
-            f'XP awarded: {request.user.username} earned {xp_result["xp_awarded"]} XP '
-            f'(Level {xp_result["old_level"]} -> {xp_result["new_level"] or xp_result["old_level"]})'
+            'XP awarded: %s earned %s XP (Level %s -> %s)',
+            request.user.username,
+            xp_result["xp_awarded"],
+            xp_result["old_level"],
+            xp_result["new_level"] or xp_result["old_level"]
         )
 
         # Update UserProgress
