@@ -50,6 +50,7 @@ tests:
   - B304  # insecure ciphers
   - B305  # insecure cipher modes
   - B311  # random usage - weak random (not crypto-safe)
+  # B320 removed - test ID doesn't exist in current Bandit
   - B324  # hashlib new insecure functions
 
   # ===== CWE-502: Deserialization of Untrusted Data =====
@@ -71,10 +72,10 @@ tests:
   - B317  # xml_bad_sax
   - B318  # xml_bad_minidom
   - B319  # xml_bad_pulldom
-  - B320  # xml_bad_etree
+  # B320 removed - test ID doesn't exist in current Bandit
 
   # ===== Insecure Network Protocols =====
-  - B309  # httpsconnection - potential HTTPS issues
+  # B309 removed - test ID doesn't exist in current Bandit
   - B310  # urllib_urlopen - SSRF risk
   - B312  # telnetlib usage - unencrypted protocol
   - B321  # ftplib - unencrypted protocol
@@ -83,7 +84,7 @@ tests:
   # ===== Insecure Temporary Files =====
   - B108  # hardcoded_tmp_directory - predictable paths
   - B306  # mktemp_q - insecure temp file creation
-  - B325  # tempnam - insecure temp file naming
+  # B325 removed - test ID doesn't exist in current Bandit
 
   # ===== Error Handling Issues =====
   - B110  # try_except_pass - silently hides errors
@@ -93,7 +94,7 @@ tests:
   - B202  # tarfile_unsafe_members - path traversal
 
   # ===== Input Validation =====
-  - B322  # input - potential code injection in Python 2
+  # B322 removed - test ID doesn't exist in current Bandit
 
   # ===== Insecure Import Checks =====
   - B401  # import_telnetlib
@@ -105,11 +106,11 @@ tests:
   - B407  # import_xml_expat
   - B408  # import_xml_minidom
   - B409  # import_xml_pulldom
-  - B410  # import_lxml
+  # B410 removed - test ID doesn't exist in current Bandit
   - B411  # import_xmlrpclib
   - B412  # import_httpoxy
   - B413  # import_pycrypto - deprecated crypto library
-  - B414  # import_pycryptodome
+  # B414 removed - test ID doesn't exist in current Bandit
 
 # Only skip known false positives
 skips:
