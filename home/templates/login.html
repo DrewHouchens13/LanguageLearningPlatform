@@ -38,11 +38,11 @@
         <div id="login-content" class="tab-content active">
           <div class="auth-card-header">
             {% if not messages %}
-            <h2>Welcome Back! 👋</h2>
+            <h2>Welcome Back!</h2>
             <p class="auth-card-subtitle">Login to continue your learning journey</p>
             {% else %}
             <h2>Login</h2>
-            <p class="auth-card-subtitle">Please check your credentials and try again 🔐</p>
+            <p class="auth-card-subtitle">Please check your credentials and try again</p>
             {% endif %}
           </div>
 
@@ -50,7 +50,10 @@
             {% csrf_token %}
             
             <div class="form-group">
-              <label for="login-username-or-email" class="form-label">Username or Email</label>
+              <div class="flex justify-between items-center mb-sm">
+                <label for="login-username-or-email" class="form-label">Username or Email</label>
+                <a href="{% url 'forgot_username' %}" class="auth-link text-sm">Forgot Username?</a>
+              </div>
               <input
                 type="text"
                 id="login-username-or-email"
@@ -62,11 +65,13 @@
                 placeholder="Enter your username or email"
                 title="Use only letters, numbers, and @._+- characters"
               >
-              <small class="form-hint">You can log in with either your username or email address</small>
             </div>
             
             <div class="form-group">
-              <label for="login-password" class="form-label">Password</label>
+              <div class="flex justify-between items-center mb-sm">
+                <label for="login-password" class="form-label">Password</label>
+                <a href="{% url 'forgot_password' %}" class="auth-link text-sm">Forgot Password?</a>
+              </div>
               <input 
                 type="password" 
                 id="login-password" 
@@ -77,16 +82,11 @@
               >
             </div>
             
-            <div class="flex justify-between items-center mb-lg">
+            <div class="mb-lg">
               <label class="form-check-label">
                 <input type="checkbox" name="remember" class="form-checkbox">
                 Remember me
               </label>
-              <a href="{% url 'forgot_password' %}" class="auth-link text-sm">Forgot Password?</a>
-            </div>
-
-            <div class="mb-lg">
-              <a href="{% url 'forgot_username' %}" class="auth-link text-sm">Forgot Username?</a>
             </div>
             
             <button type="submit" class="btn btn-primary btn-full btn-lg">Login</button>
@@ -103,7 +103,7 @@
         <!-- Signup Form -->
         <div id="signup-content" class="tab-content">
           <div class="auth-card-header">
-            <h2>Create Account 🚀</h2>
+            <h2>Create Account</h2>
             <p class="auth-card-subtitle">Start your language learning adventure today</p>
           </div>
 
