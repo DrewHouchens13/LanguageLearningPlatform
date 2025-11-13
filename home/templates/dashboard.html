@@ -36,6 +36,27 @@
           {% else %}
             <p><strong>Your Level:</strong> <span style="display: inline-block; padding: 0.25rem 0.75rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">{{ user_profile.get_proficiency_level_display }}</span></p>
           {% endif %}
+
+          <!-- XP and Leveling System -->
+          {% if user.profile %}
+          <div style="margin: 1.5rem 0; padding: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <div>
+                <h3 style="margin: 0 0 0.5rem 0; font-size: 1.5rem;">Level {{ user.profile.current_level }}</h3>
+                <p style="margin: 0; font-size: 1.1rem; opacity: 0.9;">{{ user.profile.total_xp }} XP</p>
+              </div>
+              <div style="text-align: right;">
+                <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">Next Level</p>
+                <p style="margin: 0; font-size: 1.2rem; font-weight: 600;">{{ user.profile.get_xp_to_next_level }} XP to go</p>
+              </div>
+            </div>
+            <div style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 12px; overflow: hidden;">
+              <div style="background: white; height: 100%; width: {{ user.profile.get_progress_to_next_level }}%; transition: width 0.3s ease;"></div>
+            </div>
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; opacity: 0.9; text-align: center;">{{ user.profile.get_progress_to_next_level|floatformat:0 }}% to Level {{ user.profile.current_level|add:1 }}</p>
+          </div>
+          {% endif %}
+
           <p><strong>Email:</strong> {{ user.email }}</p>
           <p><strong>Username:</strong> {{ user.username }}</p>
           <p><strong>Member since:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
@@ -59,6 +80,11 @@
         <div class="feature-card">
           <h3>Learning Progress</h3>
           <p>Track your achievements and see how far you've come.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Daily Quest</h3>
+          <p>Complete today's challenge to earn bonus XP and rewards!</p>
+          <a href="{% url 'daily_quest' %}" style="display: inline-block; margin-top: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Start Quest</a>
         </div>
         <div class="feature-card">
           <h3>Study Schedule</h3>

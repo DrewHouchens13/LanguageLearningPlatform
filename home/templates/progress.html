@@ -40,7 +40,39 @@
             </div>
           </div>
         </section>
-        
+
+        <!-- XP and Leveling System -->
+        {% if user.profile %}
+        <section class="progress-section">
+          <h3 class="section-title">Experience & Level</h3>
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 2rem; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+              <div style="text-align: center;">
+                <div style="font-size: 3rem; font-weight: 700; margin-bottom: 0.5rem;">{{ user.profile.current_level }}</div>
+                <div style="font-size: 1rem; opacity: 0.9;">Current Level</div>
+              </div>
+              <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.3); border-right: 1px solid rgba(255,255,255,0.3);">
+                <div style="font-size: 3rem; font-weight: 700; margin-bottom: 0.5rem;">{{ user.profile.total_xp }}</div>
+                <div style="font-size: 1rem; opacity: 0.9;">Total XP</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-size: 3rem; font-weight: 700; margin-bottom: 0.5rem;">{{ user.profile.get_xp_to_next_level }}</div>
+                <div style="font-size: 1rem; opacity: 0.9;">XP to Level {{ user.profile.current_level|add:1 }}</div>
+              </div>
+            </div>
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.9rem; opacity: 0.9;">Progress to Next Level</span>
+                <span style="font-size: 0.9rem; font-weight: 600;">{{ user.profile.get_progress_to_next_level|floatformat:0 }}%</span>
+              </div>
+              <div style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 16px; overflow: hidden;">
+                <div style="background: white; height: 100%; width: {{ user.profile.get_progress_to_next_level }}%; transition: width 0.5s ease; border-radius: 10px;"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+        {% endif %}
+
         <!-- Onboarding/Proficiency Level Section -->
         {% if user_profile and user_profile.has_completed_onboarding %}
         <section class="progress-section">

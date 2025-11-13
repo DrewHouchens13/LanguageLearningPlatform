@@ -57,6 +57,27 @@
               <span class="info-label">Name:</span>
               <span class="info-value">{{ user.first_name }} {{ user.last_name }}</span>
             </div>
+            {% if user.profile %}
+            <div class="info-row">
+              <span class="info-label">Level:</span>
+              <span class="info-value"><strong style="color: #667eea; font-size: 1.2rem;">{{ user.profile.current_level }}</strong></span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Total XP:</span>
+              <span class="info-value"><strong style="color: #667eea; font-size: 1.2rem;">{{ user.profile.total_xp }}</strong></span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Progress:</span>
+              <span class="info-value">
+                <div style="width: 200px;">
+                  <div style="background: #e0e0e0; border-radius: 10px; height: 8px; overflow: hidden;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 100%; width: {{ user.profile.get_progress_to_next_level }}%;"></div>
+                  </div>
+                  <small style="color: #666;">{{ user.profile.get_xp_to_next_level }} XP to Level {{ user.profile.current_level|add:1 }}</small>
+                </div>
+              </span>
+            </div>
+            {% endif %}
           </div>
 
           <!-- Update Email -->
