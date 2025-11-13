@@ -470,8 +470,8 @@ footer p {
 .dashboard-welcome {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-xl);
+  justify-content: space-between;
+  gap: var(--space-2xl);
   flex-wrap: wrap;
 }
 
@@ -1470,6 +1470,19 @@ footer p {
 
   .hero-main {
     min-height: 150px;
+  }
+
+  .dashboard-welcome {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .dashboard-welcome > div {
+    width: 100%;
+  }
+
+  .streak-fire-container {
+    margin: var(--space-xl) auto;
   }
 }
 

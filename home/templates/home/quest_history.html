@@ -6,15 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quest History - Language Learning Platform</title>
     {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
-    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
   </head>
   <body>
     {% include '_nav.html' %}
 
-    <main>
+    <main class="container">
       <!-- Django Messages -->
       {% if messages %}
-        <div class="page-messages">
+        <div class="mt-xl">
           {% for message in messages %}
             <div class="alert alert-{{ message.tags }}">
               {{ message }}
@@ -23,55 +27,82 @@
         </div>
       {% endif %}
 
-      <section class="hero">
-        <div class="hero-content">
-          <h1>Quest History</h1>
-
-          {% if attempts %}
-            <div class="quest-stats">
-              <p class="total-xp"><strong>Total XP from Quests:</strong> {{ total_quest_xp }}</p>
-            </div>
-
-            <div class="quest-list">
-              {% for attempt in attempts %}
-                <div class="quest-item" style="margin: 1rem 0; padding: 1rem; background-color: #f5f5f5; border-radius: 8px;">
-                  <h3>{{ attempt.daily_quest.title }}</h3>
-                  <p class="quest-date"><strong>Date:</strong> {{ attempt.daily_quest.date|date:"F j, Y" }}</p>
-                  <p class="quest-score"><strong>Score:</strong> {{ attempt.score }}/{{ attempt.total_questions }}</p>
-                  <p class="quest-xp"><strong>XP Earned:</strong> {{ attempt.xp_earned }}</p>
-                </div>
-              {% endfor %}
-            </div>
-          {% else %}
-            <p>No completed quests yet. Visit the Daily Quest page to start!</p>
-          {% endif %}
+      <!-- Quest History Header -->
+      <section class="fade-in" style="margin-top: var(--space-xl);">
+        <div class="text-center mb-lg">
+          <h1 class="page-title">Quest History 📜</h1>
         </div>
+
+        {% if attempts %}
+          <!-- Total Stats Card -->
+          <div class="card card-bordered fade-in-up mb-lg" style="max-width: 800px; margin-left: auto; margin-right: auto; margin-bottom: var(--space-lg);">
+            <div class="card-body text-center">
+              <div class="mb-sm">
+                <span style="font-size: 3rem;">⭐</span>
+              </div>
+              <h3 class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Total Quest XP Earned</h3>
+              <p style="font-size: var(--font-size-3xl); font-weight: 700; color: var(--color-success);">{{ total_quest_xp }}</p>
+              <p class="text-muted" style="font-size: var(--font-size-sm);">{{ attempts|length }} quest{{ attempts|length|pluralize }} completed</p>
+            </div>
+          </div>
+
+          <!-- Quest List -->
+          <div class="quest-list" style="max-width: 800px; margin: 0 auto;">
+            {% for attempt in attempts %}
+              <div class="card card-bordered fade-in-up mb-md" style="animation-delay: {{ forloop.counter0|add:1|stringformat:'d' }}00ms;">
+                <div class="card-body">
+                  <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--space-sm);">
+                    <div>
+                      <h3 class="card-title" style="margin-bottom: var(--space-xs);">{{ attempt.daily_quest.title }}</h3>
+                      <p class="text-muted" style="font-size: var(--font-size-sm);">
+                        📅 {{ attempt.daily_quest.date|date:"F j, Y" }}
+                      </p>
+                    </div>
+                    <span class="badge" style="background: var(--color-success); color: white; padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm); font-size: var(--font-size-sm);">
+                      +{{ attempt.xp_earned }} XP
+                    </span>
+                  </div>
+                  
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-md); margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px solid var(--color-border);">
+                    <div>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Score</p>
+                      <p style="font-weight: 600;">{{ attempt.correct_answers }}/{{ attempt.total_questions }}</p>
+                    </div>
+                    <div>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Accuracy</p>
+                      <p style="font-weight: 600;">{{ attempt.score_percentage }}%</p>
+                    </div>
+                    <div>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Completed</p>
+                      <p style="font-weight: 600;">{{ attempt.completed_at|date:"M j, g:i A" }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <!-- Empty State -->
+          <div class="card card-bordered fade-in-up" style="max-width: 600px; margin: 0 auto;">
+            <div class="card-body text-center">
+              <div class="mb-md">
+                <span style="font-size: 4rem;">🎯</span>
+              </div>
+              <h2 class="card-title mb-sm">No Quests Completed Yet</h2>
+              <p class="text-muted mb-lg">Start your first daily quest to earn XP and track your progress!</p>
+              <a href="{% if IS_DEVEDU %}../../quests/daily/{% else %}{% url 'daily_quest' %}{% endif %}" class="btn btn-primary">
+                Try Today's Quest
+              </a>
+            </div>
+          </div>
+        {% endif %}
       </section>
     </main>
 
-    <footer>
-      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+    <footer class="footer">
+      <div class="container">
+        <p class="text-center text-muted">&copy; 2025 Language Learning Platform. Start learning today!</p>
+      </div>
     </footer>
-
-    <script>
-      // Mobile menu toggle
-      const navToggle = document.querySelector('.nav-toggle');
-      const navMenu = document.querySelector('.nav-menu');
-
-      if (navToggle) {
-        navToggle.addEventListener('click', () => {
-          navMenu.classList.toggle('active');
-          navToggle.classList.toggle('active');
-        });
-
-        // Close menu when clicking outside
-        document.addEventListener('click', (e) => {
-          if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
-            navMenu.classList.remove('active');
-            navToggle.classList.remove('active');
-          }
-        });
-      }
-    </script>
   </body>
 </html>

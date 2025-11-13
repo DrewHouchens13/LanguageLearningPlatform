@@ -27,22 +27,100 @@
         </div>
       {% endif %}
       
-      <!-- Dashboard Header -->
+      <!-- Dashboard Header with Streak -->
       <section class="dashboard-header fade-in">
         <div class="dashboard-welcome">
-          <div>
+          <div style="flex: 1;">
             <h2 class="dashboard-title">Welcome back, {{ user.first_name }}! 👋</h2>
-            <p class="dashboard-subtitle">Ready to continue your learning journey?</p>
+            <p class="dashboard-subtitle">
+              {% if current_streak > 0 %}
+                Keep your streak alive! You're doing great!
+              {% else %}
+                Ready to start your learning journey?
+              {% endif %}
+            </p>
           </div>
-          <div>
+          
+          <!-- Animated Streak Fire -->
+          <div class="streak-fire-container">
+            <div class="fire-glow {% if current_streak > 0 %}active{% endif %}"></div>
+            <div class="fire-emoji {% if current_streak > 0 %}active{% else %}dead{% endif %}">🔥</div>
+            <div class="streak-stats">
+              <span class="streak-number">{{ current_streak }}</span>
+              <span class="streak-label">Day Streak</span>
+            </div>
+          </div>
+          
+          <div style="text-align: center;">
             {% if user.profile %}
-              <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="avatar avatar-2xl">
+              <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="avatar avatar-2xl" style="margin-bottom: var(--space-sm);">
             {% else %}
-              <img src="https://www.gravatar.com/avatar/?s=200&d=identicon" alt="{{ user.username }}'s avatar" class="avatar avatar-2xl">
+              <img src="https://www.gravatar.com/avatar/?s=200&d=identicon" alt="{{ user.username }}'s avatar" class="avatar avatar-2xl" style="margin-bottom: var(--space-sm);">
+            {% endif %}
+            {% if user_profile and user_profile.has_completed_onboarding %}
+              <div>
+                <span class="badge badge-primary" style="font-size: var(--font-size-sm); padding: var(--space-xs) var(--space-md);">
+                  {{ user_profile.get_proficiency_level_display }}
+                </span>
+              </div>
             {% endif %}
           </div>
         </div>
       </section>
+
+      <!-- XP and Leveling System -->
+      {% if user_profile %}
+      <section class="card card-bordered mt-xl fade-in-up" style="background: linear-gradient(135deg, #fff4e6 0%, #ffe8cc 100%); border: 2px solid #ff8a65;">
+        <div class="card-body">
+          <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: var(--space-lg); margin-bottom: var(--space-lg);">
+            <div style="flex: 1; min-width: 250px;">
+              <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-xs);">
+                <span style="font-size: 2.5rem;">⚡</span>
+                <div>
+                  <h3 style="margin: 0; font-size: var(--font-size-2xl); color: #d84315;">Level {{ user_profile.current_level }}</h3>
+                  <p class="text-muted" style="margin: 0; color: #d84315;">Experience Points</p>
+                </div>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <p style="font-size: var(--font-size-3xl); font-weight: 700; color: #d84315; margin: 0;">{{ user_profile.total_xp|floatformat:0 }}</p>
+              <p class="text-muted" style="font-size: var(--font-size-sm); color: #d84315;">Total XP</p>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div style="margin-bottom: var(--space-md);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
+              <span style="font-weight: 600; color: #d84315;">Progress to Level {{ user_profile.current_level|add:1 }}</span>
+              <span style="font-weight: 600; color: #d84315;">{{ xp_progress_percent|floatformat:1 }}%</span>
+            </div>
+            <div style="width: 100%; height: 24px; background: rgba(255, 138, 101, 0.2); border-radius: var(--radius-full); overflow: hidden; position: relative;">
+              <div style="height: 100%; background: linear-gradient(90deg, #ff8a65 0%, #ff7043 100%); border-radius: var(--radius-full); width: {{ xp_progress_percent }}%; transition: width 0.5s ease;"></div>
+            </div>
+            <p class="text-muted mt-sm" style="font-size: var(--font-size-sm); color: #d84315;">{{ xp_to_next_level }} XP needed for next level</p>
+          </div>
+
+          <!-- XP Sources -->
+          <div style="background: rgba(255, 255, 255, 0.7); padding: var(--space-md); border-radius: var(--radius-md);">
+            <p style="font-weight: 600; margin-bottom: var(--space-sm); color: #d84315;">Earn XP by:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-sm);">
+              <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                <span>📚</span>
+                <span style="font-size: var(--font-size-sm); color: #d84315;">Complete lessons (+50-100 XP)</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                <span>🎯</span>
+                <span style="font-size: var(--font-size-sm); color: #d84315;">Daily quests (+50-100 XP)</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                <span>⭐</span>
+                <span style="font-size: var(--font-size-sm); color: #d84315;">Perfect scores (+10 XP bonus)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      {% endif %}
       
       <!-- Placement Test CTA -->
       {% if not has_completed_onboarding %}
@@ -55,69 +133,117 @@
             </a>
           </div>
         </section>
-      {% else %}
-        <!-- Current Level Badge -->
-        <div class="text-center mb-xl fade-in-up delay-100">
-          <span class="text-muted text-sm uppercase tracking-wide">Your Current Level</span>
-          <div class="mt-sm">
-            <span class="badge badge-primary" style="font-size: var(--text-xl); padding: var(--space-md) var(--space-2xl);">
-              {{ user_profile.get_proficiency_level_display }}
-            </span>
+      {% endif %}
+
+      <!-- Daily Quests Card -->
+      {% if daily_quests %}
+        <section class="card card-bordered fade-in-up delay-150" style="margin-top: var(--space-3xl); margin-bottom: var(--space-2xl); background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #0ea5e9;">
+          <div class="card-body">
+            <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: var(--space-md);">
+              <div style="flex: 1; min-width: 250px;">
+                <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-xs);">
+                  <span style="font-size: 2rem;">🎯</span>
+                  <h3 class="card-title" style="margin: 0;">Daily Quests</h3>
+                </div>
+                <p class="text-muted" style="margin-bottom: var(--space-md);">{{ daily_quests.time_quest.date|date:"F j, Y" }}</p>
+                
+                {% if daily_quests.both_complete %}
+                  <div style="display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-md); background: var(--color-success-light, #d1fae5); border-radius: var(--radius-md); margin-bottom: var(--space-md);">
+                    <span style="font-size: 1.5rem;">✅</span>
+                    <div>
+                      <p style="font-weight: 600; color: var(--color-success); margin: 0;">All Quests Completed!</p>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">Come back tomorrow for new challenges</p>
+                    </div>
+                  </div>
+                {% else %}
+                  <p style="font-weight: 600; margin-bottom: var(--space-sm);">2 Quests Available Today</p>
+                  
+                  <div style="display: grid; gap: var(--space-sm); margin-bottom: var(--space-md);">
+                    <!-- Time Quest -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-sm); background: var(--color-surface); border-radius: var(--radius-sm);">
+                      <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                        <span>⏱️</span>
+                        <span style="font-size: var(--font-size-sm);">{{ daily_quests.time_quest.title }}</span>
+                      </div>
+                      {% if daily_quests.time_complete %}
+                        <span style="color: var(--color-success); font-size: var(--font-size-sm);">✓ Complete</span>
+                      {% else %}
+                        <span class="text-muted" style="font-size: var(--font-size-sm);">{{ daily_quests.time_progress }}/15 min</span>
+                      {% endif %}
+                    </div>
+                    
+                    <!-- Lesson Quest -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-sm); background: var(--color-surface); border-radius: var(--radius-sm);">
+                      <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                        <span>📚</span>
+                        <span style="font-size: var(--font-size-sm);">{{ daily_quests.lesson_quest.title }}</span>
+                      </div>
+                      {% if daily_quests.lesson_complete %}
+                        <span style="color: var(--color-success); font-size: var(--font-size-sm);">✓ Complete</span>
+                      {% else %}
+                        <span class="text-muted" style="font-size: var(--font-size-sm);">Pending</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                  
+                  <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                    <span>⭐</span>
+                    <span style="font-weight: 600; color: var(--color-success);">Up to {{ daily_quests.time_quest.xp_reward|add:daily_quests.lesson_quest.xp_reward }} XP available</span>
+                  </div>
+                {% endif %}
+              </div>
+              
+              <div style="display: flex; align-items: center;">
+                {% if daily_quests.both_complete %}
+                  <a href="{% url 'quest_history' %}" class="btn btn-outline">
+                    View History
+                  </a>
+                {% else %}
+                  <a href="{% url 'daily_quest' %}" class="btn btn-primary btn-lg">
+                    View Quests →
+                  </a>
+                {% endif %}
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
       {% endif %}
       
-      <!-- Stats Grid -->
-      <section class="stats-grid mt-4xl">
-        <div class="stat-card fade-in-up delay-200">
-          <div class="stat-icon">
-            📚
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">0</div>
-            <div class="stat-label">Lessons Completed</div>
-          </div>
-        </div>
-
-        <div class="stat-card fade-in-up delay-300">
-          <div class="stat-icon">
-            🎯
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">0</div>
-            <div class="stat-label">Quiz Score</div>
-          </div>
-        </div>
-
-        <div class="stat-card fade-in-up delay-400">
-          <div class="stat-icon">
-            🔥
-          </div>
-          <div class="stat-content">
-            <div class="stat-value">0</div>
-            <div class="stat-label">Day Streak</div>
-          </div>
-        </div>
-      </section>
-
       <!-- Quick Actions -->
       <section class="mt-3xl">
         <h3 class="text-3xl font-bold mb-xl text-center">Quick Actions</h3>
         <div class="features-grid">
           <a href="{% url 'lessons_list' %}" class="feature-item hover-lift" style="text-decoration: none;">
-            <div class="feature-icon">📖</div>
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+              </svg>
+            </div>
             <h3>Browse Lessons</h3>
             <p>Explore our catalog of interactive language lessons designed for your level.</p>
           </a>
 
           <a href="{% url 'progress' %}" class="feature-item hover-lift" style="text-decoration: none;">
-            <div class="feature-icon">📊</div>
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+            </div>
             <h3>View Progress</h3>
             <p>Track your learning journey with detailed statistics and achievements.</p>
           </a>
 
           <a href="{% url 'account' %}" class="feature-item hover-lift" style="text-decoration: none;">
-            <div class="feature-icon">⚙️</div>
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6m-9-9h6m6 0h6"></path>
+                <path d="M19.07 4.93l-4.24 4.24m0 5.66l4.24 4.24M4.93 4.93l4.24 4.24m0 5.66l-4.24 4.24"></path>
+              </svg>
+            </div>
             <h3>Account Settings</h3>
             <p>Update your profile, change password, and customize your experience.</p>
           </a>

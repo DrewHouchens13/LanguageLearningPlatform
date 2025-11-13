@@ -403,6 +403,12 @@ class UserProgress(models.Model):
     total_lessons_completed = models.IntegerField(default=0)
     total_quizzes_taken = models.IntegerField(default=0)
     overall_quiz_accuracy = models.FloatField(default=0.0)  # Percentage 0-100
+    
+    # Streak tracking
+    current_streak = models.IntegerField(default=0, help_text="Number of consecutive days with activity")
+    longest_streak = models.IntegerField(default=0, help_text="Longest streak ever achieved")
+    last_activity_date = models.DateField(null=True, blank=True, help_text="Last date user completed a lesson")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -411,6 +417,36 @@ class UserProgress(models.Model):
 
     def __str__(self):
         return f"Progress for {self.user.username}"
+    
+    def update_streak(self):
+        """
+        Update user's learning streak based on activity.
+        Call this whenever user completes a lesson.
+        """
+        from datetime import date, timedelta
+        
+        today = date.today()
+        
+        if self.last_activity_date is None:
+            # First activity ever
+            self.current_streak = 1
+            self.longest_streak = 1
+            self.last_activity_date = today
+        elif self.last_activity_date == today:
+            # Already studied today, no change to streak
+            pass
+        elif self.last_activity_date == today - timedelta(days=1):
+            # Studied yesterday, increment streak
+            self.current_streak += 1
+            if self.current_streak > self.longest_streak:
+                self.longest_streak = self.current_streak
+            self.last_activity_date = today
+        else:
+            # Missed a day, reset streak
+            self.current_streak = 1
+            self.last_activity_date = today
+        
+        self.save(update_fields=['current_streak', 'longest_streak', 'last_activity_date'])
 
     def calculate_quiz_accuracy(self):
         """
@@ -784,19 +820,19 @@ class LessonAttempt(models.Model):
 class DailyQuest(models.Model):
     """
     A daily quest generated from an existing lesson.
-    One quest per day, available to all users.
+    Two quests per day: one time-based, one lesson-based.
     """
     # Identification
-    date = models.DateField(unique=True, db_index=True)
+    date = models.DateField(db_index=True)
     title = models.CharField(max_length=200)
     description = models.TextField()
 
     # Source and Configuration
     based_on_lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
-    quest_type = models.CharField(max_length=20)  # 'flashcard', 'quiz'
+    quest_type = models.CharField(max_length=20)  # 'study' (time-based), 'quiz' (lesson-based)
 
     # Rewards
-    xp_reward = models.IntegerField()  # Calculated: lesson.xp_value * 0.75
+    xp_reward = models.IntegerField()
 
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
@@ -805,12 +841,15 @@ class DailyQuest(models.Model):
         ordering = ['-date']
         indexes = [
             models.Index(fields=['date']),
+            models.Index(fields=['date', 'quest_type']),
         ]
+        # Allow two quests per day, but only one of each type
+        unique_together = [['date', 'quest_type']]
         verbose_name = "Daily Quest"
         verbose_name_plural = "Daily Quests"
 
     def __str__(self):
-        return f"Daily Quest - {self.date} - {self.title}"
+        return f"Daily Quest - {self.date} - {self.quest_type} - {self.title}"
 
 
 class DailyQuestQuestion(models.Model):

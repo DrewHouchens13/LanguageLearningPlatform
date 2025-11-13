@@ -23,6 +23,12 @@
          class="nav-link {% if '/lessons/' in request.path %}active{% endif %}">
         Lessons
       </a>
+      {% if user.is_authenticated %}
+        <a href="{% if IS_DEVEDU %}../quests/daily/{% else %}{% url 'daily_quest' %}{% endif %}" 
+           class="nav-link {% if '/quests/' in request.path %}active{% endif %}">
+          Quests
+        </a>
+      {% endif %}
       <a href="{% if IS_DEVEDU %}../progress/{% else %}{% url 'progress' %}{% endif %}" 
          class="nav-link {% if request.path == '/progress/' %}active{% endif %}">
         Progress
@@ -38,7 +44,9 @@
     <!-- Right Side - User Section -->
     <div class="nav-right">
       {% if user.is_authenticated %}
-        <div class="nav-user">
+        <a href="{% if IS_DEVEDU %}../account/{% else %}{% url 'account' %}{% endif %}" 
+           class="nav-user"
+           style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-md); transition: background-color 0.2s ease;">
           {% if user.profile %}
             <img src="{{ user.profile.get_avatar_thumbnail_url }}" 
                  alt="{{ user.username }}" 
@@ -49,15 +57,13 @@
                  class="avatar avatar-sm">
           {% endif %}
           <span class="nav-username hide-mobile">{{ user.username }}</span>
-        </div>
-        <a href="{% if IS_DEVEDU %}../account/{% else %}{% url 'account' %}{% endif %}" 
-           class="btn btn-ghost btn-sm">
-          Account
         </a>
-        <a href="{% if IS_DEVEDU %}../logout/{% else %}{% url 'logout' %}{% endif %}" 
-           class="btn btn-primary btn-sm">
-          Logout
-        </a>
+        <form method="post" action="{% if IS_DEVEDU %}../logout/{% else %}{% url 'logout' %}{% endif %}" style="display: inline; margin: 0;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary btn-sm" style="cursor: pointer;">
+            Logout
+          </button>
+        </form>
       {% else %}
         <a href="{% if IS_DEVEDU %}../login/{% else %}{% url 'login' %}{% endif %}" 
            class="btn btn-ghost btn-sm">

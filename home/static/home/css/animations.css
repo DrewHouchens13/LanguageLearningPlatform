@@ -704,6 +704,124 @@
 }
 
 /* ===================================
+   FIRE ANIMATION FOR STREAK TRACKER
+   =================================== */
+
+.streak-fire-container {
+  position: relative;
+  width: 120px;
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Fire Emoji Container */
+.fire-emoji {
+  font-size: 5rem;
+  line-height: 1;
+  display: block;
+  position: relative;
+  z-index: 2;
+}
+
+/* Active Fire Animation */
+.fire-emoji.active {
+  animation: fireFlicker 1.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 20px rgba(255, 107, 107, 0.6)) 
+          drop-shadow(0 0 40px rgba(255, 138, 101, 0.4));
+}
+
+@keyframes fireFlicker {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+    filter: drop-shadow(0 0 20px rgba(255, 107, 107, 0.6)) 
+            drop-shadow(0 0 40px rgba(255, 138, 101, 0.4))
+            brightness(1);
+  }
+  25% {
+    transform: scale(1.05) translateY(-3px);
+    filter: drop-shadow(0 0 25px rgba(255, 107, 107, 0.8)) 
+            drop-shadow(0 0 50px rgba(255, 138, 101, 0.5))
+            brightness(1.1);
+  }
+  50% {
+    transform: scale(0.98) translateY(2px);
+    filter: drop-shadow(0 0 15px rgba(255, 107, 107, 0.5)) 
+            drop-shadow(0 0 35px rgba(255, 138, 101, 0.3))
+            brightness(0.95);
+  }
+  75% {
+    transform: scale(1.03) translateY(-2px);
+    filter: drop-shadow(0 0 22px rgba(255, 107, 107, 0.7)) 
+            drop-shadow(0 0 45px rgba(255, 138, 101, 0.45))
+            brightness(1.05);
+  }
+}
+
+/* Dead Fire (No Streak) */
+.fire-emoji.dead {
+  filter: grayscale(100%) brightness(0.6);
+  opacity: 0.5;
+}
+
+/* Glow Effect Behind Fire */
+.fire-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(255, 107, 107, 0.3) 0%, rgba(255, 138, 101, 0.2) 40%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(20px);
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.fire-glow.active {
+  opacity: 1;
+  animation: fireGlowPulse 2s ease-in-out infinite;
+}
+
+@keyframes fireGlowPulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+  }
+}
+
+/* Streak Stats */
+.streak-stats {
+  text-align: center;
+  margin-top: var(--space-sm);
+}
+
+.streak-number {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  display: block;
+  margin-bottom: var(--space-xs);
+}
+
+.streak-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* ===================================
    REDUCED MOTION OVERRIDES
    =================================== */
 
@@ -724,7 +842,9 @@
   .float,
   .heartbeat,
   .attention,
-  .blink {
+  .blink,
+  .fire-emoji.active,
+  .fire-glow.active {
     animation: none !important;
   }
   
