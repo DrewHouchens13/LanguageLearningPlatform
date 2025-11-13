@@ -6,10 +6,14 @@ Welcome to the Language Learning Platform! This guide will help you get started 
 
 - [Getting Started](#getting-started)
 - [Creating an Account](#creating-an-account)
+- [Taking the Placement Test](#taking-the-placement-test)
 - [Logging In](#logging-in)
 - [Managing Your Account](#managing-your-account)
 - [Password & Username Recovery](#password--username-recovery)
 - [Using the Dashboard](#using-the-dashboard)
+- [Learning with Lessons](#learning-with-lessons)
+- [Daily Quests](#daily-quests)
+- [XP and Leveling System](#xp-and-leveling-system)
 - [Tracking Your Progress](#tracking-your-progress)
 - [Security & Privacy](#security--privacy)
 - [Troubleshooting](#troubleshooting)
@@ -57,6 +61,43 @@ Your password must:
 ### After Registration
 
 You'll be automatically logged in and redirected to the landing page. Your username is automatically generated from your email address.
+
+**Important:** After creating your account, we recommend taking the placement test to personalize your learning experience!
+
+---
+
+## Taking the Placement Test
+
+The placement test (onboarding assessment) helps us understand your current language level and customize your learning path.
+
+### How to Take the Test
+
+1. **Navigate to "Placement Test"** from the navigation menu or dashboard
+2. **Read the welcome instructions** explaining the test format
+3. **Click "Start Assessment"** when ready
+4. **Answer 5 questions** testing your Spanish knowledge
+5. **Submit your answers** when complete
+6. **View your results** including:
+   - Score and proficiency level (Beginner, Intermediate, or Advanced)
+   - Personalized feedback
+   - Recommended next steps
+
+### Test Features
+
+- **Multiple Choice Format:** Each question has 4 possible answers
+- **Immediate Feedback:** See your results instantly after submission
+- **Proficiency Levels:**
+  - **Beginner** (0-60%): Start with fundamental concepts
+  - **Intermediate** (60-80%): Build on existing knowledge
+  - **Advanced** (80-100%): Challenge yourself with complex material
+- **Retake Anytime:** You can retake the test to update your level
+
+### After the Test
+
+Based on your results, you'll receive:
+- A proficiency level badge
+- Personalized lesson recommendations
+- Access to appropriate difficulty content
 
 ---
 
@@ -231,10 +272,163 @@ After logging in, access your dashboard by clicking **"Dashboard"** in the navig
 ### Dashboard Features
 
 Your dashboard shows:
-- Welcome message with your name
-- Your email and username
-- Member since date
-- Quick links to courses, progress, and study schedule
+- **Profile Section:** Your avatar, name, and member-since date
+- **XP and Level:** Current level, total XP, and progress to next level
+- **Streak Counter:** Days of consecutive learning activity
+- **Daily Quests:** Two quests refreshed daily
+  - Time-based quest: Study for 15 minutes
+  - Lesson-based quest: Complete a specific lesson
+- **Recommended Lessons:** Personalized lesson suggestions
+- **Recent Activity:** Your latest completed lessons and achievements
+
+---
+
+## Learning with Lessons
+
+Access interactive lessons by clicking **"Lessons"** in the navigation menu.
+
+### Lesson Types
+
+The platform offers two types of lessons:
+
+#### 1. **Flashcard Lessons**
+- Learn vocabulary through interactive flashcards
+- Click to flip cards and reveal translations
+- Navigate through cards at your own pace
+- Take a quiz to test your memory
+- **Example:** Colors, Numbers, Common Phrases
+
+#### 2. **Quiz Lessons**
+- Answer multiple-choice questions
+- Receive immediate feedback on your answers
+- Review correct answers after submission
+- Track your accuracy and improvement
+- **Example:** Grammar, Verb Conjugation, Comprehension
+
+### Taking a Lesson
+
+1. **Browse Lessons** from the lessons page
+2. **Click on a lesson** to view details
+3. **Start the Lesson:**
+   - For flashcards: Study the cards, then click "Take Quiz"
+   - For quizzes: Click "Start Quiz" to begin
+4. **Complete the Quiz:** Answer all questions
+5. **Submit Your Answers** when finished
+6. **View Results:**
+   - Score and percentage
+   - XP earned
+   - Correct/incorrect answers review
+   - Option to retry
+
+### Lesson Features
+
+- **Progress Tracking:** See which lessons you've completed
+- **XP Rewards:** Earn experience points for each completed lesson
+- **Difficulty Levels:** Lessons are categorized by proficiency level
+- **Immediate Feedback:** Know your score right away
+- **Review Mode:** Go back to review lesson content anytime
+
+---
+
+## Daily Quests
+
+Complete daily quests to earn bonus XP and maintain your learning streak!
+
+### Quest Types
+
+Every day at midnight, two new quests are generated:
+
+#### 1. **Time-Based Quest** (⏱️ Study for 15 Minutes)
+- **Goal:** Accumulate 15 minutes of study time
+- **Reward:** 50 XP
+- **How it Works:**
+  - Complete any lesson quizzes throughout the day
+  - Time is automatically tracked
+  - Progress bar shows your current time
+- **Completion:** Automatically completes when you reach 15 minutes
+
+#### 2. **Lesson-Based Quest** (📚 Complete Specific Lesson)
+- **Goal:** Complete the assigned lesson
+- **Reward:** Same XP as the lesson (typically 100-150 XP)
+- **How it Works:**
+  - A random published lesson is assigned
+  - Click "Go to [Lesson Name]" to start
+  - Complete the lesson quiz
+- **Completion:** Automatically completes when you finish the assigned lesson
+
+### Accessing Daily Quests
+
+1. Click **"Daily Quests"** in the dashboard
+2. View both quest cards showing:
+   - Quest title and description
+   - Progress indicator
+   - XP reward
+   - Completion status
+3. Click the action button to start working on a quest
+
+### Quest Features
+
+- **Daily Refresh:** New quests every day at midnight
+- **Automatic Completion:** Quests complete automatically when goals are met
+- **Quest History:** View past completed quests and total XP earned
+- **Streak Bonus:** Completing quests daily helps maintain your learning streak
+- **Both Completable:** You can complete both quests in one day for maximum XP!
+
+### Quest History
+
+Click **"Quest History"** to view:
+- All completed quests
+- Completion dates
+- XP earned from each quest
+- Total quest XP across all time
+- Performance statistics
+
+---
+
+## XP and Leveling System
+
+Track your progress and unlock achievements through our XP (Experience Points) and leveling system.
+
+### Earning XP
+
+You can earn XP in multiple ways:
+
+| Activity | XP Earned |
+|----------|-----------|
+| Complete a Flashcard Lesson | 100 XP |
+| Complete a Quiz Lesson | 150 XP |
+| Complete Time-Based Daily Quest | 50 XP |
+| Complete Lesson-Based Daily Quest | 100-150 XP (same as lesson) |
+
+### Level System
+
+- **Starting Level:** Level 1 (0 XP)
+- **Level Progression:** XP required increases with each level
+- **Current Level Display:** Visible on dashboard and progress page
+- **Level Badges:** Visual indicators of your current level
+
+### XP Calculation Formula
+
+XP required for next level = `100 × current_level`
+
+**Example:**
+- Level 1 → Level 2: 100 XP needed
+- Level 2 → Level 3: 200 XP needed
+- Level 5 → Level 6: 500 XP needed
+
+### Tracking Your XP
+
+View your XP progress on:
+- **Dashboard:** Large circular progress indicator
+- **Progress Page:** Detailed XP statistics
+- **Navigation Bar:** Current level display (for quick reference)
+
+### Benefits of Leveling Up
+
+- 🏆 **Achievement Recognition:** Higher levels show your dedication
+- 📊 **Progress Motivation:** Visual feedback on your learning journey
+- 🎯 **Goal Setting:** Work towards reaching the next level
+- 📈 **Skill Indication:** Your level reflects your learning activity
 
 ---
 
@@ -403,34 +597,40 @@ If you're having account-related issues that can't be resolved:
 
 | Task | Location | Notes |
 |------|----------|-------|
+| Take placement test | Onboarding menu | Determines proficiency level |
+| Start a lesson | Lessons → Select lesson | Flashcards or quizzes |
+| View daily quests | Dashboard → Daily Quests | Refreshes daily at midnight |
+| Check XP/Level | Dashboard or Progress | Track your advancement |
 | Update email | Account → Update Email | Requires password |
 | Update name | Account → Update Name | First name required |
 | Update username | Account → Update Username | Must be unique |
 | Change password | Account → Change Password | Requires current password |
+| Upload avatar | Account → Update Profile Picture | Max 5MB, PNG/JPG |
 | Reset password | Login → Forgot Password? | Link expires in 20 min |
 | Get username | Login → Forgot Username? | Sent via email |
-| View progress | My Progress in navigation | Real-time statistics |
+| View progress | Progress in navigation | Real-time statistics |
+| View quest history | Daily Quests → Quest History | Past completions |
 | Access dashboard | Dashboard in navigation | Personal overview |
 
 ### Navigation Structure
 
 **When Logged Out:**
 - Home
-- Courses
-- Lessons
-- My Progress
+- Lessons (shows login prompt)
+- Progress (shows login prompt)
 - Login
-- Sign Up
+- Get Started
 
 **When Logged In:**
 - Home
-- Courses
-- Lessons
-- My Progress
 - Dashboard
+- Lessons
+- Progress
+- Daily Quests (via Dashboard)
 - Admin (staff only)
-- Account
-- Logout
+- Profile Picture (dropdown menu):
+  - Account
+  - Logout
 
 ### Password Requirements Checklist
 
@@ -453,25 +653,37 @@ If you're having account-related issues that can't be resolved:
 
 This guide is updated regularly as new features are added to the platform.
 
-**Last Updated:** October 26, 2025
+**Last Updated:** November 13, 2025
 
 **Recent Changes:**
-- Added account management section
-- Added password recovery guide
-- Added username recovery guide
-- Added security best practices
-- Added troubleshooting section
+- Added placement test/onboarding section
+- Added learning with lessons section (flashcards & quizzes)
+- Added daily quests system documentation
+- Added XP and leveling system guide
+- Updated dashboard features description
+- Updated navigation structure
+- Modernized UI and user experience
 
 ---
 
 ## Glossary
 
 **Account:** Your user profile and login credentials
-**Dashboard:** Your personal overview page
+**Avatar:** Your profile picture (custom upload or Gravatar)
+**Dashboard:** Your personal overview page with XP, quests, and recommendations
+**Daily Quest:** Time-limited challenges that refresh every 24 hours
+**Flashcard:** Interactive vocabulary card that flips to show translation
+**Lesson:** A learning module with either flashcards or quiz questions
+**Level:** Your current rank based on total XP earned
+**Placement Test:** Initial assessment to determine your proficiency level
 **Progress:** Statistics tracking your learning achievements
+**Proficiency Level:** Your skill rating (Beginner, Intermediate, Advanced)
+**Quest History:** Archive of all completed daily quests
 **Session:** The period you're logged in
+**Streak:** Consecutive days of learning activity
 **Token:** A secure temporary code for password reset
 **Username:** Your unique identifier that can be used to log in (along with email)
+**XP (Experience Points):** Points earned for completing lessons and quests
 **Staff:** Users with admin privileges
 
 ---

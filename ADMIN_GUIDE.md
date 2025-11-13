@@ -6,8 +6,10 @@ This guide explains how to access and use the Django admin interface to manage u
 1. [Creating Your First Admin Account](#creating-your-first-admin-account)
 2. [Accessing the Admin Interface](#accessing-the-admin-interface)
 3. [Managing Users](#managing-users)
-4. [Managing User Progress](#managing-user-progress)
-5. [Admin Actions Reference](#admin-actions-reference)
+4. [Managing Lessons](#managing-lessons)
+5. [Managing Daily Quests](#managing-daily-quests)
+6. [Managing User Progress](#managing-user-progress)
+7. [Admin Actions Reference](#admin-actions-reference)
 
 ---
 
@@ -175,6 +177,123 @@ Admin actions allow you to perform operations on multiple users at once.
 3. Click Go
 
 ⚠️ **Warning**: This action **permanently deletes** all progress data. Cannot be undone.
+
+---
+
+## Managing Lessons
+
+The admin interface provides tools to create and manage lessons, flashcards, and quiz questions.
+
+### Viewing Lessons
+
+1. Click **Lessons** in the admin home page
+2. View all lessons with:
+   - Title and slug
+   - Lesson type (flashcard or quiz)
+   - XP value
+   - Category
+   - Publication status
+   - Order
+
+### Creating a Lesson
+
+1. Click **Add Lesson** button
+2. Fill in required fields:
+   - **Title**: Name of the lesson (e.g., "Colors", "Numbers")
+   - **Slug**: URL-friendly identifier (auto-generated from title)
+   - **Lesson Type**: Choose "flashcard" or "quiz"
+   - **XP Value**: Experience points awarded (default: 100)
+   - **Category**: Learning category (e.g., "Vocabulary", "Grammar")
+   - **Is Published**: Check to make lesson visible to users
+   - **Order**: Display order in lesson list
+3. Click **Save**
+
+### Adding Content to Lessons
+
+#### For Flashcard Lessons:
+1. Open the lesson in admin
+2. Scroll to **Flashcards** section
+3. Click **Add another Flashcard**
+4. Fill in:
+   - Front text (e.g., "Red")
+   - Back text (e.g., "Rojo")
+   - Order (determines display sequence)
+   - Optional: Image URL, Audio URL
+5. Repeat for all flashcards (minimum 5 recommended)
+6. Click **Save**
+
+#### For Quiz Lessons:
+1. Open the lesson in admin
+2. Scroll to **Quiz Questions** section
+3. Click **Add another Quiz Question**
+4. Fill in:
+   - Question text
+   - Options (JSON array: `["Option 1", "Option 2", "Option 3", "Option 4"]`)
+   - Correct index (0-3, indicating which option is correct)
+   - Explanation (optional feedback text)
+   - Order
+5. Repeat for all questions (minimum 5 recommended)
+6. Click **Save**
+
+### Bulk Actions for Lessons
+
+- **Publish selected lessons**: Make multiple lessons visible to users
+- **Unpublish selected lessons**: Hide lessons from users
+- **Delete selected lessons**: Permanently remove lessons
+
+---
+
+## Managing Daily Quests
+
+Daily quests are automatically generated each day. Admins can view and manage quest data.
+
+### How Daily Quests Work
+
+The system automatically generates two quests per day at midnight:
+
+1. **Time-Based Quest**: "Study for 15 Minutes" - 50 XP
+2. **Lesson-Based Quest**: "Complete [Random Lesson]" - Varies by lesson
+
+### Viewing Daily Quests
+
+1. Click **Daily Quests** in the admin home page
+2. View all quests with:
+   - Date
+   - Title
+   - Quest type (study or quiz)
+   - Based on lesson
+   - XP reward
+   - Number of user attempts
+
+### Quest Generation
+
+Quests are generated automatically by the `DailyQuestService`:
+- Runs daily at midnight
+- Selects a random published lesson for lesson-based quest
+- Creates both quest types for the day
+- Reuses existing quests if already generated for that date
+
+### Managing Quest Attempts
+
+1. Click **User Daily Quest Attempts** in admin
+2. View user progress on quests:
+   - User
+   - Daily quest
+   - Completion status
+   - Correct answers / Total questions
+   - XP earned
+   - Completion timestamp
+3. Filter by user, quest, or completion status
+
+### Quest History
+
+Administrators can:
+- View total quests completed by users
+- Check XP earned from quests
+- Identify most popular quest types
+- Monitor daily engagement
+
+**Note**: The daily quest system is fully automated. Manual quest creation is not required.
 
 ---
 

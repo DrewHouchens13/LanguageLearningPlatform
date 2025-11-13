@@ -854,7 +854,16 @@ class DailyQuest(models.Model):
 
 class DailyQuestQuestion(models.Model):
     """
-    A single question in a daily quest.
+    LEGACY MODEL - No longer used in current implementation.
+    
+    Daily quests now pull questions directly from lessons rather than
+    storing pre-generated questions. This model is kept for:
+    - Database migration compatibility
+    - Historical test data
+    
+    Do not use this model for new features.
+    
+    Original purpose: A single question in a daily quest.
     Format depends on quest_type (flashcard vs quiz).
     """
     # Relationship

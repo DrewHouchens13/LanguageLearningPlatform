@@ -4,21 +4,39 @@ An interactive web application that helps users incorporate AI into their langua
 
 ## Features
 
-- 📊 **Progress Dashboard**: Track your learning statistics and achievements
-- 📚 **Lesson System**: Structured language learning courses
-- 📈 **Weekly Stats**: Monitor your study time, units completed, and quiz accuracy
-- 🎯 **Career Progress**: Lifetime learning statistics
-- 🌍 **Multi-Language Support**: Learn different languages with tier-based progression
-- 💡 **Insights**: Identify your strongest and weakest skills
-- 🔐 **Secure Authentication**: Email-based login with comprehensive validation
-- 👤 **Account Management**: Update email, name, username, and password
-- 🔑 **Password Recovery**: Email-based password reset with secure tokens
-- 📧 **Username Recovery**: Forgot username? Get a reminder via email
-- 👨‍💼 **Admin Panel**: Enhanced Django admin with unified navigation and bulk operations
+### Learning & Progress
+- 📝 **Placement Test**: Adaptive onboarding assessment to determine your proficiency level (Beginner, Intermediate, Advanced)
+- 📚 **Interactive Lessons**: Two lesson types - flashcards for vocabulary and quizzes for comprehension
+- 🎯 **Daily Quests**: Two daily challenges refresh at midnight (time-based and lesson-based)
+- ⭐ **XP & Leveling System**: Earn experience points and level up as you learn
+- 🔥 **Streak Tracking**: Maintain your learning momentum with consecutive day tracking
+- 📊 **Progress Dashboard**: Comprehensive overview with XP, quests, and personalized recommendations
+- 📈 **Weekly & Lifetime Stats**: Monitor study time, lessons completed, and quiz accuracy
+- 🏆 **Quest History**: View all completed quests and total XP earned
+
+### User Experience
+- 🎨 **Modern UI**: Clean, responsive design with smooth animations and gradients
+- 📱 **Mobile-First**: Fully responsive across all device sizes
+- 🖼️ **Avatar System**: Custom profile pictures with automatic Gravatar integration
+- 🎮 **Gamification**: Level badges, progress indicators, and achievement tracking
+- 💬 **Immediate Feedback**: Instant results and detailed answer reviews
+
+### Account & Security
+- 🔐 **Secure Authentication**: Email/username-based login with comprehensive validation
+- 👤 **Account Management**: Update email, name, username, password, and avatar
+- 🔑 **Password Recovery**: Secure token-based password reset (simulated email for demo)
+- 📧 **Username Recovery**: Forgot username reminder via email (simulated for demo)
 - 🛡️ **Security Features**: IP validation, login attempt logging, password validation, account change tracking
-- ✅ **Comprehensive Testing**: 129 tests with 89% code coverage including security edge cases
-- 📱 **Responsive Design**: Works on desktop and mobile devices
-- 🔄 **Production Ready**: Email retry mechanism, cache validation, configuration checks
+
+### Administration
+- 👨‍💼 **Admin Panel**: Enhanced Django admin with unified navigation and bulk operations
+- 📊 **Analytics Dashboard**: Track user engagement, lesson completion rates, and quest performance
+- 🔧 **Content Management**: Create and manage lessons, quizzes, and daily quests
+
+### Technical
+- ✅ **Comprehensive Testing**: 443 tests with 91% code coverage including security edge cases
+- 🔄 **Production Ready**: Deployed on Render.com with PostgreSQL database
+- 🚀 **Performance Optimized**: Static file caching, efficient queries, and CDN integration
 
 ## Tech Stack
 

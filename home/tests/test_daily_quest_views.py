@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
-from home.models import Lesson, DailyQuest, DailyQuestQuestion, UserDailyQuestAttempt, Flashcard
+from home.models import Lesson, DailyQuest, UserDailyQuestAttempt
 
 
 class TestDailyQuestView(TestCase):
@@ -69,281 +69,51 @@ class TestDailyQuestView(TestCase):
         response = self.client.get(reverse('daily_quest'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Daily Colors Challenge')
-        self.assertContains(response, '75 XP')
-        self.assertContains(response, 'Start Quest')
+        # Check for the new quest page elements
+        self.assertContains(response, 'Daily Quests')
+        self.assertContains(response, 'Study for 15 Minutes')
+        self.assertContains(response, 'Complete')
+        self.assertContains(response, 'XP')
 
     def test_daily_quest_view_shows_completion_status_if_completed(self):
         """Test view shows completion status when quest completed"""
         self.client.login(username='testuser', password='testpass123')
-
-        # Create completed attempt
+        
+        # Get the actual quests that would be generated for today
+        from datetime import date
+        from home.services.daily_quest_service import DailyQuestService
+        
+        today = date.today()
+        quests = DailyQuestService.generate_quests_for_date(today)
+        
+        # Create completed attempt for time quest
         UserDailyQuestAttempt.objects.create(
             user=self.user,
-            daily_quest=self.quest,
-            correct_answers=4,
-            total_questions=5,
-            xp_earned=60,
+            daily_quest=quests['time_quest'],
+            correct_answers=1,
+            total_questions=1,
+            xp_earned=50,
             is_completed=True
         )
 
         response = self.client.get(reverse('daily_quest'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Quest Completed')
-        self.assertContains(response, '4/5')
-        self.assertContains(response, 'XP Earned: 60')
-        self.assertNotContains(response, 'Start Quest')
+        self.assertContains(response, 'Quest Completed!')
+        self.assertContains(response, 'XP earned')
 
     def test_daily_quest_view_generates_quest_if_not_exists(self):
-        """Test view generates quest if none exists for today"""
-        # Delete existing quest
-        self.quest.delete()
+        """Test view generates quests if none exist for today"""
+        # Delete all quests
+        DailyQuest.objects.all().delete()
 
         self.client.login(username='testuser', password='testpass123')
 
         response = self.client.get(reverse('daily_quest'))
 
         self.assertEqual(response.status_code, 200)
-        # Should have generated a new quest
-        self.assertTrue(DailyQuest.objects.filter(date=date.today()).exists())
-
-
-class TestStartDailyQuestView(TestCase):
-    """Test start_daily_quest view"""
-
-    def setUp(self):
-        """Create test user and quest"""
-        self.client = Client()
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
-        )
-
-        # Create lesson
-        self.lesson = Lesson.objects.create(
-            title='Colors',
-            slug='colors',
-            lesson_type='flashcard',
-            xp_value=100,
-            is_published=True
-        )
-
-        # Create quest
-        self.quest = DailyQuest.objects.create(
-            date=date.today(),
-            title='Daily Colors Challenge',
-            description='Test quest',
-            based_on_lesson=self.lesson,
-            quest_type='flashcard',
-            xp_reward=75
-        )
-        # Add questions
-        for i in range(5):
-            DailyQuestQuestion.objects.create(
-                daily_quest=self.quest,
-                question_text=f'Q{i+1}',
-                answer_text=f'A{i+1}',
-                order=i+1
-            )
-
-    def test_start_quest_requires_authentication(self):
-        """Test view requires authentication"""
-        response = self.client.post(reverse('start_daily_quest'))
-
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
-
-    def test_start_quest_requires_post(self):
-        """Test view requires POST method"""
-        self.client.login(username='testuser', password='testpass123')
-
-        response = self.client.get(reverse('start_daily_quest'))
-
-        self.assertEqual(response.status_code, 405)  # Method not allowed
-
-    def test_start_quest_creates_attempt(self):
-        """Test view creates UserDailyQuestAttempt"""
-        self.client.login(username='testuser', password='testpass123')
-
-        response = self.client.post(reverse('start_daily_quest'))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(
-            UserDailyQuestAttempt.objects.filter(
-                user=self.user,
-                daily_quest=self.quest
-            ).exists()
-        )
-
-    def test_start_quest_prevents_duplicate_attempts(self):
-        """Test view prevents creating duplicate attempts"""
-        self.client.login(username='testuser', password='testpass123')
-
-        # Create first attempt
-        self.client.post(reverse('start_daily_quest'))
-
-        # Try to create duplicate
-        response = self.client.post(reverse('start_daily_quest'))
-
-        self.assertEqual(response.status_code, 400)
-        # Should only have one attempt
-        self.assertEqual(
-            UserDailyQuestAttempt.objects.filter(
-                user=self.user,
-                daily_quest=self.quest
-            ).count(),
-            1
-        )
-
-    def test_start_quest_returns_json_with_questions(self):
-        """Test view returns JSON with quest questions"""
-        self.client.login(username='testuser', password='testpass123')
-
-        response = self.client.post(reverse('start_daily_quest'))
-
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('questions', data)
-        self.assertEqual(len(data['questions']), 5)
-
-
-class TestSubmitDailyQuestView(TestCase):
-    """Test submit_daily_quest view"""
-
-    def setUp(self):
-        """Create test user, quest, and attempt"""
-        self.client = Client()
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
-        )
-        # Create user profile for XP tracking
-        from home.models import UserProfile
-        if not hasattr(self.user, 'profile'):
-            UserProfile.objects.create(user=self.user)
-
-        # Create lesson
-        self.lesson = Lesson.objects.create(
-            title='Colors',
-            slug='colors',
-            lesson_type='flashcard',
-            xp_value=100,
-            is_published=True
-        )
-
-        # Create quest
-        self.quest = DailyQuest.objects.create(
-            date=date.today(),
-            title='Daily Colors Challenge',
-            description='Test quest',
-            based_on_lesson=self.lesson,
-            quest_type='flashcard',
-            xp_reward=75
-        )
-        # Add questions
-        self.questions = []
-        for i in range(5):
-            q = DailyQuestQuestion.objects.create(
-                daily_quest=self.quest,
-                question_text=f'Question {i+1}',
-                answer_text=f'Answer {i+1}',
-                order=i+1
-            )
-            self.questions.append(q)
-
-        # Create attempt
-        self.attempt = UserDailyQuestAttempt.objects.create(
-            user=self.user,
-            daily_quest=self.quest
-        )
-
-    def test_submit_quest_requires_authentication(self):
-        """Test view requires authentication"""
-        response = self.client.post(reverse('submit_daily_quest'))
-
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
-
-    def test_submit_quest_requires_post(self):
-        """Test view requires POST method"""
-        self.client.login(username='testuser', password='testpass123')
-
-        response = self.client.get(reverse('submit_daily_quest'))
-
-        self.assertEqual(response.status_code, 405)
-
-    def test_submit_quest_calculates_score_correctly(self):
-        """Test view calculates correct score"""
-        self.client.login(username='testuser', password='testpass123')
-
-        # Submit 4 correct answers
-        answers = {
-            str(self.questions[0].id): 'Answer 1',
-            str(self.questions[1].id): 'Answer 2',
-            str(self.questions[2].id): 'Answer 3',
-            str(self.questions[3].id): 'Answer 4',
-            str(self.questions[4].id): 'Wrong Answer'
-        }
-
-        response = self.client.post(
-            reverse('submit_daily_quest'),
-            data=answers
-        )
-
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data['correct_answers'], 4)
-        self.assertEqual(data['total_questions'], 5)
-
-    def test_submit_quest_awards_xp_correctly(self):
-        """Test view awards XP based on score"""
-        self.client.login(username='testuser', password='testpass123')
-
-        initial_xp = self.user.profile.total_xp
-
-        # Submit 4/5 correct (should award 60 XP: 75 * 4/5)
-        answers = {
-            str(self.questions[0].id): 'Answer 1',
-            str(self.questions[1].id): 'Answer 2',
-            str(self.questions[2].id): 'Answer 3',
-            str(self.questions[3].id): 'Answer 4',
-            str(self.questions[4].id): 'Wrong'
-        }
-
-        response = self.client.post(reverse('submit_daily_quest'), data=answers)
-
-        self.assertEqual(response.status_code, 200)
-        self.user.profile.refresh_from_db()
-        self.assertEqual(self.user.profile.total_xp, initial_xp + 60)
-
-    def test_submit_quest_marks_attempt_as_completed(self):
-        """Test view marks attempt as completed"""
-        self.client.login(username='testuser', password='testpass123')
-
-        answers = {str(q.id): f'Answer {i+1}' for i, q in enumerate(self.questions)}
-
-        response = self.client.post(reverse('submit_daily_quest'), data=answers)
-
-        self.assertEqual(response.status_code, 200)
-        self.attempt.refresh_from_db()
-        self.assertTrue(self.attempt.is_completed)
-        self.assertIsNotNone(self.attempt.completed_at)
-
-    def test_submit_quest_prevents_resubmission(self):
-        """Test view prevents submitting completed quest"""
-        self.client.login(username='testuser', password='testpass123')
-
-        # Mark as completed
-        self.attempt.is_completed = True
-        self.attempt.save()
-
-        answers = {str(q.id): 'Answer' for q in self.questions}
-        response = self.client.post(reverse('submit_daily_quest'), data=answers)
-
-        self.assertEqual(response.status_code, 400)
+        # Should have generated two new quests (time and lesson)
+        self.assertEqual(DailyQuest.objects.filter(date=date.today()).count(), 2)
 
 
 class TestQuestHistoryView(TestCase):
@@ -433,4 +203,4 @@ class TestQuestHistoryView(TestCase):
         response = self.client.get(reverse('quest_history'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'No completed quests')
+        self.assertContains(response, 'No Quests Completed Yet')
