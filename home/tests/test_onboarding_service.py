@@ -193,7 +193,7 @@ class TestOnboardingServiceCalculateProficiencyLevel(TestCase):
         # 4+4+6 = 14/19 = 73.7%, 4/4 A1 (100%), 2/3 A2 (66.7%), 2/3 B1 (66.7%) → B1
         self.assertEqual(level, 'B1')
 
-    def test_calculate_level_edge_case_exactly_60_b1_not_enough(self):
+    def test_calculate_level_edge_case_60_b1_insufficient(self):
         """Test calculation with exactly 60% on B1 but not enough overall"""
         answers_data = [
             # 3 out of 4 A1 correct (75%)

@@ -992,6 +992,108 @@ def article_list(request):
     return render(request, 'articles.html', {'articles': articles})
 ```
 
+### DevEDU Environment Compatibility
+
+**IMPORTANT**: All templates must be compatible with the DevEDU testing environment, which uses a reverse proxy at `/proxy/8000/`.
+
+#### Required Template Structure
+Templates should be standalone HTML files (not using template inheritance) with the following structure:
+
+```django
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Title - Language Learning Platform</title>
+    {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
+    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+  </head>
+  <body>
+    {% include '_nav.html' %}
+
+    <main>
+      <!-- Django Messages -->
+      {% if messages %}
+        <div class="page-messages">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <section class="hero">
+        <div class="hero-content">
+          <!-- Page content here -->
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+    </footer>
+
+    <script>
+      // Mobile menu toggle
+      const navToggle = document.querySelector('.nav-toggle');
+      const navMenu = document.querySelector('.nav-menu');
+
+      if (navToggle) {
+        navToggle.addEventListener('click', () => {
+          navMenu.classList.toggle('active');
+          navToggle.classList.toggle('active');
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+            navMenu.classList.remove('active');
+            navToggle.classList.remove('active');
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
+```
+
+#### Key DevEDU Requirements:
+1. **Base href tag**: `{% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}...">{% endif %}`
+   - This handles the reverse proxy path in the DevEDU environment
+   - Must be in the `<head>` section before any relative URLs
+   - The `IS_DEVEDU` context variable is provided by `home.context_processors.devedu_context`
+
+2. **Standalone HTML**: Templates should NOT use `{% extends %}` for inheritance
+   - Use full HTML structure in each template
+   - Include `{% include '_nav.html' %}` for navigation
+   - Duplicate footer and scripts across templates
+
+3. **Static files**: Always use `{% load static %}` and `{% static 'path' %}`
+
+4. **Testing**: Verify templates work in both local and DevEDU environments
+
+#### Context Processor Setup
+Ensure `home.context_processors.devedu_context` is in `settings.TEMPLATES.OPTIONS.context_processors`:
+
+```python
+'context_processors': [
+    # ... other processors
+    'home.context_processors.devedu_context',
+],
+```
+
+The context processor adds `IS_DEVEDU` based on the environment variable:
+```python
+def devedu_context(request):
+    """Add IS_DEVEDU flag to template context."""
+    return {
+        'IS_DEVEDU': settings.IS_DEVEDU
+    }
+```
+
 ---
 
 ## Security Practices

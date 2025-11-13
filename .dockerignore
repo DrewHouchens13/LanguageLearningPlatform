@@ -1,0 +1,66 @@
+# Test files - should not be deployed to production
+**/tests/
+**/test_*.py
+**/*_test.py
+pytest.ini
+.pytest_cache/
+coverage.xml
+.coverage
+htmlcov/
+*.cover
+
+# BDD test files
+features/
+**/steps/
+
+# Development and CI/CD files
+.github/
+.git/
+.gitignore
+.pylintrc
+.bandit
+pylint_output.txt
+bandit-report.json
+
+# Documentation
+*.md
+!README.md
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Local environment files
+.env
+.env.local
+*.env
+
+# Database
+*.sqlite3
+*.db
+
+# Static files (collected during build)
+staticfiles/
+
+# AI code reviews (development only)
+AI_code_reviews/
+
+# Personal workflow files (not needed in production)
+manchesterjm_*/
+CLAUDE.md
+SESSION_PROGRESS.md
+SPRINT*.md

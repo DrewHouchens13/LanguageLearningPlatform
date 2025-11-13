@@ -56,7 +56,7 @@ class AuthenticationFlowTest(TestCase):
     def test_login_redirect_to_next(self):
         """Test login redirects to 'next' parameter"""
         client = Client()
-        user = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
+        _ = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
         
         # Try to access protected page
         response = client.get('/dashboard/')

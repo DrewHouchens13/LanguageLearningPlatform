@@ -1,16 +1,8 @@
 from django.test import TestCase, Client
-from django.contrib.auth.models import User
-from django.urls import reverse, resolve
-from django.utils import timezone
-from django.core.cache import cache
-from datetime import timedelta
+from django.urls import reverse
 from enum import Enum
-from unittest.mock import patch
 
-from home.models import UserProgress, LessonCompletion, QuizResult
-from .test_utils import create_test_user, create_test_superuser, AdminTestCase
-
-from home.views import account_view
+from .test_utils import create_test_user
 
 
 # ============================================================================
@@ -338,8 +330,8 @@ class AccountViewTests(TestCase):
         )
 
         sql_payload = "admin' OR '1'='1"
-        old_username = self.user.username
-        response = self.client.post(reverse('account'), {
+        _old_username = self.user.username  # pylint: disable=unused-variable
+        _response = self.client.post(reverse('account'), {  # pylint: disable=unused-variable
             'action': AccountAction.UPDATE_USERNAME.value,
             'new_username': sql_payload
         })

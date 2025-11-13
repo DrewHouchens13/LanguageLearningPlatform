@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 import json
 
-from home.models import Lesson, Flashcard, LessonQuizQuestion, LessonAttempt
+from home.models import Lesson, LessonAttempt
 
 
 class TestColorsLessonManagementCommand(TestCase):

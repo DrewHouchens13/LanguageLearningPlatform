@@ -13,8 +13,8 @@ for production use.
 from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib.staticfiles.views import serve
+from django.views.static import serve as media_serve
 from home.views import logout_view
 
 urlpatterns = [
@@ -46,7 +46,6 @@ if settings.DEBUG:
     # Serve media files in development (user uploaded content)
     # Use hardcoded /media/ pattern so it works with DevEDU proxy
     # (proxy strips /proxy/8000 before Django sees the request)
-    from django.views.static import serve as media_serve
     urlpatterns += [
         re_path(r'^media/(?P<path>.*)$', media_serve, {'document_root': settings.MEDIA_ROOT}),
     ]
