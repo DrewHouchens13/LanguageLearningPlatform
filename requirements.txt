@@ -1,5 +1,5 @@
 asgiref==3.9.2
-Django==5.2.7
+Django==5.2.8  # Updated from 5.2.7 to fix CVEs: GHSA-qw25-v68c-qjf3, GHSA-frmv-pr5f-9mcr
 sqlparse==0.5.3
 
 # Production dependencies

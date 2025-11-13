@@ -1,0 +1,193 @@
+name: Security Scans
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run weekly on Mondays at 9am UTC
+    - cron: '0 9 * * 1'
+
+jobs:
+  bandit:
+    name: Bandit - CWE Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Bandit
+        run: pip install bandit[toml]
+
+      - name: Run Bandit Security Scan
+        run: |
+          bandit -r home/ config/ -c .bandit -f json -o bandit-report.json
+          bandit -r home/ config/ -c .bandit -f screen | tee bandit-screen.txt
+
+      - name: Upload Bandit JSON Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report-json
+          path: bandit-report.json
+
+      - name: Upload Bandit Screen Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report-txt
+          path: bandit-screen.txt
+
+      - name: Comment Bandit Results on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('bandit-screen.txt', 'utf8');
+
+            // Extract summary
+            const highMatch = report.match(/Severity: High: (\d+)/);
+            const mediumMatch = report.match(/Severity: Medium: (\d+)/);
+            const lowMatch = report.match(/Severity: Low: (\d+)/);
+
+            const high = highMatch ? highMatch[1] : '0';
+            const medium = mediumMatch ? mediumMatch[1] : '0';
+            const low = lowMatch ? lowMatch[1] : '0';
+
+            const passed = (high === '0' && medium === '0');
+            const status = passed ? '✅ Passed' : '❌ Failed';
+
+            const comment = `## Bandit Security Scan (CWE Coverage) 🔒\n\n**Status: ${status}**\n\n**Issues Found:**\n- 🔴 High: ${high}\n- 🟠 Medium: ${medium}\n- 🟡 Low: ${low}\n\n**CWE Categories Checked:** 50+ including SQL Injection, XSS, Command Injection, Insecure Deserialization, Hard-coded Credentials, Weak Crypto, and more.\n\n<details>\n<summary>Full Report</summary>\n\n\`\`\`\n${report}\n\`\`\`\n\n</details>`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  semgrep:
+    name: Semgrep - Advanced CWE/OWASP Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/django
+            p/python
+            p/owasp-top-ten
+            p/cwe-top-25
+          generateSarif: true
+
+      - name: Upload Semgrep SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+
+  pip-audit:
+    name: pip-audit - CVE Dependency Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Run pip-audit
+        run: |
+          pip-audit -r requirements.txt --desc --format json -o pip-audit-report.json || true
+          pip-audit -r requirements.txt --desc | tee pip-audit-screen.txt || true
+
+      - name: Upload pip-audit JSON Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-report-json
+          path: pip-audit-report.json
+
+      - name: Upload pip-audit Screen Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-report-txt
+          path: pip-audit-screen.txt
+
+      - name: Comment pip-audit Results on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let report = '';
+            try {
+              report = fs.readFileSync('pip-audit-screen.txt', 'utf8');
+            } catch (e) {
+              report = 'No vulnerabilities found or scan errored (check artifacts)';
+            }
+
+            const hasVulns = report.includes('Found') && !report.includes('Found 0');
+            const status = hasVulns ? '⚠️ Vulnerabilities Found' : '✅ No CVEs Found';
+
+            const comment = `## pip-audit CVE Scan 🛡️\n\n**Status: ${status}**\n\n**Checks:** Known CVE vulnerabilities in Python dependencies\n\n<details>\n<summary>Full Report</summary>\n\n\`\`\`\n${report}\n\`\`\`\n\n</details>`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  safety:
+    name: Safety - Additional CVE Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install safety
+
+      - name: Run Safety Check
+        run: |
+          safety check --json -o safety-report.json || true
+          safety check | tee safety-screen.txt || true
+
+      - name: Upload Safety Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: safety-reports
+          path: |
+            safety-report.json
+            safety-screen.txt

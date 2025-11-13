@@ -1,0 +1,141 @@
+# Bandit Security Configuration - Comprehensive CWE Coverage
+# This configuration runs ALL security checks for maximum vulnerability detection
+
+exclude_dirs:
+  - /venv/
+  - /env/
+  - /.venv/
+  - /migrations/
+  - /staticfiles/
+  - /static/
+  - /.pytest_cache/
+  - /node_modules/
+  - /.git/
+
+# REQUIRED TESTS (per assignment)
+# PLUS additional comprehensive CWE coverage
+tests:
+  # ===== REQUIRED TESTS (Assignment) =====
+  - B201  # flask_debug_true
+  - B501  # request_with_no_cert_validation
+  - B502  # ssl_with_bad_version
+  - B503  # ssl_with_bad_defaults
+  - B506  # yaml_load (insecure deserialization)
+  - B601  # paramiko_calls
+  - B602  # shell_with_shell_equals_true (command injection)
+
+  # ===== ADDITIONAL CWE COVERAGE (Maximum Security) =====
+  # CWE-78: OS Command Injection
+  - B603  # subprocess_without_shell_equals_true
+  - B604  # any_other_function_with_shell_equals_true
+  - B605  # start_process_with_a_shell
+  - B606  # start_process_with_no_shell
+  - B607  # start_process_with_partial_path
+
+  # CWE-502: Deserialization of Untrusted Data
+  - B301  # pickle usage
+  - B302  # marshal usage
+  - B303  # md5 usage
+  - B304  # ciphers
+  - B305  # cipher_modes
+  - B306  # mktemp_q
+
+  # CWE-89: SQL Injection
+  - B608  # hardcoded_sql_expressions
+
+  # CWE-94: Code Injection
+  - B307  # eval usage
+  - B308  # mark_safe usage (XSS risk in Django)
+  - B309  # httpsconnection
+  - B310  # urllib_urlopen
+  - B311  # random usage (weak crypto)
+  - B312  # telnetlib usage
+  - B313  # xml_bad_cElementTree
+  - B314  # xml_bad_ElementTree
+  - B315  # xml_bad_expatreader
+  - B316  # xml_bad_expatbuilder
+  - B317  # xml_bad_sax
+  - B318  # xml_bad_minidom
+  - B319  # xml_bad_pulldom
+  - B320  # xml_bad_etree
+
+  # CWE-327: Use of Broken Crypto
+  - B324  # hashlib new insecure functions
+  - B401  # import_telnetlib
+  - B402  # import_ftplib
+  - B403  # import_pickle
+  - B404  # import_subprocess
+  - B405  # import_xml_etree
+  - B406  # import_xml_sax
+  - B407  # import_xml_expat
+  - B408  # import_xml_minidom
+  - B409  # import_xml_pulldom
+  - B410  # import_lxml
+
+  # CWE-798: Use of Hard-coded Credentials
+  - B105  # hardcoded_password_string
+  - B106  # hardcoded_password_funcarg
+  - B107  # hardcoded_password_default
+
+  # Additional Security Checks
+  - B108  # hardcoded_tmp_directory
+  - B110  # try_except_pass (hides errors)
+  - B112  # try_except_continue
+  - B201  # flask_debug_true
+  - B202  # tarfile_unsafe_members
+  - B301  # pickle
+  - B302  # marshal
+  - B303  # md5
+  - B304  # ciphers
+  - B305  # cipher_modes
+  - B306  # mktemp_q
+  - B307  # eval
+  - B308  # mark_safe
+  - B309  # httpsconnection
+  - B310  # urllib_urlopen
+  - B311  # random
+  - B312  # telnetlib
+  - B321  # ftplib
+  - B322  # input
+  - B323  # unverified_context
+  - B324  # hashlib
+  - B325  # tempnam
+  - B401  # import_telnetlib
+  - B402  # import_ftplib
+  - B403  # import_pickle
+  - B404  # import_subprocess
+  - B405  # import_xml_etree
+  - B406  # import_xml_sax
+  - B407  # import_xml_expat
+  - B408  # import_xml_minidom
+  - B409  # import_xml_pulldom
+  - B410  # import_lxml
+  - B411  # import_xmlrpclib
+  - B412  # import_httpoxy
+  - B413  # import_pycrypto
+  - B414  # import_pycryptodome
+
+# Only skip known false positives (minimal)
+skips:
+  - B101  # assert_used - OK in test files only
+
+# Configure per-test behavior
+[hardcoded_password_string]
+# Skip B105 in test files (test fixtures need hardcoded passwords)
+skips: ['*/test_*.py', '*/tests/*.py', '*/tests.py']
+
+[hardcoded_password_funcarg]
+# Skip B106 in test files (test fixtures need hardcoded passwords)
+skips: ['*/test_*.py', '*/tests/*.py', '*/tests.py']
+
+# Report all severity levels
+severity:
+  - low
+  - medium
+  - high
+
+# Confidence levels
+confidence:
+  - low
+  - medium
+  - high
