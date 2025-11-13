@@ -4,15 +4,21 @@ Live Integration Test for XP System
 Tests the XP overflow protection and transaction safety in a live Django environment.
 """
 import os
+
 import django
 
-# Setup Django environment
+# Setup Django environment (must be done before Django imports)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
-from django.contrib.auth.models import User
-from django.db import transaction, DatabaseError
-from home.models import UserProfile
+# Django imports (after django.setup())
+# pylint: disable=wrong-import-position
+from django.contrib.auth.models import User  # noqa: E402
+from django.db import DatabaseError  # noqa: E402
+from home.models import UserProfile  # noqa: E402
+
+# Constants
+MAX_POSTGRESQL_INT = 2147483647  # 2^31 - 1, max value for PostgreSQL integer field
 
 def test_xp_overflow_protection():
     """Test that XP overflow is prevented."""
@@ -30,8 +36,7 @@ def test_xp_overflow_protection():
     profile = user.profile
 
     # Set XP near max value
-    max_int = 2147483647
-    profile.total_xp = max_int - 50
+    profile.total_xp = MAX_POSTGRESQL_INT - 50
     profile.save()
 
     print(f"[OK] Initial XP: {profile.total_xp}")
