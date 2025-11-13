@@ -306,11 +306,11 @@ class UserProfile(models.Model):
             }
 
         # Overflow protection: Check if adding amount would exceed max PositiveIntegerField
-        MAX_POSITIVE_INT = 2147483647  # 2^31 - 1
-        if self.total_xp + amount > MAX_POSITIVE_INT:
+        max_positive_int = 2147483647  # 2^31 - 1
+        if self.total_xp + amount > max_positive_int:
             raise ValueError(
                 f"XP overflow: {self.total_xp} + {amount} = {self.total_xp + amount} "
-                f"exceeds maximum ({MAX_POSITIVE_INT})"
+                f"exceeds maximum ({max_positive_int})"
             )
 
         # Use atomic transaction to ensure data integrity
