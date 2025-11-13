@@ -62,6 +62,9 @@ AI_code_reviews/
 # Claude Code specific files (not needed for non-Claude users)
 CLAUDE.md
 agents.md
+SESSION_PROGRESS.md
+manchesterjm_README.md
+manchesterjm_workflow/
 
 # OS-specific files
 .DS_Store
@@ -71,6 +74,7 @@ Thumbs.db
 *.bak
 *.tmp
 ~$*
+nul
 
 # pytest / test cache
 .pytest_cache/
@@ -80,26 +84,29 @@ Thumbs.db
 # ai code reviews ( no need to push these )
 *code.review*.txt
 *code.review*.md
+AI_CODE_REVIEW_FIXES.md
+AI_CODE_REVIEW_LOG.md
+process_ai_reviews.py
 
 # Live testing files (for manual local testing only, not part of test suite)
+live_test*.py
 test_live_features.py
 test_avatar_upload_live.py
 test_cloudinary_setup.py
 test_cloudinary_simple.py
 setup_test_data.py
 test_cloudinary_connection.py
-live_test_xp_system.py
 process_ai_reviews.py
 
 # other files to not push (assignment specs and reports are local only)
+manchesterjm_workflow/
 SPRINT_2_ASSIGNMENT.md
 SPRINT_2_REPORT.md
 SPRINT_3_ASSIGNMENT.md
 SPRINT_3_REPORT.md
 SPRINT3_PLAN.md
-SESSION_PROGRESS.md
-manchesterjm_README.md
 DAILY_QUEST_DESIGN.md
 AI_CODE_REVIEW_FIXES.md
 AI_CODE_REVIEW_LOG.md
-manchesterjm_workflow/
+SESSION_PROGRESS*
+manchesterjm_*

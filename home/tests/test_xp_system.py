@@ -9,10 +9,9 @@ Tests cover:
 - Integration with lesson completion
 """
 
-import pytest
 from django.contrib.auth.models import User
 from django.test import TestCase
-from home.models import UserProfile, Lesson, LessonAttempt
+from home.models import UserProfile, Lesson
 
 
 class TestXPCalculations(TestCase):
@@ -20,28 +19,28 @@ class TestXPCalculations(TestCase):
 
     def test_get_xp_for_level_1(self):
         """Level 1 requires 0 XP."""
-        assert UserProfile.get_xp_for_level(1) == 0
+        self.assertEqual(UserProfile.get_xp_for_level(1), 0)
 
     def test_get_xp_for_level_2(self):
         """Level 2 requires 100 XP."""
-        assert UserProfile.get_xp_for_level(2) == 100
+        self.assertEqual(UserProfile.get_xp_for_level(2), 100)
 
     def test_get_xp_for_level_3(self):
         """Level 3 requires 282 XP (100 * 2^1.5 = 282.84)."""
         xp = UserProfile.get_xp_for_level(3)
-        assert 280 <= xp <= 285  # Allow for rounding
+        self.assertTrue(280 <= xp <= 285, f"XP {xp} not in expected range 280-285")
 
     def test_get_xp_for_level_progression(self):
         """XP requirements increase progressively."""
         levels = [UserProfile.get_xp_for_level(i) for i in range(1, 11)]
         # Verify strictly increasing
         for i in range(len(levels) - 1):
-            assert levels[i] < levels[i + 1]
+            self.assertLess(levels[i], levels[i + 1])
 
     def test_get_xp_for_negative_level(self):
         """Negative level returns 0 XP."""
-        assert UserProfile.get_xp_for_level(-1) == 0
-        assert UserProfile.get_xp_for_level(0) == 0
+        self.assertEqual(UserProfile.get_xp_for_level(-1), 0)
+        self.assertEqual(UserProfile.get_xp_for_level(0), 0)
 
 
 class TestLevelCalculations(TestCase):
@@ -58,18 +57,18 @@ class TestLevelCalculations(TestCase):
 
     def test_initial_level_is_1(self):
         """New user starts at level 1."""
-        assert self.profile.current_level == 1
-        assert self.profile.total_xp == 0
+        self.assertEqual(self.profile.current_level, 1)
+        self.assertEqual(self.profile.total_xp, 0)
 
     def test_calculate_level_from_zero_xp(self):
         """0 XP = Level 1."""
         self.profile.total_xp = 0
-        assert self.profile.calculate_level_from_xp() == 1
+        self.assertEqual(self.profile.calculate_level_from_xp(), 1)
 
     def test_calculate_level_from_50_xp(self):
         """50 XP = Level 1 (under 100 threshold)."""
         self.profile.total_xp = 50
-        assert self.profile.calculate_level_from_xp() == 1
+        self.assertEqual(self.profile.calculate_level_from_xp(), 1)
 
     def test_calculate_level_from_100_xp(self):
         """100 XP = Level 2 (exactly at threshold)."""
@@ -196,11 +195,10 @@ class TestAwardXP(TestCase):
         assert result['leveled_up'] is False
 
     def test_award_negative_xp(self):
-        """Awarding negative XP does nothing."""
-        result = self.profile.award_xp(-50)
-        assert result['xp_awarded'] == 0
-        assert result['total_xp'] == 0
-        assert result['leveled_up'] is False
+        """Awarding negative XP raises ValueError."""
+        import pytest
+        with pytest.raises(ValueError, match="XP amount must be non-negative"):
+            self.profile.award_xp(-50)
 
     def test_award_xp_no_level_up(self):
         """Awarding XP without level up."""
@@ -208,7 +206,7 @@ class TestAwardXP(TestCase):
         assert result['leveled_up'] is False
         assert result['new_level'] is None
         assert result['old_level'] == 1
-        assert self.profile.current_level == 1
+        self.assertEqual(self.profile.current_level, 1)
 
     def test_award_xp_triggers_level_up(self):
         """Awarding 100 XP triggers level up from 1 to 2."""
@@ -216,7 +214,7 @@ class TestAwardXP(TestCase):
         assert result['leveled_up'] is True
         assert result['old_level'] == 1
         assert result['new_level'] == 2
-        assert self.profile.current_level == 2
+        self.assertEqual(self.profile.current_level, 2)
 
     def test_award_xp_multiple_level_ups(self):
         """Awarding enough XP can skip multiple levels."""
@@ -233,7 +231,7 @@ class TestAwardXP(TestCase):
 
         assert self.profile.total_xp == 100
         assert result['leveled_up'] is True  # Should level up at 100
-        assert self.profile.current_level == 2
+        self.assertEqual(self.profile.current_level, 2)
 
     def test_award_xp_persists_to_database(self):
         """Awarded XP is saved to database."""
@@ -242,7 +240,7 @@ class TestAwardXP(TestCase):
         # Refresh from database
         self.profile.refresh_from_db()
         assert self.profile.total_xp == 75
-        assert self.profile.current_level == 1
+        self.assertEqual(self.profile.current_level, 1)
 
 
 class TestXPIntegrationWithLessons(TestCase):
@@ -274,7 +272,7 @@ class TestXPIntegrationWithLessons(TestCase):
         # Award XP as lesson completion would
         self.profile.award_xp(50)  # Base XP
 
-        assert self.profile.total_xp == initial_xp + 50
+        self.assertEqual(self.profile.total_xp, initial_xp + 50)
 
     def test_perfect_quiz_bonus_xp(self):
         """Perfect quiz score should award bonus XP."""
@@ -284,8 +282,8 @@ class TestXPIntegrationWithLessons(TestCase):
 
         result = self.profile.award_xp(base_xp + bonus_xp)
 
-        assert result['xp_awarded'] == 60
-        assert self.profile.total_xp == 60
+        self.assertEqual(result['xp_awarded'], 60)
+        self.assertEqual(self.profile.total_xp, 60)
 
     def test_multiple_lesson_completions(self):
         """Completing multiple lessons accumulates XP."""
@@ -293,8 +291,8 @@ class TestXPIntegrationWithLessons(TestCase):
         for _ in range(3):
             self.profile.award_xp(50)
 
-        assert self.profile.total_xp == 150
-        assert self.profile.current_level == 2  # Should level up at 100
+        self.assertEqual(self.profile.total_xp, 150)
+        self.assertEqual(self.profile.current_level, 2)  # Should level up at 100
 
 
 class TestXPEdgeCases(TestCase):
@@ -312,23 +310,23 @@ class TestXPEdgeCases(TestCase):
     def test_level_up_at_exact_threshold(self):
         """Level up occurs at exact threshold."""
         self.profile.award_xp(100)  # Exact threshold
-        assert self.profile.current_level == 2
+        self.assertEqual(self.profile.current_level, 2)
 
     def test_level_up_one_xp_over_threshold(self):
         """Level up occurs even 1 XP over threshold."""
         self.profile.award_xp(101)
-        assert self.profile.current_level == 2
+        self.assertEqual(self.profile.current_level, 2)
 
     def test_level_up_one_xp_under_threshold(self):
         """No level up if 1 XP under threshold."""
         self.profile.award_xp(99)
-        assert self.profile.current_level == 1
+        self.assertEqual(self.profile.current_level, 1)
 
     def test_very_high_xp(self):
-        """System handles very high XP values."""
-        self.profile.award_xp(1000000)
-        assert self.profile.total_xp == 1000000
-        assert self.profile.current_level > 1  # Should level up significantly
+        """System rejects unreasonably high XP values."""
+        import pytest
+        with pytest.raises(ValueError, match="exceeds maximum allowed"):
+            self.profile.award_xp(1000000)
 
     def test_award_xp_after_manual_level_change(self):
         """System recovers if level is manually set incorrectly."""
@@ -338,7 +336,7 @@ class TestXPEdgeCases(TestCase):
         self.profile.save()
 
         # Award XP should recalculate correct level
-        result = self.profile.award_xp(50)
+        _result = self.profile.award_xp(50)  # pylint: disable=unused-variable
 
         # Should detect we're at wrong level and fix it
-        assert self.profile.current_level >= 2
+        self.assertGreaterEqual(self.profile.current_level, 2)

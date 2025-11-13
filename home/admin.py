@@ -1,3 +1,13 @@
+"""
+Django admin configuration for the Language Learning Platform.
+
+Registers all models with customized admin interfaces including:
+- User management with profile inline
+- Progress tracking (UserProgress, LessonCompletion, QuizResult)
+- Onboarding system
+- Lesson and quiz management
+- XP and leveling system
+"""
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
@@ -264,6 +274,7 @@ reset_progress_stats.short_description = "Reset progress statistics"
 
 @admin.register(UserProgress)
 class UserProgressAdmin(admin.ModelAdmin):
+    """Admin interface for UserProgress model with progress statistics."""
     list_display = ('user', 'total_minutes_studied', 'total_lessons_completed', 'total_quizzes_taken', 'overall_quiz_accuracy', 'updated_at')
     search_fields = ('user__username', 'user__email')
     list_filter = ('created_at', 'updated_at')
@@ -295,6 +306,7 @@ delete_selected_lessons.short_description = "Delete selected lesson completions"
 
 @admin.register(LessonCompletion)
 class LessonCompletionAdmin(admin.ModelAdmin):
+    """Admin interface for LessonCompletion tracking."""
     list_display = ('user', 'lesson_title', 'lesson_id', 'duration_minutes', 'completed_at')
     search_fields = ('user__username', 'lesson_title', 'lesson_id')
     list_filter = ('completed_at',)
@@ -313,6 +325,7 @@ delete_selected_quizzes.short_description = "Delete selected quiz results"
 
 @admin.register(QuizResult)
 class QuizResultAdmin(admin.ModelAdmin):
+    """Admin interface for QuizResult tracking with scoring statistics."""
     list_display = ('user', 'quiz_title', 'quiz_id', 'score', 'total_questions', 'accuracy_percentage', 'completed_at')
     search_fields = ('user__username', 'quiz_title', 'quiz_id')
     list_filter = ('completed_at',)
@@ -553,12 +566,14 @@ class OnboardingAnswerAdmin(admin.ModelAdmin):
 # =============================================================================
 
 class FlashcardInline(admin.TabularInline):
+    """Inline admin for managing flashcards within a lesson."""
     model = Flashcard
     extra = 1
     fields = ['order', 'front_text', 'back_text', 'image_url']
 
 
 class LessonQuizQuestionInline(admin.TabularInline):
+    """Inline admin for managing quiz questions within a lesson."""
     model = LessonQuizQuestion
     extra = 1
     fields = ['order', 'question', 'options', 'correct_index', 'explanation']
@@ -566,6 +581,7 @@ class LessonQuizQuestionInline(admin.TabularInline):
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
+    """Admin interface for Lesson management with flashcard and quiz inlines."""
     list_display = ['title', 'difficulty_level', 'language', 'order', 'is_published', 'created_at']
     list_filter = ['difficulty_level', 'language', 'is_published']
     search_fields = ['title', 'description']
@@ -582,6 +598,7 @@ class LessonAdmin(admin.ModelAdmin):
 
 @admin.register(LessonAttempt)
 class LessonAttemptAdmin(admin.ModelAdmin):
+    """Admin interface for LessonAttempt tracking and scoring."""
     list_display = ['lesson', 'user', 'score', 'total', 'percentage', 'completed_at']
     list_filter = ['lesson', 'completed_at']
     search_fields = ['user__username', 'lesson__title']

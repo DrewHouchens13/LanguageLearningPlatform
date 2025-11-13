@@ -1,4 +1,4 @@
-from django.db import models, IntegrityError, DatabaseError
+from django.db import models, IntegrityError, DatabaseError, transaction
 from django.db.models import Sum, Count
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -75,11 +75,11 @@ class UserProfile(models.Model):
     learning_motivation = models.TextField(blank=True)
 
     # XP and Leveling System (Sprint 3 - Issue #17)
-    total_xp = models.IntegerField(
+    total_xp = models.PositiveIntegerField(
         default=0,
         help_text="Total experience points earned from completing lessons and quests"
     )
-    current_level = models.IntegerField(
+    current_level = models.PositiveIntegerField(
         default=1,
         help_text="Current level based on total XP earned"
     )
@@ -257,12 +257,14 @@ class UserProfile(models.Model):
         progress = (xp_in_current_level / level_xp_range) * 100
         return min(100.0, max(0.0, progress))
 
+    @transaction.atomic
     def award_xp(self, amount):
         """
         Award XP to user and check for level up.
+        Uses atomic transaction to ensure data integrity.
 
         Args:
-            amount: XP to award (must be positive)
+            amount: XP to award (must be positive integer/float)
 
         Returns:
             dict: {
@@ -272,8 +274,29 @@ class UserProfile(models.Model):
                 'new_level': int or None,
                 'old_level': int
             }
+
+        Raises:
+            TypeError: If amount is not a number
+            ValueError: If amount is negative or unreasonably large
+            DatabaseError: If database save operation fails
         """
-        if amount <= 0:
+        # Type validation
+        if not isinstance(amount, (int, float)):
+            raise TypeError(f"XP amount must be numeric, got {type(amount).__name__}")
+
+        # Convert to int for consistency
+        amount = int(amount)
+
+        # Range validation
+        if amount < 0:
+            raise ValueError(f"XP amount must be non-negative, got {amount}")
+
+        if amount > 100000:  # Sanity check: prevent abuse with unreasonable values
+            raise ValueError(f"XP amount {amount} exceeds maximum allowed (100000)")
+
+        # Zero XP is valid but no-op
+        if amount == 0:
+            logger.debug('Zero XP award attempted for user %s', self.user.username)
             return {
                 'xp_awarded': 0,
                 'total_xp': self.total_xp,
@@ -282,25 +305,51 @@ class UserProfile(models.Model):
                 'old_level': self.current_level
             }
 
-        old_level = self.current_level
-        self.total_xp += amount
+        # Overflow protection: Check if adding amount would exceed max PositiveIntegerField
+        max_positive_int = 2147483647  # 2^31 - 1
+        if self.total_xp + amount > max_positive_int:
+            raise ValueError(
+                f"XP overflow: {self.total_xp} + {amount} = {self.total_xp + amount} "
+                f"exceeds maximum ({max_positive_int})"
+            )
 
-        # Recalculate level based on new XP
-        new_level = self.calculate_level_from_xp()
-        leveled_up = new_level > old_level
+        # Use atomic transaction to ensure data integrity
+        try:
+            with transaction.atomic():
+                old_level = self.current_level
+                old_xp = self.total_xp
+                self.total_xp += amount
 
-        if leveled_up:
-            self.current_level = new_level
+                # Recalculate level based on new XP
+                new_level = self.calculate_level_from_xp()
+                leveled_up = new_level > old_level
 
-        self.save()
+                if leveled_up:
+                    self.current_level = new_level
+                    # Save both fields if level changed
+                    self.save(update_fields=['total_xp', 'current_level'])
+                    logger.info('User %s leveled up! %d → %d (awarded %d XP, total %d)',
+                               self.user.username, old_level, new_level, amount, self.total_xp)
+                else:
+                    # Only save XP if no level change (performance optimization)
+                    self.save(update_fields=['total_xp'])
+                    logger.debug('User %s awarded %d XP (%d → %d, level %d)',
+                                self.user.username, amount, old_xp, self.total_xp, self.current_level)
 
-        return {
-            'xp_awarded': amount,
-            'total_xp': self.total_xp,
-            'leveled_up': leveled_up,
-            'new_level': new_level if leveled_up else None,
-            'old_level': old_level
-        }
+                return {
+                    'xp_awarded': amount,
+                    'total_xp': self.total_xp,
+                    'leveled_up': leveled_up,
+                    'new_level': new_level if leveled_up else None,
+                    'old_level': old_level
+                }
+
+        except (DatabaseError, IntegrityError) as e:
+            logger.error(
+                'Database error awarding %d XP to user %s: %s',
+                amount, self.user.username, str(e)
+            )
+            raise DatabaseError(f"Failed to award XP: {str(e)}") from e
 
 
 @receiver(post_save, sender=User)
@@ -605,26 +654,6 @@ class Lesson(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # Lesson type and XP (for Daily Quests)
-    lesson_type = models.CharField(
-        max_length=20,
-        choices=[
-            ('flashcard', 'Flashcard'),
-            ('quiz', 'Quiz')
-        ],
-        default='flashcard',
-        help_text="Type of lesson content"
-    )
-    xp_value = models.IntegerField(
-        default=100,
-        help_text="XP awarded for completing this lesson"
-    )
-    category = models.CharField(
-        max_length=50,
-        default='General',
-        help_text="Category of lesson (e.g., Colors, Numbers, Shapes)"
-    )
-
     # Link to next lesson
     next_lesson = models.ForeignKey(
         'self',
@@ -729,139 +758,3 @@ class LessonAttempt(models.Model):
         if self.total == 0:
             return 0
         return round((self.score / self.total) * 100, 1)
-
-
-class DailyQuest(models.Model):
-    """
-    A daily quest generated from an existing lesson.
-    One quest per day, available to all users.
-    """
-    # Identification
-    date = models.DateField(unique=True, db_index=True)
-    title = models.CharField(max_length=200)
-    description = models.TextField()
-
-    # Source and Configuration
-    based_on_lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
-    quest_type = models.CharField(max_length=20)  # 'flashcard', 'quiz'
-
-    # Rewards
-    xp_reward = models.IntegerField()  # Calculated: lesson.xp_value * 0.75
-
-    # Metadata
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-date']
-        indexes = [
-            models.Index(fields=['date']),
-        ]
-        verbose_name = "Daily Quest"
-        verbose_name_plural = "Daily Quests"
-
-    def __str__(self):
-        return f"Daily Quest - {self.date} - {self.title}"
-
-
-class DailyQuestQuestion(models.Model):
-    """
-    A single question in a daily quest.
-    Format depends on quest_type (flashcard vs quiz).
-    """
-    # Relationship
-    daily_quest = models.ForeignKey(
-        DailyQuest,
-        on_delete=models.CASCADE,
-        related_name='questions'
-    )
-
-    # Question Content
-    question_text = models.TextField()
-
-    # For flashcard type
-    answer_text = models.CharField(max_length=200, blank=True)
-
-    # For quiz type
-    options = models.JSONField(default=list, blank=True)
-    correct_index = models.IntegerField(null=True, blank=True)
-
-    # Ordering
-    order = models.IntegerField()  # 1-5
-
-    # Metadata
-    difficulty_level = models.CharField(max_length=10, default='medium')
-
-    class Meta:
-        ordering = ['order']
-        unique_together = [['daily_quest', 'order']]
-        constraints = [
-            models.CheckConstraint(
-                condition=models.Q(order__gte=1) & models.Q(order__lte=5),
-                name='valid_question_order'
-            )
-        ]
-        verbose_name = "Daily Quest Question"
-        verbose_name_plural = "Daily Quest Questions"
-
-    def __str__(self):
-        return f"Q{self.order}: {self.question_text[:50]}"
-
-
-class UserDailyQuestAttempt(models.Model):
-    """
-    Tracks a user's attempt at a daily quest.
-    One attempt per user per quest (one per day).
-    """
-    # Relationships
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    daily_quest = models.ForeignKey(
-        DailyQuest,
-        on_delete=models.CASCADE,
-        related_name='attempts'
-    )
-
-    # Progress
-    started_at = models.DateTimeField(auto_now_add=True)
-    completed_at = models.DateTimeField(null=True, blank=True)
-
-    # Results
-    total_questions = models.IntegerField(default=5)
-    correct_answers = models.IntegerField(default=0)
-
-    # Rewards
-    xp_earned = models.IntegerField(default=0)
-
-    # State
-    is_completed = models.BooleanField(default=False)
-
-    class Meta:
-        unique_together = [['user', 'daily_quest']]
-        ordering = ['-started_at']
-        indexes = [
-            models.Index(fields=['user', '-started_at']),
-            models.Index(fields=['daily_quest', 'is_completed']),
-        ]
-        verbose_name = "User Daily Quest Attempt"
-        verbose_name_plural = "User Daily Quest Attempts"
-
-    def __str__(self):
-        return f"{self.user.username} - {self.daily_quest.date} - {self.score}"
-
-    @property
-    def score(self):
-        """Return score as 'X/5' format"""
-        return f"{self.correct_answers}/{self.total_questions}"
-
-    @property
-    def score_percentage(self):
-        """Return score as percentage"""
-        if self.total_questions == 0:
-            return 0
-        return round((self.correct_answers / self.total_questions) * 100, 1)
-
-    def calculate_xp(self):
-        """Calculate XP based on correct answers"""
-        if self.total_questions == 0:
-            return 0
-        max_xp = self.daily_quest.xp_reward
-        return int((self.correct_answers / self.total_questions) * max_xp)
