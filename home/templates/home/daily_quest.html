@@ -1,36 +1,84 @@
-{% extends "home/base.html" %}
 {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Quest - Language Learning Platform</title>
+    {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
+    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+  </head>
+  <body>
+    {% include '_nav.html' %}
 
-{% block title %}Daily Quest{% endblock %}
-
-{% block content %}
-<div class="daily-quest-container">
-    <h1>Daily Quest</h1>
-    <p class="date">{{ quest.date|date:"F j, Y" }}</p>
-
-    {% if attempt and attempt.is_completed %}
-        <!-- Completed State -->
-        <div class="quest-completed">
-            <h2>Quest Completed!</h2>
-            <p class="score">{{ attempt.score }}</p>
-            <p class="xp">{{ attempt.xp_earned }} XP</p>
-            <p>Come back tomorrow for a new quest!</p>
+    <main>
+      <!-- Django Messages -->
+      {% if messages %}
+        <div class="page-messages">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+              {{ message }}
+            </div>
+          {% endfor %}
         </div>
-    {% else %}
-        <!-- Available State -->
-        <div class="quest-info">
-            <h2>{{ quest.title }}</h2>
-            <p>{{ quest.description }}</p>
-            <ul>
+      {% endif %}
+
+      <section class="hero">
+        <div class="hero-content">
+          <h1>Daily Quest</h1>
+          <p class="date">{{ quest.date|date:"F j, Y" }}</p>
+
+          {% if attempt and attempt.is_completed %}
+            <!-- Completed State -->
+            <div class="quest-completed">
+              <h2>Quest Completed!</h2>
+              <p class="score">Score: {{ attempt.score }}/{{ attempt.total_questions }}</p>
+              <p class="xp">XP Earned: {{ attempt.xp_earned }}</p>
+              <p>Come back tomorrow for a new quest!</p>
+            </div>
+          {% else %}
+            <!-- Available State -->
+            <div class="quest-info">
+              <h2>{{ quest.title }}</h2>
+              <p>{{ quest.description }}</p>
+              <ul>
                 <li>Questions: 5</li>
                 <li>Reward: {{ quest.xp_reward }} XP</li>
                 <li>Type: {{ quest.quest_type }}</li>
-            </ul>
-            <form method="post" action="{% url 'start_daily_quest' %}">
+              </ul>
+              <form method="post" action="{% url 'start_daily_quest' %}">
                 {% csrf_token %}
-                <button type="submit">Start Quest</button>
-            </form>
+                <button type="submit" class="btn-primary">Start Quest</button>
+              </form>
+            </div>
+          {% endif %}
         </div>
-    {% endif %}
-</div>
-{% endblock %}
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+    </footer>
+
+    <script>
+      // Mobile menu toggle
+      const navToggle = document.querySelector('.nav-toggle');
+      const navMenu = document.querySelector('.nav-menu');
+
+      if (navToggle) {
+        navToggle.addEventListener('click', () => {
+          navMenu.classList.toggle('active');
+          navToggle.classList.toggle('active');
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+            navMenu.classList.remove('active');
+            navToggle.classList.remove('active');
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

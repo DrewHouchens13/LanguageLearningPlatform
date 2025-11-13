@@ -92,7 +92,7 @@ class TestDailyQuestView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Quest Completed')
         self.assertContains(response, '4/5')
-        self.assertContains(response, '60 XP')
+        self.assertContains(response, 'XP Earned: 60')
         self.assertNotContains(response, 'Start Quest')
 
     def test_daily_quest_view_generates_quest_if_not_exists(self):
@@ -290,8 +290,7 @@ class TestSubmitDailyQuestView(TestCase):
 
         response = self.client.post(
             reverse('submit_daily_quest'),
-            data=answers,
-            content_type='application/x-www-form-urlencoded'
+            data=answers
         )
 
         self.assertEqual(response.status_code, 200)
