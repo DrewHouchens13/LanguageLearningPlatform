@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
-from home.models import Lesson, DailyQuest, UserDailyQuestAttempt
+from home.models import Lesson, DailyQuest, UserDailyQuestAttempt, Flashcard
 
 
 class TestDailyQuestView(TestCase):
