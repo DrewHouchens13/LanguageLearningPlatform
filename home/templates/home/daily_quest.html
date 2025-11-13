@@ -54,7 +54,7 @@
                 <li>Reward: {{ quest.xp_reward }} XP</li>
                 <li>Type: {{ quest.quest_type }}</li>
               </ul>
-              <button id="start-quest-btn" class="btn-primary">Start Quest</button>
+              <button id="start-quest-btn" class="btn-primary">Begin Quest</button>
             </div>
 
             <!-- Active Quest Container (hidden initially) -->
@@ -103,7 +103,7 @@
                document.cookie.match(/csrftoken=([^;]+)/)?.[1];
       }
 
-      // Start Quest
+      // Daily quest start button handler
       const startBtn = document.getElementById('start-quest-btn');
       if (startBtn) {
         startBtn.addEventListener('click', async () => {

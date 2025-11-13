@@ -1838,13 +1838,25 @@ def submit_daily_quest(request):
     if attempt.is_completed:
         return JsonResponse({'error': 'Quest already completed'}, status=400)
 
-    # Parse JSON body
-    try:
-        import json
-        body = json.loads(request.body)
-        answers = body.get('answers', {})
-    except (json.JSONDecodeError, ValueError):
-        return JsonResponse({'error': 'Invalid request body'}, status=400)
+    # Parse answers - support both JSON body and form POST
+    answers = {}
+    content_type = request.content_type or ''
+
+    if 'application/json' in content_type:
+        # JSON body (from JavaScript)
+        try:
+            import json
+            body = json.loads(request.body)
+            answers = body.get('answers', {})
+        except (json.JSONDecodeError, ValueError):
+            return JsonResponse({'error': 'Invalid request body'}, status=400)
+    else:
+        # Form POST data (from tests)
+        answers = dict(request.POST)
+        # Remove CSRF token if present
+        answers.pop('csrfmiddlewaretoken', None)
+        # Convert lists to single values (Django POST gives lists)
+        answers = {k: v[0] if isinstance(v, list) else v for k, v in answers.items()}
 
     # Validate answers
     correct_count = 0

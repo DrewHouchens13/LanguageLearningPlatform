@@ -71,7 +71,7 @@ class TestDailyQuestView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Daily Colors Challenge')
         self.assertContains(response, '75 XP')
-        self.assertContains(response, 'Start Quest')
+        self.assertContains(response, 'Begin Quest')
 
     def test_daily_quest_view_shows_completion_status_if_completed(self):
         """Test view shows completion status when quest completed"""
@@ -93,7 +93,7 @@ class TestDailyQuestView(TestCase):
         self.assertContains(response, 'Quest Completed')
         self.assertContains(response, '4/5')
         self.assertContains(response, 'XP Earned: 60')
-        self.assertNotContains(response, 'Start Quest')
+        self.assertNotContains(response, 'Begin Quest')
 
     def test_daily_quest_view_generates_quest_if_not_exists(self):
         """Test view generates quest if none exists for today"""
@@ -178,17 +178,22 @@ class TestStartDailyQuestView(TestCase):
         )
 
     def test_start_quest_prevents_duplicate_attempts(self):
-        """Test view prevents creating duplicate attempts"""
+        """Test view prevents creating duplicate attempts (returns existing incomplete quest)"""
         self.client.login(username='testuser', password='testpass123')
 
         # Create first attempt
-        self.client.post(reverse('start_daily_quest'))
+        response1 = self.client.post(reverse('start_daily_quest'))
+        self.assertEqual(response1.status_code, 200)
 
-        # Try to create duplicate
-        response = self.client.post(reverse('start_daily_quest'))
+        # Try to start again - should return questions for existing incomplete attempt
+        response2 = self.client.post(reverse('start_daily_quest'))
 
-        self.assertEqual(response.status_code, 400)
-        # Should only have one attempt
+        # Should return 200 with questions (allowing resume)
+        self.assertEqual(response2.status_code, 200)
+        data = response2.json()
+        self.assertIn('questions', data)
+
+        # Should only have one attempt (no duplicate created)
         self.assertEqual(
             UserDailyQuestAttempt.objects.filter(
                 user=self.user,
