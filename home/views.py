@@ -1809,10 +1809,10 @@ def submit_daily_quest(request):
     # Validate answers
     correct_count = 0
     total_questions = quest.questions.count()
-    
+
     for question in quest.questions.all():
         user_answer = request.POST.get(str(question.id), '').strip()
-        
+
         if quest.quest_type == 'flashcard':
             # For flashcards, check if answer matches (case-insensitive)
             if user_answer.lower() == question.answer_text.lower():
