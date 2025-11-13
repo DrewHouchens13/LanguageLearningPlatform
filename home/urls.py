@@ -1,3 +1,13 @@
+"""
+URL routing configuration for the home application.
+
+Defines URL patterns for:
+- Authentication (login, signup, logout, password reset)
+- Dashboard and user account management
+- Onboarding assessment system
+- Lesson and quiz system
+- Daily Quest system
+"""
 from django.urls import path
 from . import views
 
