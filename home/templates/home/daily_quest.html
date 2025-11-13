@@ -1,0 +1,36 @@
+{% extends "home/base.html" %}
+{% load static %}
+
+{% block title %}Daily Quest{% endblock %}
+
+{% block content %}
+<div class="daily-quest-container">
+    <h1>Daily Quest</h1>
+    <p class="date">{{ quest.date|date:"F j, Y" }}</p>
+
+    {% if attempt and attempt.is_completed %}
+        <!-- Completed State -->
+        <div class="quest-completed">
+            <h2>Quest Completed!</h2>
+            <p class="score">{{ attempt.score }}</p>
+            <p class="xp">{{ attempt.xp_earned }} XP</p>
+            <p>Come back tomorrow for a new quest!</p>
+        </div>
+    {% else %}
+        <!-- Available State -->
+        <div class="quest-info">
+            <h2>{{ quest.title }}</h2>
+            <p>{{ quest.description }}</p>
+            <ul>
+                <li>Questions: 5</li>
+                <li>Reward: {{ quest.xp_reward }} XP</li>
+                <li>Type: {{ quest.quest_type }}</li>
+            </ul>
+            <form method="post" action="{% url 'start_daily_quest' %}">
+                {% csrf_token %}
+                <button type="submit">Start Quest</button>
+            </form>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

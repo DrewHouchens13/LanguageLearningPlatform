@@ -1,0 +1,29 @@
+{% extends "home/base.html" %}
+{% load static %}
+
+{% block title %}Quest History{% endblock %}
+
+{% block content %}
+<div class="quest-history-container">
+    <h1>Quest History</h1>
+
+    {% if attempts %}
+        <div class="quest-stats">
+            <p class="total-xp">Total XP from Quests: {{ total_quest_xp }}</p>
+        </div>
+
+        <div class="quest-list">
+            {% for attempt in attempts %}
+                <div class="quest-item">
+                    <h3>{{ attempt.daily_quest.title }}</h3>
+                    <p class="quest-date">{{ attempt.daily_quest.date|date:"F j, Y" }}</p>
+                    <p class="quest-score">Score: {{ attempt.score }}</p>
+                    <p class="quest-xp">XP Earned: {{ attempt.xp_earned }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No completed quests yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
