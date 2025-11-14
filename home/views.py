@@ -28,7 +28,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email as django_validate_email
 from django.db import DatabaseError, IntegrityError
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -38,6 +38,8 @@ from django.views.decorators.http import require_http_methods, require_POST
 
 # Local application imports
 from .models import (
+    DailyQuest,
+    DailyQuestQuestion,
     Lesson,
     LessonAttempt,
     LessonCompletion,
@@ -1627,13 +1629,230 @@ def onboarding_results(request):
     return render(request, 'onboarding/results.html', context)
 
 # =============================================================================
-# LESSON VIEWS
+# LESSON VIEWS - DYNAMIC LANGUAGE DETECTION SYSTEM
+# =============================================================================
+#
+# 🤖 AI ASSISTANT INSTRUCTIONS:
+# This section implements a fully dynamic lesson system that automatically detects
+# and displays lessons for ANY language without hardcoding language names in templates.
+#
+# ARCHITECTURE OVERVIEW:
+# 1. Main lessons page (/lessons/) - Shows language selection buttons
+#    - Automatically detects all languages that have published lessons
+#    - Displays native language names (e.g., "Español" not "Spanish")
+#    - Shows appropriate flag emoji for each language
+#
+# 2. Language-specific pages (/lessons/spanish/) - Shows lessons for one language
+#    - Filters lessons by language parameter
+#    - Displays lesson cards with auto-detected topic icons
+#    - Fully responsive grid layout
+#
+# HOW TO ADD A NEW LANGUAGE:
+# 1. Add language metadata to LANGUAGE_METADATA constant below
+# 2. Create lessons in database with language='NewLanguage'
+# 3. Page will automatically display new language button
+# 4. No template changes needed!
+#
+# EXAMPLE - Adding Portuguese:
+#   LANGUAGE_METADATA = {
+#       'Portuguese': {'native_name': 'Português', 'flag': '🇵🇹'},
+#       ...
+#   }
+#   Then create lessons: Lesson.objects.create(title='Colors', language='Portuguese', ...)
+#
+# DATABASE REQUIREMENTS:
+# - Lesson model must have: language (CharField), is_published (BooleanField)
+# - Language names must match dictionary keys exactly (case-sensitive)
+#
+# TEMPLATE VARIABLES PASSED:
+# - languages_with_lessons: List of dicts with {name, native_name, flag, lesson_count, lessons}
+# - lessons_by_language: Dict of {language: [lessons]} for backward compatibility
+# - lessons: QuerySet of all published lessons
+#
 # =============================================================================
 
+# Language metadata: native names and flag emojis (DRY - single source of truth)
+LANGUAGE_METADATA = {
+    'Spanish': {'native_name': 'Español', 'flag': '🇪🇸'},
+    'French': {'native_name': 'Français', 'flag': '🇫🇷'},
+    'German': {'native_name': 'Deutsch', 'flag': '🇩🇪'},
+    'Italian': {'native_name': 'Italiano', 'flag': '🇮🇹'},
+    'Japanese': {'native_name': '日本語', 'flag': '🇯🇵'},
+    'Chinese': {'native_name': '中文', 'flag': '🇨🇳'},
+    'Portuguese': {'native_name': 'Português', 'flag': '🇵🇹'},
+    'Russian': {'native_name': 'Русский', 'flag': '🇷🇺'},
+    'Korean': {'native_name': '한국어', 'flag': '🇰🇷'},
+    'Arabic': {'native_name': 'العربية', 'flag': '🇸🇦'},
+}
+
+
+def _build_language_data(language, lessons):
+    """
+    Helper function to build language data dict with metadata.
+    Follows Function Extraction and DRY principles.
+
+    Args:
+        language: English language name (e.g., 'Spanish')
+        lessons: List of Lesson objects for this language
+
+    Returns:
+        Dict with {name, native_name, flag, lesson_count, lessons}
+    """
+    metadata = LANGUAGE_METADATA.get(language, {
+        'native_name': language,  # Fallback to English name
+        'flag': '🌐'  # Default flag
+    })
+
+    return {
+        'name': language,
+        'native_name': metadata['native_name'],
+        'flag': metadata['flag'],
+        'lesson_count': len(lessons),
+        'lessons': lessons
+    }
+
+
 def lessons_list(request):
-    """Display list of all available lessons."""
-    lessons = Lesson.objects.filter(is_published=True).order_by('order', 'id')
-    return render(request, 'lessons_list.html', {'lessons': lessons})
+    """
+    Display list of all available lessons grouped by language.
+    Follows Single Responsibility Principle - delegates to helper functions.
+    """
+    from collections import defaultdict
+
+    # Get all published lessons
+    all_lessons = Lesson.objects.filter(is_published=True).order_by('language', 'order', 'id')
+
+    # Group lessons by language
+    grouped_lessons = defaultdict(list)  # Renamed to avoid shadowing function name
+    for lesson in all_lessons:
+        grouped_lessons[lesson.language].append(lesson)
+
+    # Build language list with metadata using helper function
+    languages_with_lessons = [
+        _build_language_data(language, language_lessons)
+        for language, language_lessons in grouped_lessons.items()
+    ]
+
+    context = {
+        'languages_with_lessons': languages_with_lessons,
+        'lessons_by_language': dict(grouped_lessons),  # Keep for backward compatibility
+        'lessons': all_lessons,  # Keep for backward compatibility
+    }
+
+    return render(request, 'lessons_list.html', context)
+
+
+def lessons_by_language(request, language):
+    """
+    Display lessons for a specific language (e.g., /lessons/spanish/).
+
+    🤖 AI ASSISTANT INSTRUCTIONS:
+    This view handles language-specific lesson pages. It receives a language
+    name from the URL (lowercase) and displays all lessons for that language.
+
+    URL PATTERN: lessons/<str:language>/ (defined in home/urls.py)
+    EXAMPLE URLs: /lessons/spanish/, /lessons/french/, /lessons/german/
+
+    ⚠️ CRITICAL URL ROUTING REQUIREMENT:
+    In home/urls.py, this pattern MUST come AFTER lessons/<int:lesson_id>/
+    Otherwise, numeric lesson IDs will be interpreted as language names!
+
+    CORRECT ORDER in urls.py:
+      1. path("lessons/<int:lesson_id>/", ...)      ← FIRST (specific)
+      2. path("lessons/<str:language>/", ...)       ← SECOND (general)
+
+    WRONG ORDER causes bugs like /lessons/2/ being treated as language "2"!
+
+    HOW IT WORKS:
+    1. Receives language from URL (e.g., 'spanish')
+    2. Capitalizes it to match database format (e.g., 'Spanish')
+    3. Queries all published lessons with that language
+    4. Orders by lesson.order field, then by ID
+    5. Passes lessons to template
+
+    TEMPLATE: home/templates/lessons/lessons_by_language.html
+    - Displays lesson cards in a grid
+    - Auto-detects lesson icons based on title/slug
+    - Shows lesson count, difficulty badges, flashcard counts
+
+    TO ADD NEW LESSONS TO EXISTING LANGUAGE:
+    Just create lesson in database with matching language name:
+        Lesson.objects.create(
+            title='Numbers in Spanish',
+            language='Spanish',
+            slug='numbers',
+            is_published=True,
+            order=3
+        )
+    This view will automatically include it - no code changes needed!
+    """
+    # Validate language parameter to prevent SQL injection and invalid input
+    # Language names should only contain letters, spaces, and hyphens
+    import re
+    if not re.match(r'^[a-zA-Z\s\-]+$', language):
+        # Invalid characters detected (e.g., SQL injection attempt)
+        raise Http404("Invalid language parameter")
+
+    # Capitalize first letter to match database format
+    language = language.capitalize()
+
+    # Get lessons for the specified language
+    lessons = Lesson.objects.filter(
+        language=language,
+        is_published=True
+    ).order_by('order', 'id')
+
+    # Add icon to each lesson based on topic
+    lessons_with_icons = []
+    for lesson in lessons:
+        lesson_data = {
+            'lesson': lesson,
+            'icon': _get_lesson_icon(lesson)
+        }
+        lessons_with_icons.append(lesson_data)
+
+    context = {
+        'language': language,
+        'lessons_with_icons': lessons_with_icons,
+    }
+
+    return render(request, 'lessons/lessons_by_language.html', context)
+
+
+def _get_lesson_icon(lesson):
+    """
+    Helper function to determine lesson icon based on topic.
+    Follows DRY principle - single source of truth for icon mapping.
+    Uses early returns for clarity (Pylint prefers if over elif after return).
+    """
+    slug = (lesson.slug or '').lower()
+    title = lesson.title.lower()
+
+    if 'color' in slug or 'color' in title:
+        return '🎨'
+    if 'shape' in slug or 'shape' in title:
+        return '🔷'
+    if 'number' in slug or 'number' in title:
+        return '🔢'
+    if 'animal' in slug or 'animal' in title:
+        return '🐾'
+    if 'food' in slug or 'food' in title:
+        return '🍎'
+    if 'family' in slug or 'family' in title:
+        return '👨‍👩‍👧‍👦'
+    if 'greeting' in slug or 'greeting' in title:
+        return '👋'
+    if 'verb' in slug or 'verb' in title:
+        return '⚡'
+    if 'adjective' in slug or 'adjective' in title:
+        return '✨'
+    if 'time' in slug or 'time' in title:
+        return '🕐'
+    if 'weather' in slug or 'weather' in title:
+        return '🌤️'
+    if 'clothing' in slug or 'clothing' in title:
+        return '👕'
+    return '📚'  # Default icon
 
 
 def lesson_detail(request, lesson_id):
@@ -1835,157 +2054,130 @@ def lesson_results(request, lesson_id, attempt_id):
 @login_required
 def daily_quest_view(request):
     """
-    Show today's daily quests (both time-based and lesson-based).
+    Show today's daily challenge (ONE quest with 5 random questions).
     """
     from datetime import date
     from home.services.daily_quest_service import DailyQuestService
 
-    # Generate or get today's quests
     today = date.today()
-    quests = DailyQuestService.generate_quests_for_date(today)
-    
-    time_quest = quests['time_quest']
-    lesson_quest = quests['lesson_quest']
 
-    # Check if user has completed these quests
-    time_attempt = UserDailyQuestAttempt.objects.filter(
-        user=request.user,
-        daily_quest=time_quest
-    ).first()
-    
-    lesson_attempt = UserDailyQuestAttempt.objects.filter(
-        user=request.user,
-        daily_quest=lesson_quest
-    ).first()
+    try:
+        # Generate or get today's quest
+        quest = DailyQuestService.generate_quest_for_user(request.user, today)
 
-    # Calculate time progress (in minutes)
-    time_progress = 0
-    if time_attempt and not time_attempt.is_completed:
-        # Get today's completed lessons for this user
-        from datetime import datetime
-        today_start = datetime.combine(today, datetime.min.time())
-        today_lessons = LessonCompletion.objects.filter(
+        # Check if user has already attempted this quest
+        attempt = UserDailyQuestAttempt.objects.filter(
             user=request.user,
-            completed_at__gte=today_start
-        )
-        time_progress = sum(completion.duration_minutes for completion in today_lessons)
+            daily_quest=quest
+        ).first()
 
-    context = {
-        'time_quest': time_quest,
-        'lesson_quest': lesson_quest,
-        'time_attempt': time_attempt,
-        'lesson_attempt': lesson_attempt,
-        'time_progress': time_progress,
-        'lesson_to_complete': lesson_quest.based_on_lesson,
-    }
+        # Get quest questions
+        questions = DailyQuestQuestion.objects.filter(daily_quest=quest).order_by('order')
+
+        # Format options for template rendering (index, text) tuples
+        for question in questions:
+            if question.options:
+                question.formatted_options = [
+                    (idx, text) for idx, text in enumerate(question.options)
+                ]
+            else:
+                question.formatted_options = []
+
+        context = {
+            'quest': quest,
+            'questions': questions,
+            'attempt': attempt,
+        }
+
+    except ValueError as e:
+        # Not enough questions available
+        context = {
+            'error': str(e),
+            'quest': None,
+        }
 
     return render(request, 'home/daily_quest.html', context)
 
 
+@login_required
+def daily_quest_submit(request):
+    """
+    Handle daily quest submission and calculate score.
+    """
+    from datetime import date
+    from home.services.daily_quest_service import DailyQuestService
+
+    if request.method != 'POST':
+        return redirect('daily_quest')
+
+    today = date.today()
+    quest = DailyQuest.objects.filter(date=today).first()
+
+    if not quest:
+        messages.error(request, "No quest available for today.")
+        return redirect('daily_quest')
+
+    # Check if already completed
+    existing_attempt = UserDailyQuestAttempt.objects.filter(
+        user=request.user,
+        daily_quest=quest,
+        is_completed=True
+    ).first()
+
+    if existing_attempt:
+        messages.warning(request, "You've already completed today's challenge!")
+        return redirect('daily_quest')
+
+    # Collect submitted answers
+    submitted_answers = {}
+    for key, value in request.POST.items():
+        if key.startswith('question_'):
+            question_id = key.replace('question_', '')
+            submitted_answers[question_id] = value
+
+    # Calculate score
+    correct, total, xp_earned = DailyQuestService.calculate_quest_score(
+        quest, submitted_answers
+    )
+
+    # Create or update attempt
+    _attempt, _created = UserDailyQuestAttempt.objects.update_or_create(
+        user=request.user,
+        daily_quest=quest,
+        defaults={
+            'correct_answers': correct,
+            'total_questions': total,
+            'xp_earned': xp_earned,
+            'is_completed': True,
+            'completed_at': timezone.now()
+        }
+    )
+
+    # Award XP to user
+    request.user.profile.award_xp(xp_earned)
+
+    # Success message
+    messages.success(
+        request,
+        f"Challenge complete! You scored {correct}/{total} and earned {xp_earned} XP!"
+    )
+
+    logger.info(
+        'Daily quest completed: %s scored %d/%d, earned %d XP',
+        request.user.username, correct, total, xp_earned
+    )
+
+    return redirect('daily_quest')
+
+
 def check_and_complete_daily_quests(user, lesson, duration_minutes=5):
     """
-    Helper function to check if completing a lesson completes today's daily quests.
-    Called after a lesson is completed.
-    
-    Checks both:
-    1. Lesson-based quest (specific lesson)
-    2. Time-based quest (cumulative study time)
-    
-    Args:
-        user: User instance
-        lesson: Lesson instance that was just completed
-        duration_minutes: Estimated duration of lesson completion (default 5)
-        
-    Returns:
-        dict: Quest completion info with keys for each quest type
+    DEPRECATED - Legacy function for old two-quest system.
+    Now does nothing since quests are standalone challenges.
+
+    Kept for backward compatibility.
     """
-    from datetime import date, datetime
-    from django.utils import timezone as tz
-    from home.services.daily_quest_service import DailyQuestService
-    
-    results = {
-        'lesson_quest_completed': False,
-        'time_quest_completed': False,
-        'total_xp_earned': 0
-    }
-    
-    try:
-        today = date.today()
-        quests = DailyQuestService.generate_quests_for_date(today)
-        
-        lesson_quest = quests['lesson_quest']
-        time_quest = quests['time_quest']
-        
-        # Check lesson-based quest
-        lesson_attempt = UserDailyQuestAttempt.objects.filter(
-            user=user,
-            daily_quest=lesson_quest,
-            is_completed=True
-        ).first()
-        
-        if not lesson_attempt and lesson.id == lesson_quest.based_on_lesson.id:
-            # This lesson completes the quest!
-            _ = UserDailyQuestAttempt.objects.create(
-                user=user,
-                daily_quest=lesson_quest,
-                correct_answers=1,
-                total_questions=1,
-                xp_earned=lesson_quest.xp_reward,
-                is_completed=True,
-                completed_at=tz.now()
-            )
-            
-            user.profile.award_xp(lesson_quest.xp_reward)
-            results['lesson_quest_completed'] = True
-            results['total_xp_earned'] += lesson_quest.xp_reward
-            
-            logger.info(
-                'Lesson quest completed: %s finished %s',
-                user.username, lesson.title
-            )
-        
-        # Check time-based quest
-        time_attempt = UserDailyQuestAttempt.objects.filter(
-            user=user,
-            daily_quest=time_quest,
-            is_completed=True
-        ).first()
-        
-        if not time_attempt:
-            # Calculate total study time for today
-            today_start = datetime.combine(today, datetime.min.time())
-            today_lessons = LessonCompletion.objects.filter(
-                user=user,
-                completed_at__gte=today_start
-            )
-            total_time = sum(completion.duration_minutes for completion in today_lessons)
-            
-            # Check if reached 15 minutes
-            if total_time >= 15:
-                _ = UserDailyQuestAttempt.objects.create(
-                    user=user,
-                    daily_quest=time_quest,
-                    correct_answers=1,
-                    total_questions=1,
-                    xp_earned=time_quest.xp_reward,
-                    is_completed=True,
-                    completed_at=tz.now()
-                )
-                
-                user.profile.award_xp(time_quest.xp_reward)
-                results['time_quest_completed'] = True
-                results['total_xp_earned'] += time_quest.xp_reward
-                
-                logger.info(
-                    'Time quest completed: %s reached %d minutes',
-                    user.username, total_time
-                )
-    
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        # Broad catch is intentional - quest completion errors shouldn't block lesson completion
-        logger.error('Error checking daily quest completion: %s', str(e))
-    
-    return results if results['total_xp_earned'] > 0 else None
+    return None
 
 
 @login_required

@@ -1,0 +1,186 @@
+<!--
+🤖 AI ASSISTANT INSTRUCTIONS - LANGUAGE-SPECIFIC LESSONS PAGE
+================================================================================
+
+PURPOSE:
+This template displays all lessons for a SPECIFIC language (e.g., Spanish lessons,
+French lessons). It includes automatic icon detection based on lesson topics.
+
+URL PATTERN: /lessons/{language}/
+EXAMPLES: /lessons/spanish/, /lessons/french/, /lessons/german/
+
+⚠️ CRITICAL URL ROUTING REQUIREMENT:
+The URL pattern for this view MUST be defined AFTER the lesson detail pattern in
+home/urls.py to avoid routing conflicts. See home/urls.py for detailed explanation.
+
+CORRECT URL ORDER in home/urls.py:
+  1. lessons/<int:lesson_id>/     ← Lesson detail (specific, matches numbers only)
+  2. lessons/<str:language>/      ← Language page (general, matches any string)
+
+If the order is wrong, clicking on lesson cards will show "No {number} Lessons Available"
+instead of the lesson detail page!
+
+HOW IT WORKS:
+1. User clicks language button on main lessons page
+2. URL routes to home/views.py:lessons_by_language with language parameter
+3. Backend queries all published lessons for that language
+4. Passes 'language' (string) and 'lessons' (QuerySet) to this template
+5. Template displays lesson cards in responsive grid with auto-detected icons
+
+TEMPLATE VARIABLES RECEIVED:
+- language: String (e.g., 'Spanish', 'French', 'German')
+- lessons: QuerySet of Lesson objects for that language
+
+LESSON CARD FEATURES:
+1. AUTO-DETECTED TOPIC ICONS (lines 46-59):
+   - Colors → 🎨 (palette)
+   - Shapes → 🔷 (diamond)
+   - Numbers → 🔢
+   - Animals → 🐾
+   - Food → 🍎
+   - Greetings → 👋
+   - Default → 📚 (for unknown topics)
+
+2. LESSON INFORMATION DISPLAYED:
+   - Title (e.g., "Colors in Spanish")
+   - Description
+   - Difficulty badge (A1/A2/B1)
+   - Flashcard count (if available)
+
+3. CARD BEHAVIOR:
+   - Hover effect (lift up, add shadow)
+   - Click navigates to lesson detail page (/lessons/{lesson_id}/)
+
+HOW TO ADD NEW LESSONS (For AI Assistants):
+1. Create lesson in database:
+   Lesson.objects.create(
+       title='Numbers in Spanish',
+       description='Learn numbers 1-10',
+       language='Spanish',
+       slug='numbers',
+       difficulty_level='A1',
+       is_published=True,
+       order=3
+   )
+2. Add flashcards and quiz questions to lesson
+3. This template will automatically display it with appropriate icon
+4. NO template changes needed!
+
+ICON AUTO-DETECTION LOGIC:
+Icons are now determined in the backend (home/views.py:_get_lesson_icon function).
+The view automatically assigns icons based on lesson topic keywords:
+- If contains 'color' → 🎨
+- If contains 'shape' → 🔷
+- If contains 'number' → 🔢
+... and so on (see _get_lesson_icon function in views.py)
+
+TO ADD NEW ICON MAPPING:
+Edit the _get_lesson_icon() helper function in home/views.py and add a new elif condition.
+
+RELATED FILES:
+- home/views.py (lessons_by_language function) - Provides data
+- home/templates/lessons_list.html - Main language selection page
+- home/urls.py - URL routing
+
+================================================================================
+-->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ language }} Lessons - Language Learning Platform</title>
+    {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
+</head>
+<body>
+    {% include '_nav.html' %}
+
+    <main class="container" style="padding-top: var(--space-3xl);">
+        <!-- Back Button -->
+        <div class="fade-in" style="margin-bottom: var(--space-xl);">
+            <a href="{% if IS_DEVEDU %}../{% else %}{% url 'lessons_list' %}{% endif %}"
+               class="btn btn-outline"
+               style="display: inline-flex; align-items: center; gap: var(--space-xs);">
+                ← Back to Languages
+            </a>
+        </div>
+
+        <!-- Header -->
+        <div class="lessons-header fade-in text-center" style="margin-bottom: var(--space-3xl);">
+            <h2 style="font-size: var(--font-size-4xl); font-weight: 800;">
+                {{ language }} Lessons
+            </h2>
+            <p style="font-size: var(--font-size-lg); color: var(--color-text-muted);">{{ lessons_with_icons|length }} lesson{{ lessons_with_icons|length|pluralize }} available</p>
+        </div>
+
+        {% if lessons_with_icons %}
+            <!-- Lessons Grid -->
+            <div class="fade-in-up">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-xl);">
+                    {% for item in lessons_with_icons %}
+                    <a href="{% if IS_DEVEDU %}../../{{ item.lesson.id }}/{% else %}{% url 'lesson_detail' item.lesson.id %}{% endif %}"
+                       class="card card-bordered"
+                       style="text-decoration: none; cursor: pointer; transition: all 0.3s ease; display: block;">
+                        <div class="card-body">
+                            <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-sm);">
+                                <div style="font-size: 3rem; line-height: 1;">
+                                    {{ item.icon }}
+                                </div>
+                                <h3 class="card-title" style="font-size: var(--font-size-xl); margin: 0;">
+                                    {{ item.lesson.title }}
+                                </h3>
+                            </div>
+                            <p class="text-muted" style="margin-bottom: var(--space-md);">
+                                {{ item.lesson.description }}
+                            </p>
+                            <div class="flex gap-sm" style="flex-wrap: wrap;">
+                                <span class="badge badge-primary">{{ item.lesson.difficulty }}</span>
+                                {% if item.lesson.cards.count > 0 %}
+                                <span class="badge badge-outline">{{ item.lesson.cards.count }} flashcard{{ item.lesson.cards.count|pluralize }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+        {% else %}
+            <!-- No Lessons Available -->
+            <div class="empty-state">
+                <div class="empty-state-icon">📚</div>
+                <h3>No {{ language }} Lessons Available Yet</h3>
+                <p>Check back soon for new learning content!</p>
+                <a href="{% if IS_DEVEDU %}../{% else %}{% url 'lessons_list' %}{% endif %}" class="btn btn-primary" style="margin-top: var(--space-lg);">
+                    Back to Languages
+                </a>
+            </div>
+        {% endif %}
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Language Learning Platform. Empowering language learners worldwide.</p>
+    </footer>
+
+    <script>
+      // Hover effect for lesson cards
+      const lessonCards = document.querySelectorAll('.card[href]');
+      lessonCards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+          card.style.transform = 'translateY(-4px)';
+          card.style.boxShadow = '0 8px 16px rgba(0,0,0,0.1)';
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = 'translateY(0)';
+          card.style.boxShadow = '';
+        });
+      });
+    </script>
+</body>
+</html>

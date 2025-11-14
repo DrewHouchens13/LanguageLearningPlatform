@@ -1,157 +1,249 @@
 """
-Unit tests for DailyQuestService.
-Following TDD - write tests first, then implement service.
+Unit tests for DailyQuestService (NEW single-quest system).
+Tests the redesigned service with ONE quest containing 5 random questions.
 """
 from datetime import date
+from django.contrib.auth.models import User
 from django.test import TestCase
-from home.models import Lesson, DailyQuest, Flashcard, LessonQuizQuestion
+from home.models import (
+    DailyQuest,
+    DailyQuestQuestion,
+    Lesson,
+    LessonCompletion,
+    LessonQuizQuestion,
+    UserProfile,
+)
 from home.services.daily_quest_service import DailyQuestService
 
 
 class TestDailyQuestServiceGeneration(TestCase):
-    """Test DailyQuestService quest generation"""
+    """Test DailyQuestService quest generation for new single-quest system"""
 
     def setUp(self):
-        """Create test lessons with content"""
-        # Flashcard lesson
-        self.flashcard_lesson = Lesson.objects.create(
-            title='Colors',
-            slug='colors',
-            lesson_type='flashcard',
-            xp_value=100,
-            category='Vocabulary',
-            is_published=True
+        """Create test user and lessons with quiz questions"""
+        # Create test user
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
         )
-        # Add flashcards
-        for i in range(5):
-            Flashcard.objects.create(
-                lesson=self.flashcard_lesson,
-                front_text=f'Color {i+1}',
-                back_text=f'Spanish Color {i+1}',
-                order=i
-            )
+        self.profile = UserProfile.objects.get(user=self.user)
 
-        # Quiz lesson
-        self.quiz_lesson = Lesson.objects.create(
-            title='Numbers',
-            slug='numbers',
-            lesson_type='quiz',
-            xp_value=150,
-            category='Vocabulary',
+        # Create Spanish lesson with quiz questions
+        self.spanish_lesson = Lesson.objects.create(
+            title='Spanish Colors',
+            slug='spanish-colors',
+            language='Spanish',
+            xp_value=100,
+            difficulty_level='beginner',
             is_published=True
         )
-        # Add quiz questions
-        for i in range(5):
+        for i in range(10):
             LessonQuizQuestion.objects.create(
-                lesson=self.quiz_lesson,
-                question=f'What is number {i+1}?',
-                options=[f'Option{j}' for j in range(4)],
+                lesson=self.spanish_lesson,
+                question=f'What color is this? {i+1}',
+                options=['Red', 'Blue', 'Green', 'Yellow'],
                 correct_index=0,
                 order=i
             )
 
-    def test_generate_quest_for_date_creates_new_quest(self):
-        """Test generating quests creates two DailyQuests"""
-        test_date = date(2025, 11, 13)
+        # Create French lesson with quiz questions
+        self.french_lesson = Lesson.objects.create(
+            title='French Numbers',
+            slug='french-numbers',
+            language='French',
+            xp_value=150,
+            difficulty_level='beginner',
+            is_published=True
+        )
+        for i in range(10):
+            LessonQuizQuestion.objects.create(
+                lesson=self.french_lesson,
+                question=f'What number is this? {i+1}',
+                options=['Un', 'Deux', 'Trois', 'Quatre'],
+                correct_index=0,
+                order=i
+            )
 
-        quests = DailyQuestService.generate_quests_for_date(test_date)
+    def test_generate_quest_creates_single_quest(self):
+        """Test generating quest creates ONE DailyQuest"""
+        test_date = date(2025, 11, 14)
 
-        # Should return dict with two quests
-        self.assertIn('time_quest', quests)
-        self.assertIn('lesson_quest', quests)
-        
-        time_quest = quests['time_quest']
-        lesson_quest = quests['lesson_quest']
-        
-        # Verify time quest
-        self.assertIsNotNone(time_quest)
-        self.assertEqual(time_quest.date, test_date)
-        self.assertEqual(time_quest.quest_type, 'study')
-        self.assertEqual(time_quest.xp_reward, 50)
-        
-        # Verify lesson quest
-        self.assertIsNotNone(lesson_quest)
-        self.assertEqual(lesson_quest.date, test_date)
-        self.assertEqual(lesson_quest.quest_type, 'quiz')
-        self.assertIsNotNone(lesson_quest.based_on_lesson)
-        self.assertTrue(lesson_quest.xp_reward > 0)
+        quest = DailyQuestService.generate_quest_for_user(self.user, test_date)
 
-    def test_generate_quest_returns_existing_if_already_generated(self):
-        """Test generating quests for same date returns existing quests"""
-        test_date = date(2025, 11, 13)
-
-        # Generate first time
-        quests1 = DailyQuestService.generate_quests_for_date(test_date)
-
-        # Try to generate again for same date
-        quests2 = DailyQuestService.generate_quests_for_date(test_date)
-
-        # Should return same quests
-        self.assertEqual(quests1['time_quest'].id, quests2['time_quest'].id)
-        self.assertEqual(quests1['lesson_quest'].id, quests2['lesson_quest'].id)
-        self.assertEqual(DailyQuest.objects.filter(date=test_date).count(), 2)
-
-    def test_generate_quest_calculates_xp_as_75_percent(self):
-        """Test lesson quest XP matches lesson XP"""
-        test_date = date(2025, 11, 13)
-
-        quests = DailyQuestService.generate_quests_for_date(test_date)
-        lesson_quest = quests['lesson_quest']
-        lesson_xp = lesson_quest.based_on_lesson.xp_value
-
-        # New behavior: quest XP equals lesson XP (not 75%)
-        self.assertEqual(lesson_quest.xp_reward, lesson_xp)
+        # Should create one quest
+        self.assertIsNotNone(quest)
+        self.assertEqual(quest.date, test_date)
+        self.assertEqual(quest.quest_type, 'quiz')
+        self.assertEqual(quest.xp_reward, 50)
+        self.assertEqual(quest.title, 'Daily Challenge')
 
     def test_generate_quest_creates_5_questions(self):
-        """Test that lesson quest is based on a lesson with content"""
-        test_date = date(2025, 11, 13)
+        """Test quest contains exactly 5 DailyQuestQuestion records"""
+        test_date = date(2025, 11, 14)
 
-        quests = DailyQuestService.generate_quests_for_date(test_date)
-        lesson = quests['lesson_quest'].based_on_lesson
+        quest = DailyQuestService.generate_quest_for_user(self.user, test_date)
+        questions = DailyQuestQuestion.objects.filter(daily_quest=quest)
 
-        # Lesson should have either flashcards or quiz questions
-        has_flashcards = lesson.cards.count() >= 5
-        has_quiz_questions = lesson.quiz_questions.count() >= 5
-        
-        self.assertTrue(has_flashcards or has_quiz_questions,
-                       "Lesson should have at least 5 flashcards or quiz questions")
+        self.assertEqual(questions.count(), 5)
 
-    def test_generate_quest_questions_have_correct_order(self):
-        """Test lesson has properly ordered content"""
-        test_date = date(2025, 11, 13)
+    def test_generate_quest_returns_existing_if_already_generated(self):
+        """Test generating quest for same date returns existing quest"""
+        test_date = date(2025, 11, 14)
 
-        quests = DailyQuestService.generate_quests_for_date(test_date)
-        lesson = quests['lesson_quest'].based_on_lesson
+        # Generate first time
+        quest1 = DailyQuestService.generate_quest_for_user(self.user, test_date)
 
-        # Verify lesson has content (flashcards or quiz questions)
-        total_content = lesson.cards.count() + lesson.quiz_questions.count()
-        self.assertTrue(total_content >= 5,
-                       "Lesson should have at least 5 pieces of content")
+        # Try to generate again for same date
+        quest2 = DailyQuestService.generate_quest_for_user(self.user, test_date)
 
-    def test_generate_quest_inherits_lesson_type(self):
-        """Test lesson quest type is 'quiz' for lesson-based quests"""
-        test_date = date(2025, 11, 13)
+        # Should return same quest
+        self.assertEqual(quest1.id, quest2.id)
+        self.assertEqual(DailyQuest.objects.filter(date=test_date).count(), 1)
 
-        quests = DailyQuestService.generate_quests_for_date(test_date)
+    def test_questions_from_all_lessons_if_no_completions(self):
+        """Test questions pulled from all published lessons if user hasn't completed any"""
+        test_date = date(2025, 11, 14)
 
-        # Time quest should be 'study'
-        self.assertEqual(quests['time_quest'].quest_type, 'study')
-        # Lesson quest should be 'quiz'
-        self.assertEqual(quests['lesson_quest'].quest_type, 'quiz')
+        quest = DailyQuestService.generate_quest_for_user(self.user, test_date)
+        questions = DailyQuestQuestion.objects.filter(daily_quest=quest)
 
-    def test_select_random_lesson_returns_published_lesson(self):
-        """Test _select_random_lesson returns a published lesson"""
-        lesson = DailyQuestService._select_random_lesson()
+        # All 5 questions should exist
+        self.assertEqual(questions.count(), 5)
 
-        self.assertIsNotNone(lesson)
-        self.assertTrue(lesson.is_published)
+        # Verify questions are created as snapshots (have question_text copied)
+        for question in questions:
+            self.assertIsNotNone(question.question_text)
+            self.assertTrue(len(question.question_text) > 0)
 
-    def test_select_random_lesson_raises_error_if_no_lessons(self):
-        """Test _select_random_lesson raises error if no published lessons"""
-        # Delete all lessons
-        Lesson.objects.all().delete()
+    def test_questions_from_completed_lessons_only(self):
+        """Test questions pulled only from completed lessons if user has completions"""
+        # Mark Spanish lesson as completed
+        LessonCompletion.objects.create(
+            user=self.user,
+            lesson_id=str(self.spanish_lesson.id),
+            lesson_title=self.spanish_lesson.title,
+            duration_minutes=5
+        )
+
+        test_date = date(2025, 11, 14)
+        quest = DailyQuestService.generate_quest_for_user(self.user, test_date)
+        questions = DailyQuestQuestion.objects.filter(daily_quest=quest)
+
+        # All 5 questions should be generated (from completed lessons pool)
+        self.assertEqual(questions.count(), 5)
+
+        # Verify questions are created as valid snapshots
+        for question in questions:
+            self.assertIsNotNone(question.question_text)
+            self.assertTrue(len(question.question_text) > 0)
+            # Questions should have options since they're quiz type
+            self.assertTrue(len(question.options) > 0)
+
+    def test_raises_error_if_insufficient_questions(self):
+        """Test ValueError raised if fewer than 5 questions available"""
+        # Create lesson with only 3 questions
+        small_lesson = Lesson.objects.create(
+            title='Small Lesson',
+            slug='small',
+            language='German',
+            is_published=True
+        )
+        for i in range(3):
+            LessonQuizQuestion.objects.create(
+                lesson=small_lesson,
+                question=f'Question {i+1}',
+                options=['Answer', 'Wrong', 'Wrong', 'Wrong'],
+                correct_index=0,
+                order=i
+            )
+
+        # Mark as completed (so it's the only source)
+        LessonCompletion.objects.create(
+            user=self.user,
+            lesson_id=str(small_lesson.id),
+            lesson_title=small_lesson.title,
+            duration_minutes=5
+        )
+
+        # Delete other lessons
+        self.spanish_lesson.delete()
+        self.french_lesson.delete()
+
+        test_date = date(2025, 11, 14)
 
         with self.assertRaises(ValueError) as context:
-            DailyQuestService._select_random_lesson()
+            DailyQuestService.generate_quest_for_user(self.user, test_date)
 
-        self.assertIn('No published lessons', str(context.exception))
+        self.assertIn('Insufficient questions', str(context.exception))
+
+    def test_calculate_quest_score_perfect_score(self):
+        """Test score calculation with all correct answers"""
+        test_date = date(2025, 11, 14)
+        quest = DailyQuestService.generate_quest_for_user(self.user, test_date)
+        questions = DailyQuestQuestion.objects.filter(daily_quest=quest)
+
+        # Submit all correct answers (indices)
+        answers = {str(q.id): str(q.correct_index) for q in questions}
+
+        correct, total, xp = DailyQuestService.calculate_quest_score(quest, answers)
+
+        self.assertEqual(correct, 5)
+        self.assertEqual(total, 5)
+        self.assertEqual(xp, 50)  # 100% of 50 XP reward
+
+    def test_calculate_quest_score_partial_score(self):
+        """Test score calculation with some correct answers"""
+        test_date = date(2025, 11, 14)
+        quest = DailyQuestService.generate_quest_for_user(self.user, test_date)
+        questions = list(DailyQuestQuestion.objects.filter(daily_quest=quest))
+
+        # Submit 3 correct, 2 wrong
+        answers = {
+            str(questions[0].id): str(questions[0].correct_index),
+            str(questions[1].id): str(questions[1].correct_index),
+            str(questions[2].id): str(questions[2].correct_index),
+            str(questions[3].id): '99',  # Wrong index
+            str(questions[4].id): '99',  # Wrong index
+        }
+
+        correct, total, xp = DailyQuestService.calculate_quest_score(quest, answers)
+
+        self.assertEqual(correct, 3)
+        self.assertEqual(total, 5)
+        self.assertEqual(xp, 30)  # 60% of 50 XP = 30
+
+    def test_get_weekly_stats_no_attempts(self):
+        """Test weekly stats returns zeros if no attempts"""
+        stats = DailyQuestService.get_weekly_stats(self.user)
+
+        self.assertEqual(stats['challenges_completed'], 0)
+        self.assertEqual(stats['xp_earned'], 0)
+        self.assertEqual(stats['total_questions'], 0)
+        self.assertEqual(stats['correct_answers'], 0)
+        self.assertEqual(stats['accuracy'], 0)
+
+    def test_get_lifetime_stats_no_attempts(self):
+        """Test lifetime stats returns zeros if no attempts"""
+        stats = DailyQuestService.get_lifetime_stats(self.user)
+
+        self.assertEqual(stats['challenges_completed'], 0)
+        self.assertEqual(stats['xp_earned'], 0)
+        self.assertEqual(stats['total_questions'], 0)
+        self.assertEqual(stats['correct_answers'], 0)
+        self.assertEqual(stats['accuracy'], 0)
+
+    def test_legacy_generate_quests_for_date_returns_compat_dict(self):
+        """Test legacy method returns backward-compatible dict format"""
+        test_date = date(2025, 11, 14)
+
+        # Generate quest first
+        DailyQuestService.generate_quest_for_user(self.user, test_date)
+
+        # Call legacy method
+        result = DailyQuestService.generate_quests_for_date(test_date)
+
+        # Should return dict with expected keys
+        self.assertIn('time_quest', result)
+        self.assertIn('lesson_quest', result)
+        self.assertIsNone(result['time_quest'])
+        self.assertIsNotNone(result['lesson_quest'])
