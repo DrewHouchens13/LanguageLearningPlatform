@@ -6,15 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Language Learning Platform</title>
     {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
-    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
   </head>
   <body>
     {% include '_nav.html' %}
     
-    <main>
+    <main class="container">
       <!-- Django Messages -->
       {% if messages %}
-        <div class="page-messages">
+        <div class="mt-xl">
           {% for message in messages %}
             <div class="alert alert-{{ message.tags }}">
               {{ message }}
@@ -23,97 +27,278 @@
         </div>
       {% endif %}
       
-      <section class="hero">
-        <div class="hero-content">
-          <h2>Welcome, {{ user.first_name }}! 👋</h2>
-          <p>This is your personal dashboard. Here you can track your progress, manage your courses, and continue your language learning journey.</p>
-          {% if not has_completed_onboarding %}
-            <div style="margin: 1.5rem 0; padding: 1rem; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-              <p style="margin: 0 0 0.5rem 0; font-weight: 600; color: #856404;">📝 Take Your Placement Test</p>
-              <p style="margin: 0 0 1rem 0; color: #856404;">Discover your Spanish proficiency level to unlock personalized lessons tailored to your skills!</p>
-              <a href="{% url 'onboarding_welcome' %}" style="display: inline-block; padding: 0.5rem 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Take Assessment Now</a>
-            </div>
-          {% else %}
-            <p><strong>Your Level:</strong> <span style="display: inline-block; padding: 0.25rem 0.75rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">{{ user_profile.get_proficiency_level_display }}</span></p>
-          {% endif %}
-
-          <!-- XP and Leveling System -->
-          {% if user.profile %}
-          <div style="margin: 1.5rem 0; padding: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; color: white;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-              <div>
-                <h3 style="margin: 0 0 0.5rem 0; font-size: 1.5rem;">Level {{ user.profile.current_level }}</h3>
-                <p style="margin: 0; font-size: 1.1rem; opacity: 0.9;">{{ user.profile.total_xp }} XP</p>
-              </div>
-              <div style="text-align: right;">
-                <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">Next Level</p>
-                <p style="margin: 0; font-size: 1.2rem; font-weight: 600;">{{ user.profile.get_xp_to_next_level }} XP to go</p>
-              </div>
-            </div>
-            <div style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 12px; overflow: hidden;">
-              <div style="background: white; height: 100%; width: {{ user.profile.get_progress_to_next_level }}%; transition: width 0.3s ease;"></div>
-            </div>
-            <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; opacity: 0.9; text-align: center;">{{ user.profile.get_progress_to_next_level|floatformat:0 }}% to Level {{ user.profile.current_level|add:1 }}</p>
+      <!-- Dashboard Header with Streak -->
+      <section class="dashboard-header fade-in">
+        <div class="dashboard-welcome">
+          <div style="flex: 1;">
+            <h2 class="dashboard-title">Welcome back, {{ user.first_name }}! 👋</h2>
+            <p class="dashboard-subtitle">
+              {% if current_streak > 0 %}
+                Keep your streak alive! You're doing great!
+              {% else %}
+                Ready to start your learning journey?
+              {% endif %}
+            </p>
           </div>
-          {% endif %}
-
-          <p><strong>Email:</strong> {{ user.email }}</p>
-          <p><strong>Username:</strong> {{ user.username }}</p>
-          <p><strong>Member since:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
-        </div>
-        <div class="hero-image dashboard-avatar-container">
-          {% if user.profile %}
-            <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="dashboard-avatar">
-            <p class="avatar-source">{% if user.profile.avatar %}Custom Avatar{% else %}Gravatar{% endif %}</p>
-          {% else %}
-            <img src="https://www.gravatar.com/avatar/?s=200&d=identicon" alt="{{ user.username }}'s avatar" class="dashboard-avatar">
-            <p class="avatar-source">Gravatar (default)</p>
-          {% endif %}
+          
+          <!-- Animated Streak Fire -->
+          <div class="streak-fire-container">
+            <div class="fire-glow {% if current_streak > 0 %}active{% endif %}"></div>
+            <div class="fire-emoji {% if current_streak > 0 %}active{% else %}dead{% endif %}">🔥</div>
+            <div class="streak-stats">
+              <span class="streak-number">{{ current_streak }}</span>
+              <span class="streak-label">Day Streak</span>
+            </div>
+          </div>
+          
+          <div style="text-align: center;">
+            {% if user.profile %}
+              <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="avatar avatar-2xl" style="margin-bottom: var(--space-sm);">
+            {% else %}
+              <img src="https://www.gravatar.com/avatar/?s=200&d=identicon" alt="{{ user.username }}'s avatar" class="avatar avatar-2xl" style="margin-bottom: var(--space-sm);">
+            {% endif %}
+            {% if user_profile and user_profile.has_completed_onboarding %}
+              <div>
+                <span class="badge badge-primary" style="font-size: var(--font-size-sm); padding: var(--space-xs) var(--space-md);">
+                  {{ user_profile.get_proficiency_level_display }}
+                </span>
+              </div>
+            {% endif %}
+          </div>
         </div>
       </section>
+
+      <!-- XP and Leveling System -->
+      {% if user_profile %}
+      <section class="card card-bordered mt-xl fade-in-up" style="background: linear-gradient(135deg, #fff4e6 0%, #ffe8cc 100%); border: 2px solid #ff8a65;">
+        <div class="card-body">
+          <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: var(--space-lg); margin-bottom: var(--space-lg);">
+            <div style="flex: 1; min-width: 250px;">
+              <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-xs);">
+                <span style="font-size: 2.5rem;">⚡</span>
+                <div>
+                  <h3 style="margin: 0; font-size: var(--font-size-2xl); color: #d84315;">Level {{ user_profile.current_level }}</h3>
+                  <p class="text-muted" style="margin: 0; color: #d84315;">Experience Points</p>
+                </div>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <p style="font-size: var(--font-size-3xl); font-weight: 700; color: #d84315; margin: 0;">{{ user_profile.total_xp|floatformat:0 }}</p>
+              <p class="text-muted" style="font-size: var(--font-size-sm); color: #d84315;">Total XP</p>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div style="margin-bottom: var(--space-md);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
+              <span style="font-weight: 600; color: #d84315;">Progress to Level {{ user_profile.current_level|add:1 }}</span>
+              <span style="font-weight: 600; color: #d84315;">{{ xp_progress_percent|floatformat:1 }}%</span>
+            </div>
+            <div style="width: 100%; height: 24px; background: rgba(255, 138, 101, 0.2); border-radius: var(--radius-full); overflow: hidden; position: relative;">
+              <div style="height: 100%; background: linear-gradient(90deg, #ff8a65 0%, #ff7043 100%); border-radius: var(--radius-full); width: {{ xp_progress_percent }}%; transition: width 0.5s ease;"></div>
+            </div>
+            <p class="text-muted mt-sm" style="font-size: var(--font-size-sm); color: #d84315;">{{ xp_to_next_level }} XP needed for next level</p>
+          </div>
+
+          <!-- XP Sources -->
+          <div style="background: rgba(255, 255, 255, 0.7); padding: var(--space-md); border-radius: var(--radius-md);">
+            <p style="font-weight: 600; margin-bottom: var(--space-sm); color: #d84315;">Earn XP by:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-sm);">
+              <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                <span>📚</span>
+                <span style="font-size: var(--font-size-sm); color: #d84315;">Complete lessons (+50-100 XP)</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                <span>🎯</span>
+                <span style="font-size: var(--font-size-sm); color: #d84315;">Daily quests (+50-100 XP)</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                <span>⭐</span>
+                <span style="font-size: var(--font-size-sm); color: #d84315;">Perfect scores (+10 XP bonus)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      {% endif %}
       
-      <section class="features">
-        <div class="feature-card">
-          <h3>Your Courses</h3>
-          <p>View and manage all your enrolled courses in one place.</p>
+      <!-- Placement Test CTA -->
+      {% if not has_completed_onboarding %}
+        <section class="card card-bordered fade-in-up delay-100" style="background: linear-gradient(135deg, #fff3cd 0%, #fef3c7 100%);">
+          <div class="card-body text-center">
+            <h3 class="text-3xl font-bold mb-md" style="color: #92400e;">📝 Discover Your Spanish Level</h3>
+            <p class="text-lg mb-xl" style="color: #92400e;">Take our quick placement test to unlock personalized lessons tailored to your proficiency!</p>
+            <a href="{% url 'onboarding_welcome' %}" class="btn btn-accent btn-lg">
+              Start Placement Test →
+            </a>
+          </div>
+        </section>
+      {% endif %}
+
+      <!-- Daily Quests Card -->
+      {% if daily_quests %}
+        <section class="card card-bordered fade-in-up delay-150" style="margin-top: var(--space-3xl); margin-bottom: var(--space-2xl); background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #0ea5e9;">
+          <div class="card-body">
+            <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: var(--space-md);">
+              <div style="flex: 1; min-width: 250px;">
+                <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-xs);">
+                  <span style="font-size: 2rem;">🎯</span>
+                  <h3 class="card-title" style="margin: 0;">Daily Quests</h3>
+                </div>
+                <p class="text-muted" style="margin-bottom: var(--space-md);">{{ daily_quests.time_quest.date|date:"F j, Y" }}</p>
+                
+                {% if daily_quests.both_complete %}
+                  <div style="display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-md); background: var(--color-success-light, #d1fae5); border-radius: var(--radius-md); margin-bottom: var(--space-md);">
+                    <span style="font-size: 1.5rem;">✅</span>
+                    <div>
+                      <p style="font-weight: 600; color: var(--color-success); margin: 0;">All Quests Completed!</p>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">Come back tomorrow for new challenges</p>
+                    </div>
+                  </div>
+                {% else %}
+                  <p style="font-weight: 600; margin-bottom: var(--space-sm);">2 Quests Available Today</p>
+                  
+                  <div style="display: grid; gap: var(--space-sm); margin-bottom: var(--space-md);">
+                    <!-- Time Quest -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-sm); background: var(--color-surface); border-radius: var(--radius-sm);">
+                      <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                        <span>⏱️</span>
+                        <span style="font-size: var(--font-size-sm);">{{ daily_quests.time_quest.title }}</span>
+                      </div>
+                      {% if daily_quests.time_complete %}
+                        <span style="color: var(--color-success); font-size: var(--font-size-sm);">✓ Complete</span>
+                      {% else %}
+                        <span class="text-muted" style="font-size: var(--font-size-sm);">{{ daily_quests.time_progress }}/15 min</span>
+                      {% endif %}
+                    </div>
+                    
+                    <!-- Lesson Quest -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-sm); background: var(--color-surface); border-radius: var(--radius-sm);">
+                      <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                        <span>📚</span>
+                        <span style="font-size: var(--font-size-sm);">{{ daily_quests.lesson_quest.title }}</span>
+                      </div>
+                      {% if daily_quests.lesson_complete %}
+                        <span style="color: var(--color-success); font-size: var(--font-size-sm);">✓ Complete</span>
+                      {% else %}
+                        <span class="text-muted" style="font-size: var(--font-size-sm);">Pending</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                  
+                  <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                    <span>⭐</span>
+                    <span style="font-weight: 600; color: var(--color-success);">Up to {{ daily_quests.time_quest.xp_reward|add:daily_quests.lesson_quest.xp_reward }} XP available</span>
+                  </div>
+                {% endif %}
+              </div>
+              
+              <div style="display: flex; align-items: center;">
+                {% if daily_quests.both_complete %}
+                  <a href="{% url 'quest_history' %}" class="btn btn-outline">
+                    View History
+                  </a>
+                {% else %}
+                  <a href="{% url 'daily_quest' %}" class="btn btn-primary btn-lg">
+                    View Quests →
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </section>
+      {% endif %}
+      
+      <!-- Quick Actions -->
+      <section class="mt-3xl">
+        <h3 class="text-3xl font-bold mb-xl text-center">Quick Actions</h3>
+        <div class="features-grid">
+          <a href="{% url 'lessons_list' %}" class="feature-item hover-lift" style="text-decoration: none;">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+              </svg>
+            </div>
+            <h3>Browse Lessons</h3>
+            <p>Explore our catalog of interactive language lessons designed for your level.</p>
+          </a>
+
+          <a href="{% url 'progress' %}" class="feature-item hover-lift" style="text-decoration: none;">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+            </div>
+            <h3>View Progress</h3>
+            <p>Track your learning journey with detailed statistics and achievements.</p>
+          </a>
+
+          <a href="{% url 'account' %}" class="feature-item hover-lift" style="text-decoration: none;">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6m-9-9h6m6 0h6"></path>
+                <path d="M19.07 4.93l-4.24 4.24m0 5.66l4.24 4.24M4.93 4.93l4.24 4.24m0 5.66l-4.24 4.24"></path>
+              </svg>
+            </div>
+            <h3>Account Settings</h3>
+            <p>Update your profile, change password, and customize your experience.</p>
+          </a>
         </div>
-        <div class="feature-card">
-          <h3>Learning Progress</h3>
-          <p>Track your achievements and see how far you've come.</p>
-        </div>
-        <div class="feature-card">
-          <h3>Daily Quest</h3>
-          <p>Complete today's challenge to earn bonus XP and rewards!</p>
-          <a href="{% url 'daily_quest' %}" style="display: inline-block; margin-top: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Start Quest</a>
-        </div>
-        <div class="feature-card">
-          <h3>Study Schedule</h3>
-          <p>Stay on track with your personalized study plan.</p>
+      </section>
+
+      <!-- User Info Card -->
+      <section class="mt-3xl">
+        <div class="card">
+          <div class="card-header">
+            <h3>Account Information</h3>
+          </div>
+          <div class="card-body">
+            <div class="info-grid">
+              <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ user.email }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Username</span>
+                <span class="info-value">{{ user.username }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Member Since</span>
+                <span class="info-value">{{ user.date_joined|date:"F d, Y" }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
     
     <footer>
-      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+      <p>&copy; 2025 Language Learning Platform. Empowering language learners worldwide.</p>
     </footer>
 
     <script>
       // Mobile menu toggle
       const navToggle = document.querySelector('.nav-toggle');
-      const navMenu = document.querySelector('.nav-menu');
+      const navCenter = document.querySelector('.nav-center');
       
-      navToggle.addEventListener('click', () => {
-        navMenu.classList.toggle('active');
-        navToggle.classList.toggle('active');
-      });
+      if (navToggle && navCenter) {
+        navToggle.addEventListener('click', () => {
+          navCenter.classList.toggle('active');
+          navToggle.classList.toggle('active');
+        });
 
-      // Close menu when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
-          navMenu.classList.remove('active');
-          navToggle.classList.remove('active');
-        }
-      });
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!navToggle.contains(e.target) && !navCenter.contains(e.target)) {
+            navCenter.classList.remove('active');
+            navToggle.classList.remove('active');
+          }
+        });
+      }
     </script>
   </body>
 </html>

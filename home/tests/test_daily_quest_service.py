@@ -51,67 +51,93 @@ class TestDailyQuestServiceGeneration(TestCase):
             )
 
     def test_generate_quest_for_date_creates_new_quest(self):
-        """Test generating a quest creates a new DailyQuest"""
+        """Test generating quests creates two DailyQuests"""
         test_date = date(2025, 11, 13)
 
-        quest = DailyQuestService.generate_quest_for_date(test_date)
+        quests = DailyQuestService.generate_quests_for_date(test_date)
 
-        self.assertIsNotNone(quest)
-        self.assertEqual(quest.date, test_date)
-        self.assertIn('Daily', quest.title)
-        self.assertIn('Challenge', quest.title)
-        self.assertIsNotNone(quest.based_on_lesson)
-        self.assertTrue(quest.xp_reward > 0)
+        # Should return dict with two quests
+        self.assertIn('time_quest', quests)
+        self.assertIn('lesson_quest', quests)
+        
+        time_quest = quests['time_quest']
+        lesson_quest = quests['lesson_quest']
+        
+        # Verify time quest
+        self.assertIsNotNone(time_quest)
+        self.assertEqual(time_quest.date, test_date)
+        self.assertEqual(time_quest.quest_type, 'study')
+        self.assertEqual(time_quest.xp_reward, 50)
+        
+        # Verify lesson quest
+        self.assertIsNotNone(lesson_quest)
+        self.assertEqual(lesson_quest.date, test_date)
+        self.assertEqual(lesson_quest.quest_type, 'quiz')
+        self.assertIsNotNone(lesson_quest.based_on_lesson)
+        self.assertTrue(lesson_quest.xp_reward > 0)
 
     def test_generate_quest_returns_existing_if_already_generated(self):
-        """Test generating quest for same date returns existing quest"""
+        """Test generating quests for same date returns existing quests"""
         test_date = date(2025, 11, 13)
 
-        # Generate first quest
-        quest1 = DailyQuestService.generate_quest_for_date(test_date)
+        # Generate first time
+        quests1 = DailyQuestService.generate_quests_for_date(test_date)
 
         # Try to generate again for same date
-        quest2 = DailyQuestService.generate_quest_for_date(test_date)
+        quests2 = DailyQuestService.generate_quests_for_date(test_date)
 
-        # Should return same quest
-        self.assertEqual(quest1.id, quest2.id)
-        self.assertEqual(DailyQuest.objects.filter(date=test_date).count(), 1)
+        # Should return same quests
+        self.assertEqual(quests1['time_quest'].id, quests2['time_quest'].id)
+        self.assertEqual(quests1['lesson_quest'].id, quests2['lesson_quest'].id)
+        self.assertEqual(DailyQuest.objects.filter(date=test_date).count(), 2)
 
     def test_generate_quest_calculates_xp_as_75_percent(self):
-        """Test quest XP is 75% of lesson XP"""
+        """Test lesson quest XP matches lesson XP"""
         test_date = date(2025, 11, 13)
 
-        quest = DailyQuestService.generate_quest_for_date(test_date)
-        lesson_xp = quest.based_on_lesson.xp_value
-        expected_xp = int(lesson_xp * 0.75)
+        quests = DailyQuestService.generate_quests_for_date(test_date)
+        lesson_quest = quests['lesson_quest']
+        lesson_xp = lesson_quest.based_on_lesson.xp_value
 
-        self.assertEqual(quest.xp_reward, expected_xp)
+        # New behavior: quest XP equals lesson XP (not 75%)
+        self.assertEqual(lesson_quest.xp_reward, lesson_xp)
 
     def test_generate_quest_creates_5_questions(self):
-        """Test quest generation creates exactly 5 questions"""
+        """Test that lesson quest is based on a lesson with content"""
         test_date = date(2025, 11, 13)
 
-        quest = DailyQuestService.generate_quest_for_date(test_date)
+        quests = DailyQuestService.generate_quests_for_date(test_date)
+        lesson = quests['lesson_quest'].based_on_lesson
 
-        self.assertEqual(quest.questions.count(), 5)
+        # Lesson should have either flashcards or quiz questions
+        has_flashcards = lesson.cards.count() >= 5
+        has_quiz_questions = lesson.quiz_questions.count() >= 5
+        
+        self.assertTrue(has_flashcards or has_quiz_questions,
+                       "Lesson should have at least 5 flashcards or quiz questions")
 
     def test_generate_quest_questions_have_correct_order(self):
-        """Test quest questions have order 1-5"""
+        """Test lesson has properly ordered content"""
         test_date = date(2025, 11, 13)
 
-        quest = DailyQuestService.generate_quest_for_date(test_date)
-        questions = quest.questions.all()
+        quests = DailyQuestService.generate_quests_for_date(test_date)
+        lesson = quests['lesson_quest'].based_on_lesson
 
-        orders = [q.order for q in questions]
-        self.assertEqual(sorted(orders), [1, 2, 3, 4, 5])
+        # Verify lesson has content (flashcards or quiz questions)
+        total_content = lesson.cards.count() + lesson.quiz_questions.count()
+        self.assertTrue(total_content >= 5,
+                       "Lesson should have at least 5 pieces of content")
 
     def test_generate_quest_inherits_lesson_type(self):
-        """Test quest inherits quest_type from lesson"""
+        """Test lesson quest type is 'quiz' for lesson-based quests"""
         test_date = date(2025, 11, 13)
 
-        quest = DailyQuestService.generate_quest_for_date(test_date)
+        quests = DailyQuestService.generate_quests_for_date(test_date)
 
-        self.assertEqual(quest.quest_type, quest.based_on_lesson.lesson_type)
+        # Time quest should be 'study'
+        self.assertEqual(quests['time_quest'].quest_type, 'study')
+        # Lesson quest should be 'quiz'
+        self.assertEqual(quests['lesson_quest'].quest_type, 'quiz')
 
     def test_select_random_lesson_returns_published_lesson(self):
         """Test _select_random_lesson returns a published lesson"""
@@ -129,205 +155,3 @@ class TestDailyQuestServiceGeneration(TestCase):
             DailyQuestService._select_random_lesson()
 
         self.assertIn('No published lessons', str(context.exception))
-
-
-class TestDailyQuestServiceFlashcardQuestions(TestCase):
-    """Test DailyQuestService flashcard question generation"""
-
-    def setUp(self):
-        """Create flashcard lesson with content"""
-        self.lesson = Lesson.objects.create(
-            title='Colors',
-            slug='colors',
-            lesson_type='flashcard',
-            xp_value=100,
-            is_published=True
-        )
-        # Add 5 flashcards
-        self.cards = []
-        for i in range(5):
-            card = Flashcard.objects.create(
-                lesson=self.lesson,
-                front_text=f'Color {i+1}',
-                back_text=f'Spanish {i+1}',
-                order=i
-            )
-            self.cards.append(card)
-
-    def test_generate_flashcard_questions_creates_5_questions(self):
-        """Test flashcard question generation creates 5 questions"""
-        test_date = date(2025, 11, 13)
-        quest = DailyQuest.objects.create(
-            date=test_date,
-            title='Test Quest',
-            description='Test',
-            based_on_lesson=self.lesson,
-            quest_type='flashcard',
-            xp_reward=75
-        )
-
-        DailyQuestService._generate_flashcard_questions(quest, self.lesson)
-
-        self.assertEqual(quest.questions.count(), 5)
-
-    def test_generate_flashcard_questions_have_required_fields(self):
-        """Test flashcard questions have question_text and answer_text"""
-        test_date = date(2025, 11, 13)
-        quest = DailyQuest.objects.create(
-            date=test_date,
-            title='Test Quest',
-            description='Test',
-            based_on_lesson=self.lesson,
-            quest_type='flashcard',
-            xp_reward=75
-        )
-
-        DailyQuestService._generate_flashcard_questions(quest, self.lesson)
-
-        for question in quest.questions.all():
-            self.assertTrue(len(question.question_text) > 0)
-            self.assertTrue(len(question.answer_text) > 0)
-
-    def test_generate_flashcard_questions_raises_error_if_insufficient_cards(self):
-        """Test error raised if lesson has < 3 flashcards"""
-        # Create lesson with only 2 cards
-        lesson = Lesson.objects.create(
-            title='Small Lesson',
-            slug='small',
-            lesson_type='flashcard',
-            xp_value=100,
-            is_published=True
-        )
-        for i in range(2):
-            Flashcard.objects.create(
-                lesson=lesson,
-                front_text=f'Card {i}',
-                back_text=f'Answer {i}',
-                order=i
-            )
-
-        quest = DailyQuest.objects.create(
-            date=date.today(),
-            title='Test',
-            description='Test',
-            based_on_lesson=lesson,
-            quest_type='flashcard',
-            xp_reward=75
-        )
-
-        with self.assertRaises(ValueError) as context:
-            DailyQuestService._generate_flashcard_questions(quest, lesson)
-
-        self.assertIn('at least 3 flashcards', str(context.exception))
-
-
-class TestDailyQuestServiceQuizQuestions(TestCase):
-    """Test DailyQuestService quiz question generation"""
-
-    def setUp(self):
-        """Create quiz lesson with content"""
-        self.lesson = Lesson.objects.create(
-            title='Numbers',
-            slug='numbers',
-            lesson_type='quiz',
-            xp_value=150,
-            is_published=True
-        )
-        # Add 5 quiz questions
-        for i in range(5):
-            LessonQuizQuestion.objects.create(
-                lesson=self.lesson,
-                question=f'Question {i+1}?',
-                options=['A', 'B', 'C', 'D'],
-                correct_index=i % 4,
-                order=i
-            )
-
-    def test_generate_quiz_questions_creates_5_questions(self):
-        """Test quiz question generation creates 5 questions"""
-        test_date = date(2025, 11, 13)
-        quest = DailyQuest.objects.create(
-            date=test_date,
-            title='Test Quest',
-            description='Test',
-            based_on_lesson=self.lesson,
-            quest_type='quiz',
-            xp_reward=112
-        )
-
-        DailyQuestService._generate_quiz_questions(quest, self.lesson)
-
-        self.assertEqual(quest.questions.count(), 5)
-
-    def test_generate_quiz_questions_have_required_fields(self):
-        """Test quiz questions have question_text, options, correct_index"""
-        test_date = date(2025, 11, 13)
-        quest = DailyQuest.objects.create(
-            date=test_date,
-            title='Test Quest',
-            description='Test',
-            based_on_lesson=self.lesson,
-            quest_type='quiz',
-            xp_reward=112
-        )
-
-        DailyQuestService._generate_quiz_questions(quest, self.lesson)
-
-        for question in quest.questions.all():
-            self.assertTrue(len(question.question_text) > 0)
-            self.assertIsNotNone(question.options)
-            self.assertTrue(len(question.options) > 0)
-            self.assertIsNotNone(question.correct_index)
-            self.assertTrue(0 <= question.correct_index < len(question.options))
-
-    def test_generate_quiz_questions_shuffles_options(self):
-        """Test quiz questions shuffle options"""
-        test_date = date(2025, 11, 13)
-        quest = DailyQuest.objects.create(
-            date=test_date,
-            title='Test Quest',
-            description='Test',
-            based_on_lesson=self.lesson,
-            quest_type='quiz',
-            xp_reward=112
-        )
-
-        DailyQuestService._generate_quiz_questions(quest, self.lesson)
-
-        # Options should be shuffled, so correct_index may differ from lesson
-        # Just verify correct answer is at the specified index
-        for question in quest.questions.all():
-            self.assertTrue(question.correct_index < len(question.options))
-
-    def test_generate_quiz_questions_raises_error_if_insufficient_questions(self):
-        """Test error raised if lesson has < 5 quiz questions"""
-        lesson = Lesson.objects.create(
-            title='Small Quiz',
-            slug='small-quiz',
-            lesson_type='quiz',
-            xp_value=150,
-            is_published=True
-        )
-        # Only 3 questions
-        for i in range(3):
-            LessonQuizQuestion.objects.create(
-                lesson=lesson,
-                question=f'Q{i}',
-                options=['A', 'B'],
-                correct_index=0,
-                order=i
-            )
-
-        quest = DailyQuest.objects.create(
-            date=date.today(),
-            title='Test',
-            description='Test',
-            based_on_lesson=lesson,
-            quest_type='quiz',
-            xp_reward=112
-        )
-
-        with self.assertRaises(ValueError) as context:
-            DailyQuestService._generate_quiz_questions(quest, lesson)
-
-        self.assertIn('at least 5 quiz questions', str(context.exception))

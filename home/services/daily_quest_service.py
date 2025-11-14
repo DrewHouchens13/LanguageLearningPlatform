@@ -2,7 +2,7 @@
 Service for generating and managing daily quests.
 """
 import secrets
-from home.models import Lesson, DailyQuest, DailyQuestQuestion
+from home.models import Lesson, DailyQuest
 
 # Use secrets.SystemRandom() for cryptographically secure random selection
 # Even though this is not security-critical (just quiz selection),
@@ -14,10 +14,48 @@ class DailyQuestService:
     """Service for generating and managing daily quests"""
 
     @staticmethod
-    def generate_quest_for_date(quest_date):
+    def generate_quests_for_date(quest_date):
         """
-        Generate a daily quest for the specified date.
-        Returns existing quest if already generated.
+        Generate TWO daily quests for the specified date.
+        Returns existing quests if already generated.
+
+        Creates:
+        1. Time-based quest: Study for 15 minutes
+        2. Lesson-based quest: Complete a specific lesson
+
+        Args:
+            quest_date: date object for the quest
+
+        Returns:
+            dict: {'time_quest': DailyQuest, 'lesson_quest': DailyQuest}
+        """
+        # Check if quests already exist for this date
+        existing_time = DailyQuest.objects.filter(
+            date=quest_date,
+            quest_type='study'
+        ).first()
+        
+        existing_lesson = DailyQuest.objects.filter(
+            date=quest_date,
+            quest_type='quiz'
+        ).first()
+
+        # Create missing quests
+        if not existing_time:
+            existing_time = DailyQuestService._create_study_quest(quest_date)
+        
+        if not existing_lesson:
+            existing_lesson = DailyQuestService._create_quiz_quest(quest_date)
+
+        return {
+            'time_quest': existing_time,
+            'lesson_quest': existing_lesson
+        }
+
+    @staticmethod
+    def _create_quiz_quest(quest_date):
+        """
+        Create a quest to complete a specific lesson quiz.
 
         Args:
             quest_date: date object for the quest
@@ -25,29 +63,50 @@ class DailyQuestService:
         Returns:
             DailyQuest instance
         """
-        # Check if quest already exists
-        existing = DailyQuest.objects.filter(date=quest_date).first()
-        if existing:
-            return existing
-
-        # Select random lesson (weighted by lesson type)
+        # Select random lesson
         lesson = DailyQuestService._select_random_lesson()
 
-        # Calculate XP (75% of lesson)
-        xp_reward = int(lesson.xp_value * 0.75)
+        # Calculate XP reward (same as lesson)
+        xp_reward = lesson.xp_value
 
         # Create quest
         quest = DailyQuest.objects.create(
             date=quest_date,
-            title=f"Daily {lesson.title} Challenge",
-            description=f"Test your {lesson.title} knowledge with harder questions!",
+            title=f"Complete {lesson.title} Lesson",
+            description=f"Complete the {lesson.title} quiz to earn {xp_reward} XP!",
             based_on_lesson=lesson,
-            quest_type=lesson.lesson_type,
+            quest_type='quiz',
             xp_reward=xp_reward
         )
 
-        # Generate 5 harder questions
-        DailyQuestService._generate_questions(quest, lesson)
+        return quest
+
+    @staticmethod
+    def _create_study_quest(quest_date):
+        """
+        Create a quest to study for a certain amount of time.
+
+        Args:
+            quest_date: date object for the quest
+
+        Returns:
+            DailyQuest instance
+        """
+        # Select random lesson for context (but any lesson can be studied)
+        lesson = DailyQuestService._select_random_lesson()
+
+        # Time-based quests award 50 XP
+        xp_reward = 50
+
+        # Create quest
+        quest = DailyQuest.objects.create(
+            date=quest_date,
+            title="Study for 15 Minutes",
+            description="Complete any lesson quiz to contribute to your study time!",
+            based_on_lesson=lesson,
+            quest_type='study',
+            xp_reward=xp_reward
+        )
 
         return quest
 
@@ -67,116 +126,3 @@ class DailyQuestService:
             raise ValueError("No published lessons available")
 
         return _random.choice(lessons)
-
-    @staticmethod
-    def _generate_questions(quest, lesson):
-        """
-        Generate 5 harder questions based on lesson content.
-        Combines multiple concepts from the lesson.
-
-        Args:
-            quest: DailyQuest instance
-            lesson: Lesson instance
-        """
-        if quest.quest_type == 'flashcard':
-            DailyQuestService._generate_flashcard_questions(quest, lesson)
-        elif quest.quest_type == 'quiz':
-            DailyQuestService._generate_quiz_questions(quest, lesson)
-
-    @staticmethod
-    def _generate_flashcard_questions(quest, lesson):
-        """
-        Generate harder flashcard questions.
-
-        Args:
-            quest: DailyQuest instance
-            lesson: Lesson instance
-
-        Raises:
-            ValueError: If lesson has < 3 flashcards
-        """
-        # Get all flashcards from lesson
-        cards = list(lesson.cards.all())
-
-        if len(cards) < 3:
-            raise ValueError(f"Lesson {lesson.title} needs at least 3 flashcards")
-
-        # Question 1-3: Individual cards (shuffle)
-        selected_cards = _random.sample(cards, min(3, len(cards)))
-        for idx, card in enumerate(selected_cards, 1):
-            DailyQuestQuestion.objects.create(
-                daily_quest=quest,
-                question_text=card.front_text,
-                answer_text=card.back_text,
-                order=idx
-            )
-
-        # Question 4-5: Combo questions (harder)
-        if len(cards) >= 5:
-            # Q4: Reverse question (answer -> front)
-            reverse_card = _random.choice(cards)
-            DailyQuestQuestion.objects.create(
-                daily_quest=quest,
-                question_text=f"What word means '{reverse_card.back_text}'?",
-                answer_text=reverse_card.front_text,
-                order=4,
-                difficulty_level='hard'
-            )
-
-            # Q5: Multiple items
-            multi_cards = _random.sample(cards, min(3, len(cards)))
-            question = "What are these three: " + ", ".join([c.front_text for c in multi_cards])
-            answer = ", ".join([c.back_text for c in multi_cards])
-            DailyQuestQuestion.objects.create(
-                daily_quest=quest,
-                question_text=question,
-                answer_text=answer,
-                order=5,
-                difficulty_level='hard'
-            )
-        else:
-            # If < 5 cards, just use more individual cards
-            remaining_cards = [c for c in cards if c not in selected_cards]
-            for idx, card in enumerate(remaining_cards[:2], 4):
-                DailyQuestQuestion.objects.create(
-                    daily_quest=quest,
-                    question_text=card.front_text,
-                    answer_text=card.back_text,
-                    order=idx
-                )
-
-    @staticmethod
-    def _generate_quiz_questions(quest, lesson):
-        """
-        Generate harder quiz questions.
-
-        Args:
-            quest: DailyQuest instance
-            lesson: Lesson instance
-
-        Raises:
-            ValueError: If lesson has < 5 quiz questions
-        """
-        # Get all quiz questions from lesson
-        quiz_questions = list(lesson.quiz_questions.all())
-
-        if len(quiz_questions) < 5:
-            raise ValueError(f"Lesson {lesson.title} needs at least 5 quiz questions")
-
-        # Select 5 random questions
-        selected = _random.sample(quiz_questions, 5)
-
-        for idx, question in enumerate(selected, 1):
-            # Shuffle options to make harder
-            options = question.options.copy()
-            correct_answer = options[question.correct_index]
-            _random.shuffle(options)
-            new_correct_index = options.index(correct_answer)
-
-            DailyQuestQuestion.objects.create(
-                daily_quest=quest,
-                question_text=question.question,
-                options=options,
-                correct_index=new_correct_index,
-                order=idx
-            )

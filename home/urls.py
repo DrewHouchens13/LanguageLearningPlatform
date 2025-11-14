@@ -38,8 +38,6 @@ urlpatterns = [
 
     # Daily Quest paths
     path("quests/daily/", views.daily_quest_view, name="daily_quest"),
-    path("quests/daily/start/", views.start_daily_quest, name="start_daily_quest"),
-    path("quests/daily/submit/", views.submit_daily_quest, name="submit_daily_quest"),
     path("quests/history/", views.quest_history, name="quest_history"),
 ]
 

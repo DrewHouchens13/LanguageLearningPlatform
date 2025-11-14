@@ -294,9 +294,18 @@ class TestLessonsListView(TestCase):
     """Test lessons_list view functionality"""
 
     def setUp(self):
-        """Create test lessons"""
+        """Create test lessons and user"""
         self.client = Client()
         self.url = reverse('lessons_list')
+        
+        # Create user and log in (lessons require authentication)
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        self.client.login(username='testuser', password='testpass123')
+        
         self.lesson1 = Lesson.objects.create(
             title='Lesson 1',
             order=1,

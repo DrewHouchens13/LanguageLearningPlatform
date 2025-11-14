@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="mascotGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Owl body -->
+  <ellipse cx="100" cy="120" rx="60" ry="70" fill="url(#mascotGradient)"/>
+  
+  <!-- Owl head -->
+  <circle cx="100" cy="70" r="45" fill="url(#mascotGradient)"/>
+  
+  <!-- Ear tufts -->
+  <path d="M 65 45 Q 60 30 65 25" stroke="#764ba2" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M 135 45 Q 140 30 135 25" stroke="#764ba2" stroke-width="6" stroke-linecap="round" fill="none"/>
+  
+  <!-- Eyes background -->
+  <circle cx="85" cy="70" r="18" fill="white"/>
+  <circle cx="115" cy="70" r="18" fill="white"/>
+  
+  <!-- Pupils -->
+  <circle cx="85" cy="72" r="10" fill="#333333"/>
+  <circle cx="115" cy="72" r="10" fill="#333333"/>
+  
+  <!-- Eye shine -->
+  <circle cx="88" cy="68" r="4" fill="white" opacity="0.8"/>
+  <circle cx="118" cy="68" r="4" fill="white" opacity="0.8"/>
+  
+  <!-- Beak -->
+  <path d="M 100 85 L 95 92 L 105 92 Z" fill="#f093fb"/>
+  
+  <!-- Wings -->
+  <ellipse cx="60" cy="130" rx="18" ry="35" fill="#8b9af5" opacity="0.7" transform="rotate(-20 60 130)"/>
+  <ellipse cx="140" cy="130" rx="18" ry="35" fill="#8b9af5" opacity="0.7" transform="rotate(20 140 130)"/>
+  
+  <!-- Belly -->
+  <ellipse cx="100" cy="135" rx="35" ry="45" fill="#f5f7fa" opacity="0.3"/>
+  
+  <!-- Feet -->
+  <path d="M 85 185 L 80 195 M 85 185 L 85 195 M 85 185 L 90 195" stroke="#764ba2" stroke-width="4" stroke-linecap="round"/>
+  <path d="M 115 185 L 110 195 M 115 185 L 115 195 M 115 185 L 120 195" stroke="#764ba2" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Book in wing -->
+  <rect x="135" y="120" width="20" height="15" rx="2" fill="#f093fb"/>
+  <line x1="145" y1="120" x2="145" y2="135" stroke="white" stroke-width="1" opacity="0.6"/>
+</svg>
+

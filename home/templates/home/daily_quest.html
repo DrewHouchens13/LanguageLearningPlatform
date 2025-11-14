@@ -4,17 +4,21 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Quest - Language Learning Platform</title>
+    <title>Daily Quests - Language Learning Platform</title>
     {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
-    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
   </head>
   <body>
     {% include '_nav.html' %}
 
-    <main>
+    <main class="container">
       <!-- Django Messages -->
       {% if messages %}
-        <div class="page-messages">
+        <div class="mt-xl">
           {% for message in messages %}
             <div class="alert alert-{{ message.tags }}">
               {{ message }}
@@ -23,254 +27,133 @@
         </div>
       {% endif %}
 
-      <section class="hero">
-        <div class="hero-content">
-          <h1>Daily Quest</h1>
-          <p class="date">{{ quest.date|date:"F j, Y" }}</p>
+      <!-- Daily Quests Header -->
+      <section class="fade-in" style="margin-top: var(--space-xl);">
+        <div class="text-center mb-lg">
+          <h1 class="page-title">Daily Quests 🎯</h1>
+          <p class="text-muted">Complete both quests to maximize your XP!</p>
+          <p class="text-muted">{{ time_quest.date|date:"F j, Y" }}</p>
+        </div>
 
-          {% if attempt and attempt.is_completed %}
-            <!-- Completed State -->
-            <div class="quest-completed">
-              <h2>Quest Completed!</h2>
-              <p class="score">Score: {{ attempt.score }}/{{ attempt.total_questions }}</p>
-              <p class="xp">XP Earned: {{ attempt.xp_earned }}</p>
-              <p>Come back tomorrow for a new quest!</p>
-            </div>
-          {% elif attempt and not attempt.is_completed %}
-            <!-- In Progress State -->
-            <div id="quest-active" class="quest-active">
-              <h2>{{ quest.title }}</h2>
-              <div id="quest-content">
-                <p>Loading questions...</p>
+        <!-- Quest 1: Time-Based Quest -->
+        <div class="card card-bordered fade-in-up mb-lg" style="max-width: 700px; margin-left: auto; margin-right: auto; margin-bottom: var(--space-lg);">
+          <div class="card-body">
+            <div style="display: flex; justify-content: space-between; align-items: start; gap: var(--space-md); flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 250px;">
+                <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm);">
+                  <span style="font-size: 2.5rem;">⏱️</span>
+                  <div>
+                    <h2 class="card-title" style="margin: 0;">{{ time_quest.title }}</h2>
+                    <p class="text-muted" style="margin: 0; font-size: var(--font-size-sm);">Time-Based Quest</p>
+                  </div>
+                </div>
+                <p class="text-muted mb-md">{{ time_quest.description }}</p>
+                
+                {% if time_attempt and time_attempt.is_completed %}
+                  <!-- Completed -->
+                  <div style="display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-md); background: var(--color-success-light, #d1fae5); border-radius: var(--radius-md);">
+                    <span style="font-size: 1.5rem;">✅</span>
+                    <div>
+                      <p style="font-weight: 600; color: var(--color-success); margin: 0;">Quest Completed!</p>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">+{{ time_attempt.xp_earned }} XP earned</p>
+                    </div>
+                  </div>
+                {% else %}
+                  <!-- Progress -->
+                  <div style="margin-bottom: var(--space-md);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xs);">
+                      <span style="font-size: var(--font-size-sm); font-weight: 600;">Progress</span>
+                      <span style="font-size: var(--font-size-sm); font-weight: 600;">{{ time_progress }}/15 minutes</span>
+                    </div>
+                    <div style="width: 100%; height: 12px; background: var(--color-surface); border-radius: var(--radius-full); overflow: hidden;">
+                      <div style="height: 100%; background: linear-gradient(90deg, #14b8a6 0%, #0891b2 100%); border-radius: var(--radius-full); width: {% widthratio time_progress 15 100 %}%; transition: width 0.3s ease;"></div>
+                    </div>
+                  </div>
+                  
+                  <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md);">
+                    <span>⭐</span>
+                    <span style="font-weight: 600; color: var(--color-success);">Reward: {{ time_quest.xp_reward }} XP</span>
+                  </div>
+                  
+                  <a href="{% if IS_DEVEDU %}../../../lessons/{% else %}{% url 'lessons_list' %}{% endif %}" class="btn btn-primary">
+                    Continue Studying →
+                  </a>
+                {% endif %}
               </div>
             </div>
-          {% else %}
-            <!-- Available State -->
-            <div id="quest-info" class="quest-info">
-              <h2>{{ quest.title }}</h2>
-              <p>{{ quest.description }}</p>
-              <ul>
-                <li>Questions: 5</li>
-                <li>Reward: {{ quest.xp_reward }} XP</li>
-                <li>Type: {{ quest.quest_type }}</li>
-              </ul>
-              <button id="start-quest-btn" class="btn-primary">Begin Quest</button>
-            </div>
-
-            <!-- Active Quest Container (hidden initially) -->
-            <div id="quest-active" class="quest-active" style="display: none;">
-              <h2>{{ quest.title }}</h2>
-              <div id="quest-content"></div>
-            </div>
-          {% endif %}
+          </div>
         </div>
+
+        <!-- Quest 2: Lesson-Based Quest -->
+        <div class="card card-bordered fade-in-up delay-100" style="max-width: 700px; margin: 0 auto;">
+          <div class="card-body">
+            <div style="display: flex; justify-content: space-between; align-items: start; gap: var(--space-md); flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 250px;">
+                <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm);">
+                  <span style="font-size: 2.5rem;">📚</span>
+                  <div>
+                    <h2 class="card-title" style="margin: 0;">{{ lesson_quest.title }}</h2>
+                    <p class="text-muted" style="margin: 0; font-size: var(--font-size-sm);">Lesson-Based Quest</p>
+                  </div>
+                </div>
+                <p class="text-muted mb-md">{{ lesson_quest.description }}</p>
+                
+                {% if lesson_attempt and lesson_attempt.is_completed %}
+                  <!-- Completed -->
+                  <div style="display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-md); background: var(--color-success-light, #d1fae5); border-radius: var(--radius-md);">
+                    <span style="font-size: 1.5rem;">✅</span>
+                    <div>
+                      <p style="font-weight: 600; color: var(--color-success); margin: 0;">Quest Completed!</p>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">+{{ lesson_attempt.xp_earned }} XP earned</p>
+                    </div>
+                  </div>
+                {% else %}
+                  <!-- Available -->
+                  <div style="background: var(--color-surface); padding: var(--space-md); border-radius: var(--radius-md); margin-bottom: var(--space-md);">
+                    <p style="font-weight: 600; margin-bottom: var(--space-xs);">Required Lesson:</p>
+                    <p style="font-size: var(--font-size-lg); margin-bottom: var(--space-sm);">{{ lesson_to_complete.title }}</p>
+                    <p class="text-muted" style="font-size: var(--font-size-sm);">Complete this specific lesson to earn the quest reward</p>
+                  </div>
+                  
+                  <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md);">
+                    <span>⭐</span>
+                    <span style="font-weight: 600; color: var(--color-success);">Reward: {{ lesson_quest.xp_reward }} XP</span>
+                  </div>
+                  
+                  <a href="{% if IS_DEVEDU %}../../../lessons/{{ lesson_to_complete.id }}/{% else %}{% url 'lesson_detail' lesson_to_complete.id %}{% endif %}" class="btn btn-primary">
+                    Go to {{ lesson_to_complete.title }} →
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- All Complete Message -->
+        {% if time_attempt.is_completed and lesson_attempt.is_completed %}
+          <div class="card card-bordered fade-in-up delay-200" style="max-width: 600px; margin: var(--space-xl) auto 0;">
+            <div class="card-body text-center">
+              <div style="font-size: 4rem; margin-bottom: var(--space-md);">🎉</div>
+              <h2 class="card-title mb-sm">All Quests Complete!</h2>
+              <p class="text-muted mb-lg">You've completed both daily quests! Come back tomorrow for new challenges.</p>
+              <div style="display: flex; gap: var(--space-md); justify-content: center; flex-wrap: wrap;">
+                <a href="{% if IS_DEVEDU %}../../dashboard/{% else %}{% url 'dashboard' %}{% endif %}" class="btn btn-outline">
+                  Back to Dashboard
+                </a>
+                <a href="{% if IS_DEVEDU %}../history/{% else %}{% url 'quest_history' %}{% endif %}" class="btn btn-primary">
+                  View Quest History
+                </a>
+              </div>
+            </div>
+          </div>
+        {% endif %}
       </section>
     </main>
 
-    <footer>
-      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+    <footer class="footer">
+      <div class="container">
+        <p class="text-center text-muted">&copy; 2025 Language Learning Platform. Start learning today!</p>
+      </div>
     </footer>
-
-    <script>
-      // Mobile menu toggle
-      const navToggle = document.querySelector('.nav-toggle');
-      const navMenu = document.querySelector('.nav-menu');
-
-      if (navToggle) {
-        navToggle.addEventListener('click', () => {
-          navMenu.classList.toggle('active');
-          navToggle.classList.toggle('active');
-        });
-
-        // Close menu when clicking outside
-        document.addEventListener('click', (e) => {
-          if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
-            navMenu.classList.remove('active');
-            navToggle.classList.remove('active');
-          }
-        });
-      }
-
-      // Daily Quest Logic
-      let currentQuestions = [];
-      let currentAnswers = {};
-      let currentAttemptId = null;
-      let questType = null;
-
-      // Get CSRF token
-      function getCsrfToken() {
-        return document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
-               document.cookie.match(/csrftoken=([^;]+)/)?.[1];
-      }
-
-      // Daily quest start button handler
-      const startBtn = document.getElementById('start-quest-btn');
-      if (startBtn) {
-        startBtn.addEventListener('click', async () => {
-          try {
-            const response = await fetch('{% url "start_daily_quest" %}', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
-              }
-            });
-
-            if (!response.ok) {
-              const error = await response.json();
-              alert(error.error || 'Failed to start quest');
-              return;
-            }
-
-            const data = await response.json();
-            currentAttemptId = data.attempt_id;
-            currentQuestions = data.questions;
-            questType = data.quest_type;
-            currentAnswers = {};
-
-            // Hide info, show active quest
-            document.getElementById('quest-info').style.display = 'none';
-            document.getElementById('quest-active').style.display = 'block';
-
-            // Display questions
-            displayQuestions();
-          } catch (error) {
-            console.error('Error starting quest:', error);
-            alert('Failed to start quest. Please try again.');
-          }
-        });
-      }
-
-      // Display Questions
-      function displayQuestions() {
-        const container = document.getElementById('quest-content');
-        let html = '<div class="questions-container">';
-
-        currentQuestions.forEach((q, index) => {
-          html += `<div class="question-card" style="margin-bottom: 2rem; padding: 1.5rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">`;
-          html += `<h3 style="margin-bottom: 1rem;">Question ${index + 1}</h3>`;
-          html += `<p style="font-size: 1.1rem; margin-bottom: 1rem;">${q.question_text}</p>`;
-
-          if (questType === 'quiz' && q.options) {
-            // Multiple choice
-            html += '<div class="options" style="display: flex; flex-direction: column; gap: 0.5rem;">';
-            q.options.forEach((option, optIndex) => {
-              html += `
-                <label style="padding: 1rem; background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
-                  <input type="radio" name="q${q.id}" value="${optIndex}"
-                    onchange="currentAnswers[${q.id}] = ${optIndex}"
-                    style="margin-right: 0.5rem;">
-                  ${option}
-                </label>
-              `;
-            });
-            html += '</div>';
-          } else {
-            // Text input (flashcard)
-            html += `
-              <input type="text" id="answer-${q.id}"
-                placeholder="Type your answer here"
-                onchange="currentAnswers[${q.id}] = this.value"
-                style="width: 100%; padding: 0.75rem; border: 2px solid #dee2e6; border-radius: 6px; font-size: 1rem;">
-            `;
-          }
-
-          html += '</div>';
-        });
-
-        html += `
-          <button onclick="submitQuest()"
-            style="padding: 1rem 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; font-size: 1.1rem; font-weight: 600; cursor: pointer; margin-top: 1rem;">
-            Submit Answers
-          </button>
-        `;
-        html += '</div>';
-
-        container.innerHTML = html;
-      }
-
-      // Submit Quest
-      async function submitQuest() {
-        // Validate all questions answered
-        if (Object.keys(currentAnswers).length !== currentQuestions.length) {
-          alert('Please answer all questions before submitting.');
-          return;
-        }
-
-        try {
-          const response = await fetch('{% url "submit_daily_quest" %}', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': getCsrfToken()
-            },
-            body: JSON.stringify({
-              answers: currentAnswers
-            })
-          });
-
-          if (!response.ok) {
-            const error = await response.json();
-            alert(error.error || 'Failed to submit quest');
-            return;
-          }
-
-          const result = await response.json();
-          displayResults(result);
-        } catch (error) {
-          console.error('Error submitting quest:', error);
-          alert('Failed to submit quest. Please try again.');
-        }
-      }
-
-      // Display Results
-      function displayResults(result) {
-        const container = document.getElementById('quest-content');
-        container.innerHTML = `
-          <div class="quest-results" style="text-align: center; padding: 2rem;">
-            <h2 style="color: #667eea; font-size: 2.5rem; margin-bottom: 1rem;">Quest Complete!</h2>
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; margin: 2rem 0;">
-              <p style="font-size: 1.5rem; margin-bottom: 0.5rem;">Score: ${result.score}/${result.total_questions}</p>
-              <p style="font-size: 2rem; font-weight: bold;">+${result.xp_earned} XP</p>
-            </div>
-            <p style="font-size: 1.1rem; color: #666; margin-top: 1rem;">Come back tomorrow for a new quest!</p>
-            <a href="{% url 'quest_history' %}"
-              style="display: inline-block; margin-top: 1.5rem; padding: 1rem 2rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">
-              View Quest History
-            </a>
-          </div>
-        `;
-      }
-
-      // If quest already started, load it
-      {% if attempt and not attempt.is_completed %}
-      window.addEventListener('DOMContentLoaded', async () => {
-        try {
-          const response = await fetch('{% url "start_daily_quest" %}', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': getCsrfToken()
-            }
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            currentAttemptId = data.attempt_id;
-            currentQuestions = data.questions;
-            questType = data.quest_type;
-            currentAnswers = {};
-            displayQuestions();
-          } else if (response.status === 400) {
-            // Quest already started but no questions loaded - this is an edge case
-            document.getElementById('quest-content').innerHTML =
-              '<p style="text-align: center; color: #666;">Quest in progress. Please refresh the page.</p>';
-          }
-        } catch (error) {
-          console.error('Error loading quest:', error);
-        }
-      });
-      {% endif %}
-    </script>
   </body>
 </html>

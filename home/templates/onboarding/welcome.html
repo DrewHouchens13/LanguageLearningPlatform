@@ -6,15 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spanish Level Assessment - Language Learning Platform</title>
     {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
-    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
   </head>
   <body>
     {% include '_nav.html' %}
 
-    <main>
+    <main class="container" style="padding-top: var(--space-2xl);">
       <!-- Django Messages -->
       {% if messages %}
-        <div class="page-messages">
+        <div class="mt-xl">
           {% for message in messages %}
             <div class="alert alert-{{ message.tags }}">
               {{ message }}
@@ -24,85 +28,91 @@
       {% endif %}
 
       <!-- Hero Section -->
-      <section class="hero">
-        <div class="hero-content">
-          <h2>Discover Your Spanish Level</h2>
+      <section class="card mb-2xl fade-in">
+        <div class="card-body text-center" style="padding: var(--space-3xl);">
+          <h2 class="text-5xl font-black mb-lg">Discover Your Spanish Level</h2>
           {% if user_profile and user_profile.has_completed_onboarding %}
-            <div style="margin: 1.5rem 0; padding: 1rem; background: rgba(102, 126, 234, 0.1); border-radius: 8px; border-left: 4px solid #667eea;">
-              <p style="margin: 0; font-size: 1.1rem; color: #333;">
-                <strong>Assessment Complete!</strong> 
-                Your proficiency level is <span style="color: #667eea; font-weight: 700;">{{ user_profile.get_proficiency_level_display }}</span>
-              </p>
-              <p style="margin: 0.5rem 0 0 0; font-size: 0.95rem; color: #666;">
-                View your results anytime from your progress page.
-              </p>
+            <div class="card mt-xl" style="background: rgba(20, 184, 166, 0.1); border-left: 4px solid var(--primary);">
+              <div class="card-body">
+                <p class="text-lg mb-sm">
+                  <strong>Assessment Complete!</strong> 
+                  Your proficiency level is <span class="badge badge-primary" style="font-size: var(--text-xl); padding: var(--space-sm) var(--space-lg);">{{ user_profile.get_proficiency_level_display }}</span>
+                </p>
+                <p class="text-secondary">
+                  View your results anytime from your progress page.
+                </p>
+              </div>
             </div>
-            <a href="{% url 'dashboard' %}" class="auth-button" style="display: inline-block; text-decoration: none; margin-top: 1rem;">
+            <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg mt-xl">
               Go to Dashboard
             </a>
           {% else %}
-            <p>Take our quick 10-question assessment to determine your Spanish proficiency level. This helps us personalize your learning experience with AI-powered lessons matched to your current skills.</p>
-            <a href="{% url 'onboarding_quiz' %}" class="auth-button" style="display: inline-block; text-decoration: none; margin-top: 1rem;">
-              Start Assessment
+            <p class="lead mb-xl">Take our quick 10-question assessment to determine your Spanish proficiency level. This helps us personalize your learning experience with AI-powered lessons matched to your current skills.</p>
+            <a href="{% url 'onboarding_quiz' %}" class="btn btn-accent btn-lg">
+              🚀 Start Assessment
             </a>
           {% endif %}
-        </div>
-        <div class="hero-image">
-          <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80" alt="Language Assessment">
         </div>
       </section>
 
       <!-- Features Section -->
-      <section class="features">
-        <div class="feature-card">
+      <section class="features-grid mb-3xl">
+        <div class="feature-item">
+          <div class="feature-icon">⚡</div>
           <h3>Quick Assessment</h3>
           <p>10 questions covering beginner to intermediate levels. Takes about 5-7 minutes to complete.</p>
         </div>
-        <div class="feature-card">
+        <div class="feature-item">
+          <div class="feature-icon">🎯</div>
           <h3>Accurate Placement</h3>
           <p>Determines your CEFR level (A1, A2, or B1) based on progressive difficulty and proven language assessment methods.</p>
         </div>
-        <div class="feature-card">
+        <div class="feature-item">
+          <div class="feature-icon">✨</div>
           <h3>Personalized Learning</h3>
           <p>Your results enable AI-powered lessons tailored to your exact proficiency level and learning needs.</p>
         </div>
       </section>
 
       <!-- What to Expect Section -->
-      <section class="progress-section" style="max-width: 800px; margin: 2rem auto;">
-        <h2 class="section-title">What to Expect</h2>
-        <div style="text-align: left; line-height: 1.8;">
-          <p><strong>📝 Question Types:</strong> Multiple choice questions testing vocabulary, grammar, and comprehension</p>
-          <p><strong>⏱️ Time:</strong> No time limit - take as long as you need to think through each question</p>
-          <p><strong>📊 Levels Assessed:</strong></p>
-          <ul style="margin-left: 2rem;">
-            <li><strong>A1 (Beginner):</strong> Basic everyday expressions and simple phrases</li>
-            <li><strong>A2 (Elementary):</strong> Sentences and common expressions for everyday situations</li>
-            <li><strong>B1 (Intermediate):</strong> Main points of clear standard input on familiar topics</li>
-          </ul>
-          <p><strong>✨ After Completion:</strong> Immediate results with your proficiency level and personalized recommendations</p>
+      <section class="card mb-2xl">
+        <div class="card-header">
+          <h2>What to Expect</h2>
+        </div>
+        <div class="card-body">
+          <div style="text-align: left; line-height: 1.8; color: var(--text-secondary);">
+            <p><strong>📝 Question Types:</strong> Multiple choice questions testing vocabulary, grammar, and comprehension</p>
+            <p><strong>⏱️ Time:</strong> No time limit - take as long as you need to think through each question</p>
+            <p><strong>📊 Levels Assessed:</strong></p>
+            <ul style="margin-left: 2rem;">
+              <li><strong>A1 (Beginner):</strong> Basic everyday expressions and simple phrases</li>
+              <li><strong>A2 (Elementary):</strong> Sentences and common expressions for everyday situations</li>
+              <li><strong>B1 (Intermediate):</strong> Main points of clear standard input on familiar topics</li>
+            </ul>
+            <p><strong>✨ After Completion:</strong> Immediate results with your proficiency level and personalized recommendations</p>
+          </div>
         </div>
       </section>
     </main>
 
     <footer>
-      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+      <p>&copy; 2025 Language Learning Platform. Empowering language learners worldwide.</p>
     </footer>
 
     <script>
       // Mobile menu toggle
       const navToggle = document.querySelector('.nav-toggle');
-      const navMenu = document.querySelector('.nav-menu');
+      const navCenter = document.querySelector('.nav-center');
 
       navToggle.addEventListener('click', () => {
-        navMenu.classList.toggle('active');
+        navCenter.classList.toggle('active');
         navToggle.classList.toggle('active');
       });
 
       // Close menu when clicking outside
       document.addEventListener('click', (e) => {
-        if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
-          navMenu.classList.remove('active');
+        if (!navToggle.contains(e.target) && !navCenter.contains(e.target)) {
+          navCenter.classList.remove('active');
           navToggle.classList.remove('active');
         }
       });

@@ -6,18 +6,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spanish Assessment Quiz - Language Learning Platform</title>
     {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
-    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
     <style>
       .question-container {
         margin-bottom: 2.5rem;
         padding: 2rem;
-        background: rgba(102, 126, 234, 0.03);
+        background: rgba(20, 184, 166, 0.03);
         border-radius: 10px;
-        border-left: 4px solid #667eea;
+        border-left: 4px solid var(--primary);
       }
       
       .question-container h3 {
-        color: #333;
+        color: var(--text-primary);
         margin-bottom: 1.5rem;
         font-size: 1.2rem;
         line-height: 1.6;
@@ -34,15 +38,15 @@
         align-items: center;
         padding: 1rem 1.25rem;
         background: white;
-        border: 2px solid #e0e0e0;
-        border-radius: 8px;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-xl);
         cursor: pointer;
         transition: all 0.3s ease;
       }
       
       .option-label:hover {
-        border-color: #667eea;
-        background: rgba(102, 126, 234, 0.05);
+        border-color: var(--primary);
+        background: rgba(20, 184, 166, 0.05);
       }
       
       .option-label input[type="radio"] {
@@ -50,16 +54,17 @@
         width: 20px;
         height: 20px;
         cursor: pointer;
+        accent-color: var(--primary);
       }
       
       .option-label input[type="radio"]:checked + span {
         font-weight: 600;
-        color: #667eea;
+        color: var(--primary);
       }
       
       .option-label.selected {
-        border-color: #667eea;
-        background: rgba(102, 126, 234, 0.1);
+        border-color: var(--primary);
+        background: rgba(20, 184, 166, 0.1);
       }
       
       .progress-indicator {
@@ -68,13 +73,13 @@
         background: white;
         padding: 1rem 2rem;
         margin: -2rem -2rem 2rem -2rem;
-        border-bottom: 2px solid #e0e0e0;
+        border-bottom: 2px solid var(--border);
         z-index: 100;
       }
       
       .progress-bar {
         height: 8px;
-        background: #e0e0e0;
+        background: var(--border);
         border-radius: 4px;
         overflow: hidden;
         margin-top: 0.5rem;
@@ -82,7 +87,7 @@
       
       .progress-fill {
         height: 100%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--gradient-primary);
         transition: width 0.3s ease;
         width: 0%;
       }
@@ -115,7 +120,7 @@
         height: 40px;
         margin: 0 auto;
         border: 4px solid #f3f3f3;
-        border-top: 4px solid #667eea;
+        border-top: 4px solid var(--primary);
         border-radius: 50%;
         animation: spin 1s linear infinite;
       }
@@ -149,7 +154,7 @@
         <div class="progress-indicator">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <h2 style="margin: 0; font-size: 1.5rem; color: #333;">Spanish Proficiency Assessment</h2>
-            <span id="progressText" style="font-weight: 600; color: #667eea;">0 / 10 answered</span>
+            <span id="progressText" style="font-weight: 600; color: var(--primary);">0 / 10 answered</span>
           </div>
           <div class="progress-bar">
             <div id="progressFill" class="progress-fill"></div>
@@ -197,7 +202,7 @@
     </main>
 
     <footer>
-      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+      <p>&copy; 2025 Language Learning Platform. Empowering language learners worldwide.</p>
     </footer>
 
     <script>
