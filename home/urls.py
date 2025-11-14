@@ -38,6 +38,7 @@ urlpatterns = [
 
     # Daily Quest paths
     path("quests/daily/", views.daily_quest_view, name="daily_quest"),
+    path("quests/daily/submit/", views.daily_quest_submit, name="daily_quest_submit"),
     path("quests/history/", views.quest_history, name="quest_history"),
 ]
 

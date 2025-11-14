@@ -14,7 +14,7 @@
 </head>
 <body>
     {% include '_nav.html' %}
-    
+
     <main class="container" style="padding-top: var(--space-3xl);">
         {% if not user.is_authenticated %}
         <!-- Guest View - Login Required -->
@@ -37,45 +37,90 @@
         <!-- Logged In User View -->
         <!-- Header -->
         <div class="lessons-header fade-in">
-            <h2>Explore Lessons</h2>
-            <p>Dive into interactive language lessons designed to help you succeed</p>
+            <h2>Explore Lessons by Language</h2>
+            <p>Choose a language to start learning</p>
         </div>
-        
-        <!-- Lessons Grid -->
-        <div class="lessons-grid">
-            {% for lesson in lessons %}
-            <div class="lesson-card fade-in-up delay-{{ forloop.counter }}00">
-                <div class="lesson-card-header">
-                    <div class="lesson-icon">📚</div>
-                </div>
-                <div class="lesson-card-body">
-                    <h3 class="lesson-card-title">{{ lesson.title }}</h3>
-                    <p class="lesson-card-description">{{ lesson.description }}</p>
-                    
-                    <div class="lesson-card-meta">
-                        <span class="badge badge-primary">
-                            {{ lesson.get_difficulty_level_display }}
-                        </span>
-                        <span class="badge badge-accent">
-                            {{ lesson.language }}
-                        </span>
+
+        {% if lessons_by_language %}
+            <!-- Language Selection Buttons -->
+            <div class="fade-in-up" style="margin-bottom: var(--space-2xl);">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--space-lg); max-width: 900px; margin: 0 auto;">
+                    {% for language, language_lessons in lessons_by_language.items %}
+                    <div class="card card-bordered" style="cursor: pointer; transition: all 0.3s ease;" onclick="scrollToLanguage('{{ language }}')">
+                        <div class="card-body text-center">
+                            <div style="font-size: 3rem; margin-bottom: var(--space-sm);">
+                                {% if language == 'Spanish' %}🇪🇸
+                                {% elif language == 'French' %}🇫🇷
+                                {% elif language == 'German' %}🇩🇪
+                                {% elif language == 'Italian' %}🇮🇹
+                                {% elif language == 'Japanese' %}🇯🇵
+                                {% elif language == 'Chinese' %}🇨🇳
+                                {% else %}🌐{% endif %}
+                            </div>
+                            <h3 class="card-title mb-xs">{{ language }}</h3>
+                            <p class="text-muted" style="font-size: var(--font-size-sm);">{{ language_lessons|length }} lesson{{ language_lessons|length|pluralize }}</p>
+                        </div>
                     </div>
-                </div>
-                <div class="lesson-card-footer">
-                    <a href="{% if IS_DEVEDU %}../lessons/{{ lesson.id }}/{% else %}{% url 'lesson_detail' lesson.id %}{% endif %}" 
-                       class="btn btn-primary btn-full">
-                        Start Lesson →
-                    </a>
+                    {% endfor %}
                 </div>
             </div>
-            {% empty %}
+
+            <!-- Lessons Grouped by Language -->
+            {% for language, language_lessons in lessons_by_language.items %}
+            <div id="language-{{ language }}" class="fade-in-up" style="margin-bottom: var(--space-3xl);">
+                <div style="margin-bottom: var(--space-lg);">
+                    <h2 style="font-size: var(--font-size-3xl); font-weight: 700; margin-bottom: var(--space-xs);">
+                        {% if language == 'Spanish' %}🇪🇸
+                        {% elif language == 'French' %}🇫🇷
+                        {% elif language == 'German' %}🇩🇪
+                        {% elif language == 'Italian' %}🇮🇹
+                        {% elif language == 'Japanese' %}🇯🇵
+                        {% elif language == 'Chinese' %}🇨🇳
+                        {% else %}🌐{% endif %}
+                        {{ language }} Lessons
+                    </h2>
+                    <p class="text-muted">{{ language_lessons|length }} lesson{{ language_lessons|length|pluralize }} available</p>
+                </div>
+
+                <div class="lessons-grid">
+                    {% for lesson in language_lessons %}
+                    <div class="lesson-card fade-in-up delay-{{ forloop.counter }}00">
+                        <div class="lesson-card-header">
+                            <div class="lesson-icon">📚</div>
+                        </div>
+                        <div class="lesson-card-body">
+                            <h3 class="lesson-card-title">{{ lesson.title }}</h3>
+                            <p class="lesson-card-description">{{ lesson.description }}</p>
+
+                            <div class="lesson-card-meta">
+                                <span class="badge badge-primary">
+                                    {{ lesson.get_difficulty_level_display }}
+                                </span>
+                                <span class="badge badge-success">
+                                    +{{ lesson.xp_value }} XP
+                                </span>
+                            </div>
+                        </div>
+                        <div class="lesson-card-footer">
+                            <a href="{% if IS_DEVEDU %}../lessons/{{ lesson.id }}/{% else %}{% url 'lesson_detail' lesson.id %}{% endif %}"
+                               class="btn btn-primary btn-full">
+                                Start Lesson →
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+
+        {% else %}
+            <!-- No Lessons Available -->
             <div class="empty-state">
                 <div class="empty-state-icon">📚</div>
                 <h3>No Lessons Available Yet</h3>
                 <p>Check back soon for new learning content!</p>
             </div>
-            {% endfor %}
-        </div>
+        {% endif %}
         {% endif %}
     </main>
 
@@ -84,10 +129,18 @@
     </footer>
 
     <script>
+      // Smooth scroll to language section
+      function scrollToLanguage(language) {
+        const element = document.getElementById('language-' + language);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+
       // Mobile menu toggle
       const navToggle = document.querySelector('.nav-toggle');
       const navCenter = document.querySelector('.nav-center');
-      
+
       if (navToggle && navCenter) {
         navToggle.addEventListener('click', () => {
           navCenter.classList.toggle('active');
@@ -101,6 +154,19 @@
           }
         });
       }
+
+      // Hover effect for language cards
+      const languageCards = document.querySelectorAll('.card[onclick]');
+      languageCards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+          card.style.transform = 'translateY(-4px)';
+          card.style.boxShadow = '0 8px 16px rgba(0,0,0,0.1)';
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = 'translateY(0)';
+          card.style.boxShadow = '';
+        });
+      });
     </script>
 </body>
 </html>

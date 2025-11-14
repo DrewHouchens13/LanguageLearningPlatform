@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Quests - Language Learning Platform</title>
+    <title>Daily Challenge - Language Learning Platform</title>
     {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
     <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
     <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
@@ -27,123 +27,113 @@
         </div>
       {% endif %}
 
-      <!-- Daily Quests Header -->
+      <!-- Daily Challenge Header -->
       <section class="fade-in" style="margin-top: var(--space-xl);">
         <div class="text-center mb-lg">
-          <h1 class="page-title">Daily Quests 🎯</h1>
-          <p class="text-muted">Complete both quests to maximize your XP!</p>
-          <p class="text-muted">{{ time_quest.date|date:"F j, Y" }}</p>
+          <h1 class="page-title">Daily Challenge 🎯</h1>
+          <p class="text-muted">Answer 5 random questions to earn XP!</p>
+          <p class="text-muted">{{ quest.date|date:"F j, Y" }}</p>
         </div>
 
-        <!-- Quest 1: Time-Based Quest -->
-        <div class="card card-bordered fade-in-up mb-lg" style="max-width: 700px; margin-left: auto; margin-right: auto; margin-bottom: var(--space-lg);">
-          <div class="card-body">
-            <div style="display: flex; justify-content: space-between; align-items: start; gap: var(--space-md); flex-wrap: wrap;">
-              <div style="flex: 1; min-width: 250px;">
-                <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm);">
-                  <span style="font-size: 2.5rem;">⏱️</span>
-                  <div>
-                    <h2 class="card-title" style="margin: 0;">{{ time_quest.title }}</h2>
-                    <p class="text-muted" style="margin: 0; font-size: var(--font-size-sm);">Time-Based Quest</p>
-                  </div>
-                </div>
-                <p class="text-muted mb-md">{{ time_quest.description }}</p>
-                
-                {% if time_attempt and time_attempt.is_completed %}
-                  <!-- Completed -->
-                  <div style="display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-md); background: var(--color-success-light, #d1fae5); border-radius: var(--radius-md);">
-                    <span style="font-size: 1.5rem;">✅</span>
-                    <div>
-                      <p style="font-weight: 600; color: var(--color-success); margin: 0;">Quest Completed!</p>
-                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">+{{ time_attempt.xp_earned }} XP earned</p>
-                    </div>
-                  </div>
-                {% else %}
-                  <!-- Progress -->
-                  <div style="margin-bottom: var(--space-md);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xs);">
-                      <span style="font-size: var(--font-size-sm); font-weight: 600;">Progress</span>
-                      <span style="font-size: var(--font-size-sm); font-weight: 600;">{{ time_progress }}/15 minutes</span>
-                    </div>
-                    <div style="width: 100%; height: 12px; background: var(--color-surface); border-radius: var(--radius-full); overflow: hidden;">
-                      <div style="height: 100%; background: linear-gradient(90deg, #14b8a6 0%, #0891b2 100%); border-radius: var(--radius-full); width: {% widthratio time_progress 15 100 %}%; transition: width 0.3s ease;"></div>
-                    </div>
-                  </div>
-                  
-                  <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md);">
-                    <span>⭐</span>
-                    <span style="font-weight: 600; color: var(--color-success);">Reward: {{ time_quest.xp_reward }} XP</span>
-                  </div>
-                  
-                  <a href="{% if IS_DEVEDU %}../../../lessons/{% else %}{% url 'lessons_list' %}{% endif %}" class="btn btn-primary">
-                    Continue Studying →
-                  </a>
-                {% endif %}
-              </div>
+        {% if error %}
+          <!-- Error State -->
+          <div class="card card-bordered fade-in-up" style="max-width: 700px; margin: 0 auto;">
+            <div class="card-body text-center">
+              <div style="font-size: 3rem; margin-bottom: var(--space-md);">⚠️</div>
+              <h2 class="card-title mb-sm">Challenge Not Available</h2>
+              <p class="text-muted mb-lg">{{ error }}</p>
+              <a href="{% if IS_DEVEDU %}../../dashboard/{% else %}{% url 'dashboard' %}{% endif %}" class="btn btn-primary">
+                Back to Dashboard
+              </a>
             </div>
           </div>
-        </div>
 
-        <!-- Quest 2: Lesson-Based Quest -->
-        <div class="card card-bordered fade-in-up delay-100" style="max-width: 700px; margin: 0 auto;">
-          <div class="card-body">
-            <div style="display: flex; justify-content: space-between; align-items: start; gap: var(--space-md); flex-wrap: wrap;">
-              <div style="flex: 1; min-width: 250px;">
-                <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm);">
-                  <span style="font-size: 2.5rem;">📚</span>
-                  <div>
-                    <h2 class="card-title" style="margin: 0;">{{ lesson_quest.title }}</h2>
-                    <p class="text-muted" style="margin: 0; font-size: var(--font-size-sm);">Lesson-Based Quest</p>
-                  </div>
-                </div>
-                <p class="text-muted mb-md">{{ lesson_quest.description }}</p>
-                
-                {% if lesson_attempt and lesson_attempt.is_completed %}
-                  <!-- Completed -->
-                  <div style="display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-md); background: var(--color-success-light, #d1fae5); border-radius: var(--radius-md);">
-                    <span style="font-size: 1.5rem;">✅</span>
-                    <div>
-                      <p style="font-weight: 600; color: var(--color-success); margin: 0;">Quest Completed!</p>
-                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">+{{ lesson_attempt.xp_earned }} XP earned</p>
-                    </div>
-                  </div>
-                {% else %}
-                  <!-- Available -->
-                  <div style="background: var(--color-surface); padding: var(--space-md); border-radius: var(--radius-md); margin-bottom: var(--space-md);">
-                    <p style="font-weight: 600; margin-bottom: var(--space-xs);">Required Lesson:</p>
-                    <p style="font-size: var(--font-size-lg); margin-bottom: var(--space-sm);">{{ lesson_to_complete.title }}</p>
-                    <p class="text-muted" style="font-size: var(--font-size-sm);">Complete this specific lesson to earn the quest reward</p>
-                  </div>
-                  
-                  <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md);">
-                    <span>⭐</span>
-                    <span style="font-weight: 600; color: var(--color-success);">Reward: {{ lesson_quest.xp_reward }} XP</span>
-                  </div>
-                  
-                  <a href="{% if IS_DEVEDU %}../../../lessons/{{ lesson_to_complete.id }}/{% else %}{% url 'lesson_detail' lesson_to_complete.id %}{% endif %}" class="btn btn-primary">
-                    Go to {{ lesson_to_complete.title }} →
-                  </a>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- All Complete Message -->
-        {% if time_attempt.is_completed and lesson_attempt.is_completed %}
-          <div class="card card-bordered fade-in-up delay-200" style="max-width: 600px; margin: var(--space-xl) auto 0;">
+        {% elif attempt and attempt.is_completed %}
+          <!-- Completed State -->
+          <div class="card card-bordered fade-in-up" style="max-width: 700px; margin: 0 auto;">
             <div class="card-body text-center">
               <div style="font-size: 4rem; margin-bottom: var(--space-md);">🎉</div>
-              <h2 class="card-title mb-sm">All Quests Complete!</h2>
-              <p class="text-muted mb-lg">You've completed both daily quests! Come back tomorrow for new challenges.</p>
+              <h2 class="card-title mb-sm">Challenge Completed!</h2>
+              <p class="text-muted mb-md">Great work! Here are your results:</p>
+
+              <div style="background: var(--color-surface); padding: var(--space-lg); border-radius: var(--radius-md); margin-bottom: var(--space-lg);">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-md);">
+                  <div>
+                    <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Score</p>
+                    <p style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-primary);">{{ attempt.score }}/{{ attempt.total_questions }}</p>
+                  </div>
+                  <div>
+                    <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">XP Earned</p>
+                    <p style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-success);">+{{ attempt.xp_earned }}</p>
+                  </div>
+                  <div>
+                    <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Accuracy</p>
+                    <p style="font-size: var(--font-size-2xl); font-weight: 700;">{% widthratio attempt.score attempt.total_questions 100 %}%</p>
+                  </div>
+                </div>
+              </div>
+
+              <p class="text-muted mb-lg">Come back tomorrow for a new challenge!</p>
+
               <div style="display: flex; gap: var(--space-md); justify-content: center; flex-wrap: wrap;">
                 <a href="{% if IS_DEVEDU %}../../dashboard/{% else %}{% url 'dashboard' %}{% endif %}" class="btn btn-outline">
                   Back to Dashboard
                 </a>
                 <a href="{% if IS_DEVEDU %}../history/{% else %}{% url 'quest_history' %}{% endif %}" class="btn btn-primary">
-                  View Quest History
+                  View Challenge History
                 </a>
               </div>
+            </div>
+          </div>
+
+        {% else %}
+          <!-- Active Challenge -->
+          <div class="card card-bordered fade-in-up" style="max-width: 800px; margin: 0 auto;">
+            <div class="card-body">
+              <div class="mb-lg">
+                <h2 class="card-title mb-sm">{{ quest.title }}</h2>
+                <p class="text-muted">{{ quest.description }}</p>
+                <div style="display: flex; align-items: center; gap: var(--space-sm); margin-top: var(--space-md);">
+                  <span>⭐</span>
+                  <span style="font-weight: 600; color: var(--color-success);">Reward: {{ quest.xp_reward }} XP</span>
+                </div>
+              </div>
+
+              <form method="POST" action="{% if IS_DEVEDU %}../submit/{% else %}{% url 'daily_quest_submit' %}{% endif %}">
+                {% csrf_token %}
+
+                {% for question in questions %}
+                <div class="mb-xl" style="padding: var(--space-lg); background: var(--color-surface); border-radius: var(--radius-md);">
+                  <div style="display: flex; align-items: start; gap: var(--space-sm); margin-bottom: var(--space-md);">
+                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: var(--color-primary); color: white; border-radius: var(--radius-full); font-weight: 700; font-size: var(--font-size-sm); flex-shrink: 0;">{{ forloop.counter }}</span>
+                    <p style="font-weight: 600; margin: 0; flex: 1;">{{ question.question_text }}</p>
+                  </div>
+
+                  {% if question.option_a %}
+                    <!-- Multiple Choice -->
+                    <div style="display: grid; gap: var(--space-sm);">
+                      {% for option_letter, option_text in question.options %}
+                      <label style="display: flex; align-items: center; padding: var(--space-md); background: white; border: 2px solid var(--color-border); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
+                        <input type="radio" name="question_{{ question.id }}" value="{{ option_letter }}" required style="margin-right: var(--space-sm);">
+                        <span><strong>{{ option_letter }}.</strong> {{ option_text }}</span>
+                      </label>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <!-- Text Input -->
+                    <input type="text" name="question_{{ question.id }}" required
+                           placeholder="Type your answer here..."
+                           style="width: 100%; padding: var(--space-md); border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-base);">
+                  {% endif %}
+                </div>
+                {% endfor %}
+
+                <div class="text-center mt-xl">
+                  <button type="submit" class="btn btn-primary btn-lg">
+                    Submit Challenge →
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         {% endif %}
@@ -155,5 +145,26 @@
         <p class="text-center text-muted">&copy; 2025 Language Learning Platform. Start learning today!</p>
       </div>
     </footer>
+
+    <style>
+      /* Radio button hover effect */
+      label:has(input[type="radio"]):hover {
+        border-color: var(--color-primary);
+        background: var(--color-primary-light, #f0f9ff);
+      }
+
+      label:has(input[type="radio"]:checked) {
+        border-color: var(--color-primary);
+        background: var(--color-primary-light, #f0f9ff);
+        font-weight: 600;
+      }
+
+      /* Text input focus */
+      input[type="text"]:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px var(--color-primary-light, #f0f9ff);
+      }
+    </style>
   </body>
 </html>
