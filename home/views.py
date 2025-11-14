@@ -1945,7 +1945,7 @@ def daily_quest_submit(request):
         user=request.user,
         daily_quest=quest,
         defaults={
-            'score': correct,
+            'correct_answers': correct,
             'total_questions': total,
             'xp_earned': xp_earned,
             'is_completed': True,

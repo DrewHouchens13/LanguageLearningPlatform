@@ -80,7 +80,7 @@ class TestDailyQuestView(TestCase):
         UserDailyQuestAttempt.objects.create(
             user=self.user,
             daily_quest=quest,
-            score=4,
+            correct_answers=4,
             total_questions=5,
             xp_earned=40,
             is_completed=True
@@ -176,7 +176,7 @@ class TestDailyQuestSubmitView(TestCase):
 
         # Should create attempt
         attempt = UserDailyQuestAttempt.objects.get(user=self.user, daily_quest=self.quest)
-        self.assertEqual(attempt.score, 5)
+        self.assertEqual(attempt.correct_answers, 5)
         self.assertEqual(attempt.total_questions, 5)
         self.assertEqual(attempt.xp_earned, 50)
         self.assertTrue(attempt.is_completed)
@@ -241,7 +241,7 @@ class TestQuestHistoryView(TestCase):
             UserDailyQuestAttempt.objects.create(
                 user=self.user,
                 daily_quest=quest,
-                score=4,
+                correct_answers=4,
                 total_questions=5,
                 xp_earned=40,
                 is_completed=True
