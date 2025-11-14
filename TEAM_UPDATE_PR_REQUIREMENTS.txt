@@ -1,0 +1,198 @@
+================================================================================
+  TEAM UPDATE: NEW PR REQUIREMENTS - ACTION REQUIRED
+================================================================================
+
+Effective Date: November 14, 2025
+Impact: ALL PRs to main now require 6 additional passing checks
+Status: MANDATORY - No exceptions
+
+================================================================================
+  WHAT CHANGED
+================================================================================
+
+NEW Required Checks (BLOCKING - PR cannot merge if ANY fail):
+
+  1. PyLint           - Code quality must score 9.0+/10
+  2. Bandit           - No high/critical security issues
+  3. Semgrep          - No security pattern violations
+  4. pip-audit        - No known CVEs in dependencies
+  5. Safety           - Redundant CVE verification
+  6. tests            - All tests pass, 90%+ coverage (unchanged)
+
+BLOCKING means: You CANNOT merge your PR if checks fail. No bypasses allowed.
+
+================================================================================
+  NEW WORKFLOW (Before Every PR)
+================================================================================
+
+STEP 1: Run These Commands Locally BEFORE Pushing
+------------------------------------------------------
+
+# 1. Code Quality (9.0+/10 required)
+pylint home/ config/ --rcfile=.pylintrc --fail-under=9.0
+
+# 2. Security Scan (0 issues required)
+bandit -r home/ config/ -c .bandit
+
+# 3. Advanced Security (0 critical required)
+semgrep --config=p/django --config=p/python home/ config/
+
+# 4. Check Dependencies (0 CVEs required)
+pip-audit -r requirements.txt
+
+# 5. Safety Check (0 vulnerabilities required)
+safety check --continue-on-error
+
+# 6. Run Tests (all must pass)
+pytest
+
+# 7. Check Coverage (90%+ required)
+pytest --cov=home --cov-report=term-missing
+
+
+STEP 2: After Creating PR
+------------------------------------------------------
+1. Wait ~5 minutes for CI checks to complete
+2. If you see red X → fix the issue and push again
+3. All green checkmarks → request review from team member
+4. After approval → merge
+
+================================================================================
+  COMMON ISSUES & QUICK FIXES
+================================================================================
+
+PyLint Fails (Score < 9.0)
+------------------------------------------------------
+- Remove unused imports/variables
+- Add docstrings to functions/classes
+- Break long lines (keep under 100 characters)
+- Simplify complex functions (reduce branches/variables)
+
+
+Bandit Fails (Security Issues)
+------------------------------------------------------
+- DON'T hard-code passwords: PASSWORD = "admin123"  ❌
+- DO use environment variables: PASSWORD = os.environ.get('DB_PASSWORD')  ✅
+- DON'T concatenate SQL: query = "SELECT * FROM " + table  ❌
+- DO use Django ORM: Model.objects.filter(...)  ✅
+- DON'T use random module for secrets  ❌
+- DO use secrets module: secrets.token_hex(16)  ✅
+
+
+CVE Found (pip-audit/Safety)
+------------------------------------------------------
+# Upgrade affected package
+pip install --upgrade package-name==X.Y.Z
+
+# Update requirements.txt
+pip freeze | grep package-name
+
+# Re-run tests to ensure nothing breaks
+pytest
+
+
+Tests Fail
+------------------------------------------------------
+# Run tests with verbose output
+pytest -vv
+
+# Check which tests failed
+pytest --tb=short
+
+# Fix broken tests or add missing tests
+# Ensure coverage stays above 90%
+
+================================================================================
+  KEY RULES
+================================================================================
+
+✅ DO:
+  - Run ALL checks locally before pushing
+  - Fix issues properly (no shortcuts)
+  - Ask for help in team chat if stuck
+  - Read TESTING_GUIDE.md for full details
+
+❌ DON'T:
+  - Push code without running local checks first
+  - Use bypass comments (# nosemgrep, # pylint: disable)
+  - Try to merge with failing checks (GitHub won't let you anyway)
+  - Hard-code secrets or passwords in code
+
+================================================================================
+  QUICK REFERENCE CHECKLIST
+================================================================================
+
+Print this section and keep at your desk:
+
+BEFORE EVERY COMMIT:
+  ☐ pylint home/ config/ --fail-under=9.0
+  ☐ bandit -r home/ config/ -c .bandit
+  ☐ semgrep --config=p/django home/ config/
+  ☐ pip-audit -r requirements.txt
+  ☐ safety check --continue-on-error
+  ☐ pytest (all tests passing)
+  ☐ pytest --cov (90%+ coverage)
+
+AFTER PR CREATED:
+  ☐ Wait 5 minutes for CI checks
+  ☐ Fix any red X's that appear
+  ☐ Request review from team member
+  ☐ Wait for approval
+  ☐ Merge when approved
+
+================================================================================
+  HELP & RESOURCES
+================================================================================
+
+Full Documentation (in repo):
+  - TESTING_GUIDE.md          - Complete step-by-step workflow
+  - SECURITY_COVERAGE.md      - Details on security tools
+  - STYLE_GUIDE.md            - Code style and SOFA principles
+
+Need Help?
+  - Ask in team Discord/Slack
+  - Check GitHub Actions logs (click the red X for details)
+  - Run commands locally to reproduce issues
+
+Install Required Tools (one-time setup):
+  pip install pylint bandit semgrep pip-audit safety
+
+================================================================================
+  TIME & EXPECTATIONS
+================================================================================
+
+Time Investment per PR:
+  - ~10 minutes running local checks before push
+  - ~5 minutes waiting for CI checks after PR created
+  - Total: ~15 minutes added to workflow
+
+Benefits:
+  - Catch bugs before they reach production
+  - Higher code quality and security
+  - Less time fixing production issues
+  - Professional development practices (resume-worthy)
+
+This mirrors real-world practices at Google, Microsoft, Amazon, Meta, etc.
+
+================================================================================
+  ACTION ITEMS (Everyone Must Complete)
+================================================================================
+
+1. ☐ Read this entire document
+2. ☐ Read TESTING_GUIDE.md in repo root
+3. ☐ Install security tools: pip install pylint bandit semgrep pip-audit safety
+4. ☐ Run the full checklist once to verify your local setup works
+5. ☐ Bookmark TESTING_GUIDE.md for future reference
+6. ☐ Acknowledge in team chat that you've read and understand
+
+================================================================================
+  QUESTIONS?
+================================================================================
+
+Ask in team chat or create a GitHub Discussion.
+
+Last Updated: November 14, 2025
+Prepared by: Development Team
+Approved for: Sprint 3 and beyond
+
+================================================================================

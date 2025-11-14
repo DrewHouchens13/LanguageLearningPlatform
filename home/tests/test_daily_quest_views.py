@@ -38,12 +38,9 @@ class TestDailyQuestView(TestCase):
         for i in range(10):
             LessonQuizQuestion.objects.create(
                 lesson=self.lesson,
-                question_text=f'What color is this? {i+1}',
-                correct_answer='Red',
-                option_a='Red',
-                option_b='Blue',
-                option_c='Green',
-                option_d='Yellow',
+                question=f'What color is this? {i+1}',
+                options=['Red', 'Blue', 'Green', 'Yellow'],
+                correct_index=0,
                 order=i
             )
 
@@ -136,12 +133,9 @@ class TestDailyQuestSubmitView(TestCase):
         for i in range(10):
             LessonQuizQuestion.objects.create(
                 lesson=self.lesson,
-                question_text=f'What number is {i+1}?',
-                correct_answer='Uno',
-                option_a='Uno',
-                option_b='Dos',
-                option_c='Tres',
-                option_d='Cuatro',
+                question=f'What number is {i+1}?',
+                options=['Uno', 'Dos', 'Tres', 'Cuatro'],
+                correct_index=0,
                 order=i
             )
 
@@ -169,9 +163,9 @@ class TestDailyQuestSubmitView(TestCase):
         """Test submitting answers creates attempt with correct score"""
         self.client.login(username='testuser', password='testpass123')
 
-        # Submit all correct answers
+        # Submit all correct answers (as indices)
         post_data = {
-            f'question_{q.id}': q.correct_answer
+            f'question_{q.id}': str(q.correct_index)
             for q in self.questions
         }
 
@@ -193,7 +187,7 @@ class TestDailyQuestSubmitView(TestCase):
 
         # Submit first time
         post_data = {
-            f'question_{q.id}': q.correct_answer
+            f'question_{q.id}': str(q.correct_index)
             for q in self.questions
         }
         self.client.post(reverse('daily_quest_submit'), post_data)

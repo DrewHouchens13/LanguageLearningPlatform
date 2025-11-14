@@ -1872,17 +1872,16 @@ def daily_quest_view(request):
         ).first()
 
         # Get quest questions
-        questions = DailyQuestQuestion.objects.filter(quest=quest).order_by('id')
+        questions = DailyQuestQuestion.objects.filter(daily_quest=quest).order_by('order')
 
-        # Add options tuple for template rendering
+        # Format options for template rendering (index, text) tuples
         for question in questions:
-            if question.option_a:
-                question.options = [
-                    ('A', question.option_a),
-                    ('B', question.option_b),
-                    ('C', question.option_c),
-                    ('D', question.option_d),
+            if question.options:
+                question.formatted_options = [
+                    (idx, text) for idx, text in enumerate(question.options)
                 ]
+            else:
+                question.formatted_options = []
 
         context = {
             'quest': quest,

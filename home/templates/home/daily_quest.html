@@ -109,13 +109,13 @@
                     <p style="font-weight: 600; margin: 0; flex: 1;">{{ question.question_text }}</p>
                   </div>
 
-                  {% if question.option_a %}
+                  {% if question.formatted_options %}
                     <!-- Multiple Choice -->
                     <div style="display: grid; gap: var(--space-sm);">
-                      {% for option_letter, option_text in question.options %}
+                      {% for option_idx, option_text in question.formatted_options %}
                       <label style="display: flex; align-items: center; padding: var(--space-md); background: white; border: 2px solid var(--color-border); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
-                        <input type="radio" name="question_{{ question.id }}" value="{{ option_letter }}" required style="margin-right: var(--space-sm);">
-                        <span><strong>{{ option_letter }}.</strong> {{ option_text }}</span>
+                        <input type="radio" name="question_{{ question.id }}" value="{{ option_idx }}" required style="margin-right: var(--space-sm);">
+                        <span>{{ option_text }}</span>
                       </label>
                       {% endfor %}
                     </div>

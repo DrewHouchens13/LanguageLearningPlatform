@@ -40,12 +40,9 @@ class TestDailyQuestServiceGeneration(TestCase):
         for i in range(10):
             LessonQuizQuestion.objects.create(
                 lesson=self.spanish_lesson,
-                question_text=f'What color is this? {i+1}',
-                correct_answer='Red',
-                option_a='Red',
-                option_b='Blue',
-                option_c='Green',
-                option_d='Yellow',
+                question=f'What color is this? {i+1}',
+                options=['Red', 'Blue', 'Green', 'Yellow'],
+                correct_index=0,
                 order=i
             )
 
@@ -61,12 +58,9 @@ class TestDailyQuestServiceGeneration(TestCase):
         for i in range(10):
             LessonQuizQuestion.objects.create(
                 lesson=self.french_lesson,
-                question_text=f'What number is this? {i+1}',
-                correct_answer='Un',
-                option_a='Un',
-                option_b='Deux',
-                option_c='Trois',
-                option_d='Quatre',
+                question=f'What number is this? {i+1}',
+                options=['Un', 'Deux', 'Trois', 'Quatre'],
+                correct_index=0,
                 order=i
             )
 
@@ -88,7 +82,7 @@ class TestDailyQuestServiceGeneration(TestCase):
         test_date = date(2025, 11, 14)
 
         quest = DailyQuestService.generate_quest_for_user(self.user, test_date)
-        questions = DailyQuestQuestion.objects.filter(quest=quest)
+        questions = DailyQuestQuestion.objects.filter(daily_quest=quest)
 
         self.assertEqual(questions.count(), 5)
 
@@ -111,7 +105,7 @@ class TestDailyQuestServiceGeneration(TestCase):
         test_date = date(2025, 11, 14)
 
         quest = DailyQuestService.generate_quest_for_user(self.user, test_date)
-        questions = DailyQuestQuestion.objects.filter(quest=quest)
+        questions = DailyQuestQuestion.objects.filter(daily_quest=quest)
 
         # All 5 questions should exist
         self.assertEqual(questions.count(), 5)
@@ -131,7 +125,7 @@ class TestDailyQuestServiceGeneration(TestCase):
 
         test_date = date(2025, 11, 14)
         quest = DailyQuestService.generate_quest_for_user(self.user, test_date)
-        questions = DailyQuestQuestion.objects.filter(quest=quest)
+        questions = DailyQuestQuestion.objects.filter(daily_quest=quest)
 
         # All questions should be from Spanish lesson only
         for question in questions:
@@ -179,10 +173,10 @@ class TestDailyQuestServiceGeneration(TestCase):
         """Test score calculation with all correct answers"""
         test_date = date(2025, 11, 14)
         quest = DailyQuestService.generate_quest_for_user(self.user, test_date)
-        questions = DailyQuestQuestion.objects.filter(quest=quest)
+        questions = DailyQuestQuestion.objects.filter(daily_quest=quest)
 
-        # Submit all correct answers
-        answers = {str(q.id): q.correct_answer for q in questions}
+        # Submit all correct answers (indices)
+        answers = {str(q.id): str(q.correct_index) for q in questions}
 
         correct, total, xp = DailyQuestService.calculate_quest_score(quest, answers)
 
@@ -198,11 +192,11 @@ class TestDailyQuestServiceGeneration(TestCase):
 
         # Submit 3 correct, 2 wrong
         answers = {
-            str(questions[0].id): questions[0].correct_answer,
-            str(questions[1].id): questions[1].correct_answer,
-            str(questions[2].id): questions[2].correct_answer,
-            str(questions[3].id): 'Wrong Answer',
-            str(questions[4].id): 'Wrong Answer',
+            str(questions[0].id): str(questions[0].correct_index),
+            str(questions[1].id): str(questions[1].correct_index),
+            str(questions[2].id): str(questions[2].correct_index),
+            str(questions[3].id): '99',  # Wrong index
+            str(questions[4].id): '99',  # Wrong index
         }
 
         correct, total, xp = DailyQuestService.calculate_quest_score(quest, answers)

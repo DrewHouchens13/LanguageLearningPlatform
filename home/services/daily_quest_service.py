@@ -62,17 +62,15 @@ class DailyQuestService:
             xp_reward=50
         )
 
-        # Create DailyQuestQuestion records
-        for question in selected_questions:
+        # Create DailyQuestQuestion records from LessonQuizQuestion
+        for idx, lesson_q in enumerate(selected_questions, start=1):
             DailyQuestQuestion.objects.create(
-                quest=quest,
-                lesson=question.lesson,
-                question_text=question.question_text,
-                correct_answer=question.correct_answer,
-                option_a=question.option_a,
-                option_b=question.option_b,
-                option_c=question.option_c,
-                option_d=question.option_d
+                daily_quest=quest,
+                question_text=lesson_q.question,
+                options=lesson_q.options,
+                correct_index=lesson_q.correct_index,
+                order=idx,
+                difficulty_level='medium'
             )
 
         return quest
@@ -117,21 +115,25 @@ class DailyQuestService:
 
         Args:
             quest: DailyQuest instance
-            submitted_answers: dict mapping question IDs to submitted answers
+            submitted_answers: dict mapping question IDs to submitted answer indices (as strings)
 
         Returns:
             tuple: (correct_count, total_questions, xp_earned)
         """
-        questions = DailyQuestQuestion.objects.filter(quest=quest)
+        questions = DailyQuestQuestion.objects.filter(daily_quest=quest)
         total_questions = questions.count()
         correct_count = 0
 
         for question in questions:
-            submitted = submitted_answers.get(str(question.id), '').strip().lower()
-            correct = question.correct_answer.strip().lower()
+            submitted_idx_str = submitted_answers.get(str(question.id), '')
 
-            if submitted == correct:
-                correct_count += 1
+            try:
+                submitted_idx = int(submitted_idx_str)
+                if submitted_idx == question.correct_index:
+                    correct_count += 1
+            except (ValueError, TypeError):
+                # Invalid submission, counts as wrong
+                pass
 
         # XP proportional to correct answers
         if total_questions > 0:
