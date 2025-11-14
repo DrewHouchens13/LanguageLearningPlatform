@@ -101,8 +101,10 @@ class DailyQuestService:
 
         if completed_lesson_ids:
             # User has completed lessons - pull from those only
+            # Convert string IDs to integers for comparison
+            lesson_ids = [int(lid) for lid in completed_lesson_ids]
             question_pool = LessonQuizQuestion.objects.filter(
-                lesson_id__in=completed_lesson_ids
+                lesson__id__in=lesson_ids
             )
         else:
             # User hasn't completed any lessons - pull from all published lessons
@@ -175,7 +177,7 @@ class DailyQuestService:
         stats = weekly_attempts.aggregate(
             total_xp=Sum('xp_earned'),
             total_questions=Sum('total_questions'),
-            total_correct=Sum('score')
+            total_correct=Sum('correct_answers')
         )
 
         return {
@@ -214,7 +216,7 @@ class DailyQuestService:
         stats = all_attempts.aggregate(
             total_xp=Sum('xp_earned'),
             total_questions=Sum('total_questions'),
-            total_correct=Sum('score')
+            total_correct=Sum('correct_answers')
         )
 
         return {

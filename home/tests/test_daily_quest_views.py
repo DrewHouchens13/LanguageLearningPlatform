@@ -107,7 +107,7 @@ class TestDailyQuestView(TestCase):
         self.assertEqual(DailyQuest.objects.filter(date=date.today()).count(), 1)
         # With 5 questions
         quest = DailyQuest.objects.get(date=date.today())
-        self.assertEqual(DailyQuestQuestion.objects.filter(quest=quest).count(), 5)
+        self.assertEqual(DailyQuestQuestion.objects.filter(daily_quest=quest).count(), 5)
 
 
 class TestDailyQuestSubmitView(TestCase):
@@ -142,7 +142,7 @@ class TestDailyQuestSubmitView(TestCase):
         # Generate quest
         from home.services.daily_quest_service import DailyQuestService
         self.quest = DailyQuestService.generate_quest_for_user(self.user, date.today())
-        self.questions = list(DailyQuestQuestion.objects.filter(quest=self.quest))
+        self.questions = list(DailyQuestQuestion.objects.filter(daily_quest=self.quest))
 
     def test_submit_requires_authentication(self):
         """Test submit endpoint requires authentication"""
@@ -232,6 +232,7 @@ class TestQuestHistoryView(TestCase):
                 date=quest_date,
                 title='Daily Challenge',
                 description='Answer 5 questions',
+                based_on_lesson=self.lesson,
                 quest_type='quiz',
                 xp_reward=50
             )
