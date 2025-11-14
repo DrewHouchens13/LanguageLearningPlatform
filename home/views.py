@@ -848,8 +848,11 @@ def dashboard(request):
             'both_complete': time_complete and lesson_complete
         }
         any_quest_available = not (time_complete and lesson_complete)
-        logger.info('Daily quests generated successfully for dashboard: time=%s, lesson=%s', 
-                   quests['time_quest'].id, quests['lesson_quest'].id)
+        # Log quest generation success (safely handle None values)
+        time_id = quests['time_quest'].id if quests['time_quest'] else 'None'
+        lesson_id = quests['lesson_quest'].id if quests['lesson_quest'] else 'None'
+        logger.info('Daily quests generated successfully for dashboard: time=%s, lesson=%s',
+                   time_id, lesson_id)
     except Exception as e:  # pylint: disable=broad-exception-caught
         # If quest generation fails (e.g., no lessons available), log and continue
         # Broad catch is intentional - dashboard should load even if quests fail
