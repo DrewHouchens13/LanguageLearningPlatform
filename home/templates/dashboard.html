@@ -39,8 +39,32 @@
                 Ready to start your learning journey?
               {% endif %}
             </p>
+
+            <!-- Compact XP Display -->
+            {% if user_profile %}
+            <div style="display: flex; gap: var(--space-md); margin-top: var(--space-md); flex-wrap: wrap;">
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-lg); color: white; display: flex; align-items: center; gap: var(--space-sm);">
+                <span style="font-size: 1.5rem;">⚡</span>
+                <div>
+                  <div style="font-size: var(--text-sm); opacity: 0.9;">Level {{ user_profile.current_level }}</div>
+                  <div style="font-weight: 700; font-size: var(--text-lg);">{{ user_profile.total_xp|floatformat:0 }} XP</div>
+                </div>
+              </div>
+              <div style="flex: 1; min-width: 200px;">
+                <div style="font-size: var(--text-xs); margin-bottom: var(--space-xs); color: var(--text-secondary);">
+                  Progress to Level {{ user_profile.current_level|add:1 }} ({{ xp_progress_percent|floatformat:0 }}%)
+                </div>
+                <div style="width: 100%; height: 12px; background: var(--gray-200); border-radius: var(--radius-full); overflow: hidden;">
+                  <div style="height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); width: {{ xp_progress_percent }}%; transition: width 0.5s ease;"></div>
+                </div>
+                <div style="font-size: var(--text-xs); margin-top: var(--space-xs); color: var(--text-secondary);">
+                  {{ xp_to_next_level }} XP to next level
+                </div>
+              </div>
+            </div>
+            {% endif %}
           </div>
-          
+
           <!-- Animated Streak Fire -->
           <div class="streak-fire-container">
             <div class="fire-glow {% if current_streak > 0 %}active{% endif %}"></div>
@@ -50,7 +74,7 @@
               <span class="streak-label">Day Streak</span>
             </div>
           </div>
-          
+
           <div style="text-align: center;">
             {% if user.profile %}
               <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="avatar avatar-2xl" style="margin-bottom: var(--space-sm);">
@@ -67,140 +91,78 @@
           </div>
         </div>
       </section>
-
-      <!-- XP and Leveling System -->
-      {% if user_profile %}
-      <section class="card card-bordered mt-xl fade-in-up" style="background: linear-gradient(135deg, #fff4e6 0%, #ffe8cc 100%); border: 2px solid #ff8a65;">
-        <div class="card-body">
-          <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: var(--space-lg); margin-bottom: var(--space-lg);">
-            <div style="flex: 1; min-width: 250px;">
-              <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-xs);">
-                <span style="font-size: 2.5rem;">⚡</span>
-                <div>
-                  <h3 style="margin: 0; font-size: var(--font-size-2xl); color: #d84315;">Level {{ user_profile.current_level }}</h3>
-                  <p class="text-muted" style="margin: 0; color: #d84315;">Experience Points</p>
-                </div>
-              </div>
-            </div>
-            <div style="text-align: right;">
-              <p style="font-size: var(--font-size-3xl); font-weight: 700; color: #d84315; margin: 0;">{{ user_profile.total_xp|floatformat:0 }}</p>
-              <p class="text-muted" style="font-size: var(--font-size-sm); color: #d84315;">Total XP</p>
-            </div>
-          </div>
-
-          <!-- Progress Bar -->
-          <div style="margin-bottom: var(--space-md);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
-              <span style="font-weight: 600; color: #d84315;">Progress to Level {{ user_profile.current_level|add:1 }}</span>
-              <span style="font-weight: 600; color: #d84315;">{{ xp_progress_percent|floatformat:1 }}%</span>
-            </div>
-            <div style="width: 100%; height: 24px; background: rgba(255, 138, 101, 0.2); border-radius: var(--radius-full); overflow: hidden; position: relative;">
-              <div style="height: 100%; background: linear-gradient(90deg, #ff8a65 0%, #ff7043 100%); border-radius: var(--radius-full); width: {{ xp_progress_percent }}%; transition: width 0.5s ease;"></div>
-            </div>
-            <p class="text-muted mt-sm" style="font-size: var(--font-size-sm); color: #d84315;">{{ xp_to_next_level }} XP needed for next level</p>
-          </div>
-
-          <!-- XP Sources -->
-          <div style="background: rgba(255, 255, 255, 0.7); padding: var(--space-md); border-radius: var(--radius-md);">
-            <p style="font-weight: 600; margin-bottom: var(--space-sm); color: #d84315;">Earn XP by:</p>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-sm);">
-              <div style="display: flex; align-items: center; gap: var(--space-xs);">
-                <span>📚</span>
-                <span style="font-size: var(--font-size-sm); color: #d84315;">Complete lessons (+50-100 XP)</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: var(--space-xs);">
-                <span>🎯</span>
-                <span style="font-size: var(--font-size-sm); color: #d84315;">Daily quests (+50-100 XP)</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: var(--space-xs);">
-                <span>⭐</span>
-                <span style="font-size: var(--font-size-sm); color: #d84315;">Perfect scores (+10 XP bonus)</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      {% endif %}
       
-      <!-- Placement Test CTA -->
-      {% if not has_completed_onboarding %}
+      <!-- Placement Test CTA (Dynamic for Multiple Languages) -->
+      {% if pending_languages %}
         <section class="card card-bordered fade-in-up delay-100" style="background: linear-gradient(135deg, #fff3cd 0%, #fef3c7 100%);">
           <div class="card-body text-center">
-            <h3 class="text-3xl font-bold mb-md" style="color: #92400e;">📝 Discover Your Spanish Level</h3>
-            <p class="text-lg mb-xl" style="color: #92400e;">Take our quick placement test to unlock personalized lessons tailored to your proficiency!</p>
-            <a href="{% url 'onboarding_welcome' %}" class="btn btn-accent btn-lg">
-              Start Placement Test →
-            </a>
+            <h3 class="text-3xl font-bold mb-md" style="color: #92400e;">📝 Discover Your Language Proficiency</h3>
+            <p class="text-lg mb-md" style="color: #92400e;">Take a quick placement test to unlock personalized lessons!</p>
+
+            {% if pending_languages|length == 1 %}
+              <!-- Single language available -->
+              <p class="mb-xl" style="color: #78350f; font-weight: 600;">Available: {{ pending_languages.0 }}</p>
+              <a href="{% url 'onboarding_welcome' %}?language={{ pending_languages.0 }}" class="btn btn-accent btn-lg">
+                Start {{ pending_languages.0 }} Test →
+              </a>
+            {% else %}
+              <!-- Multiple languages available -->
+              <p class="mb-lg" style="color: #78350f;">Choose a language to test:</p>
+              <div style="display: flex; flex-wrap: wrap; gap: var(--space-md); justify-content: center;">
+                {% for language in pending_languages %}
+                  <a href="{% url 'onboarding_welcome' %}?language={{ language }}" class="btn btn-accent">
+                    {{ language }}
+                  </a>
+                {% endfor %}
+              </div>
+            {% endif %}
           </div>
         </section>
       {% endif %}
 
-      <!-- Daily Quests Card -->
-      {% if daily_quests %}
+      <!-- Daily Challenge Card -->
+      {% if daily_quest %}
         <section class="card card-bordered fade-in-up delay-150" style="margin-top: var(--space-3xl); margin-bottom: var(--space-2xl); background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #0ea5e9;">
           <div class="card-body">
             <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: var(--space-md);">
               <div style="flex: 1; min-width: 250px;">
                 <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-xs);">
                   <span style="font-size: 2rem;">🎯</span>
-                  <h3 class="card-title" style="margin: 0;">Daily Quests</h3>
+                  <h3 class="card-title" style="margin: 0;">Daily Challenge</h3>
                 </div>
-                <p class="text-muted" style="margin-bottom: var(--space-md);">{{ daily_quests.time_quest.date|date:"F j, Y" }}</p>
-                
-                {% if daily_quests.both_complete %}
+                <p class="text-muted" style="margin-bottom: var(--space-md);">{{ daily_quest.date|date:"F j, Y" }}</p>
+
+                {% if quest_complete %}
                   <div style="display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-md); background: var(--color-success-light, #d1fae5); border-radius: var(--radius-md); margin-bottom: var(--space-md);">
                     <span style="font-size: 1.5rem;">✅</span>
                     <div>
-                      <p style="font-weight: 600; color: var(--color-success); margin: 0;">All Quests Completed!</p>
-                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">Come back tomorrow for new challenges</p>
+                      <p style="font-weight: 600; color: var(--color-success); margin: 0;">Challenge Completed!</p>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">Come back tomorrow for a new challenge</p>
                     </div>
                   </div>
                 {% else %}
-                  <p style="font-weight: 600; margin-bottom: var(--space-sm);">2 Quests Available Today</p>
-                  
-                  <div style="display: grid; gap: var(--space-sm); margin-bottom: var(--space-md);">
-                    <!-- Time Quest -->
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-sm); background: var(--color-surface); border-radius: var(--radius-sm);">
-                      <div style="display: flex; align-items: center; gap: var(--space-xs);">
-                        <span>⏱️</span>
-                        <span style="font-size: var(--font-size-sm);">{{ daily_quests.time_quest.title }}</span>
-                      </div>
-                      {% if daily_quests.time_complete %}
-                        <span style="color: var(--color-success); font-size: var(--font-size-sm);">✓ Complete</span>
-                      {% else %}
-                        <span class="text-muted" style="font-size: var(--font-size-sm);">{{ daily_quests.time_progress }}/15 min</span>
-                      {% endif %}
-                    </div>
-                    
-                    <!-- Lesson Quest -->
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-sm); background: var(--color-surface); border-radius: var(--radius-sm);">
-                      <div style="display: flex; align-items: center; gap: var(--space-xs);">
-                        <span>📚</span>
-                        <span style="font-size: var(--font-size-sm);">{{ daily_quests.lesson_quest.title }}</span>
-                      </div>
-                      {% if daily_quests.lesson_complete %}
-                        <span style="color: var(--color-success); font-size: var(--font-size-sm);">✓ Complete</span>
-                      {% else %}
-                        <span class="text-muted" style="font-size: var(--font-size-sm);">Pending</span>
-                      {% endif %}
+                  <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-md); background: var(--color-surface); border-radius: var(--radius-md); margin-bottom: var(--space-md);">
+                    <div>
+                      <p style="font-weight: 600; margin-bottom: var(--space-xs);">📚 {{ daily_quest.title }}</p>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">{{ daily_quest.description }}</p>
                     </div>
                   </div>
-                  
+
                   <div style="display: flex; align-items: center; gap: var(--space-xs);">
                     <span>⭐</span>
-                    <span style="font-weight: 600; color: var(--color-success);">Up to {{ daily_quests.time_quest.xp_reward|add:daily_quests.lesson_quest.xp_reward }} XP available</span>
+                    <span style="font-weight: 600; color: var(--color-success);">{{ daily_quest.xp_reward }} XP available</span>
                   </div>
                 {% endif %}
               </div>
-              
+
               <div style="display: flex; align-items: center;">
-                {% if daily_quests.both_complete %}
+                {% if quest_complete %}
                   <a href="{% url 'quest_history' %}" class="btn btn-outline">
                     View History
                   </a>
                 {% else %}
                   <a href="{% url 'daily_quest' %}" class="btn btn-primary btn-lg">
-                    View Quests →
+                    Start Challenge →
                   </a>
                 {% endif %}
               </div>
@@ -247,31 +209,6 @@
             <h3>Account Settings</h3>
             <p>Update your profile, change password, and customize your experience.</p>
           </a>
-        </div>
-      </section>
-
-      <!-- User Info Card -->
-      <section class="mt-3xl">
-        <div class="card">
-          <div class="card-header">
-            <h3>Account Information</h3>
-          </div>
-          <div class="card-body">
-            <div class="info-grid">
-              <div class="info-row">
-                <span class="info-label">Email</span>
-                <span class="info-value">{{ user.email }}</span>
-              </div>
-              <div class="info-row">
-                <span class="info-label">Username</span>
-                <span class="info-value">{{ user.username }}</span>
-              </div>
-              <div class="info-row">
-                <span class="info-label">Member Since</span>
-                <span class="info-value">{{ user.date_joined|date:"F d, Y" }}</span>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
     </main>

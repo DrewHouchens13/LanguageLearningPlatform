@@ -853,3 +853,34 @@ textarea.form-input {
     transform: translateY(0);
   }
 }
+
+/* ===================================
+   XP BADGE (Navbar)
+   =================================== */
+
+.xp-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  color: white;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+  font-size: var(--text-sm);
+}
+
+.xp-level {
+  font-size: 0.9rem;
+}
+
+.xp-divider {
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
+.xp-amount {
+  font-size: 0.85rem;
+}
