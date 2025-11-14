@@ -10,6 +10,7 @@ dj-database-url==2.1.0     # Parse database URL from environment
 Pillow==11.0.0             # Image processing for user avatars
 cloudinary==1.41.0         # Cloudinary SDK for cloud media storage
 django-cloudinary-storage==0.3.0  # Django storage backend for Cloudinary
+django-redis==5.4.0        # Redis cache backend for Django (production caching)
 
 # Testing dependencies
 pytest==8.3.4              # Testing framework

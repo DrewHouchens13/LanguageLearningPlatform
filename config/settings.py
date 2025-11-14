@@ -367,37 +367,48 @@ PASSWORD_RESET_TIMEOUT = 1200  # 20 minutes in seconds
 # - Not suitable for load-balanced deployments
 #
 # To use Redis in production, install django-redis and configure:
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django_redis.cache.RedisCache',
-#         'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
-#         'OPTIONS': {
-#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-#             'PASSWORD': os.environ.get('REDIS_PASSWORD'),  # Strongly recommended
-#         }
-#     }
-# }
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-        'OPTIONS': {
-            'MAX_ENTRIES': 1000,
+# Automatically use Redis in production if REDIS_URL is set, otherwise use local memory
+REDIS_URL = os.environ.get('REDIS_URL')
+
+if REDIS_URL:
+    # Production: Use Redis for caching (shared across processes)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': REDIS_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'PASSWORD': os.environ.get('REDIS_PASSWORD'),  # Optional password auth
+                'SOCKET_CONNECT_TIMEOUT': 5,  # seconds
+                'SOCKET_TIMEOUT': 5,  # seconds
+                'RETRY_ON_TIMEOUT': True,
+                'MAX_CONNECTIONS': 50,
+            }
         }
     }
-}
+else:
+    # Development: Use local memory cache (not shared across processes)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+            'OPTIONS': {
+                'MAX_ENTRIES': 1000,
+            }
+        }
+    }
 
-# Production cache backend validation
-if not DEBUG and CACHES['default']['BACKEND'] == 'django.core.cache.backends.locmem.LocMemCache':
-    import warnings
-    warnings.warn(
-        'WARNING: Using local memory cache in production! '
-        'This cache is not shared across processes and will cause issues with '
-        'rate limiting and session management in multi-process deployments. '
-        'Configure Redis or Memcached for production use.',
-        RuntimeWarning,
-        stacklevel=2
-    )
+    # Warn if using local memory in production
+    if not DEBUG:
+        import warnings
+        warnings.warn(
+            'WARNING: Using local memory cache in production! '
+            'This cache is not shared across processes and will cause issues with '
+            'rate limiting and session management in multi-process deployments. '
+            'Set REDIS_URL environment variable to enable Redis caching.',
+            RuntimeWarning,
+            stacklevel=2
+        )
 
 # Session settings
 SESSION_COOKIE_AGE = 86400  # Session expires after 1 day (86400 seconds)
