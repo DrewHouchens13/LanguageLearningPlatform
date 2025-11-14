@@ -30,11 +30,26 @@ urlpatterns = [
     path("onboarding/results/", views.onboarding_results, name="onboarding_results"),
 
   # Lesson paths
+    # 🤖 AI ASSISTANT WARNING - URL PATTERN ORDERING IS CRITICAL!
+    # ALWAYS put more specific patterns (<int:...>) BEFORE general patterns (<str:...>)
+    #
+    # CORRECT ORDER (current):
+    #   1. lessons/<int:lesson_id>/        ← Matches numbers only (e.g., /lessons/2/)
+    #   2. lessons/<str:language>/         ← Matches any string (e.g., /lessons/spanish/)
+    #
+    # WRONG ORDER (causes bugs):
+    #   1. lessons/<str:language>/         ← Would match "2" as a language name!
+    #   2. lessons/<int:lesson_id>/        ← Never reached for numeric IDs
+    #
+    # If you change this order, lesson detail pages will break!
+    # Example bug: /lessons/2/ would be interpreted as "show lessons for language '2'"
+    #
     path("lessons/", views.lessons_list, name="lessons_list"),
     path("lessons/<int:lesson_id>/", views.lesson_detail, name="lesson_detail"),
     path("lessons/<int:lesson_id>/quiz/", views.lesson_quiz, name="lesson_quiz"),
     path("lessons/<int:lesson_id>/submit/", views.submit_lesson_quiz, name="submit_lesson_quiz"),
     path("lessons/<int:lesson_id>/results/<int:attempt_id>/", views.lesson_results, name="lesson_results"),
+    path("lessons/<str:language>/", views.lessons_by_language, name="lessons_by_language"),
 
     # Daily Quest paths
     path("quests/daily/", views.daily_quest_view, name="daily_quest"),

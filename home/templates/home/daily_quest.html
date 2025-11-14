@@ -1,3 +1,86 @@
+<!--
+🤖 AI ASSISTANT INSTRUCTIONS - DAILY CHALLENGE TEMPLATE
+================================================================================
+
+PURPOSE:
+This template displays the Daily Challenge page where users answer 5 quiz questions
+from their completed (or available) lessons to earn XP.
+
+URL: /quests/daily/
+BACKEND: home/views.py:daily_quest_view
+SERVICE: home/services/daily_quest_service.py
+
+HOW IT WORKS:
+1. Backend generates ONE daily quest with 5 questions (via DailyQuestService)
+2. Questions are personalized based on user's completed lessons
+3. User selects answers using radio buttons
+4. Form submits to /quests/daily/submit/
+5. Backend calculates score and awards XP
+
+TEMPLATE VARIABLES RECEIVED:
+- quest: DailyQuest object (has date, xp_reward, is_active)
+- questions: List of DailyQuestQuestion objects (5 items)
+- has_completed_today: Boolean (True if user already completed today's quest)
+- user_attempt: UserDailyQuestAttempt object (if completed)
+
+QUESTION DISPLAY LOGIC:
+Each question displays:
+- Question text (e.g., "What color is 'rojo'?")
+- 4 radio button options (from question.options JSON field)
+- Hidden input with correct answer index (for submission)
+
+FORM SUBMISSION:
+- Method: POST
+- Action: {% url 'daily_quest_submit' %}
+- CSRF token included
+- Data: question_{id}={selected_index} for each question
+
+COMPLETION STATES:
+1. NOT COMPLETED:
+   - Shows 5 questions with radio buttons
+   - Submit button enabled
+   - XP reward displayed
+
+2. ALREADY COMPLETED:
+   - Shows score and XP earned
+   - Submit button disabled or hidden
+   - Message: "You've already completed today's challenge!"
+
+XP REWARDS:
+- Base: 50 XP
+- Bonus: +10 XP per correct answer (max 50)
+- Perfect score: 100 XP total
+
+HOW MULTI-LANGUAGE WORKS:
+Questions automatically come from ALL completed lessons across ALL languages:
+- User completed Spanish Colors → Spanish color questions in pool
+- User completed French Greetings → French greeting questions in pool
+- Daily quest randomly selects 5 from combined pool
+- NO template changes needed for new languages!
+
+EXAMPLE - User with multiple languages:
+User has completed:
+- Spanish: Colors, Shapes
+- French: Greetings, Numbers
+Daily quest might include:
+- Q1: Spanish color
+- Q2: French greeting
+- Q3: Spanish shape
+- Q4: French number
+- Q5: Spanish color
+(Randomized each day)
+
+RELATED FILES:
+- home/services/daily_quest_service.py - Quest generation logic
+- home/views.py (daily_quest_view, daily_quest_submit) - Request handlers
+- home/models.py (DailyQuest, DailyQuestQuestion, UserDailyQuestAttempt)
+
+TESTING:
+- See tests/test_daily_quest.py for test coverage
+- See local_testing/test_daily_quest_fix.py for live testing
+
+================================================================================
+-->
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">

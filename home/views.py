@@ -1629,30 +1629,223 @@ def onboarding_results(request):
     return render(request, 'onboarding/results.html', context)
 
 # =============================================================================
-# LESSON VIEWS
+# LESSON VIEWS - DYNAMIC LANGUAGE DETECTION SYSTEM
+# =============================================================================
+#
+# 🤖 AI ASSISTANT INSTRUCTIONS:
+# This section implements a fully dynamic lesson system that automatically detects
+# and displays lessons for ANY language without hardcoding language names in templates.
+#
+# ARCHITECTURE OVERVIEW:
+# 1. Main lessons page (/lessons/) - Shows language selection buttons
+#    - Automatically detects all languages that have published lessons
+#    - Displays native language names (e.g., "Español" not "Spanish")
+#    - Shows appropriate flag emoji for each language
+#
+# 2. Language-specific pages (/lessons/spanish/) - Shows lessons for one language
+#    - Filters lessons by language parameter
+#    - Displays lesson cards with auto-detected topic icons
+#    - Fully responsive grid layout
+#
+# HOW TO ADD A NEW LANGUAGE:
+# 1. Add language metadata to LANGUAGE_METADATA constant below
+# 2. Create lessons in database with language='NewLanguage'
+# 3. Page will automatically display new language button
+# 4. No template changes needed!
+#
+# EXAMPLE - Adding Portuguese:
+#   LANGUAGE_METADATA = {
+#       'Portuguese': {'native_name': 'Português', 'flag': '🇵🇹'},
+#       ...
+#   }
+#   Then create lessons: Lesson.objects.create(title='Colors', language='Portuguese', ...)
+#
+# DATABASE REQUIREMENTS:
+# - Lesson model must have: language (CharField), is_published (BooleanField)
+# - Language names must match dictionary keys exactly (case-sensitive)
+#
+# TEMPLATE VARIABLES PASSED:
+# - languages_with_lessons: List of dicts with {name, native_name, flag, lesson_count, lessons}
+# - lessons_by_language: Dict of {language: [lessons]} for backward compatibility
+# - lessons: QuerySet of all published lessons
+#
 # =============================================================================
 
+# Language metadata: native names and flag emojis (DRY - single source of truth)
+LANGUAGE_METADATA = {
+    'Spanish': {'native_name': 'Español', 'flag': '🇪🇸'},
+    'French': {'native_name': 'Français', 'flag': '🇫🇷'},
+    'German': {'native_name': 'Deutsch', 'flag': '🇩🇪'},
+    'Italian': {'native_name': 'Italiano', 'flag': '🇮🇹'},
+    'Japanese': {'native_name': '日本語', 'flag': '🇯🇵'},
+    'Chinese': {'native_name': '中文', 'flag': '🇨🇳'},
+    'Portuguese': {'native_name': 'Português', 'flag': '🇵🇹'},
+    'Russian': {'native_name': 'Русский', 'flag': '🇷🇺'},
+    'Korean': {'native_name': '한국어', 'flag': '🇰🇷'},
+    'Arabic': {'native_name': 'العربية', 'flag': '🇸🇦'},
+}
+
+
+def _build_language_data(language, lessons):
+    """
+    Helper function to build language data dict with metadata.
+    Follows Function Extraction and DRY principles.
+
+    Args:
+        language: English language name (e.g., 'Spanish')
+        lessons: List of Lesson objects for this language
+
+    Returns:
+        Dict with {name, native_name, flag, lesson_count, lessons}
+    """
+    metadata = LANGUAGE_METADATA.get(language, {
+        'native_name': language,  # Fallback to English name
+        'flag': '🌐'  # Default flag
+    })
+
+    return {
+        'name': language,
+        'native_name': metadata['native_name'],
+        'flag': metadata['flag'],
+        'lesson_count': len(lessons),
+        'lessons': lessons
+    }
+
+
 def lessons_list(request):
-    """Display list of all available lessons grouped by language."""
+    """
+    Display list of all available lessons grouped by language.
+    Follows Single Responsibility Principle - delegates to helper functions.
+    """
     from collections import defaultdict
 
     # Get all published lessons
     all_lessons = Lesson.objects.filter(is_published=True).order_by('language', 'order', 'id')
 
     # Group lessons by language
-    lessons_by_language = defaultdict(list)
+    grouped_lessons = defaultdict(list)  # Renamed to avoid shadowing function name
     for lesson in all_lessons:
-        lessons_by_language[lesson.language].append(lesson)
+        grouped_lessons[lesson.language].append(lesson)
 
-    # Convert to regular dict for template
-    lessons_by_language = dict(lessons_by_language)
+    # Build language list with metadata using helper function
+    languages_with_lessons = [
+        _build_language_data(language, language_lessons)
+        for language, language_lessons in grouped_lessons.items()
+    ]
 
     context = {
-        'lessons_by_language': lessons_by_language,
+        'languages_with_lessons': languages_with_lessons,
+        'lessons_by_language': dict(grouped_lessons),  # Keep for backward compatibility
         'lessons': all_lessons,  # Keep for backward compatibility
     }
 
     return render(request, 'lessons_list.html', context)
+
+
+def lessons_by_language(request, language):
+    """
+    Display lessons for a specific language (e.g., /lessons/spanish/).
+
+    🤖 AI ASSISTANT INSTRUCTIONS:
+    This view handles language-specific lesson pages. It receives a language
+    name from the URL (lowercase) and displays all lessons for that language.
+
+    URL PATTERN: lessons/<str:language>/ (defined in home/urls.py)
+    EXAMPLE URLs: /lessons/spanish/, /lessons/french/, /lessons/german/
+
+    ⚠️ CRITICAL URL ROUTING REQUIREMENT:
+    In home/urls.py, this pattern MUST come AFTER lessons/<int:lesson_id>/
+    Otherwise, numeric lesson IDs will be interpreted as language names!
+
+    CORRECT ORDER in urls.py:
+      1. path("lessons/<int:lesson_id>/", ...)      ← FIRST (specific)
+      2. path("lessons/<str:language>/", ...)       ← SECOND (general)
+
+    WRONG ORDER causes bugs like /lessons/2/ being treated as language "2"!
+
+    HOW IT WORKS:
+    1. Receives language from URL (e.g., 'spanish')
+    2. Capitalizes it to match database format (e.g., 'Spanish')
+    3. Queries all published lessons with that language
+    4. Orders by lesson.order field, then by ID
+    5. Passes lessons to template
+
+    TEMPLATE: home/templates/lessons/lessons_by_language.html
+    - Displays lesson cards in a grid
+    - Auto-detects lesson icons based on title/slug
+    - Shows lesson count, difficulty badges, flashcard counts
+
+    TO ADD NEW LESSONS TO EXISTING LANGUAGE:
+    Just create lesson in database with matching language name:
+        Lesson.objects.create(
+            title='Numbers in Spanish',
+            language='Spanish',
+            slug='numbers',
+            is_published=True,
+            order=3
+        )
+    This view will automatically include it - no code changes needed!
+    """
+    # Capitalize first letter to match database format
+    language = language.capitalize()
+
+    # Get lessons for the specified language
+    lessons = Lesson.objects.filter(
+        language=language,
+        is_published=True
+    ).order_by('order', 'id')
+
+    # Add icon to each lesson based on topic
+    lessons_with_icons = []
+    for lesson in lessons:
+        lesson_data = {
+            'lesson': lesson,
+            'icon': _get_lesson_icon(lesson)
+        }
+        lessons_with_icons.append(lesson_data)
+
+    context = {
+        'language': language,
+        'lessons_with_icons': lessons_with_icons,
+    }
+
+    return render(request, 'lessons/lessons_by_language.html', context)
+
+
+def _get_lesson_icon(lesson):
+    """
+    Helper function to determine lesson icon based on topic.
+    Follows DRY principle - single source of truth for icon mapping.
+    Uses early returns for clarity (Pylint prefers if over elif after return).
+    """
+    slug = (lesson.slug or '').lower()
+    title = lesson.title.lower()
+
+    if 'color' in slug or 'color' in title:
+        return '🎨'
+    if 'shape' in slug or 'shape' in title:
+        return '🔷'
+    if 'number' in slug or 'number' in title:
+        return '🔢'
+    if 'animal' in slug or 'animal' in title:
+        return '🐾'
+    if 'food' in slug or 'food' in title:
+        return '🍎'
+    if 'family' in slug or 'family' in title:
+        return '👨‍👩‍👧‍👦'
+    if 'greeting' in slug or 'greeting' in title:
+        return '👋'
+    if 'verb' in slug or 'verb' in title:
+        return '⚡'
+    if 'adjective' in slug or 'adjective' in title:
+        return '✨'
+    if 'time' in slug or 'time' in title:
+        return '🕐'
+    if 'weather' in slug or 'weather' in title:
+        return '🌤️'
+    if 'clothing' in slug or 'clothing' in title:
+        return '👕'
+    return '📚'  # Default icon
 
 
 def lesson_detail(request, lesson_id):

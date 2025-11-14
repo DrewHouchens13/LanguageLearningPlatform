@@ -1,3 +1,56 @@
+<!--
+🤖 AI ASSISTANT INSTRUCTIONS - DYNAMIC LANGUAGE SELECTION PAGE
+================================================================================
+
+PURPOSE:
+This template displays the main lessons page with language selection buttons.
+It AUTOMATICALLY detects all available languages and displays them - no
+hardcoding required!
+
+HOW IT WORKS:
+1. Backend (home/views.py:lessons_list) queries database for all published lessons
+2. Groups lessons by language and adds metadata (native names, flags)
+3. Passes 'languages_with_lessons' list to this template
+4. Template loops through and creates a button for each language
+
+TEMPLATE VARIABLES RECEIVED:
+- languages_with_lessons: List of dicts, each containing:
+  - name: English name (e.g., 'Spanish')
+  - native_name: Native language name (e.g., 'Español')
+  - flag: Flag emoji (e.g., '🇪🇸')
+  - lesson_count: Number of lessons available
+  - lessons: QuerySet of lesson objects
+
+BUTTON BEHAVIOR:
+- Each button links to /lessons/{language_lowercase}/
+- Example: "🇪🇸 Español" button → /lessons/spanish/
+- URL routing handled by home/urls.py
+
+⚠️ CRITICAL URL ROUTING REQUIREMENT:
+The URL patterns in home/urls.py MUST be in the correct order:
+  1. lessons/<int:lesson_id>/     ← FIRST (specific pattern)
+  2. lessons/<str:language>/      ← SECOND (general pattern)
+
+If reversed, lesson detail pages will break! See home/urls.py for full explanation.
+
+HOW TO ADD A NEW LANGUAGE (For AI Assistants):
+1. Add metadata to LANGUAGE_METADATA in home/views.py:lessons_list
+2. Create lessons in database with language='YourLanguage'
+3. This template will automatically display the new language button
+4. NO template changes needed!
+
+EXAMPLE - Adding French:
+Backend: Add to LANGUAGE_METADATA: 'French': {'native_name': 'Français', 'flag': '🇫🇷'}
+Database: Create lessons with language='French'
+Result: Template automatically shows "🇫🇷 Français" button
+
+RELATED FILES:
+- home/views.py (lessons_list function) - Provides data
+- home/urls.py - URL routing
+- home/templates/lessons/lessons_by_language.html - Language-specific pages
+
+================================================================================
+-->
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -36,82 +89,24 @@
         {% else %}
         <!-- Logged In User View -->
         <!-- Header -->
-        <div class="lessons-header fade-in">
-            <h2>Explore Lessons by Language</h2>
-            <p>Choose a language to start learning</p>
+        <div class="lessons-header fade-in text-center" style="margin-bottom: var(--space-3xl);">
+            <h2 style="font-size: var(--font-size-4xl); font-weight: 800;">Choose Your Language</h2>
+            <p style="font-size: var(--font-size-lg); color: var(--color-text-muted);">Select a language to explore lessons</p>
         </div>
 
-        {% if lessons_by_language %}
-            <!-- Language Selection Buttons -->
-            <div class="fade-in-up" style="margin-bottom: var(--space-2xl);">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--space-lg); max-width: 900px; margin: 0 auto;">
-                    {% for language, language_lessons in lessons_by_language.items %}
-                    <div class="card card-bordered" style="cursor: pointer; transition: all 0.3s ease;" onclick="scrollToLanguage('{{ language }}')">
-                        <div class="card-body text-center">
-                            <div style="font-size: 3rem; margin-bottom: var(--space-sm);">
-                                {% if language == 'Spanish' %}🇪🇸
-                                {% elif language == 'French' %}🇫🇷
-                                {% elif language == 'German' %}🇩🇪
-                                {% elif language == 'Italian' %}🇮🇹
-                                {% elif language == 'Japanese' %}🇯🇵
-                                {% elif language == 'Chinese' %}🇨🇳
-                                {% else %}🌐{% endif %}
-                            </div>
-                            <h3 class="card-title mb-xs">{{ language }}</h3>
-                            <p class="text-muted" style="font-size: var(--font-size-sm);">{{ language_lessons|length }} lesson{{ language_lessons|length|pluralize }}</p>
-                        </div>
-                    </div>
+        {% if languages_with_lessons %}
+            <!-- Language Selection Buttons (ONLY BUTTONS, NO LESSONS) -->
+            <div class="fade-in-up">
+                <div style="display: flex; flex-wrap: wrap; gap: var(--space-md); justify-content: center; max-width: 600px; margin: 0 auto;">
+                    {% for language in languages_with_lessons %}
+                    <a href="{% if IS_DEVEDU %}../lessons/{{ language.name|lower }}/{% else %}{% url 'lessons_by_language' language.name|lower %}{% endif %}"
+                       class="btn btn-primary"
+                       style="text-decoration: none;">
+                        {{ language.flag }} {{ language.native_name }}
+                    </a>
                     {% endfor %}
                 </div>
             </div>
-
-            <!-- Lessons Grouped by Language -->
-            {% for language, language_lessons in lessons_by_language.items %}
-            <div id="language-{{ language }}" class="fade-in-up" style="margin-bottom: var(--space-3xl);">
-                <div style="margin-bottom: var(--space-lg);">
-                    <h2 style="font-size: var(--font-size-3xl); font-weight: 700; margin-bottom: var(--space-xs);">
-                        {% if language == 'Spanish' %}🇪🇸
-                        {% elif language == 'French' %}🇫🇷
-                        {% elif language == 'German' %}🇩🇪
-                        {% elif language == 'Italian' %}🇮🇹
-                        {% elif language == 'Japanese' %}🇯🇵
-                        {% elif language == 'Chinese' %}🇨🇳
-                        {% else %}🌐{% endif %}
-                        {{ language }} Lessons
-                    </h2>
-                    <p class="text-muted">{{ language_lessons|length }} lesson{{ language_lessons|length|pluralize }} available</p>
-                </div>
-
-                <div class="lessons-grid">
-                    {% for lesson in language_lessons %}
-                    <div class="lesson-card fade-in-up delay-{{ forloop.counter }}00">
-                        <div class="lesson-card-header">
-                            <div class="lesson-icon">📚</div>
-                        </div>
-                        <div class="lesson-card-body">
-                            <h3 class="lesson-card-title">{{ lesson.title }}</h3>
-                            <p class="lesson-card-description">{{ lesson.description }}</p>
-
-                            <div class="lesson-card-meta">
-                                <span class="badge badge-primary">
-                                    {{ lesson.get_difficulty_level_display }}
-                                </span>
-                                <span class="badge badge-success">
-                                    +{{ lesson.xp_value }} XP
-                                </span>
-                            </div>
-                        </div>
-                        <div class="lesson-card-footer">
-                            <a href="{% if IS_DEVEDU %}../lessons/{{ lesson.id }}/{% else %}{% url 'lesson_detail' lesson.id %}{% endif %}"
-                               class="btn btn-primary btn-full">
-                                Start Lesson →
-                            </a>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endfor %}
 
         {% else %}
             <!-- No Lessons Available -->

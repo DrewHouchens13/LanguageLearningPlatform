@@ -1,5 +1,78 @@
 """
 Service for generating and managing daily quests.
+
+🤖 AI ASSISTANT INSTRUCTIONS - DAILY QUEST SYSTEM
+================================================================================
+
+PURPOSE:
+This service implements a personalized daily challenge system where users receive
+ONE quest per day with 5 random questions from their completed or available lessons.
+
+ARCHITECTURE OVERVIEW:
+1. ONE quest per day (not multiple quests)
+2. 5 questions per quest (randomly selected)
+3. Personalized question selection based on user progress
+4. Question snapshots stored in DailyQuestQuestion (not FK references)
+5. XP rewards based on performance
+
+KEY CONCEPTS:
+
+1. QUESTION SELECTION LOGIC (Smart Personalization):
+   - IF user has completed ANY lessons → Questions from COMPLETED lessons only
+   - IF user has NOT completed any lessons → Questions from ALL available lessons
+   - This ensures users get relevant questions based on their learning progress
+
+2. QUESTION SNAPSHOTS (Data Isolation):
+   - Questions are COPIED (not referenced) to DailyQuestQuestion model
+   - Stores: question_text, options (JSON), correct_index
+   - Why? Prevents issues if original lesson questions are edited/deleted
+   - Each quest is a snapshot in time, preserving data integrity
+
+3. ONE QUEST PER DAY:
+   - Quest is identified by date (YYYY-MM-DD)
+   - Same quest for all users on the same day
+   - New quest generated automatically each day
+
+4. XP CALCULATION:
+   - Base XP: 50 per quest
+   - Bonus: +10 per correct answer (max 50 bonus)
+   - Perfect score: 100 XP (50 base + 50 bonus)
+
+DATABASE MODELS USED:
+- DailyQuest: One record per date (date, xp_reward, is_active)
+- DailyQuestQuestion: 5 records per quest (snapshots of questions)
+- LessonCompletion: Tracks which lessons user has completed
+- LessonQuizQuestion: Source of questions (copied to DailyQuestQuestion)
+- UserDailyQuestAttempt: Tracks user attempts and scores
+
+HOW TO EXTEND FOR OTHER LANGUAGES:
+1. Create lessons in new language (e.g., French)
+2. Add quiz questions to those lessons
+3. System automatically includes them in question pool
+4. NO code changes needed!
+
+EXAMPLE - Adding French:
+1. Create French lessons: Lesson.objects.create(language='French', ...)
+2. Add quiz questions: LessonQuizQuestion.objects.create(lesson=french_lesson, ...)
+3. When user completes French lesson, questions automatically enter their pool
+4. Daily quest will include mix of all completed language lessons
+
+KEY METHODS:
+- generate_quest_for_user(): Creates daily quest with 5 questions
+- _get_user_question_pool(): Gets personalized question pool
+- submit_quest(): Processes user's answers and calculates score/XP
+- get_weekly_stats(): Returns weekly performance statistics
+
+RELATED FILES:
+- home/models.py (DailyQuest, DailyQuestQuestion, UserDailyQuestAttempt)
+- home/views.py (daily_quest_view, daily_quest_submit)
+- home/templates/home/daily_quest.html (Quest display template)
+
+TESTING:
+- See tests/test_daily_quest.py for comprehensive test coverage
+- 23 tests covering all logic paths and edge cases
+
+================================================================================
 """
 import secrets
 from django.db.models import Sum
