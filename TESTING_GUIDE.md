@@ -54,11 +54,12 @@ pytest home/tests.py::TestClassName::test_method_name
 
 6. **Run Safety** - Additional dependency security check (GitHub workflow test)
    ```bash
-   safety check
+   safety scan
    ```
    - Target: 0 known security vulnerabilities
    - Secondary CVE check for Python dependencies
    - **BLOCKING REQUIREMENT**: This runs in GitHub workflows and WILL PREVENT PR MERGE if it fails
+   - Note: `safety check` is deprecated, use `safety scan` instead
 
 7. **Fix linting/security issues** - Address any problems found in steps 2-6
 

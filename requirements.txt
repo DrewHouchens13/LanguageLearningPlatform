@@ -24,7 +24,7 @@ isort==6.1.0               # Import sorting (dependency of pylint)
 
 # Security Scanning Tools (Sprint 3)
 bandit==1.7.10             # Security linter for Python
-safety==3.2.10             # Dependency vulnerability scanner
+safety==3.6.2             # Dependency vulnerability scanner
 pip-audit==2.8.0           # Python package security auditing
 semgrep==1.104.0           # Advanced static analysis (optional)
 

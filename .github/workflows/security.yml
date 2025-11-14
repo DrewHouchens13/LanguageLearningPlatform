@@ -111,6 +111,7 @@ jobs:
             p/python
             p/owasp-top-ten
             p/cwe-top-25
+          generateSarif: true
         # BLOCKING: Semgrep failures will prevent PR merge (required for security compliance)
 
       - name: Upload Semgrep SARIF
@@ -205,8 +206,8 @@ jobs:
       - name: Run Safety Check
         # BLOCKING: Safety CVE failures will prevent PR merge (required for security compliance)
         run: |
-          safety check --json -o safety-report.json
-          safety check | tee safety-screen.txt
+          safety scan --save-as json safety-report.json
+          safety scan | tee safety-screen.txt
 
       - name: Upload Safety Reports
         if: always()
