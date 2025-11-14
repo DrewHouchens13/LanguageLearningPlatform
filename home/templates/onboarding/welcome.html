@@ -30,12 +30,12 @@
       <!-- Hero Section -->
       <section class="card mb-2xl fade-in">
         <div class="card-body text-center" style="padding: var(--space-3xl);">
-          <h2 class="text-5xl font-black mb-lg">Discover Your Spanish Level</h2>
+          <h2 class="text-5xl font-black mb-lg">Discover Your {{ language }} Level</h2>
           {% if user_profile and user_profile.has_completed_onboarding %}
             <div class="card mt-xl" style="background: rgba(20, 184, 166, 0.1); border-left: 4px solid var(--primary);">
               <div class="card-body">
                 <p class="text-lg mb-sm">
-                  <strong>Assessment Complete!</strong> 
+                  <strong>Assessment Complete!</strong>
                   Your proficiency level is <span class="badge badge-primary" style="font-size: var(--text-xl); padding: var(--space-sm) var(--space-lg);">{{ user_profile.get_proficiency_level_display }}</span>
                 </p>
                 <p class="text-secondary">
@@ -47,9 +47,9 @@
               Go to Dashboard
             </a>
           {% else %}
-            <p class="lead mb-xl">Take our quick 10-question assessment to determine your Spanish proficiency level. This helps us personalize your learning experience with AI-powered lessons matched to your current skills.</p>
-            <a href="{% url 'onboarding_quiz' %}" class="btn btn-accent btn-lg">
-              🚀 Start Assessment
+            <p class="lead mb-xl">Take our quick 10-question assessment to determine your {{ language }} proficiency level. This helps us personalize your learning experience with lessons matched to your current skills.</p>
+            <a href="{% url 'onboarding_quiz' %}?language={{ language }}" class="btn btn-accent btn-lg">
+              🚀 Start {{ language }} Assessment
             </a>
           {% endif %}
         </div>

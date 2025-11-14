@@ -47,6 +47,176 @@ This document defines the coding standards for all Python and Django code in thi
 - **All Tests Must Pass**: No commits with failing tests
 - **No Warnings in Production**: Address all linter warnings before merging
 
+### SOFA Principles (MANDATORY)
+
+**SOFA** = **S**ingle Responsibility, **O**pen/Closed, **F**unction Extraction, **A**void Repetition
+
+All code must follow SOFA principles. Apply these when writing new code AND when refactoring existing code.
+
+#### 1. Single Responsibility Principle (SRP)
+Each function/class should have ONE clear purpose.
+
+```python
+# ❌ BAD: View doing too much
+def progress_view(request):
+    # Mixing business logic with view logic!
+    weekly_challenges = UserDailyQuestAttempt.objects.filter(
+        user=request.user,
+        is_completed=True,
+        completed_at__gte=timezone.now() - timedelta(days=7)
+    )
+    correct = weekly_challenges.aggregate(Sum('correct_answers'))['correct_answers__sum'] or 0
+    total = weekly_challenges.aggregate(Sum('total_questions'))['total_questions__sum'] or 0
+    accuracy = (correct / total * 100) if total > 0 else 0
+    return render(request, 'progress.html', {'accuracy': accuracy})
+
+# ✅ GOOD: Separated concerns
+def progress_view(request):
+    # View only handles HTTP - business logic delegated to service
+    stats = DailyQuestService.get_weekly_stats(request.user)
+    return render(request, 'progress.html', {'stats': stats})
+
+# Service layer handles business logic
+class DailyQuestService:
+    @staticmethod
+    def get_weekly_stats(user):
+        week_ago = timezone.now() - timedelta(days=7)
+        challenges = UserDailyQuestAttempt.objects.filter(
+            user=user,
+            is_completed=True,
+            completed_at__gte=week_ago
+        )
+        stats = challenges.aggregate(
+            correct=Sum('correct_answers'),
+            total=Sum('total_questions')
+        )
+        accuracy = DailyQuestService._calculate_accuracy(stats['correct'], stats['total'])
+        return {'accuracy': accuracy}
+```
+
+#### 2. Open/Closed Principle
+Open for extension, closed for modification. Use composition and inheritance.
+
+```python
+# ✅ GOOD: Extensible design
+class QuestRewardCalculator:
+    """Base calculator - closed for modification"""
+    def calculate_reward(self, correct, total):
+        raise NotImplementedError
+
+class ProportionalRewardCalculator(QuestRewardCalculator):
+    """Extension - open for extension"""
+    def calculate_reward(self, correct, total):
+        return int((correct / total) * 50)
+
+class BonusRewardCalculator(QuestRewardCalculator):
+    """Another extension"""
+    def calculate_reward(self, correct, total):
+        base = int((correct / total) * 50)
+        return base * 2 if correct == total else base
+```
+
+#### 3. Function Extraction
+Extract complex logic into helper functions. Keep functions focused and short.
+
+```python
+# ❌ BAD: Large function doing too much
+def submit_quest(request):
+    quest = get_object_or_404(DailyQuest, date=date.today())
+    correct_answers = 0
+    total_questions = quest.questions.count()
+
+    # 20 lines of answer validation
+    for question in quest.questions.all():
+        answer = request.POST.get(f'question_{question.order}')
+        if answer is not None:
+            try:
+                answer_index = int(answer)
+                if answer_index == question.correct_index:
+                    correct_answers += 1
+            except (ValueError, TypeError):
+                pass
+
+    # XP calculation
+    xp = int((correct_answers / total_questions) * quest.xp_reward)
+
+    # Create attempt record
+    attempt = UserDailyQuestAttempt.objects.create(...)
+    request.user.profile.award_xp(xp)
+    messages.success(request, f'Earned {xp} XP!')
+    return redirect('daily_quest')
+
+# ✅ GOOD: Extracted into focused functions
+def submit_quest(request):
+    quest = get_object_or_404(DailyQuest, date=date.today())
+    score = DailyQuestService.calculate_quest_score(quest, request.POST)
+    DailyQuestService.record_quest_attempt(request.user, quest, score)
+    messages.success(request, f"Earned {score['xp_earned']} XP!")
+    return redirect('daily_quest')
+```
+
+#### 4. Avoid Repetition (DRY)
+Never copy-paste code. Extract common patterns into reusable functions.
+
+```python
+# ❌ BAD: Repeated calculation logic
+def get_weekly_stats(user):
+    challenges = UserDailyQuestAttempt.objects.filter(...)
+    stats = challenges.aggregate(correct=Sum('correct_answers'), total=Sum('total_questions'))
+    # Repeated accuracy calculation #1
+    if stats['total'] and stats['total'] > 0:
+        accuracy = (stats['correct'] / stats['total']) * 100
+    else:
+        accuracy = 0
+    return {'accuracy': accuracy}
+
+def get_lifetime_stats(user):
+    challenges = UserDailyQuestAttempt.objects.filter(...)
+    stats = challenges.aggregate(correct=Sum('correct_answers'), total=Sum('total_questions'))
+    # Repeated accuracy calculation #2 (DUPLICATE!)
+    if stats['total'] and stats['total'] > 0:
+        accuracy = (stats['correct'] / stats['total']) * 100
+    else:
+        accuracy = 0
+    return {'accuracy': accuracy}
+
+# ✅ GOOD: Extracted helper function
+@staticmethod
+def _calculate_accuracy(correct, total):
+    """Helper to calculate accuracy percentage (DRY principle)"""
+    return (correct / total * 100) if total and total > 0 else 0
+
+def get_weekly_stats(user):
+    challenges = UserDailyQuestAttempt.objects.filter(...)
+    stats = challenges.aggregate(correct=Sum('correct_answers'), total=Sum('total_questions'))
+    accuracy = DailyQuestService._calculate_accuracy(stats['correct'], stats['total'])
+    return {'accuracy': accuracy}
+
+def get_lifetime_stats(user):
+    challenges = UserDailyQuestAttempt.objects.filter(...)
+    stats = challenges.aggregate(correct=Sum('correct_answers'), total=Sum('total_questions'))
+    accuracy = DailyQuestService._calculate_accuracy(stats['correct'], stats['total'])
+    return {'accuracy': accuracy}
+```
+
+#### SOFA Refactoring Checklist
+Before committing code, verify:
+
+- [ ] **Single Responsibility**: Does each function have ONE clear purpose?
+- [ ] **Layer Separation**: Is business logic separated from views/presentation?
+- [ ] **Function Length**: Are functions under 40 lines? (Exceptions allowed with justification)
+- [ ] **No Duplication**: Is there any copy-pasted code?
+- [ ] **Helper Functions**: Are complex calculations extracted?
+- [ ] **Magic Numbers**: Are literal numbers replaced with named constants?
+- [ ] **Extensibility**: Can this be extended without modification?
+
+#### When to Apply SOFA
+- ✅ When writing new features
+- ✅ After completing implementation (refactor before committing)
+- ✅ During code reviews
+- ✅ When fixing bugs in existing code
+- ✅ When user explicitly requests it
+
 ---
 
 ## Python Style (PEP 8)

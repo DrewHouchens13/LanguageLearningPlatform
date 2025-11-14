@@ -11,8 +11,10 @@ Registers all models with customized admin interfaces including:
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
+from django.contrib.auth import password_validation
 from django.contrib import messages
 from django.utils.html import format_html
+from django.core.exceptions import ValidationError
 from .models import (
     UserProgress,
     LessonCompletion,
@@ -68,6 +70,10 @@ def reset_password_to_default(modeladmin, request, queryset):
             # Using secrets.choice() for each character ensures cryptographic randomness
             alphabet = string.ascii_letters + string.digits + '!@#$%^&*'
             new_password = ''.join(secrets.choice(alphabet) for _ in range(16))
+
+            # Validate password with Django validators before setting
+            password_validation.validate_password(new_password, user)
+
             user.set_password(new_password)
             user.save()
             reset_info.append(f"{user.username}: {new_password}")

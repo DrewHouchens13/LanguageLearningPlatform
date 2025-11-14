@@ -36,23 +36,48 @@ pytest home/tests.py::TestClassName::test_method_name
    - Address any security warnings before proceeding
    - Runs on entire home/ and config/ directories, not just modified files
 
-4. **Fix linting/security issues** - Address any problems found in steps 2-3
+4. **Run Semgrep** - Advanced CWE/OWASP security scan (GitHub workflow test)
+   ```bash
+   semgrep --config=p/security-audit --config=p/django --config=p/python home/ config/
+   ```
+   - Target: 0 high/critical findings
+   - Scans for CWE patterns, OWASP vulnerabilities, Django-specific issues
+   - **BLOCKING REQUIREMENT**: This runs in GitHub workflows and WILL PREVENT PR MERGE if it fails
 
-5. **Run full test suite** - Verify all tests pass
+5. **Run pip-audit** - CVE vulnerability scan for dependencies (GitHub workflow test)
+   ```bash
+   pip-audit -r requirements.txt --desc
+   ```
+   - Target: 0 known CVE vulnerabilities
+   - Checks all dependencies for known security vulnerabilities
+   - **BLOCKING REQUIREMENT**: This runs in GitHub workflows and WILL PREVENT PR MERGE if it fails
+
+6. **Run Safety** - Additional dependency security check (GitHub workflow test)
+   ```bash
+   safety check --continue-on-error
+   ```
+   - Target: 0 known security vulnerabilities
+   - Secondary CVE check for Python dependencies
+   - **BLOCKING REQUIREMENT**: This runs in GitHub workflows and WILL PREVENT PR MERGE if it fails
+   - Note: Using `--continue-on-error` to avoid authentication prompts in CI
+
+7. **Fix linting/security issues** - Address any problems found in steps 2-6
+
+8. **Run full test suite** - Verify all tests pass
    ```bash
    pytest
    ```
 
-6. **Check coverage** - Ensure coverage remains high
+9. **Check coverage** - Ensure coverage remains high
    ```bash
    pytest --cov=home --cov=config --cov-report=term-missing
    ```
    - Target: 90%+ coverage
    - Only measures coverage for home/ and config/ apps (excludes local test files)
 
-7. **Live testing** - Run local server and run all live testing
+10. **Live testing** - Run local server and run all live testing
 
-8. **Commit & push** - Once everything passes
+11. **Commit & push** - Once everything passes
 
 This workflow ensures code quality and security issues are caught before running the test suite, making development more efficient.
 

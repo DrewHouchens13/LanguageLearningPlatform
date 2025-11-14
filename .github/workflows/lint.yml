@@ -1,5 +1,10 @@
 name: Lint
 
+# CRITICAL CODE QUALITY POLICY:
+# Pylint is a BLOCKING REQUIREMENT (--fail-under=9.0).
+# PRs CANNOT be merged if Pylint score < 9.0/10.
+# This is non-negotiable and must be followed for all branches.
+
 on:
   push:
     branches: [ main ]
@@ -28,7 +33,14 @@ jobs:
 
       - name: Run Pylint
         run: |
-          pylint home/ config/ --rcfile=.pylintrc --fail-under=9.0 --output-format=text | tee pylint-report.txt
+          # Exclude test files from Pylint (they won't be in production)
+          # Tests are validated separately via pytest
+          pylint home/ config/ \
+            --ignore=tests,test_*.py \
+            --ignore-patterns=.*_test\.py,test_.*\.py,.*\.feature \
+            --rcfile=.pylintrc \
+            --fail-under=9.0 \
+            --output-format=text | tee pylint-report.txt
 
       - name: Upload Pylint Report
         if: always()

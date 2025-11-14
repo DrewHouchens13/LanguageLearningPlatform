@@ -1,5 +1,5 @@
 asgiref==3.9.2
-Django==5.2.8  # Updated from 5.2.7 to fix CVEs: GHSA-qw25-v68c-qjf3, GHSA-frmv-pr5f-9mcr
+Django==5.1.14  # Updated from 5.1.13 to fix CVEs: GHSA-qw25-v68c-qjf3, GHSA-frmv-pr5f-9mcr
 sqlparse==0.5.3
 
 # Production dependencies
@@ -24,7 +24,7 @@ isort==6.1.0               # Import sorting (dependency of pylint)
 
 # Security Scanning Tools (Sprint 3)
 bandit==1.7.10             # Security linter for Python
-safety==3.2.10             # Dependency vulnerability scanner
+safety==3.6.2             # Dependency vulnerability scanner
 pip-audit==2.8.0           # Python package security auditing
 semgrep==1.104.0           # Advanced static analysis (optional)
 

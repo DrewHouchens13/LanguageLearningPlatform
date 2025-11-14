@@ -438,8 +438,7 @@ class UserProgress(models.Model):
         elif self.last_activity_date == today - timedelta(days=1):
             # Studied yesterday, increment streak
             self.current_streak += 1
-            if self.current_streak > self.longest_streak:
-                self.longest_streak = self.current_streak
+            self.longest_streak = max(self.longest_streak, self.current_streak)
             self.last_activity_date = today
         else:
             # Missed a day, reset streak
@@ -854,17 +853,10 @@ class DailyQuest(models.Model):
 
 class DailyQuestQuestion(models.Model):
     """
-    LEGACY MODEL - No longer used in current implementation.
-    
-    Daily quests now pull questions directly from lessons rather than
-    storing pre-generated questions. This model is kept for:
-    - Database migration compatibility
-    - Historical test data
-    
-    Do not use this model for new features.
-    
-    Original purpose: A single question in a daily quest.
-    Format depends on quest_type (flashcard vs quiz).
+    A single question in a daily quest.
+
+    Daily quests contain 5 random questions pulled from lessons.
+    Questions are pre-generated and stored when the quest is created.
     """
     # Relationship
     daily_quest = models.ForeignKey(
