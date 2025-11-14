@@ -2,10 +2,16 @@
 Service for generating and managing daily quests.
 """
 import secrets
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum
 from django.utils import timezone
 from datetime import timedelta
-from home.models import Lesson, DailyQuest, DailyQuestQuestion, UserDailyQuestAttempt, LessonProgress
+from home.models import (
+    DailyQuest,
+    DailyQuestQuestion,
+    LessonCompletion,
+    LessonQuizQuestion,
+    UserDailyQuestAttempt,
+)
 
 # Use secrets.SystemRandom() for cryptographically secure random selection
 _random = secrets.SystemRandom()
@@ -84,24 +90,21 @@ class DailyQuestService:
             user: User instance
 
         Returns:
-            QuerySet of Question objects
+            QuerySet of LessonQuizQuestion objects
         """
-        from home.models import Question
-
         # Check if user has completed any lessons
-        completed_lesson_ids = LessonProgress.objects.filter(
-            user=user,
-            is_completed=True
+        completed_lesson_ids = LessonCompletion.objects.filter(
+            user=user
         ).distinct().values_list('lesson_id', flat=True)
 
         if completed_lesson_ids:
             # User has completed lessons - pull from those only
-            question_pool = Question.objects.filter(
+            question_pool = LessonQuizQuestion.objects.filter(
                 lesson_id__in=completed_lesson_ids
             )
         else:
             # User hasn't completed any lessons - pull from all published lessons
-            question_pool = Question.objects.filter(
+            question_pool = LessonQuizQuestion.objects.filter(
                 lesson__is_published=True
             )
 

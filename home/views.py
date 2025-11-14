@@ -38,6 +38,8 @@ from django.views.decorators.http import require_http_methods, require_POST
 
 # Local application imports
 from .models import (
+    DailyQuest,
+    DailyQuestQuestion,
     Lesson,
     LessonAttempt,
     LessonCompletion,
@@ -1904,8 +1906,6 @@ def daily_quest_submit(request):
     Handle daily quest submission and calculate score.
     """
     from datetime import date
-    from django.contrib import messages
-    from django.utils import timezone
     from home.services.daily_quest_service import DailyQuestService
 
     if request.method != 'POST':
@@ -1942,7 +1942,7 @@ def daily_quest_submit(request):
     )
 
     # Create or update attempt
-    attempt, created = UserDailyQuestAttempt.objects.update_or_create(
+    _attempt, _created = UserDailyQuestAttempt.objects.update_or_create(
         user=request.user,
         daily_quest=quest,
         defaults={
