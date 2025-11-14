@@ -28,7 +28,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email as django_validate_email
 from django.db import DatabaseError, IntegrityError
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -1786,6 +1786,13 @@ def lessons_by_language(request, language):
         )
     This view will automatically include it - no code changes needed!
     """
+    # Validate language parameter to prevent SQL injection and invalid input
+    # Language names should only contain letters, spaces, and hyphens
+    import re
+    if not re.match(r'^[a-zA-Z\s\-]+$', language):
+        # Invalid characters detected (e.g., SQL injection attempt)
+        raise Http404("Invalid language parameter")
+
     # Capitalize first letter to match database format
     language = language.capitalize()
 
