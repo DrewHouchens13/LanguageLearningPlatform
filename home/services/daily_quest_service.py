@@ -53,11 +53,15 @@ class DailyQuestService:
         # Select 5 random questions
         selected_questions = _random.sample(list(question_pool), 5)
 
+        # Pick a lesson to represent this quest (use first question's lesson)
+        representative_lesson = selected_questions[0].lesson
+
         # Create the quest
         quest = DailyQuest.objects.create(
             date=quest_date,
             title="Daily Challenge",
             description="Answer 5 questions to earn XP!",
+            based_on_lesson=representative_lesson,
             quest_type='quiz',
             xp_reward=50
         )
