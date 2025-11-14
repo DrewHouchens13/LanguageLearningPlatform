@@ -393,46 +393,139 @@ def landing(request):
     return render(request, "index.html", context)
 
 
+def _validate_login_input(request, username_or_email, password):
+    """Validate login input (SOFA extracted)."""
+    # Check for empty fields
+    if not username_or_email or not password:
+        messages.error(request, 'Please provide both username/email and password.')
+        return False
+
+    # Check length to prevent excessively long inputs
+    if len(username_or_email) > 254:  # Max email length per RFC 5321
+        logger.warning(
+            'Login attempt with excessively long username/email from IP: %s',
+            get_client_ip(request)
+        )
+        messages.error(request, 'Invalid username/email or password.')
+        return False
+
+    # Allow only safe characters (alphanumeric, @, ., _, -, +)
+    import re
+    if not re.match(r'^[a-zA-Z0-9@._+\-]+$', username_or_email):
+        logger.warning(
+            'Login attempt with invalid characters in username/email from IP: %s',
+            get_client_ip(request)
+        )
+        messages.error(request, 'Invalid username/email or password.')
+        return False
+
+    return True
+
+
+def _find_user_by_username_or_email(request, username_or_email):
+    """Find user by username or email (SOFA extracted)."""
+    try:
+        # First, try to find by username
+        return User.objects.get(username=username_or_email)
+    except User.DoesNotExist:
+        # If not found by username, try email
+        try:
+            return User.objects.get(email=username_or_email)
+        except User.DoesNotExist:
+            # Log failed login attempt (username/email not found)
+            logger.warning(
+                'Failed login attempt - user not found: %s from IP: %s',
+                username_or_email, get_client_ip(request)
+            )
+            messages.error(request, 'Invalid username/email or password.')
+            return None
+
+
+def _link_onboarding_attempt_to_user(request, user):
+    """Link guest onboarding attempt to newly authenticated user (SOFA extracted)."""
+    onboarding_attempt_id = request.session.get('onboarding_attempt_id')
+    if not onboarding_attempt_id:
+        return None
+
+    try:
+        # Get the attempt
+        attempt = OnboardingAttempt.objects.get(id=onboarding_attempt_id)
+
+        # Only process if this attempt is NOT yet linked to a user
+        if not attempt.user:
+            # Link attempt to user
+            attempt.user = user
+            attempt.save()
+
+            # Create/update user profile with onboarding data
+            user_profile, _ = UserProfile.objects.get_or_create(user=user)
+
+            # Only update if user hasn't completed onboarding or this is newer
+            if (not user_profile.has_completed_onboarding or
+                not user_profile.onboarding_completed_at or
+                attempt.completed_at > user_profile.onboarding_completed_at):
+
+                user_profile.proficiency_level = attempt.calculated_level
+                user_profile.has_completed_onboarding = True
+                user_profile.onboarding_completed_at = attempt.completed_at or timezone.now()
+                user_profile.target_language = attempt.language
+                user_profile.save()
+
+                # Populate stats from guest onboarding
+                QuizResult.objects.create(
+                    user=user,
+                    quiz_id=f'onboarding_{attempt.language}',
+                    quiz_title=f'{attempt.language} Placement Assessment',
+                    score=attempt.total_score,
+                    total_questions=attempt.total_possible
+                )
+
+                # Calculate total time from all answers
+                total_time_minutes = sum(
+                    answer.time_taken_seconds for answer in attempt.answers.all()
+                ) // 60
+
+                # Update UserProgress
+                user_progress, _ = UserProgress.objects.get_or_create(user=user)
+                user_progress.total_minutes_studied += total_time_minutes
+                user_progress.total_quizzes_taken += 1
+                user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
+                user_progress.save()
+
+            logger.info('Linked onboarding attempt %s to user %s', attempt.id, user.username)
+
+            # Clear session AFTER getting the ID
+            request.session.pop('onboarding_attempt_id', None)
+
+            # Return attempt to trigger redirect to results
+            return attempt
+
+        # Attempt already linked - clear stale session data
+        request.session.pop('onboarding_attempt_id', None)
+        logger.info('Cleared stale onboarding session for user %s', user.username)
+        return None
+
+    except OnboardingAttempt.DoesNotExist:
+        # Clear invalid session data
+        request.session.pop('onboarding_attempt_id', None)
+        logger.warning('Onboarding attempt %s not found, cleared session', onboarding_attempt_id)
+        return None
+    except (ValueError, TypeError, AttributeError) as e:
+        # Handle data/attribute errors gracefully
+        logger.error('Error linking onboarding attempt to user: %s', str(e))
+        return None
+
+
 def login_view(request):
-    """Handle user login with username or email-based authentication.
-
-    GET: Display login form
-    POST: Authenticate user by username/email and password, redirect securely
-
-    Args:
-        request: HttpRequest object from Django
-
-    Returns:
-        HttpResponse: Rendered login.html template or redirect to landing page
-
-    Security features:
-        - Rate limiting: 5 attempts per 5 minutes per IP to prevent brute force attacks
-        - Input validation: Empty field checks, length limits (max 254 chars)
-        - Character whitelist: Only alphanumeric and safe email characters (@._+-)
-        - Validates redirect URLs to prevent open redirect attacks
-        - Uses Django's authenticate() for secure password verification
-        - Generic error messages to prevent user enumeration
-        - Logs all login attempts with IP addresses for security monitoring
-        - Django ORM parameterized queries prevent SQL injection
-
-    Authentication flow:
-        - Accepts either username or email for login
-        - Validates and sanitizes input before processing
-        - First attempts to find user by username
-        - If not found, attempts to find user by email
-        - Authenticates with Django's built-in authentication system
-    """
+    """Handle user login (SOFA refactored)."""
     # If user is already logged in, redirect to home
     if request.user.is_authenticated:
         return HttpResponseRedirect('..')
 
     if request.method == 'POST':
-        # Rate limiting: Prevent brute force attacks (5 attempts per 5 minutes per IP)
+        # Rate limiting: Prevent brute force attacks
         is_allowed, _attempts_remaining, retry_after = check_rate_limit(
-            request,
-            action='login',
-            limit=5,
-            period=300
+            request, action='login', limit=5, period=300
         )
 
         if not is_allowed:
@@ -449,128 +542,36 @@ def login_view(request):
         username_or_email = request.POST.get('username_or_email', '').strip()
         password = request.POST.get('password', '')
 
-        # Input validation: Check for empty fields
-        if not username_or_email or not password:
-            messages.error(request, 'Please provide both username/email and password.')
+        # Validate input (SOFA - extracted function)
+        if not _validate_login_input(request, username_or_email, password):
             return render(request, 'login.html')
 
-        # Input validation: Check length to prevent excessively long inputs
-        if len(username_or_email) > 254:  # Max email length per RFC 5321
-            logger.warning(
-                'Login attempt with excessively long username/email from IP: %s',
-                get_client_ip(request)
-            )
-            messages.error(request, 'Invalid username/email or password.')
+        # Find user (SOFA - extracted function)
+        user_obj = _find_user_by_username_or_email(request, username_or_email)
+        if not user_obj:
             return render(request, 'login.html')
 
-        # Input validation: Allow only safe characters (alphanumeric, @, ., _, -, +)
-        # This prevents potential injection attacks while allowing valid usernames and emails
-        import re
-        if not re.match(r'^[a-zA-Z0-9@._+\-]+$', username_or_email):
-            logger.warning(
-                'Login attempt with invalid characters in username/email from IP: %s',
-                get_client_ip(request)
-            )
-            messages.error(request, 'Invalid username/email or password.')
-            return render(request, 'login.html')
-
-        # Find user by username or email
-        user_obj = None
-        try:
-            # First, try to find by username
-            user_obj = User.objects.get(username=username_or_email)
-        except User.DoesNotExist:
-            # If not found by username, try email
-            try:
-                user_obj = User.objects.get(email=username_or_email)
-            except User.DoesNotExist:
-                # Log failed login attempt (username/email not found)
-                logger.warning(
-                    'Failed login attempt - user not found: %s from IP: %s',
-                    username_or_email, get_client_ip(request)
-                )
-                messages.error(request, 'Invalid username/email or password.')
-                return render(request, 'login.html')
-
-        # Authenticate user with their username
-        username = user_obj.username
-        user = authenticate(request, username=username, password=password)
+        # Authenticate user
+        user = authenticate(request, username=user_obj.username, password=password)
 
         if user is not None:
             login(request, user)
-            # Log successful login
-            logger.info('Successful login: %s from IP: %s', username, get_client_ip(request))
-            
-            # Check if user completed onboarding as a guest (only redirect if it's unlinked)
-            onboarding_attempt_id = request.session.get('onboarding_attempt_id')
-            if onboarding_attempt_id:
-                try:
-                    # Get the attempt
-                    attempt = OnboardingAttempt.objects.get(id=onboarding_attempt_id)
-                    
-                    # Only process if this attempt is NOT yet linked to a user
-                    # (This prevents redirect on subsequent logins)
-                    if not attempt.user:
-                        # Link attempt to user
-                        attempt.user = user
-                        attempt.save()
-                        
-                        # Create/update user profile with onboarding data
-                        user_profile, _ = UserProfile.objects.get_or_create(user=user)
-                        
-                        # Only update if user hasn't completed onboarding or this is newer
-                        if not user_profile.has_completed_onboarding or not user_profile.onboarding_completed_at or attempt.completed_at > user_profile.onboarding_completed_at:
-                            user_profile.proficiency_level = attempt.calculated_level
-                            user_profile.has_completed_onboarding = True
-                            user_profile.onboarding_completed_at = attempt.completed_at or timezone.now()
-                            user_profile.target_language = attempt.language
-                            user_profile.save()
-                            
-                            # Populate stats from guest onboarding
-                            QuizResult.objects.create(
-                                user=user,
-                                quiz_id=f'onboarding_{attempt.language}',
-                                quiz_title=f'{attempt.language} Placement Assessment',
-                                score=attempt.total_score,
-                                total_questions=attempt.total_possible
-                            )
-                            
-                            # Calculate total time from all answers
-                            total_time_minutes = sum(
-                                answer.time_taken_seconds for answer in attempt.answers.all()
-                            ) // 60  # Convert seconds to minutes
-                            
-                            # Update UserProgress
-                            user_progress, _ = UserProgress.objects.get_or_create(user=user)
-                            user_progress.total_minutes_studied += total_time_minutes
-                            user_progress.total_quizzes_taken += 1
-                            user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
-                            user_progress.save()
-                        
-                        logger.info('Linked onboarding attempt %s to user %s', attempt.id, user.username)
-                        
-                        # Clear session AFTER getting the ID
-                        request.session.pop('onboarding_attempt_id', None)
-                        
-                        # Redirect to results page with attempt ID in URL
-                        messages.success(request, f'Welcome back, {user.first_name or user.username}! Your assessment results have been saved.')
-                        results_url = f"{reverse('onboarding_results')}?attempt={attempt.id}"
-                        return redirect(results_url)
+            logger.info('Successful login: %s from IP: %s', user.username, get_client_ip(request))
 
-                    # Attempt already linked - clear stale session data and continue normal flow
-                    request.session.pop('onboarding_attempt_id', None)
-                    logger.info('Cleared stale onboarding session for user %s', user.username)
-                except OnboardingAttempt.DoesNotExist:
-                    # Clear invalid session data
-                    request.session.pop('onboarding_attempt_id', None)
-                    logger.warning('Onboarding attempt %s not found, cleared session', onboarding_attempt_id)
-                except (ValueError, TypeError, AttributeError) as e:
-                    # Handle data/attribute errors gracefully
-                    logger.error('Error linking onboarding attempt to user: %s', str(e))
-            
+            # Link onboarding attempt if exists (SOFA - extracted function)
+            linked_attempt = _link_onboarding_attempt_to_user(request, user)
+            if linked_attempt:
+                messages.success(
+                    request,
+                    f'Welcome back, {user.first_name or user.username}! '
+                    'Your assessment results have been saved.'
+                )
+                results_url = f"{reverse('onboarding_results')}?attempt={linked_attempt.id}"
+                return redirect(results_url)
+
             messages.success(request, f'Welcome back, {user.first_name or user.username}!')
 
-            # Redirect to next page if specified and safe, otherwise go to dashboard (home for logged-in users)
+            # Redirect to next page if specified and safe
             next_page = request.GET.get('next', '')
             if next_page and url_has_allowed_host_and_scheme(
                 url=next_page,
@@ -579,13 +580,12 @@ def login_view(request):
             ):
                 return HttpResponseRedirect(next_page)
 
-            # Redirect to dashboard (home for authenticated users)
             return redirect('dashboard')
 
         # Log failed login attempt (incorrect password)
         logger.warning(
             'Failed login attempt - incorrect password for: %s from IP: %s',
-            username, get_client_ip(request)
+            user_obj.username, get_client_ip(request)
         )
         messages.error(request, 'Invalid username/email or password.')
 
@@ -848,8 +848,9 @@ def dashboard(request):
         any_quest_available = not (time_complete and lesson_complete)
         logger.info('Daily quests generated successfully for dashboard: time=%s, lesson=%s', 
                    quests['time_quest'].id, quests['lesson_quest'].id)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         # If quest generation fails (e.g., no lessons available), log and continue
+        # Broad catch is intentional - dashboard should load even if quests fail
         logger.error('Failed to generate daily quests for dashboard: %s', str(e), exc_info=True)
     
     # Get XP and streak data
@@ -954,157 +955,174 @@ def progress_view(request):
     return render(request, 'progress.html', context)
 
 
+def _handle_update_email(request):
+    """Handle email update action (SOFA extracted)."""
+    new_email = request.POST.get('new_email', '').strip()
+    current_password = request.POST.get('current_password')
+
+    # Verify current password
+    if not request.user.check_password(current_password):
+        messages.error(request, 'Current password is incorrect.')
+        return False
+
+    # Validate email format
+    try:
+        django_validate_email(new_email)
+    except ValidationError:
+        messages.error(request, 'Please enter a valid email address.')
+        return False
+
+    # Check if email already exists
+    if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
+        messages.error(request, 'This email is already in use by another account.')
+        return False
+
+    # Update email
+    request.user.email = new_email
+    request.user.save()
+    messages.success(request, 'Email address updated successfully!')
+    logger.info('Email updated for user: %s from IP: %s',
+               request.user.username, get_client_ip(request))
+    return True
+
+
+def _handle_update_name(request):
+    """Handle name update action (SOFA extracted)."""
+    first_name = request.POST.get('first_name', '').strip()
+    last_name = request.POST.get('last_name', '').strip()
+
+    # Validate first name
+    if not first_name:
+        messages.error(request, 'First name cannot be empty.')
+        return False
+
+    # Update name
+    request.user.first_name = first_name
+    request.user.last_name = last_name
+    request.user.save()
+    messages.success(request, 'Name updated successfully!')
+    logger.info('Name updated for user: %s from IP: %s',
+               request.user.username, get_client_ip(request))
+    return True
+
+
+def _handle_update_username(request):
+    """Handle username update action (SOFA extracted)."""
+    new_username = request.POST.get('new_username', '').strip()
+
+    # Validate username
+    if not new_username:
+        messages.error(request, 'Username cannot be empty.')
+        return False
+
+    # Check if username already exists
+    if User.objects.filter(username=new_username).exclude(id=request.user.id).exists():
+        messages.error(request, 'This username is already taken.')
+        return False
+
+    # Update username
+    old_username = request.user.username
+    request.user.username = new_username
+    request.user.save()
+    messages.success(request, f'Username updated from "{old_username}" to "{new_username}"!')
+    logger.info('Username updated from %s to %s from IP: %s',
+               old_username, new_username, get_client_ip(request))
+    return True
+
+
+def _handle_update_password(request):
+    """Handle password update action (SOFA extracted)."""
+    current_password = request.POST.get('current_password_pwd')
+    new_password = request.POST.get('new_password')
+    confirm_password = request.POST.get('confirm_password')
+
+    # Verify current password
+    if not request.user.check_password(current_password):
+        messages.error(request, 'Current password is incorrect.')
+        return False
+
+    # Validate passwords match
+    if new_password != confirm_password:
+        messages.error(request, 'New passwords do not match.')
+        return False
+
+    # Validate password strength
+    try:
+        validate_password(new_password, user=request.user)
+    except ValidationError as e:
+        for error in e.messages:
+            messages.error(request, error)
+        return False
+
+    # Update password
+    request.user.set_password(new_password)
+    request.user.save()
+
+    # Update session auth hash to keep user logged in
+    from django.contrib.auth import update_session_auth_hash
+    update_session_auth_hash(request, request.user)
+
+    messages.success(request, 'Password updated successfully!')
+    logger.info('Password updated for user: %s from IP: %s',
+               request.user.username, get_client_ip(request))
+    return True
+
+
+def _handle_update_avatar(request):
+    """Handle avatar update action (SOFA extracted)."""
+    from .forms import AvatarUploadForm
+
+    try:
+        # Get or create user profile
+        try:
+            profile = request.user.profile
+        except UserProfile.DoesNotExist:
+            profile = UserProfile.objects.create(user=request.user)
+
+        form = AvatarUploadForm(request.POST, request.FILES, instance=profile)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Avatar updated successfully!')
+            logger.info('Avatar updated for user: %s from IP: %s',
+                       request.user.username, get_client_ip(request))
+            return True
+
+        for error_list in form.errors.values():
+            for error in error_list:
+                messages.error(request, error)
+        return False
+    except (IOError, OSError, ValidationError, ValueError) as e:
+        logger.error('Avatar upload failed for user %s: %s',
+                   request.user.username, str(e), exc_info=True)
+        messages.error(request, 'Avatar upload failed. Please try again.')
+        return False
+
+
 @login_required
 def account_view(request):
     """
-    User account management page.
+    User account management page (SOFA refactored).
 
-    Allows authenticated users to update:
-    - Email address
-    - Username
-    - Password
-
-    GET: Display account management form with current user information
-    POST: Process account updates with validation
-
-    Security features:
-    - Requires authentication (@login_required)
-    - Password validation for password changes
-    - Email format validation
-    - Username uniqueness validation
-    - Current password required for email/password changes
+    Allows authenticated users to update account details.
+    GET: Display account management form
+    POST: Process account updates via action handlers
     """
     if request.method == 'POST':
         action = request.POST.get('action')
 
-        if action == 'update_email':
-            new_email = request.POST.get('new_email', '').strip()
-            current_password = request.POST.get('current_password')
+        # Dispatch to action handlers (SOFA - Single Responsibility)
+        action_handlers = {
+            'update_email': _handle_update_email,
+            'update_name': _handle_update_name,
+            'update_username': _handle_update_username,
+            'update_password': _handle_update_password,
+            'update_avatar': _handle_update_avatar,
+        }
 
-            # Verify current password
-            if not request.user.check_password(current_password):
-                messages.error(request, 'Current password is incorrect.')
-                return render(request, 'account.html')
-
-            # Validate email format
-            try:
-                django_validate_email(new_email)
-            except ValidationError:
-                messages.error(request, 'Please enter a valid email address.')
-                return render(request, 'account.html')
-
-            # Check if email already exists
-            if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
-                messages.error(request, 'This email is already in use by another account.')
-                return render(request, 'account.html')
-
-            # Update email
-            request.user.email = new_email
-            request.user.save()
-            messages.success(request, 'Email address updated successfully!')
-            logger.info('Email updated for user: %s from IP: %s',
-                       request.user.username, get_client_ip(request))
-
-        elif action == 'update_name':
-            first_name = request.POST.get('first_name', '').strip()
-            last_name = request.POST.get('last_name', '').strip()
-
-            # Validate first name
-            if not first_name:
-                messages.error(request, 'First name cannot be empty.')
-                return render(request, 'account.html')
-
-            # Update name
-            request.user.first_name = first_name
-            request.user.last_name = last_name
-            request.user.save()
-            messages.success(request, 'Name updated successfully!')
-            logger.info('Name updated for user: %s from IP: %s',
-                       request.user.username, get_client_ip(request))
-
-        elif action == 'update_username':
-            new_username = request.POST.get('new_username', '').strip()
-
-            # Validate username
-            if not new_username:
-                messages.error(request, 'Username cannot be empty.')
-                return render(request, 'account.html')
-
-            # Check if username already exists
-            if User.objects.filter(username=new_username).exclude(id=request.user.id).exists():
-                messages.error(request, 'This username is already taken.')
-                return render(request, 'account.html')
-
-            # Update username
-            old_username = request.user.username
-            request.user.username = new_username
-            request.user.save()
-            messages.success(request, f'Username updated from "{old_username}" to "{new_username}"!')
-            logger.info('Username updated from %s to %s from IP: %s',
-                       old_username, new_username, get_client_ip(request))
-
-        elif action == 'update_password':
-            current_password = request.POST.get('current_password_pwd')
-            new_password = request.POST.get('new_password')
-            confirm_password = request.POST.get('confirm_password')
-
-            # Verify current password
-            if not request.user.check_password(current_password):
-                messages.error(request, 'Current password is incorrect.')
-                return render(request, 'account.html')
-
-            # Validate passwords match
-            if new_password != confirm_password:
-                messages.error(request, 'New passwords do not match.')
-                return render(request, 'account.html')
-
-            # Validate password strength
-            try:
-                validate_password(new_password, user=request.user)
-            except ValidationError as e:
-                for error in e.messages:
-                    messages.error(request, error)
-                return render(request, 'account.html')
-
-            # Update password
-            request.user.set_password(new_password)
-            request.user.save()
-
-            # Update session auth hash to keep user logged in
-            # This prevents invalidating the current session after password change
-            from django.contrib.auth import update_session_auth_hash
-            update_session_auth_hash(request, request.user)
-
-            messages.success(request, 'Password updated successfully!')
-            logger.info('Password updated for user: %s from IP: %s',
-                       request.user.username, get_client_ip(request))
-
-        elif action == 'update_avatar':
-            from .forms import AvatarUploadForm
-
-            try:
-                # Get or create user profile
-                try:
-                    profile = request.user.profile
-                except UserProfile.DoesNotExist:
-                    profile = UserProfile.objects.create(user=request.user)
-
-                form = AvatarUploadForm(request.POST, request.FILES, instance=profile)
-
-                if form.is_valid():
-                    form.save()
-                    messages.success(request, 'Avatar updated successfully!')
-                    logger.info('Avatar updated for user: %s from IP: %s',
-                               request.user.username, get_client_ip(request))
-                else:
-                    for error_list in form.errors.values():
-                        for error in error_list:
-                            messages.error(request, error)
-            except (IOError, OSError, ValidationError, ValueError) as e:
-                # Log the full exception for debugging
-                logger.error('Avatar upload failed for user %s: %s',
-                           request.user.username, str(e), exc_info=True)
-                messages.error(request, 'Avatar upload failed. Please try again.')
+        handler = action_handlers.get(action)
+        if handler:
+            handler(request)
 
     return render(request, 'account.html')
 
@@ -1707,6 +1725,10 @@ def submit_lesson_quiz(request, lesson_id):
         total=total
     )
 
+    # Initialize variables for later use
+    xp_result = None
+    quest_info = None
+
     # Track stats for authenticated users
     if request.user.is_authenticated:
         # Create QuizResult for stats tracking
@@ -1840,7 +1862,7 @@ def daily_quest_view(request):
     time_progress = 0
     if time_attempt and not time_attempt.is_completed:
         # Get today's completed lessons for this user
-        from datetime import datetime, timedelta
+        from datetime import datetime
         today_start = datetime.combine(today, datetime.min.time())
         today_lessons = LessonCompletion.objects.filter(
             user=request.user,
@@ -1903,7 +1925,7 @@ def check_and_complete_daily_quests(user, lesson, duration_minutes=5):
         
         if not lesson_attempt and lesson.id == lesson_quest.based_on_lesson.id:
             # This lesson completes the quest!
-            attempt = UserDailyQuestAttempt.objects.create(
+            _ = UserDailyQuestAttempt.objects.create(
                 user=user,
                 daily_quest=lesson_quest,
                 correct_answers=1,
@@ -1940,7 +1962,7 @@ def check_and_complete_daily_quests(user, lesson, duration_minutes=5):
             
             # Check if reached 15 minutes
             if total_time >= 15:
-                attempt = UserDailyQuestAttempt.objects.create(
+                _ = UserDailyQuestAttempt.objects.create(
                     user=user,
                     daily_quest=time_quest,
                     correct_answers=1,
@@ -1959,7 +1981,8 @@ def check_and_complete_daily_quests(user, lesson, duration_minutes=5):
                     user.username, total_time
                 )
     
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        # Broad catch is intentional - quest completion errors shouldn't block lesson completion
         logger.error('Error checking daily quest completion: %s', str(e))
     
     return results if results['total_xp_earned'] > 0 else None

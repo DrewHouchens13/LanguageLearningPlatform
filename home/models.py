@@ -438,8 +438,7 @@ class UserProgress(models.Model):
         elif self.last_activity_date == today - timedelta(days=1):
             # Studied yesterday, increment streak
             self.current_streak += 1
-            if self.current_streak > self.longest_streak:
-                self.longest_streak = self.current_streak
+            self.longest_streak = max(self.longest_streak, self.current_streak)
             self.last_activity_date = today
         else:
             # Missed a day, reset streak
