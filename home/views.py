@@ -806,9 +806,77 @@ def dashboard(request):
             if 'onboarding_attempt_id' in request.session:
                 request.session.pop('onboarding_attempt_id', None)
     
+    # Get today's daily quests status (Sprint 3 - Issue #18)
+    from datetime import date, datetime
+    from home.services.daily_quest_service import DailyQuestService
+    
+    daily_quests = None
+    any_quest_available = False
+    try:
+        today = date.today()
+        quests = DailyQuestService.generate_quests_for_date(today)
+        
+        # Check completion status for both quests
+        time_complete = UserDailyQuestAttempt.objects.filter(
+            user=request.user,
+            daily_quest=quests['time_quest'],
+            is_completed=True
+        ).exists()
+        
+        lesson_complete = UserDailyQuestAttempt.objects.filter(
+            user=request.user,
+            daily_quest=quests['lesson_quest'],
+            is_completed=True
+        ).exists()
+        
+        # Calculate time progress
+        today_start = datetime.combine(today, datetime.min.time())
+        today_lessons = LessonCompletion.objects.filter(
+            user=request.user,
+            completed_at__gte=today_start
+        )
+        time_progress = sum(completion.duration_minutes for completion in today_lessons)
+        
+        daily_quests = {
+            'time_quest': quests['time_quest'],
+            'lesson_quest': quests['lesson_quest'],
+            'time_complete': time_complete,
+            'lesson_complete': lesson_complete,
+            'time_progress': time_progress,
+            'both_complete': time_complete and lesson_complete
+        }
+        any_quest_available = not (time_complete and lesson_complete)
+        logger.info('Daily quests generated successfully for dashboard: time=%s, lesson=%s', 
+                   quests['time_quest'].id, quests['lesson_quest'].id)
+    except Exception as e:
+        # If quest generation fails (e.g., no lessons available), log and continue
+        logger.error('Failed to generate daily quests for dashboard: %s', str(e), exc_info=True)
+    
+    # Get XP and streak data
+    user_progress = None
+    current_streak = 0
+    xp_to_next = 0
+    xp_progress_percent = 0
+    
+    if user_profile:
+        xp_to_next = user_profile.get_xp_to_next_level()
+        xp_progress_percent = user_profile.get_progress_to_next_level()
+    
+    try:
+        user_progress = UserProgress.objects.get(user=request.user)
+        current_streak = user_progress.current_streak
+    except UserProgress.DoesNotExist:
+        pass
+    
     context = {
         'has_completed_onboarding': has_completed_onboarding,
-        'user_profile': user_profile
+        'user_profile': user_profile,
+        'daily_quests': daily_quests,
+        'any_quest_available': any_quest_available,
+        'user_progress': user_progress,
+        'current_streak': current_streak,
+        'xp_to_next_level': xp_to_next,
+        'xp_progress_percent': xp_progress_percent,
     }
     return render(request, 'dashboard.html', context)
 
@@ -846,6 +914,14 @@ def progress_view(request):
         except UserProfile.DoesNotExist:
             pass
 
+        # Get XP and leveling data (Sprint 3 - Issue #17)
+        if user_profile:
+            xp_to_next = user_profile.get_xp_to_next_level()
+            progress_percent = user_profile.get_progress_to_next_level()
+        else:
+            xp_to_next = 0
+            progress_percent = 0
+
         # Prepare context for authenticated users
         context = {
             'weekly_minutes': weekly_stats['weekly_minutes'],
@@ -857,6 +933,9 @@ def progress_view(request):
             'overall_accuracy': user_progress.overall_quiz_accuracy,
             'user_profile': user_profile,
             'latest_onboarding_attempt': latest_attempt,
+            # XP and leveling data
+            'xp_to_next_level': xp_to_next,
+            'xp_progress_percent': progress_percent,
         }
     else:
         # Context for guest users (all None/empty)
@@ -1680,7 +1759,11 @@ def submit_lesson_quiz(request, lesson_id):
         user_progress.total_quizzes_taken += 1
         user_progress.total_lessons_completed += 1
         user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
+        user_progress.update_streak()  # Update streak when lesson completed
         user_progress.save()
+
+        # Check if this completes daily quests (Sprint 3 - Issue #18)
+        quest_info = check_and_complete_daily_quests(request.user, lesson)
 
         logger.info('Lesson quiz completed: %s - %s: %s/%s', request.user.username, lesson.title, score, total)
 
@@ -1703,6 +1786,10 @@ def submit_lesson_quiz(request, lesson_id):
                 'new_level': xp_result['new_level'],
                 'old_level': xp_result['old_level']
             }
+        
+        # Add quest info if quest was completed (Sprint 3 - Issue #18)
+        if request.user.is_authenticated and quest_info:
+            response_data['quest'] = quest_info
 
         return JsonResponse(response_data)
     return redirect('lesson_results', lesson_id=lesson.id, attempt_id=attempt.id)
@@ -1726,157 +1813,156 @@ def lesson_results(request, lesson_id, attempt_id):
 @login_required
 def daily_quest_view(request):
     """
-    Show today's daily quest.
-    If completed: show results
-    If not completed: show start button
+    Show today's daily quests (both time-based and lesson-based).
     """
     from datetime import date
     from home.services.daily_quest_service import DailyQuestService
 
-    # Generate or get today's quest
+    # Generate or get today's quests
     today = date.today()
-    quest = DailyQuestService.generate_quest_for_date(today)
+    quests = DailyQuestService.generate_quests_for_date(today)
+    
+    time_quest = quests['time_quest']
+    lesson_quest = quests['lesson_quest']
 
-    # Check if user has attempt for this quest
-    attempt = UserDailyQuestAttempt.objects.filter(
+    # Check if user has completed these quests
+    time_attempt = UserDailyQuestAttempt.objects.filter(
         user=request.user,
-        daily_quest=quest
+        daily_quest=time_quest
+    ).first()
+    
+    lesson_attempt = UserDailyQuestAttempt.objects.filter(
+        user=request.user,
+        daily_quest=lesson_quest
     ).first()
 
+    # Calculate time progress (in minutes)
+    time_progress = 0
+    if time_attempt and not time_attempt.is_completed:
+        # Get today's completed lessons for this user
+        from datetime import datetime, timedelta
+        today_start = datetime.combine(today, datetime.min.time())
+        today_lessons = LessonCompletion.objects.filter(
+            user=request.user,
+            completed_at__gte=today_start
+        )
+        time_progress = sum(completion.duration_minutes for completion in today_lessons)
+
     context = {
-        'quest': quest,
-        'attempt': attempt,
+        'time_quest': time_quest,
+        'lesson_quest': lesson_quest,
+        'time_attempt': time_attempt,
+        'lesson_attempt': lesson_attempt,
+        'time_progress': time_progress,
+        'lesson_to_complete': lesson_quest.based_on_lesson,
     }
 
     return render(request, 'home/daily_quest.html', context)
 
 
-@login_required
-@require_http_methods(["POST"])
-def start_daily_quest(request):
+def check_and_complete_daily_quests(user, lesson, duration_minutes=5):
     """
-    Create UserDailyQuestAttempt and return quest questions.
-    POST only (AJAX).
+    Helper function to check if completing a lesson completes today's daily quests.
+    Called after a lesson is completed.
+    
+    Checks both:
+    1. Lesson-based quest (specific lesson)
+    2. Time-based quest (cumulative study time)
+    
+    Args:
+        user: User instance
+        lesson: Lesson instance that was just completed
+        duration_minutes: Estimated duration of lesson completion (default 5)
+        
+    Returns:
+        dict: Quest completion info with keys for each quest type
     """
-    from datetime import date
-    from home.services.daily_quest_service import DailyQuestService
-
-    # Get today's quest
-    today = date.today()
-    quest = DailyQuestService.generate_quest_for_date(today)
-
-    # Check if attempt already exists
-    existing_attempt = UserDailyQuestAttempt.objects.filter(
-        user=request.user,
-        daily_quest=quest
-    ).first()
-
-    if existing_attempt:
-        return JsonResponse(
-            {'error': 'Quest already started'},
-            status=400
-        )
-
-    # Create attempt
-    attempt = UserDailyQuestAttempt.objects.create(
-        user=request.user,
-        daily_quest=quest
-    )
-
-    # Get questions
-    questions = []
-    for question in quest.questions.all():
-        q_data = {
-            'id': question.id,
-            'order': question.order,
-            'question_text': question.question_text,
-        }
-
-        # Add format-specific fields
-        if quest.quest_type == 'flashcard':
-            q_data['answer_text'] = question.answer_text
-        elif quest.quest_type == 'quiz':
-            q_data['options'] = question.options
-            q_data['correct_index'] = question.correct_index
-
-        questions.append(q_data)
-
-    return JsonResponse({
-        'attempt_id': attempt.id,
-        'questions': questions,
-        'quest_type': quest.quest_type,
-    })
-
-
-@login_required
-@require_http_methods(["POST"])
-def submit_daily_quest(request):
-    """
-    Validate answers, calculate score, award XP.
-    POST only (AJAX).
-    """
-    from datetime import date
-    from home.services.daily_quest_service import DailyQuestService
-
-    # Get today's quest
-    today = date.today()
-    quest = DailyQuestService.generate_quest_for_date(today)
-
-    # Get user's attempt
-    attempt = UserDailyQuestAttempt.objects.filter(
-        user=request.user,
-        daily_quest=quest
-    ).first()
-
-    if not attempt:
-        return JsonResponse({'error': 'No attempt found'}, status=400)
-
-    if attempt.is_completed:
-        return JsonResponse({'error': 'Quest already completed'}, status=400)
-
-    # Validate answers
-    correct_count = 0
-    total_questions = quest.questions.count()
-
-    for question in quest.questions.all():
-        user_answer = request.POST.get(str(question.id), '').strip()
-
-        if quest.quest_type == 'flashcard':
-            # For flashcards, check if answer matches (case-insensitive)
-            if user_answer.lower() == question.answer_text.lower():
-                correct_count += 1
-        elif quest.quest_type == 'quiz':
-            # For quiz, check if selected index matches correct index
-            try:
-                selected_index = int(user_answer)
-                if selected_index == question.correct_index:
-                    correct_count += 1
-            except (ValueError, TypeError):
-                pass
-
-    # Calculate XP
-    attempt.correct_answers = correct_count
-    attempt.total_questions = total_questions
-    xp_earned = attempt.calculate_xp()
-    attempt.xp_earned = xp_earned
-
-    # Mark as completed
+    from datetime import date, datetime
     from django.utils import timezone as tz
-    attempt.is_completed = True
-    attempt.completed_at = tz.now()
-    attempt.save()
-
-    # Award XP to user
-    request.user.profile.award_xp(xp_earned)
-
-    return JsonResponse({
-        'success': True,
-        'correct_answers': correct_count,
-        'total_questions': total_questions,
-        'xp_earned': xp_earned,
-        'score': attempt.score,
-        'score_percentage': attempt.score_percentage,
-    })
+    from home.services.daily_quest_service import DailyQuestService
+    
+    results = {
+        'lesson_quest_completed': False,
+        'time_quest_completed': False,
+        'total_xp_earned': 0
+    }
+    
+    try:
+        today = date.today()
+        quests = DailyQuestService.generate_quests_for_date(today)
+        
+        lesson_quest = quests['lesson_quest']
+        time_quest = quests['time_quest']
+        
+        # Check lesson-based quest
+        lesson_attempt = UserDailyQuestAttempt.objects.filter(
+            user=user,
+            daily_quest=lesson_quest,
+            is_completed=True
+        ).first()
+        
+        if not lesson_attempt and lesson.id == lesson_quest.based_on_lesson.id:
+            # This lesson completes the quest!
+            attempt = UserDailyQuestAttempt.objects.create(
+                user=user,
+                daily_quest=lesson_quest,
+                correct_answers=1,
+                total_questions=1,
+                xp_earned=lesson_quest.xp_reward,
+                is_completed=True,
+                completed_at=tz.now()
+            )
+            
+            user.profile.award_xp(lesson_quest.xp_reward)
+            results['lesson_quest_completed'] = True
+            results['total_xp_earned'] += lesson_quest.xp_reward
+            
+            logger.info(
+                'Lesson quest completed: %s finished %s',
+                user.username, lesson.title
+            )
+        
+        # Check time-based quest
+        time_attempt = UserDailyQuestAttempt.objects.filter(
+            user=user,
+            daily_quest=time_quest,
+            is_completed=True
+        ).first()
+        
+        if not time_attempt:
+            # Calculate total study time for today
+            today_start = datetime.combine(today, datetime.min.time())
+            today_lessons = LessonCompletion.objects.filter(
+                user=user,
+                completed_at__gte=today_start
+            )
+            total_time = sum(completion.duration_minutes for completion in today_lessons)
+            
+            # Check if reached 15 minutes
+            if total_time >= 15:
+                attempt = UserDailyQuestAttempt.objects.create(
+                    user=user,
+                    daily_quest=time_quest,
+                    correct_answers=1,
+                    total_questions=1,
+                    xp_earned=time_quest.xp_reward,
+                    is_completed=True,
+                    completed_at=tz.now()
+                )
+                
+                user.profile.award_xp(time_quest.xp_reward)
+                results['time_quest_completed'] = True
+                results['total_xp_earned'] += time_quest.xp_reward
+                
+                logger.info(
+                    'Time quest completed: %s reached %d minutes',
+                    user.username, total_time
+                )
+    
+    except Exception as e:
+        logger.error('Error checking daily quest completion: %s', str(e))
+    
+    return results if results['total_xp_earned'] > 0 else None
 
 
 @login_required

@@ -6,15 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Progress - Language Learning Platform</title>
     {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
-    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
   </head>
   <body>
     {% include '_nav.html' %}
     
-    <main>
+    <main class="container" style="padding-top: var(--space-2xl);">
       <!-- Django Messages -->
       {% if messages %}
-        <div class="page-messages">
+        <div class="mt-xl">
           {% for message in messages %}
             <div class="alert alert-{{ message.tags }}">
               {{ message }}
@@ -25,61 +29,65 @@
       
       {% if user.is_authenticated %}
         <!-- Logged-in User View -->
-        <section class="progress-header">
-          <div class="progress-header-content">
-            <div>
+        <section class="progress-hero fade-in">
+          <div class="progress-hero-content">
+            <div class="progress-info">
               <h2>Your Learning Progress</h2>
-              <p>Welcome back, {{ user.first_name }}! Here's how you're doing this week.</p>
+              <p style="font-size: var(--text-xl); color: var(--text-secondary);">Welcome back, {{ user.first_name }}! Here's how you're doing this week.</p>
             </div>
-            <div class="progress-avatar-container">
+            <div>
               {% if user.profile %}
-                <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="progress-avatar">
+                <img src="{{ user.profile.get_avatar_url }}" alt="{{ user.username }}'s avatar" class="avatar avatar-2xl">
               {% else %}
-                <img src="https://www.gravatar.com/avatar/?s=120&d=identicon" alt="{{ user.username }}'s avatar" class="progress-avatar">
+                <img src="https://www.gravatar.com/avatar/?s=120&d=identicon" alt="{{ user.username }}'s avatar" class="avatar avatar-2xl">
               {% endif %}
             </div>
           </div>
         </section>
-        
+
         <!-- Onboarding/Proficiency Level Section -->
         {% if user_profile and user_profile.has_completed_onboarding %}
-        <section class="progress-section">
-          <h3 class="section-title">Your Spanish Proficiency</h3>
-          <div class="proficiency-card">
-            <div class="proficiency-badge proficiency-{{ user_profile.proficiency_level|lower }}">
-              {{ user_profile.get_proficiency_level_display }}
+        <section class="card mt-2xl">
+          <div class="card-header">
+            <h3>Your Spanish Proficiency</h3>
+          </div>
+          <div class="card-body text-center">
+            <div class="mb-xl">
+              <span class="badge badge-primary" style="font-size: var(--text-2xl); padding: var(--space-lg) var(--space-2xl);">
+                {{ user_profile.get_proficiency_level_display }}
+              </span>
             </div>
             {% if latest_onboarding_attempt %}
-            <div class="proficiency-details">
+            <div style="color: var(--text-secondary);">
               <p><strong>Assessment Score:</strong> {{ latest_onboarding_attempt.total_score }}/{{ latest_onboarding_attempt.total_possible }} ({{ latest_onboarding_attempt.score_percentage }}%)</p>
               <p><strong>Completed:</strong> {{ latest_onboarding_attempt.completed_at|date:"F j, Y" }}</p>
-              <a href="{% url 'onboarding_results' %}?attempt={{ latest_onboarding_attempt.id }}" class="link-button">View Detailed Results</a>
+              <a href="{% url 'onboarding_results' %}?attempt={{ latest_onboarding_attempt.id }}" class="btn btn-primary mt-lg">View Detailed Results</a>
             </div>
             {% endif %}
           </div>
         </section>
         {% elif user_profile %}
-        <section class="progress-section">
-          <div class="cta-card">
-            <h3>Discover Your Spanish Level</h3>
-            <p>Take our quick 10-question assessment to determine your proficiency level and get personalized recommendations.</p>
-            <a href="{% url 'onboarding_welcome' %}" class="cta-button">Take Assessment</a>
+        <section class="card mt-2xl">
+          <div class="card-body text-center">
+            <h3 class="text-3xl font-bold mb-md">Discover Your Spanish Level</h3>
+            <p class="mb-xl text-lg">Take our quick 10-question assessment to determine your proficiency level and get personalized recommendations.</p>
+            <a href="{% url 'onboarding_welcome' %}" class="btn btn-accent btn-lg">Take Assessment</a>
           </div>
         </section>
         {% else %}
-        <section class="progress-section">
-          <div class="cta-card">
-            <h3>Discover Your Spanish Level</h3>
-            <p>Take our quick 10-question assessment to determine your proficiency level and get personalized recommendations.</p>
-            <a href="{% url 'onboarding_welcome' %}" class="cta-button">Take Assessment</a>
+        <section class="card mt-2xl">
+          <div class="card-body text-center">
+            <h3 class="text-3xl font-bold mb-md">Discover Your Spanish Level</h3>
+            <p class="mb-xl text-lg">Take our quick 10-question assessment to determine your proficiency level and get personalized recommendations.</p>
+            <a href="{% url 'onboarding_welcome' %}" class="btn btn-accent btn-lg">Take Assessment</a>
           </div>
         </section>
         {% endif %}
         
         <!-- Weekly Stats -->
-        <section class="progress-section">
-          <h3 class="section-title">This Week</h3>
-          <div class="progress-stats-grid">
+        <section class="mt-3xl">
+          <h3 class="text-3xl font-bold mb-xl text-center">This Week</h3>
+          <div class="stats-grid">
             <div class="stat-card">
               <div class="stat-icon stat-icon-time">
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -122,39 +130,35 @@
         </section>
         
         <!-- Lifetime Stats -->
-        <section class="progress-section">
-          <h3 class="section-title">Lifetime Progress</h3>
-          <div class="lifetime-stats">
-            <div class="lifetime-stat-card">
-              <div class="lifetime-stat-value">{{ total_minutes }}</div>
-              <div class="lifetime-stat-label">Total Minutes</div>
+        <section class="mt-3xl">
+          <h3 class="text-3xl font-bold mb-xl text-center">Lifetime Progress</h3>
+          <div class="grid grid-cols-4 gap-xl">
+            <div class="stat-card">
+              <div class="stat-value">{{ total_minutes }}</div>
+              <div class="stat-label">Total Minutes</div>
             </div>
-            <div class="lifetime-stat-card">
-              <div class="lifetime-stat-value">{{ total_lessons }}</div>
-              <div class="lifetime-stat-label">Lessons Completed</div>
+            <div class="stat-card">
+              <div class="stat-value">{{ total_lessons }}</div>
+              <div class="stat-label">Lessons Completed</div>
             </div>
-            <div class="lifetime-stat-card">
-              <div class="lifetime-stat-value">{{ total_quizzes }}</div>
-              <div class="lifetime-stat-label">Quizzes Taken</div>
+            <div class="stat-card">
+              <div class="stat-value">{{ total_quizzes }}</div>
+              <div class="stat-label">Quizzes Taken</div>
             </div>
-            <div class="lifetime-stat-card">
-              <div class="lifetime-stat-value">{{ overall_accuracy|floatformat:0 }}%</div>
-              <div class="lifetime-stat-label">Overall Accuracy</div>
+            <div class="stat-card">
+              <div class="stat-value">{{ overall_accuracy|floatformat:0 }}%</div>
+              <div class="stat-label">Overall Accuracy</div>
             </div>
           </div>
         </section>
         
         <!-- Empty State Message -->
         {% if weekly_minutes == 0 and total_lessons == 0 %}
-        <section class="empty-state">
-          <div class="empty-state-content">
-            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-            </svg>
-            <h3>Start Your Learning Journey</h3>
-            <p>You haven't completed any lessons yet. Start learning to see your progress here!</p>
-            <a href="#" class="cta-button">Browse Lessons</a>
-          </div>
+        <section class="empty-state mt-3xl">
+          <div class="empty-state-icon">📚</div>
+          <h3>Start Your Learning Journey</h3>
+          <p>You haven't completed any lessons yet. Start learning to see your progress here!</p>
+          <a href="{% url 'lessons_list' %}" class="btn btn-primary btn-lg">Browse Lessons</a>
         </section>
         {% endif %}
         
@@ -169,8 +173,8 @@
                 <circle cx="12" cy="12" r="3" fill="url(#gradient1)" opacity="0.3"></circle>
                 <defs>
                   <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                    <stop offset="0%" style="stop-color:#14b8a6;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#0891b2;stop-opacity:1" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -213,23 +217,23 @@
     </main>
     
     <footer>
-      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+      <p>&copy; 2025 Language Learning Platform. Empowering language learners worldwide.</p>
     </footer>
 
     <script>
       // Mobile menu toggle
       const navToggle = document.querySelector('.nav-toggle');
-      const navMenu = document.querySelector('.nav-menu');
+      const navCenter = document.querySelector('.nav-center');
       
       navToggle.addEventListener('click', () => {
-        navMenu.classList.toggle('active');
+        navCenter.classList.toggle('active');
         navToggle.classList.toggle('active');
       });
 
       // Close menu when clicking outside
       document.addEventListener('click', (e) => {
-        if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
-          navMenu.classList.remove('active');
+        if (!navToggle.contains(e.target) && !navCenter.contains(e.target)) {
+          navCenter.classList.remove('active');
           navToggle.classList.remove('active');
         }
       });

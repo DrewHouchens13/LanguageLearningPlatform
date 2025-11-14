@@ -4,79 +4,220 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Language Learning Platform</title>
+    <title>Language Learning Platform - Master Any Language</title>
     {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
-    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
-    <style>
-      .hero-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-      }
-    </style>
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
   </head>
   <body>
     {% include '_nav.html' %}
 
-    <main>
-      <!-- Django Messages -->
-      {% if messages %}
-        <div class="page-messages">
-          {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">
-              {{ message }}
+    <!-- Django Messages -->
+    {% if messages %}
+      <div class="container" style="padding-top: var(--space-xl);">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Hero Section -->
+    <section class="hero-section fade-in">
+      <div class="hero-content">
+        <h1 class="hero-accent">Start AI-Powered Language Lessons Today</h1>
+        
+        <!-- Animated Learn Word - Main Attraction -->
+        <div class="hero-main">
+          <div class="language-animator-glow">
+            <div class="language-animator">
+              <span class="language-word">Learn</span>
+              <span class="language-word">Aprender</span>
+              <span class="language-word">Apprendre</span>
+              <span class="language-word">Lernen</span>
+              <span class="language-word">学ぶ</span>
+              <span class="language-word">Imparare</span>
+              <span class="language-word">배우다</span>
+              <span class="language-word">学习</span>
+              <span class="language-word">تعلم</span>
+              <span class="language-word">Учиться</span>
             </div>
-          {% endfor %}
+          </div>
         </div>
-      {% endif %}
 
-      <section class="hero">
-        <div class="hero-content">
-          <h2>Welcome to Your Journey</h2>
-          <p>Embark on an exciting adventure to master new languages. Our platform makes learning engaging, effective, and enjoyable for learners at the beginner level.</p>
-          <a href="{% url 'onboarding_welcome' %}" class="hero-button" style="display: inline-block; margin-top: 1rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: transform 0.2s;">Take Onboarding Test</a>
+        <!-- CTA Button - Right Below Animation -->
+        <div class="hero-cta">
+          <a href="{% url 'onboarding_welcome' %}" class="btn btn-primary btn-lg">
+            Take Placement Test →
+          </a>
+          <p class="hero-cta-subtitle">Personalized AI-powered lessons • Free to start</p>
         </div>
-        <div class="hero-image">
-          <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80" alt="Students learning together">
-        </div>
-      </section>
 
-      <section class="features">
-        <div class="feature-card">
-          <h3>Interactive Lessons</h3>
-          <p>Engage with dynamic content designed to help you learn naturally and effectively.</p>
+        <!-- Tagline & Description - Styled Section -->
+        <div class="hero-info-section">
+          <div class="hero-tagline-wrapper">
+            <h2 class="hero-tagline">
+              <span class="hero-tagline-highlight">Languages Through</span>
+              <span class="hero-tagline-gradient">AI-Powered Learning</span>
+            </h2>
+          </div>
+          
+          <div class="hero-description">
+            <p class="hero-subtitle-main">Master any language with confidence and ease</p>
+            <div class="hero-features-mini">
+              <span class="feature-pill">✨ Personalized Lessons</span>
+              <span class="feature-pill">🎯 Adaptive Learning</span>
+              <span class="feature-pill">🚀 Real Results</span>
+            </div>
+            <p class="hero-subtitle-secondary">Join thousands of learners discovering the joy of language mastery through our intelligent, engaging platform.</p>
+          </div>
         </div>
-        <div class="feature-card">
-          <h3>Track Progress</h3>
-          <p>Monitor your achievements and celebrate milestones as you advance through your learning journey.</p>
+      </div>
+      
+      <div class="scroll-indicator">
+        <div class="scroll-arrow"></div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section" style="margin-top: var(--space-4xl);">
+      <div class="container">
+        <div class="text-center mb-3xl">
+          <span class="text-accent">Why Choose Language Learning Platform</span>
+          <h2 class="text-5xl font-black mt-md mb-md">Everything You Need to Succeed</h2>
+          <p class="lead">Built by learners, for learners. Our platform combines cutting-edge AI with proven learning methods.</p>
         </div>
-        <div class="feature-card">
-          <h3>Adaptive Learning</h3>
-          <p>Experience personalized lessons that adapt to your pace and learning style.</p>
+
+        <div class="features-grid">
+          <div class="feature-item fade-in-up delay-100">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="6"></circle>
+                <circle cx="12" cy="12" r="2"></circle>
+              </svg>
+            </div>
+            <h3>Personalized Lessons</h3>
+            <p>AI-powered content that adapts to your unique learning style and pace. Never feel overwhelmed or bored again.</p>
+          </div>
+
+          <div class="feature-item fade-in-up delay-200">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+            </div>
+            <h3>Track Your Progress</h3>
+            <p>Visualize your improvement with detailed analytics. Celebrate milestones and stay motivated every step of the way.</p>
+          </div>
+
+          <div class="feature-item fade-in-up delay-300">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+                <polyline points="17 2 12 7 7 2"></polyline>
+              </svg>
+            </div>
+            <h3>Gamified Experience</h3>
+            <p>Turn learning into an adventure with interactive quizzes, achievements, and challenges that make studying fun.</p>
+          </div>
+
+          <div class="feature-item fade-in-up delay-400">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+            </div>
+            <h3>Multiple Languages</h3>
+            <p>Start with Spanish, French, German, or Japanese. Expand your horizons with our growing language library.</p>
+          </div>
+
+          <div class="feature-item fade-in-up delay-500">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
+            <h3>Bite-Sized Lessons</h3>
+            <p>Learn in just 10-15 minutes a day. Perfect for busy schedules without sacrificing learning quality.</p>
+          </div>
+
+          <div class="feature-item fade-in-up delay-600">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                <path d="M4 22h16"></path>
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+              </svg>
+            </div>
+            <h3>Proven Results</h3>
+            <p>Join learners who've achieved fluency using our science-backed curriculum and immersive approach.</p>
+          </div>
         </div>
-      </section>
-    </main>
+
+        <!-- Final CTA -->
+        <div class="text-center mt-4xl">
+          <h3 class="text-4xl font-bold mb-lg">Ready to Start Your Language Journey?</h3>
+          <p class="lead mb-xl">Take our quick placement test and get personalized recommendations.</p>
+          <div class="flex gap-lg justify-center flex-wrap">
+            <a href="{% url 'onboarding_welcome' %}" class="btn btn-accent btn-lg">
+              Take Placement Test →
+            </a>
+          </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="grid grid-cols-3 gap-xl mt-4xl" style="max-width: 900px; margin: 4rem auto 0;">
+          <div class="text-center">
+            <div class="text-6xl font-black text-primary">1000+</div>
+            <div class="text-secondary mt-sm">Active Learners</div>
+          </div>
+          <div class="text-center">
+            <div class="text-6xl font-black text-primary">50+</div>
+            <div class="text-secondary mt-sm">Lessons Available</div>
+          </div>
+          <div class="text-center">
+            <div class="text-6xl font-black text-primary">95%</div>
+            <div class="text-secondary mt-sm">Success Rate</div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <footer>
-      <p>&copy; 2025 Language Learning Platform. Start learning today!</p>
+      <p>&copy; 2025 Language Learning Platform. Empowering language learners worldwide.</p>
     </footer>
 
     <script>
       // Mobile menu toggle
       const navToggle = document.querySelector('.nav-toggle');
-      const navMenu = document.querySelector('.nav-menu');
+      const navCenter = document.querySelector('.nav-center');
 
-      navToggle.addEventListener('click', () => {
-        navMenu.classList.toggle('active');
-        navToggle.classList.toggle('active');
-      });
+      if (navToggle && navCenter) {
+        navToggle.addEventListener('click', () => {
+          navCenter.classList.toggle('active');
+          navToggle.classList.toggle('active');
+        });
 
-      // Close menu when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
-          navMenu.classList.remove('active');
-          navToggle.classList.remove('active');
-        }
-      });
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!navToggle.contains(e.target) && !navCenter.contains(e.target)) {
+            navCenter.classList.remove('active');
+            navToggle.classList.remove('active');
+          }
+        });
+      }
     </script>
   </body>
 </html>

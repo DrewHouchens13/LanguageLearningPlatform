@@ -6,95 +6,101 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lessons - Language Learning Platform</title>
     {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
-    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
-    <style>
-        .lessons-container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        .lessons-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-        .lesson-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .lesson-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .lesson-title {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            color: #333;
-        }
-        .lesson-description {
-            color: #666;
-            margin-bottom: 1rem;
-        }
-        .lesson-meta {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-        }
-        .lesson-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        .badge-a1 { background: #e3f2fd; color: #1976d2; }
-        .badge-a2 { background: #fff3e0; color: #f57c00; }
-        .badge-b1 { background: #f3e5f5; color: #7b1fa2; }
-        .lesson-button {
-            display: inline-block;
-            padding: 0.75rem 1.5rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: transform 0.2s;
-        }
-        .lesson-button:hover {
-            transform: translateY(-2px);
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
 </head>
 <body>
     {% include '_nav.html' %}
     
-    <main class="lessons-container">
-        <h1>Available Lessons</h1>
-        <p>Choose a lesson to begin learning</p>
+    <main class="container" style="padding-top: var(--space-3xl);">
+        {% if not user.is_authenticated %}
+        <!-- Guest View - Login Required -->
+        <div class="text-center fade-in" style="padding: var(--space-4xl) 0;">
+            <div class="empty-state">
+                <div class="empty-state-icon">🔒</div>
+                <h2 class="text-5xl font-black mb-lg">Premium Lessons Await</h2>
+                <p class="lead mb-xl">Our interactive language lessons are exclusively available to registered members.<br>Complete your placement test to unlock personalized learning content!</p>
+                <div class="flex gap-lg justify-center flex-wrap">
+                    <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
+                        Login to Access Lessons
+                    </a>
+                    <a href="{% url 'onboarding_welcome' %}" class="btn btn-accent btn-lg">
+                        Take Placement Test
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Logged In User View -->
+        <!-- Header -->
+        <div class="lessons-header fade-in">
+            <h2>Explore Lessons</h2>
+            <p>Dive into interactive language lessons designed to help you succeed</p>
+        </div>
         
+        <!-- Lessons Grid -->
         <div class="lessons-grid">
             {% for lesson in lessons %}
-            <div class="lesson-card">
-                <h2 class="lesson-title">{{ lesson.title }}</h2>
-                <p class="lesson-description">{{ lesson.description }}</p>
-                <div class="lesson-meta">
-                    <span class="lesson-badge badge-{{ lesson.difficulty_level|lower }}">
-                        {{ lesson.get_difficulty_level_display }}
-                    </span>
-                    <span>{{ lesson.language }}</span>
+            <div class="lesson-card fade-in-up delay-{{ forloop.counter }}00">
+                <div class="lesson-card-header">
+                    <div class="lesson-icon">📚</div>
                 </div>
-                <a href="{% if IS_DEVEDU %}../lessons/{{ lesson.id }}/{% else %}{% url 'lesson_detail' lesson.id %}{% endif %}" class="lesson-button">
-                    Start Lesson
-                </a>
+                <div class="lesson-card-body">
+                    <h3 class="lesson-card-title">{{ lesson.title }}</h3>
+                    <p class="lesson-card-description">{{ lesson.description }}</p>
+                    
+                    <div class="lesson-card-meta">
+                        <span class="badge badge-primary">
+                            {{ lesson.get_difficulty_level_display }}
+                        </span>
+                        <span class="badge badge-accent">
+                            {{ lesson.language }}
+                        </span>
+                    </div>
+                </div>
+                <div class="lesson-card-footer">
+                    <a href="{% if IS_DEVEDU %}../lessons/{{ lesson.id }}/{% else %}{% url 'lesson_detail' lesson.id %}{% endif %}" 
+                       class="btn btn-primary btn-full">
+                        Start Lesson →
+                    </a>
+                </div>
             </div>
             {% empty %}
-            <p>No lessons available yet.</p>
+            <div class="empty-state">
+                <div class="empty-state-icon">📚</div>
+                <h3>No Lessons Available Yet</h3>
+                <p>Check back soon for new learning content!</p>
+            </div>
             {% endfor %}
         </div>
+        {% endif %}
     </main>
+
+    <footer>
+      <p>&copy; 2025 Language Learning Platform. Empowering language learners worldwide.</p>
+    </footer>
+
+    <script>
+      // Mobile menu toggle
+      const navToggle = document.querySelector('.nav-toggle');
+      const navCenter = document.querySelector('.nav-center');
+      
+      if (navToggle && navCenter) {
+        navToggle.addEventListener('click', () => {
+          navCenter.classList.toggle('active');
+          navToggle.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+          if (!navToggle.contains(e.target) && !navCenter.contains(e.target)) {
+            navCenter.classList.remove('active');
+            navToggle.classList.remove('active');
+          }
+        });
+      }
+    </script>
 </body>
 </html>

@@ -15,7 +15,7 @@ class Command(BaseCommand):
         lesson, created = Lesson.objects.get_or_create(
             title='Colors in Spanish',
             defaults={
-                'description': 'Learn basic color names in Spanish with interactive flashcards',
+                'description': 'Learn basic color names in Spanish',
                 'language': 'Spanish',
                 'difficulty_level': 'A1',
                 'slug': 'colors',

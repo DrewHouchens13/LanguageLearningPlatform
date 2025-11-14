@@ -6,7 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Results - {{ lesson.title }}</title>
     {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
-    <link rel="stylesheet" href="{% static 'home/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
     <style>
         .results-container {
             max-width: 700px;
@@ -24,7 +28,7 @@
         .score-display {
             font-size: 4rem;
             font-weight: 700;
-            color: #667eea;
+            color: var(--primary);
             margin: 1rem 0;
         }
         .percentage {
@@ -56,13 +60,13 @@
             transform: translateY(-2px);
         }
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--gradient-primary);
             color: white;
         }
         .btn-secondary {
             background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
+            color: var(--primary);
+            border: 2px solid var(--primary);
         }
         .congrats {
             font-size: 3rem;
