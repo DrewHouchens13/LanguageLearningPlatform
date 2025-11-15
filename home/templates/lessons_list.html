@@ -64,6 +64,151 @@ RELATED FILES:
     <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
     <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
     <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
+    <style>
+      .current-language-panel {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-lg);
+        flex-wrap: wrap;
+      }
+      .current-language-flag {
+        font-size: 2.5rem;
+      }
+      .current-language-info h3 {
+        margin: 0;
+        font-size: var(--text-2xl);
+      }
+      .language-select-group label {
+        font-size: var(--text-xs);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-secondary);
+      }
+      .language-select-group select {
+        padding: var(--space-sm) var(--space-lg);
+        border-radius: var(--radius-full);
+        border: 1px solid var(--gray-300);
+        font-weight: 600;
+        min-width: 220px;
+      }
+      .lessons-hero {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(16, 185, 129, 0.08));
+        border-radius: var(--radius-2xl);
+        padding: var(--space-2xl);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-xl);
+        flex-wrap: wrap;
+      }
+      .language-focus {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        flex-wrap: wrap;
+      }
+      .language-focus .flag {
+        font-size: 3rem;
+      }
+      .language-focus h2 {
+        margin: 0;
+        font-size: var(--font-size-4xl);
+      }
+      .language-focus .eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.25em;
+        font-size: var(--text-xs);
+        color: var(--text-secondary);
+        margin-bottom: var(--space-xs);
+      }
+      details.language-switcher {
+        position: relative;
+        min-width: 220px;
+      }
+      details.language-switcher summary {
+        list-style: none;
+        cursor: pointer;
+        border: 1px solid var(--gray-200);
+        padding: var(--space-sm) var(--space-lg);
+        border-radius: var(--radius-full);
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+        background: #fff;
+        font-weight: 600;
+      }
+      details.language-switcher summary::-webkit-details-marker {
+        display: none;
+      }
+      .language-switcher-menu {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        right: 0;
+        background: #fff;
+        border-radius: var(--radius-xl);
+        box-shadow: 0 25px 60px rgba(15, 23, 42, 0.18);
+        min-width: 240px;
+        padding: var(--space-sm);
+        z-index: 10;
+      }
+      .language-switcher-menu a {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-lg);
+        text-decoration: none;
+        color: inherit;
+        font-weight: 600;
+      }
+      .language-switcher-menu a:hover {
+        background: rgba(59, 130, 246, 0.08);
+      }
+      .language-switcher-menu a.locked {
+        opacity: 0.6;
+      }
+      .language-switcher-menu .flag {
+        font-size: 1.5rem;
+      }
+      .language-switcher-menu .tag {
+        margin-left: auto;
+        font-size: var(--text-xs);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .lessons-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--space-xl);
+      }
+      .lesson-card {
+        text-decoration: none;
+        display: block;
+        padding: var(--space-xl);
+        border-radius: var(--radius-2xl);
+        border: 1px solid var(--gray-200);
+        background: #fff;
+        box-shadow: 0 15px 30px rgba(15, 23, 42, 0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .lesson-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 25px 60px rgba(15, 23, 42, 0.15);
+      }
+      .lesson-card h3 {
+        margin: 0;
+      }
+      .lessons-empty {
+        text-align: center;
+        padding: var(--space-3xl) var(--space-2xl);
+        background: rgba(59, 130, 246, 0.05);
+        border-radius: var(--radius-2xl);
+        border: 1px dashed rgba(59, 130, 246, 0.3);
+        max-width: 720px;
+        margin: var(--space-3xl) auto 0;
+      }
+    </style>
 </head>
 <body>
     {% include '_nav.html' %}
@@ -88,33 +233,74 @@ RELATED FILES:
         </div>
         {% else %}
         <!-- Logged In User View -->
-        <!-- Header -->
-        <div class="lessons-header fade-in text-center" style="margin-bottom: var(--space-3xl);">
-            <h2 style="font-size: var(--font-size-4xl); font-weight: 800;">Choose Your Language</h2>
-            <p style="font-size: var(--font-size-lg); color: var(--color-text-muted);">Select a language to explore lessons</p>
-        </div>
-
-        {% if languages_with_lessons %}
-            <!-- Language Selection Buttons (ONLY BUTTONS, NO LESSONS) -->
-            <div class="fade-in-up">
-                <div style="display: flex; flex-wrap: wrap; gap: var(--space-md); justify-content: center; max-width: 600px; margin: 0 auto;">
-                    {% for language in languages_with_lessons %}
-                    <a href="{% if IS_DEVEDU %}../lessons/{{ language.name|lower }}/{% else %}{% url 'lessons_by_language' language.name|lower %}{% endif %}"
-                       class="btn btn-primary"
-                       style="text-decoration: none;">
-                        {{ language.flag }} {{ language.native_name }}
-                    </a>
-                    {% endfor %}
-                </div>
+        <section class="lessons-hero fade-in">
+          <div>
+            <p class="eyebrow">Your Current Language</p>
+            <div class="language-focus">
+              <span class="flag">{{ selected_language_metadata.flag }}</span>
+              <div>
+                <h2>{{ selected_language_metadata.native_name }}</h2>
+                {% if selected_language_profile and selected_language_profile.proficiency_level %}
+                <p style="margin: 0; color: var(--text-secondary);">{{ selected_language_profile.get_proficiency_level_display }}</p>
+                {% endif %}
+              </div>
             </div>
+          </div>
+          {% if language_dropdown %}
+          <details class="language-switcher">
+            <summary>
+              <span>{{ selected_language_metadata.flag }}</span>
+              <span>{{ selected_language_metadata.native_name }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </summary>
+            <div class="language-switcher-menu">
+              {% for option in language_dropdown %}
+              <a href="{{ option.url }}" class="{% if option.is_active %}active{% endif %} {% if option.locked %}locked{% endif %}">
+                <span class="flag">{{ option.flag }}</span>
+                <span>{{ option.native_name }}</span>
+                {% if option.locked %}
+                <span class="tag">Locked</span>
+                {% endif %}
+              </a>
+              {% endfor %}
+            </div>
+          </details>
+          {% endif %}
+        </section>
 
+        {% if not selected_language_completed %}
+          <div class="lessons-empty fade-in-up">
+            <div class="empty-state-icon">🔒</div>
+            <h3>Unlock {{ selected_language }} Lessons</h3>
+            <p>Complete the {{ selected_language }} placement to personalize your experience and access every lesson.</p>
+            <a href="{% url 'onboarding_welcome' %}?language={{ selected_language }}" class="btn btn-primary btn-lg" style="margin-top: var(--space-lg);">
+              Start {{ selected_language }} Onboarding
+            </a>
+          </div>
+        {% elif not selected_language_has_lessons %}
+          <div class="lessons-empty fade-in-up">
+            <div class="empty-state-icon">📚</div>
+            <h3>No {{ selected_language }} Lessons Yet</h3>
+            <p>Hang tight! We're preparing brand new content for {{ selected_language }}.</p>
+          </div>
         {% else %}
-            <!-- No Lessons Available -->
-            <div class="empty-state">
-                <div class="empty-state-icon">📚</div>
-                <h3>No Lessons Available Yet</h3>
-                <p>Check back soon for new learning content!</p>
-            </div>
+          <div class="lessons-grid fade-in-up" style="margin-top: var(--space-3xl);">
+            {% for item in selected_language_lessons %}
+            <a href="{% if IS_DEVEDU %}../../{{ item.lesson.id }}/{% else %}{% url 'lesson_detail' item.lesson.id %}{% endif %}" class="lesson-card">
+              <div style="font-size: 3rem; line-height: 1; margin-bottom: var(--space-md);">
+                {{ item.icon }}
+              </div>
+              <h3 style="margin-bottom: var(--space-xs);">{{ item.lesson.title }}</h3>
+              <p class="text-muted" style="margin-bottom: var(--space-md);">{{ item.lesson.description }}</p>
+              <div class="flex gap-sm" style="flex-wrap: wrap;">
+                <span class="badge badge-primary">{{ item.lesson.difficulty }}</span>
+                {% if item.lesson.cards.count > 0 %}
+                <span class="badge badge-outline">{{ item.lesson.cards.count }} flashcard{{ item.lesson.cards.count|pluralize }}</span>
+                {% endif %}
+              </div>
+            </a>
+            {% endfor %}
+          </div>
         {% endif %}
         {% endif %}
     </main>
@@ -150,18 +336,6 @@ RELATED FILES:
         });
       }
 
-      // Hover effect for language cards
-      const languageCards = document.querySelectorAll('.card[onclick]');
-      languageCards.forEach(card => {
-        card.addEventListener('mouseenter', () => {
-          card.style.transform = 'translateY(-4px)';
-          card.style.boxShadow = '0 8px 16px rgba(0,0,0,0.1)';
-        });
-        card.addEventListener('mouseleave', () => {
-          card.style.transform = 'translateY(0)';
-          card.style.boxShadow = '';
-        });
-      });
     </script>
 </body>
 </html>

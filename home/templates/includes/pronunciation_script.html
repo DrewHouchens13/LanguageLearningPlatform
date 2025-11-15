@@ -15,6 +15,16 @@
     availableVoices = window.speechSynthesis.getVoices();
   }
 
+  function sanitizePronunciationText(text) {
+    if (!text) {
+      return '';
+    }
+    return text
+      .replace(/\s*\([^)]*\)/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   function getVoice(code) {
     if (!code || !availableVoices.length) {
       return null;
@@ -33,6 +43,7 @@
       utterance.voice = voice;
     }
     utterance.lang = (voice && voice.lang) || langCode || defaultVoiceCode;
+    utterance.rate = 1.05;
     isSpeaking = true;
     utterance.onend = () => {
       isSpeaking = false;
@@ -46,10 +57,15 @@
       return;
     }
     event.preventDefault();
-    const text = button.getAttribute('data-speak-text');
+    event.stopPropagation();
+    const rawText = button.getAttribute('data-speak-text');
+    const text = sanitizePronunciationText(rawText);
+    if (!text) {
+      return;
+    }
     const langAttr = button.getAttribute('data-speak-lang');
     speakText(text, langAttr || defaultVoiceCode);
-  });
+  }, true);
 
   if (window.speechSynthesis.onvoiceschanged !== undefined) {
     window.speechSynthesis.onvoiceschanged = loadVoices;

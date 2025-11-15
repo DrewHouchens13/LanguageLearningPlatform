@@ -16,6 +16,7 @@ authentication checks, and error handling.
 # Standard library imports
 import json
 import logging
+import random
 from functools import wraps
 
 # Django imports
@@ -30,6 +31,8 @@ from django.core.validators import validate_email as django_validate_email
 from django.db import DatabaseError, IntegrityError
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template import TemplateDoesNotExist
+from django.template.loader import select_template
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
@@ -1005,6 +1008,58 @@ def dashboard(request):
     except UserProgress.DoesNotExist:
         pass
     
+    language_profiles = list(UserLanguageProfile.objects.filter(user=request.user))
+    language_profile_map = {lp.language: lp for lp in language_profiles}
+    supported_languages = get_supported_languages(include_flags=True)
+
+    language_stats = []
+    pending_languages = []
+    for entry in supported_languages:
+        profile = language_profile_map.get(entry['name'])
+        if profile and (
+            profile.has_completed_onboarding
+            or profile.total_minutes_studied > 0
+            or profile.total_lessons_completed > 0
+            or profile.total_xp > 0
+        ):
+            language_stats.append({
+                'name': entry['name'],
+                'native_name': entry['native_name'],
+                'flag': entry['flag'],
+                'slug': entry['slug'],
+                'minutes': profile.total_minutes_studied,
+                'lessons': profile.total_lessons_completed,
+                'xp': profile.total_xp,
+                'quizzes': profile.total_quizzes_taken,
+                'proficiency': profile.get_proficiency_level_display() if profile.proficiency_level else 'Not assessed',
+                'has_completed_onboarding': profile.has_completed_onboarding,
+                'level': profile.current_level,
+                'xp_to_next': profile.get_xp_to_next_level(),
+                'progress_percent': profile.get_progress_to_next_level(),
+            })
+        else:
+            pending_languages.append(entry)
+
+    preferred_language = DEFAULT_LANGUAGE
+    if user_profile and user_profile.target_language:
+        preferred_language = normalize_language_name(user_profile.target_language)
+    elif language_stats:
+        preferred_language = language_stats[0]['name']
+
+    current_language_profile = language_profile_map.get(preferred_language)
+    current_language_metadata = get_language_metadata(preferred_language)
+
+    overall_xp_row = None
+    if user_profile:
+        overall_xp_row = {
+            'label': 'Overall',
+            'flag': '⭐',
+            'level': user_profile.current_level,
+            'xp': user_profile.total_xp,
+            'xp_to_next': xp_to_next,
+            'progress_percent': xp_progress_percent,
+        }
+
     context = {
         'has_completed_onboarding': has_completed_onboarding,
         'user_profile': user_profile,
@@ -1014,6 +1069,12 @@ def dashboard(request):
         'current_streak': current_streak,
         'xp_to_next_level': xp_to_next,
         'xp_progress_percent': xp_progress_percent,
+        'language_stats': language_stats,
+        'pending_languages': pending_languages,
+        'current_language_profile': current_language_profile,
+        'current_language_metadata': current_language_metadata,
+        'current_language_name': preferred_language,
+        'overall_xp_row': overall_xp_row,
     }
     return render(request, 'dashboard.html', context)
 
@@ -1902,33 +1963,108 @@ def _build_language_data(language, lessons):
     }
 
 
+def _build_lesson_icon_entries(lessons):
+    """
+    Convert a list/queryset of Lesson objects into icon-enriched dicts.
+    """
+    result = []
+    for lesson in lessons:
+        result.append({
+            'lesson': lesson,
+            'icon': _get_lesson_icon(lesson)
+        })
+    return result
+
+
 def lessons_list(request):
     """
-    Display list of all available lessons grouped by language.
-    Follows Single Responsibility Principle - delegates to helper functions.
+    Display lessons for the user's selected language with inline navigation.
     """
     from collections import defaultdict
 
-    # Get all published lessons
+    # Get all published lessons grouped by language for dropdown + rendering
     all_lessons = Lesson.objects.filter(is_published=True).order_by('language', 'order', 'id')
-
-    # Group lessons by language
-    grouped_lessons = defaultdict(list)  # Renamed to avoid shadowing function name
+    grouped_lessons = defaultdict(list)
     for lesson in all_lessons:
         grouped_lessons[lesson.language].append(lesson)
 
-    # Build language list with metadata using helper function
     languages_with_lessons = [
-        _build_language_data(language, language_lessons)
-        for language, language_lessons in grouped_lessons.items()
+        _build_language_data(language, lessons)
+        for language, lessons in grouped_lessons.items()
     ]
+
+    # Build profile maps for onboarding status
+    language_profile_map = {}
+    current_language_profile = None
+    current_language = DEFAULT_LANGUAGE
+
+    if request.user.is_authenticated:
+        try:
+            user_profile = UserProfile.objects.get(user=request.user)
+            if user_profile.target_language:
+                current_language = normalize_language_name(user_profile.target_language)
+        except UserProfile.DoesNotExist:
+            user_profile = None
+        user_language_profiles = list(UserLanguageProfile.objects.filter(user=request.user))
+        language_profile_map = {lp.language: lp for lp in user_language_profiles}
+        current_language_profile = language_profile_map.get(current_language)
+
+        # Prefer first completed onboarding language as default if target not ready
+        completed_languages = [lp.language for lp in user_language_profiles if lp.has_completed_onboarding]
+        if completed_languages and (not current_language_profile or not current_language_profile.has_completed_onboarding):
+            current_language = completed_languages[0]
+            current_language_profile = language_profile_map.get(current_language)
+    else:
+        user_profile = None
+
+    # Determine which language to display (query param overrides default)
+    requested_language = request.GET.get('language')
+    if requested_language:
+        selected_language = normalize_language_name(requested_language)
+    else:
+        selected_language = current_language
+
+    # Fallback if no lessons exist for the requested language
+    if selected_language not in grouped_lessons and grouped_lessons:
+        selected_language = next(iter(grouped_lessons.keys()))
+
+    selected_language_metadata = get_language_metadata(selected_language)
+    selected_language_profile = language_profile_map.get(selected_language)
+    selected_language_completed = bool(
+        request.user.is_authenticated and selected_language_profile and selected_language_profile.has_completed_onboarding
+    )
+
+    selected_language_lessons = grouped_lessons.get(selected_language, [])
+    selected_language_lessons_with_icons = _build_lesson_icon_entries(selected_language_lessons)
+
+    lessons_base_url = reverse('lessons_list')
+    language_dropdown = []
+    for language_name, lessons in grouped_lessons.items():
+        metadata = get_language_metadata(language_name)
+        profile = language_profile_map.get(language_name)
+        locked = not (request.user.is_authenticated and profile and profile.has_completed_onboarding)
+        language_dropdown.append({
+            'name': language_name,
+            'native_name': metadata.get('native_name', language_name),
+            'flag': metadata.get('flag', '🌐'),
+            'url': f"{lessons_base_url}?language={language_name}",
+            'locked': locked,
+            'is_active': language_name == selected_language,
+        })
 
     context = {
         'languages_with_lessons': languages_with_lessons,
-        'lessons_by_language': dict(grouped_lessons),  # Keep for backward compatibility
-        'lessons': all_lessons,  # Keep for backward compatibility
+        'language_dropdown': language_dropdown,
+        'selected_language': selected_language,
+        'selected_language_metadata': selected_language_metadata,
+        'selected_language_profile': selected_language_profile,
+        'selected_language_lessons': selected_language_lessons_with_icons,
+        'selected_language_completed': selected_language_completed,
+        'selected_language_has_lessons': bool(selected_language_lessons),
+        'current_language_name': current_language,
+        'current_language_profile': current_language_profile,
+        'current_language_metadata': get_language_metadata(current_language),
     }
-
     return render(request, 'lessons_list.html', context)
 
 
@@ -1985,6 +2121,22 @@ def lessons_by_language(request, language):
 
     # Normalize to match metadata/database format
     language = normalize_language_name(language)
+    
+    # Check if user is authenticated and has completed onboarding for this language
+    has_completed_onboarding = False
+    language_profile = None
+    if request.user.is_authenticated:
+        try:
+            language_profile = UserLanguageProfile.objects.get(
+                user=request.user, 
+                language=language
+            )
+            has_completed_onboarding = language_profile.has_completed_onboarding
+        except UserLanguageProfile.DoesNotExist:
+            has_completed_onboarding = False
+    
+    # Get language metadata
+    language_metadata = get_language_metadata(language)
 
     # Get lessons for the specified language
     lessons = Lesson.objects.filter(
@@ -1992,18 +2144,14 @@ def lessons_by_language(request, language):
         is_published=True
     ).order_by('order', 'id')
 
-    # Add icon to each lesson based on topic
-    lessons_with_icons = []
-    for lesson in lessons:
-        lesson_data = {
-            'lesson': lesson,
-            'icon': _get_lesson_icon(lesson)
-        }
-        lessons_with_icons.append(lesson_data)
+    lessons_with_icons = _build_lesson_icon_entries(lessons)
 
     context = {
         'language': language,
+        'language_metadata': language_metadata,
         'lessons_with_icons': lessons_with_icons,
+        'has_completed_onboarding': has_completed_onboarding,
+        'language_profile': language_profile,
     }
 
     return render(request, 'lessons/lessons_by_language.html', context)
@@ -2064,20 +2212,40 @@ def lesson_quiz(request, lesson_id):
     questions = lesson.quiz_questions.all()
     qlist = []
     for q in questions:
+        indexed_options = list(enumerate(q.options or []))
+        random.shuffle(indexed_options)
+        shuffled_options = [
+            {
+                'text': option_text,
+                'index': original_index,
+            }
+            for original_index, option_text in indexed_options
+        ]
         qlist.append({
             'id': q.id,
             'order': q.order,
             'question': q.question,
-            'options': q.options,
+            'options': shuffled_options,
         })
-    # Use dynamic template based on lesson slug
-    template_name = f'lessons/{lesson.slug}/quiz.html'
     metadata = get_language_metadata(lesson.language)
-    return render(request, template_name, {
+    context = {
         'lesson': lesson,
         'questions': qlist,
         'speech_code': metadata.get('speech_code', 'en-US'),
-    })
+    }
+
+    template_candidates = [f'lessons/{lesson.slug}/quiz.html']
+    if '-' in (lesson.slug or ''):
+        base_slug = lesson.slug.split('-')[0]
+        template_candidates.append(f'lessons/{base_slug}/quiz.html')
+
+    try:
+        template = select_template(template_candidates)
+        template_name = template.template.name
+    except TemplateDoesNotExist:
+        raise Http404("Lesson quiz template is missing. Please contact support.")
+
+    return render(request, template_name, context)
 
 
 @require_http_methods(["POST"])
@@ -2262,8 +2430,17 @@ def lesson_results(request, lesson_id, attempt_id):
     attempt = get_object_or_404(LessonAttempt, id=attempt_id, lesson=lesson)
     next_lesson = lesson.next_lesson
     context = {'lesson': lesson, 'attempt': attempt, 'next_lesson': next_lesson}
-    # Use dynamic template based on lesson slug
-    template_name = f'lessons/{lesson.slug}/results.html'
+    template_candidates = [f'lessons/{lesson.slug}/results.html']
+    if '-' in (lesson.slug or ''):
+        base_slug = lesson.slug.split('-')[0]
+        template_candidates.append(f'lessons/{base_slug}/results.html')
+
+    try:
+        template = select_template(template_candidates)
+        template_name = template.template.name
+    except TemplateDoesNotExist:
+        raise Http404("Lesson results template is missing. Please contact support.")
+
     return render(request, template_name, context)
 
 

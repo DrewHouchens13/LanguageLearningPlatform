@@ -11,11 +11,114 @@
     <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
     <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
     <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
+    <style>
+      .current-language-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: var(--space-sm) var(--space-lg);
+        background: #fff;
+        border-radius: var(--radius-full);
+        border: 1px solid var(--gray-200);
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+        margin-top: var(--space-md);
+      }
+      .current-language-pill .flag {
+        font-size: 1.75rem;
+      }
+      .current-language-pill .details {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.3;
+      }
+      .current-language-pill .details span {
+        margin: 0;
+      }
+      .current-language-pill .label {
+        font-size: var(--text-xs);
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: var(--text-secondary);
+      }
+      .current-language-pill .name {
+        font-size: var(--text-lg);
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+      .xp-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .xp-table th,
+      .xp-table td {
+        padding: var(--space-md) var(--space-lg);
+        text-align: left;
+        border-bottom: 1px solid var(--gray-200);
+      }
+      .xp-table tbody tr:hover {
+        background: rgba(79, 70, 229, 0.04);
+      }
+      .xp-progress-track {
+        width: 100%;
+        height: 8px;
+        border-radius: var(--radius-full);
+        background: rgba(251, 113, 133, 0.2);
+        overflow: hidden;
+      }
+      .xp-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #fb7185 0%, #f472b6 100%);
+      }
+      .language-chip-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        justify-content: center;
+      }
+      .language-chip {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: var(--space-sm) var(--space-lg);
+        border-radius: var(--radius-full);
+        border: 1px solid var(--gray-200);
+        text-decoration: none;
+        font-weight: 600;
+        color: var(--text-primary);
+        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+      }
+      .language-chip:hover {
+        border-color: var(--primary);
+        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.15);
+      }
+      .xp-overview-card {
+        background: linear-gradient(135deg, rgba(254, 242, 242, 0.9), #fff);
+        border: 1px solid rgba(251, 113, 133, 0.2);
+      }
+      .xp-overview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-md);
+        margin-bottom: var(--space-lg);
+        flex-wrap: wrap;
+      }
+      .xp-overview-header h3 {
+        margin: 0;
+        font-size: var(--text-2xl);
+        color: #fb7185;
+      }
+      .xp-overview-note {
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+        margin: 0;
+      }
+    </style>
   </head>
   <body>
     {% include '_nav.html' %}
     
-    <main class="container">
+    <main class="container" style="padding-top: var(--space-3xl);">
       <!-- Django Messages -->
       {% if messages %}
         <div class="mt-xl">
@@ -40,26 +143,12 @@
               {% endif %}
             </p>
 
-            <!-- Compact XP Display -->
-            {% if user_profile %}
-            <div style="display: flex; gap: var(--space-md); margin-top: var(--space-md); flex-wrap: wrap;">
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-lg); color: white; display: flex; align-items: center; gap: var(--space-sm);">
-                <span style="font-size: 1.5rem;">⚡</span>
-                <div>
-                  <div style="font-size: var(--text-sm); opacity: 0.9;">Level {{ user_profile.current_level }}</div>
-                  <div style="font-weight: 700; font-size: var(--text-lg);">{{ user_profile.total_xp|floatformat:0 }} XP</div>
-                </div>
-              </div>
-              <div style="flex: 1; min-width: 200px;">
-                <div style="font-size: var(--text-xs); margin-bottom: var(--space-xs); color: var(--text-secondary);">
-                  Progress to Level {{ user_profile.current_level|add:1 }} ({{ xp_progress_percent|floatformat:0 }}%)
-                </div>
-                <div style="width: 100%; height: 12px; background: var(--gray-200); border-radius: var(--radius-full); overflow: hidden;">
-                  <div style="height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); width: {{ xp_progress_percent }}%; transition: width 0.5s ease;"></div>
-                </div>
-                <div style="font-size: var(--text-xs); margin-top: var(--space-xs); color: var(--text-secondary);">
-                  {{ xp_to_next_level }} XP to next level
-                </div>
+            {% if current_language_metadata %}
+            <div class="current-language-pill">
+              <span class="flag">{{ current_language_metadata.flag }}</span>
+              <div class="details">
+                <span class="label">Current Language</span>
+                <span class="name">{{ current_language_metadata.native_name }}</span>
               </div>
             </div>
             {% endif %}
@@ -91,33 +180,68 @@
           </div>
         </div>
       </section>
-      
-      <!-- Placement Test CTA (Dynamic for Multiple Languages) -->
-      {% if pending_languages %}
-        <section class="card card-bordered fade-in-up delay-100" style="background: linear-gradient(135deg, #fff3cd 0%, #fef3c7 100%);">
-          <div class="card-body text-center">
-            <h3 class="text-3xl font-bold mb-md" style="color: #92400e;">📝 Discover Your Language Proficiency</h3>
-            <p class="text-lg mb-md" style="color: #92400e;">Take a quick placement test to unlock personalized lessons!</p>
 
-            {% if pending_languages|length == 1 %}
-              <!-- Single language available -->
-              <p class="mb-xl" style="color: #78350f; font-weight: 600;">Available: {{ pending_languages.0 }}</p>
-              <a href="{% url 'onboarding_welcome' %}?language={{ pending_languages.0 }}" class="btn btn-accent btn-lg">
-                Start {{ pending_languages.0 }} Test →
-              </a>
-            {% else %}
-              <!-- Multiple languages available -->
-              <p class="mb-lg" style="color: #78350f;">Choose a language to test:</p>
-              <div style="display: flex; flex-wrap: wrap; gap: var(--space-md); justify-content: center;">
-                {% for language in pending_languages %}
-                  <a href="{% url 'onboarding_welcome' %}?language={{ language }}" class="btn btn-accent">
-                    {{ language }}
-                  </a>
-                {% endfor %}
-              </div>
-            {% endif %}
+      {% if overall_xp_row or language_stats %}
+      <section class="card mt-2xl fade-in-up xp-overview-card">
+        <div class="card-body">
+          <div class="xp-overview-header">
+            <h3>XP Overview</h3>
+            <p class="xp-overview-note">Track how close you are to the next milestone</p>
           </div>
-        </section>
+          <div style="overflow-x: auto;">
+            <table class="xp-table">
+              <thead>
+                <tr>
+                  <th>Language</th>
+                  <th>Level</th>
+                  <th>Total XP</th>
+                  <th style="width: 240px;">Progress</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if overall_xp_row %}
+                <tr>
+                  <td><strong>{{ overall_xp_row.label }}</strong></td>
+                  <td>{{ overall_xp_row.level }}</td>
+                  <td>{{ overall_xp_row.xp|floatformat:0 }}</td>
+                  <td>
+                    <div class="xp-progress-track">
+                      <div class="xp-progress-fill" style="width: {{ overall_xp_row.progress_percent }}%;"></div>
+                    </div>
+                    <div class="text-xs text-secondary mt-xxs">{{ overall_xp_row.xp_to_next }} XP to next level</div>
+                  </td>
+                </tr>
+                {% endif %}
+                {% for stat in language_stats %}
+                <tr>
+                  <td>
+                    <div class="language-name">
+                      <span style="font-size: 1.5rem;">{{ stat.flag }}</span>
+                      <div>
+                        <strong>{{ stat.native_name }}</strong>
+                        <div class="text-xs text-secondary">{{ stat.proficiency }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ stat.level }}</td>
+                  <td>{{ stat.xp|floatformat:0 }}</td>
+                  <td>
+                    <div class="xp-progress-track">
+                      <div class="xp-progress-fill" style="width: {{ stat.progress_percent }}%;"></div>
+                    </div>
+                    <div class="text-xs text-secondary mt-xxs">{{ stat.xp_to_next }} XP to next level</div>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center text-secondary">No XP data yet. Complete a lesson to see progress!</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
       {% endif %}
 
       <!-- Daily Challenge Card -->

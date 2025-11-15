@@ -130,12 +130,12 @@
                     <label class="option">
                         <input type="radio" 
                                name="question_{{ q.id }}" 
-                               value="{{ forloop.counter0 }}"
+                               value="{{ option.index }}"
                                data-question-id="{{ q.id }}"
                                required
                                style="margin-right: 0.5rem;">
-                        <span>{{ option }}</span>
-                        <button class="pronounce-inline-btn" type="button" aria-label="Play pronunciation" data-speak-text="{{ option }}" data-speak-lang="{{ speech_code }}">🔊</button>
+                        <span>{{ option.text }}</span>
+                        <button class="pronounce-inline-btn" type="button" aria-label="Play pronunciation" data-speak-text="{{ option.text }}" data-speak-lang="{{ speech_code }}">🔊</button>
                     </label>
                     {% endfor %}
                 </div>
