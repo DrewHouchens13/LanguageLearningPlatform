@@ -37,6 +37,13 @@ from django.utils.http import url_has_allowed_host_and_scheme, urlsafe_base64_en
 from django.views.decorators.http import require_http_methods, require_POST
 
 # Local application imports
+from .language_registry import (
+    DEFAULT_LANGUAGE,
+    LANGUAGE_METADATA,
+    get_language_metadata,
+    get_supported_languages,
+    normalize_language_name,
+)
 from .models import (
     DailyQuest,
     DailyQuestQuestion,
@@ -51,6 +58,7 @@ from .models import (
     UserDailyQuestAttempt,
     UserProfile,
     UserProgress,
+    UserLanguageProfile,
 )
 from .services.onboarding_service import OnboardingService
 
@@ -90,15 +98,44 @@ def block_if_onboarding_completed(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         """Wrapper function that checks onboarding completion status."""
+        selected_language = normalize_language_name(request.GET.get('language'))
+
         # Check authenticated users
         if request.user.is_authenticated:
             try:
                 user_profile = UserProfile.objects.get(user=request.user)
-                if user_profile.has_completed_onboarding:
-                    messages.info(request, "You've already completed the placement assessment.")
-                    return redirect('dashboard')
             except UserProfile.DoesNotExist:
-                pass  # No profile, allow access
+                user_profile = None
+
+            preferred_language = selected_language
+            if not preferred_language:
+                if user_profile and user_profile.target_language:
+                    preferred_language = normalize_language_name(user_profile.target_language)
+                else:
+                    preferred_language = DEFAULT_LANGUAGE
+
+            existing_language_profile = UserLanguageProfile.objects.filter(
+                user=request.user,
+                language=preferred_language,
+                has_completed_onboarding=True
+            ).first()
+
+            if existing_language_profile:
+                messages.info(
+                    request,
+                    f"You've already completed the {preferred_language} placement assessment."
+                )
+                return redirect('dashboard')
+            elif (
+                user_profile
+                and user_profile.has_completed_onboarding
+                and preferred_language == normalize_language_name(user_profile.target_language or DEFAULT_LANGUAGE)
+            ):
+                messages.info(
+                    request,
+                    "You've already completed the placement assessment."
+                )
+                return redirect('dashboard')
         
         # Check guest session
         attempt_id = request.session.get('onboarding_attempt_id')
@@ -443,6 +480,70 @@ def _find_user_by_username_or_email(request, username_or_email):
             return None
 
 
+def _get_or_create_language_profile(user, language):
+    """Return the per-language profile for a user (auto-creates if missing)."""
+    normalized_language = normalize_language_name(language)
+    profile, _ = UserLanguageProfile.objects.get_or_create(
+        user=user,
+        language=normalized_language
+    )
+    return profile
+
+
+def _upsert_language_onboarding(user, language, proficiency_level, completed_at=None):
+    """Update onboarding metadata for a specific language."""
+    language_profile = _get_or_create_language_profile(user, language)
+    language_profile.proficiency_level = proficiency_level
+    language_profile.has_completed_onboarding = True
+    language_profile.onboarding_completed_at = completed_at or timezone.now()
+    language_profile.save(update_fields=[
+        'proficiency_level',
+        'has_completed_onboarding',
+        'onboarding_completed_at',
+        'updated_at',
+    ])
+    return language_profile
+
+
+def _increment_language_study_stats(user, language, minutes=0, lessons=0, quizzes=0):
+    """Increment per-language study counters."""
+    if minutes <= 0 and lessons <= 0 and quizzes <= 0:
+        return None
+
+    language_profile = _get_or_create_language_profile(user, language)
+    changed_fields = []
+
+    if minutes > 0:
+        language_profile.total_minutes_studied += minutes
+        changed_fields.append('total_minutes_studied')
+
+    if lessons > 0:
+        language_profile.total_lessons_completed += lessons
+        changed_fields.append('total_lessons_completed')
+
+    if quizzes > 0:
+        language_profile.total_quizzes_taken += quizzes
+        changed_fields.append('total_quizzes_taken')
+
+    if changed_fields:
+        changed_fields.append('updated_at')
+        language_profile.save(update_fields=changed_fields)
+
+    return language_profile
+
+
+def _award_language_xp(user, language, amount):
+    """Award XP for a specific language profile."""
+    if amount <= 0:
+        return None
+    language_profile = _get_or_create_language_profile(user, language)
+    try:
+        return language_profile.award_xp(amount)
+    except (ValueError, TypeError):
+        logger.error('Failed to award %s XP for %s (%s)', amount, user.username, language)
+        return None
+
+
 def _link_onboarding_attempt_to_user(request, user):
     """Link guest onboarding attempt to newly authenticated user (SOFA extracted)."""
     onboarding_attempt_id = request.session.get('onboarding_attempt_id')
@@ -467,17 +568,25 @@ def _link_onboarding_attempt_to_user(request, user):
                 not user_profile.onboarding_completed_at or
                 attempt.completed_at > user_profile.onboarding_completed_at):
 
+                normalized_language = normalize_language_name(attempt.language)
                 user_profile.proficiency_level = attempt.calculated_level
                 user_profile.has_completed_onboarding = True
                 user_profile.onboarding_completed_at = attempt.completed_at or timezone.now()
-                user_profile.target_language = attempt.language
+                user_profile.target_language = normalized_language
                 user_profile.save()
+                _upsert_language_onboarding(
+                    user,
+                    normalized_language,
+                    attempt.calculated_level,
+                    attempt.completed_at
+                )
 
                 # Populate stats from guest onboarding
                 QuizResult.objects.create(
                     user=user,
                     quiz_id=f'onboarding_{attempt.language}',
                     quiz_title=f'{attempt.language} Placement Assessment',
+                    language=normalized_language,
                     score=attempt.total_score,
                     total_questions=attempt.total_possible
                 )
@@ -493,6 +602,12 @@ def _link_onboarding_attempt_to_user(request, user):
                 user_progress.total_quizzes_taken += 1
                 user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
                 user_progress.save()
+                _increment_language_study_stats(
+                    user,
+                    normalized_language,
+                    minutes=total_time_minutes,
+                    quizzes=1
+                )
 
             logger.info('Linked onboarding attempt %s to user %s', attempt.id, user.username)
 
@@ -704,17 +819,26 @@ def signup_view(request):
                 
                 # Create user profile with onboarding data
                 user_profile, _ = UserProfile.objects.get_or_create(user=user)
+                normalized_language = normalize_language_name(attempt.language)
                 user_profile.proficiency_level = attempt.calculated_level
                 user_profile.has_completed_onboarding = True
                 user_profile.onboarding_completed_at = attempt.completed_at or timezone.now()
-                user_profile.target_language = attempt.language
+                user_profile.target_language = normalized_language
                 user_profile.save()
+
+                _upsert_language_onboarding(
+                    user,
+                    normalized_language,
+                    attempt.calculated_level,
+                    attempt.completed_at
+                )
                 
                 # Populate stats from guest onboarding
                 QuizResult.objects.create(
                     user=user,
                     quiz_id=f'onboarding_{attempt.language}',
                     quiz_title=f'{attempt.language} Placement Assessment',
+                    language=normalized_language,
                     score=attempt.total_score,
                     total_questions=attempt.total_possible
                 )
@@ -730,6 +854,13 @@ def signup_view(request):
                 user_progress.total_quizzes_taken += 1
                 user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
                 user_progress.save()
+
+                _increment_language_study_stats(
+                    user,
+                    normalized_language,
+                    minutes=total_time_minutes,
+                    quizzes=1
+                )
                 
                 logger.info('Linked onboarding attempt %s to new user %s', attempt.id, user.username)
                 
@@ -928,6 +1059,37 @@ def progress_view(request):
             xp_to_next = 0
             progress_percent = 0
 
+        language_profiles = UserLanguageProfile.objects.filter(user=request.user)
+        language_profile_map = {lp.language: lp for lp in language_profiles}
+        supported_languages = get_supported_languages(include_flags=True)
+
+        language_stats = []
+        pending_languages = []
+
+        for entry in supported_languages:
+            profile = language_profile_map.get(entry['name'])
+            if profile and (
+                profile.has_completed_onboarding or
+                profile.total_minutes_studied > 0 or
+                profile.total_lessons_completed > 0 or
+                profile.total_xp > 0
+            ):
+                language_stats.append({
+                    'name': entry['name'],
+                    'native_name': entry['native_name'],
+                    'flag': entry['flag'],
+                    'slug': entry['slug'],
+                    'minutes': profile.total_minutes_studied,
+                    'lessons': profile.total_lessons_completed,
+                    'xp': profile.total_xp,
+                    'quizzes': profile.total_quizzes_taken,
+                    'proficiency': profile.get_proficiency_level_display() if profile.proficiency_level else 'Not assessed',
+                    'has_completed_onboarding': profile.has_completed_onboarding,
+                    'level': profile.current_level,
+                })
+            else:
+                pending_languages.append(entry)
+
         # Prepare context for authenticated users
         context = {
             'weekly_minutes': weekly_stats['weekly_minutes'],
@@ -942,6 +1104,8 @@ def progress_view(request):
             # XP and leveling data
             'xp_to_next_level': xp_to_next,
             'xp_progress_percent': progress_percent,
+            'language_stats': language_stats,
+            'pending_languages': pending_languages,
         }
     else:
         # Context for guest users (all None/empty)
@@ -955,6 +1119,8 @@ def progress_view(request):
             'overall_accuracy': None,
             'user_profile': None,
             'latest_onboarding_attempt': None,
+            'language_stats': [],
+            'pending_languages': [],
         }
 
     return render(request, 'progress.html', context)
@@ -1332,12 +1498,33 @@ def onboarding_welcome(request):
     
     Users who have already completed onboarding are redirected to dashboard.
     """
+    selected_language = normalize_language_name(request.GET.get('language', DEFAULT_LANGUAGE))
     user_profile = None
+    selected_language_profile = None
+    language_profiles = []
+    language_profile_map = {}
+
     if request.user.is_authenticated:
         user_profile, _ = UserProfile.objects.get_or_create(user=request.user)
-    
+        language_profiles = list(UserLanguageProfile.objects.filter(user=request.user).order_by('language'))
+        language_profile_map = {lp.language: lp for lp in language_profiles}
+        selected_language_profile = next(
+            (lp for lp in language_profiles if lp.language == selected_language),
+            None
+        )
+
+    supported_languages = get_supported_languages()
+    for entry in supported_languages:
+        entry['profile'] = language_profile_map.get(entry['name'])
+
     context = {
-        'user_profile': user_profile
+        'user_profile': user_profile,
+        'language_profiles': language_profiles,
+        'language_profile_map': language_profile_map,
+        'selected_language_profile': selected_language_profile,
+        'selected_language': selected_language,
+        'language_metadata': get_language_metadata(selected_language),
+        'supported_languages': supported_languages,
     }
     return render(request, 'onboarding/welcome.html', context)
 
@@ -1355,7 +1542,7 @@ def onboarding_quiz(request):
     Creates OnboardingAttempt with started_at timestamp.
     """
     # Get questions for language (Spanish default)
-    language = request.GET.get('language', 'Spanish')
+    language = normalize_language_name(request.GET.get('language', DEFAULT_LANGUAGE))
     service = OnboardingService()
     questions = service.get_questions_for_language(language)
     
@@ -1381,7 +1568,8 @@ def onboarding_quiz(request):
         'questions': questions,
         'attempt_id': attempt.id,
         'language': language,
-        'is_guest': not request.user.is_authenticated
+        'is_guest': not request.user.is_authenticated,
+        'speech_code': get_language_metadata(language).get('speech_code', 'en-US'),
     }
     
     return render(request, 'onboarding/quiz.html', context)
@@ -1491,16 +1679,26 @@ def submit_onboarding(request):
         # For authenticated users, update profile AND stats
         if request.user.is_authenticated:
             user_profile, _created = UserProfile.objects.get_or_create(user=request.user)
+            normalized_language = normalize_language_name(attempt.language)
             user_profile.proficiency_level = calculated_level
             user_profile.has_completed_onboarding = True
             user_profile.onboarding_completed_at = timezone.now()
+            user_profile.target_language = normalized_language
             user_profile.save()
+
+            _upsert_language_onboarding(
+                request.user,
+                normalized_language,
+                calculated_level,
+                attempt.completed_at
+            )
             
             # Create QuizResult for stats tracking
             QuizResult.objects.create(
                 user=request.user,
                 quiz_id=f'onboarding_{attempt.language}',
                 quiz_title=f'{attempt.language} Placement Assessment',
+                language=normalized_language,
                 score=total_score,
                 total_questions=total_possible
             )
@@ -1516,6 +1714,13 @@ def submit_onboarding(request):
             user_progress.total_quizzes_taken += 1
             user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
             user_progress.save()
+
+            _increment_language_study_stats(
+                request.user,
+                normalized_language,
+                minutes=total_time_minutes,
+                quizzes=1
+            )
             
             logger.info('Onboarding completed for user %s: %s (%s/%s)', request.user.username, calculated_level, total_score, total_possible)
         else:
@@ -1651,7 +1856,7 @@ def onboarding_results(request):
 #    - Fully responsive grid layout
 #
 # HOW TO ADD A NEW LANGUAGE:
-# 1. Add language metadata to LANGUAGE_METADATA constant below
+# 1. Add language metadata to home/language_registry.py
 # 2. Create lessons in database with language='NewLanguage'
 # 3. Page will automatically display new language button
 # 4. No template changes needed!
@@ -1674,21 +1879,6 @@ def onboarding_results(request):
 #
 # =============================================================================
 
-# Language metadata: native names and flag emojis (DRY - single source of truth)
-LANGUAGE_METADATA = {
-    'Spanish': {'native_name': 'Español', 'flag': '🇪🇸'},
-    'French': {'native_name': 'Français', 'flag': '🇫🇷'},
-    'German': {'native_name': 'Deutsch', 'flag': '🇩🇪'},
-    'Italian': {'native_name': 'Italiano', 'flag': '🇮🇹'},
-    'Japanese': {'native_name': '日本語', 'flag': '🇯🇵'},
-    'Chinese': {'native_name': '中文', 'flag': '🇨🇳'},
-    'Portuguese': {'native_name': 'Português', 'flag': '🇵🇹'},
-    'Russian': {'native_name': 'Русский', 'flag': '🇷🇺'},
-    'Korean': {'native_name': '한국어', 'flag': '🇰🇷'},
-    'Arabic': {'native_name': 'العربية', 'flag': '🇸🇦'},
-}
-
-
 def _build_language_data(language, lessons):
     """
     Helper function to build language data dict with metadata.
@@ -1701,15 +1891,12 @@ def _build_language_data(language, lessons):
     Returns:
         Dict with {name, native_name, flag, lesson_count, lessons}
     """
-    metadata = LANGUAGE_METADATA.get(language, {
-        'native_name': language,  # Fallback to English name
-        'flag': '🌐'  # Default flag
-    })
+    metadata = get_language_metadata(language)
 
     return {
         'name': language,
-        'native_name': metadata['native_name'],
-        'flag': metadata['flag'],
+        'native_name': metadata.get('native_name', language),
+        'flag': metadata.get('flag', '🌐'),
         'lesson_count': len(lessons),
         'lessons': lessons
     }
@@ -1796,8 +1983,8 @@ def lessons_by_language(request, language):
         # Invalid characters detected (e.g., SQL injection attempt)
         raise Http404("Invalid language parameter")
 
-    # Capitalize first letter to match database format
-    language = language.capitalize()
+    # Normalize to match metadata/database format
+    language = normalize_language_name(language)
 
     # Get lessons for the specified language
     lessons = Lesson.objects.filter(
@@ -1862,7 +2049,12 @@ def lesson_detail(request, lesson_id):
     """Display lesson detail with flashcards."""
     lesson = get_object_or_404(Lesson, id=lesson_id, is_published=True)
     cards = lesson.cards.all()
-    context = {'lesson': lesson, 'cards': cards}
+    metadata = get_language_metadata(lesson.language)
+    context = {
+        'lesson': lesson,
+        'cards': cards,
+        'speech_code': metadata.get('speech_code', 'en-US'),
+    }
     return render(request, 'lessons/lesson_detail.html', context)
 
 
@@ -1880,7 +2072,12 @@ def lesson_quiz(request, lesson_id):
         })
     # Use dynamic template based on lesson slug
     template_name = f'lessons/{lesson.slug}/quiz.html'
-    return render(request, template_name, {'lesson': lesson, 'questions': qlist})
+    metadata = get_language_metadata(lesson.language)
+    return render(request, template_name, {
+        'lesson': lesson,
+        'questions': qlist,
+        'speech_code': metadata.get('speech_code', 'en-US'),
+    })
 
 
 @require_http_methods(["POST"])
@@ -1958,6 +2155,7 @@ def submit_lesson_quiz(request, lesson_id):
             user=request.user,
             quiz_id=f'lesson_{lesson.id}',
             quiz_title=lesson.title,
+            language=lesson.language,
             score=score,
             total_questions=total
         )
@@ -1967,6 +2165,7 @@ def submit_lesson_quiz(request, lesson_id):
             user=request.user,
             lesson_id=str(lesson.id),
             lesson_title=lesson.title,
+            language=lesson.language,
             duration_minutes=5  # Estimated time per lesson quiz
         )
 
@@ -1998,6 +2197,8 @@ def submit_lesson_quiz(request, lesson_id):
             logger.error('Failed to award XP for user %s: %s', request.user.username, str(e))
             xp_result = None
 
+        language_xp_result = _award_language_xp(request.user, lesson.language, total_xp_awarded)
+
         # Update UserProgress
         user_progress, _ = UserProgress.objects.get_or_create(user=request.user)
         user_progress.total_quizzes_taken += 1
@@ -2005,6 +2206,14 @@ def submit_lesson_quiz(request, lesson_id):
         user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
         user_progress.update_streak()  # Update streak when lesson completed
         user_progress.save()
+
+        _increment_language_study_stats(
+            request.user,
+            lesson.language,
+            minutes=5,
+            lessons=1,
+            quizzes=1
+        )
 
         # Check if this completes daily quests (Sprint 3 - Issue #18)
         quest_info = check_and_complete_daily_quests(request.user, lesson)
@@ -2030,6 +2239,14 @@ def submit_lesson_quiz(request, lesson_id):
                 'new_level': xp_result['new_level'],
                 'old_level': xp_result['old_level']
             }
+            if language_xp_result:
+                response_data['language_xp'] = {
+                    'language': lesson.language,
+                    'awarded': language_xp_result['xp_awarded'],
+                    'total': language_xp_result['total_xp'],
+                    'leveled_up': language_xp_result['leveled_up'],
+                    'new_level': language_xp_result['new_level'],
+                }
         
         # Add quest info if quest was completed (Sprint 3 - Issue #18)
         if request.user.is_authenticated and quest_info:

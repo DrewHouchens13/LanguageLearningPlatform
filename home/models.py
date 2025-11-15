@@ -13,6 +13,8 @@ import hashlib
 import os
 import logging
 
+from .language_registry import DEFAULT_LANGUAGE
+
 # Configure logger for error tracking
 logger = logging.getLogger(__name__)
 
@@ -70,7 +72,7 @@ class UserProfile(models.Model):
     onboarding_completed_at = models.DateTimeField(null=True, blank=True)
 
     # Learning preferences
-    target_language = models.CharField(max_length=50, default='Spanish')
+    target_language = models.CharField(max_length=50, default=DEFAULT_LANGUAGE)
     daily_goal_minutes = models.IntegerField(default=15)
     learning_motivation = models.TextField(blank=True)
 
@@ -352,6 +354,161 @@ class UserProfile(models.Model):
             raise DatabaseError(f"Failed to award XP: {str(e)}") from e
 
 
+class UserLanguageProfile(models.Model):
+    """
+    Track per-language learning progress, onboarding status, and XP.
+
+    Designed so users can study multiple languages in parallel without losing
+    their overall profile statistics. Each record corresponds to one language
+    for a given user.
+    """
+
+    LEVEL_CHOICES = [
+        ('A1', 'Beginner (A1)'),
+        ('A2', 'Elementary (A2)'),
+        ('B1', 'Intermediate (B1)'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='language_profiles'
+    )
+    language = models.CharField(max_length=50)
+
+    # Onboarding / proficiency tracking
+    proficiency_level = models.CharField(
+        max_length=2,
+        choices=LEVEL_CHOICES,
+        null=True,
+        blank=True
+    )
+    has_completed_onboarding = models.BooleanField(default=False)
+    onboarding_completed_at = models.DateTimeField(null=True, blank=True)
+
+    # Study stats (per language)
+    total_minutes_studied = models.IntegerField(default=0)
+    total_lessons_completed = models.IntegerField(default=0)
+    total_quizzes_taken = models.IntegerField(default=0)
+
+    # XP + leveling mirrors global profile but scoped to the language
+    total_xp = models.PositiveIntegerField(default=0)
+    current_level = models.PositiveIntegerField(default=1)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "User Language Profile"
+        verbose_name_plural = "User Language Profiles"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'language'],
+                name='unique_user_language_profile'
+            )
+        ]
+        ordering = ['language']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.language}"
+
+    def save(self, *args, **kwargs):
+        """Normalize language names for consistency."""
+        if self.language:
+            self.language = self.language.strip().title()
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def _calculate_level_from_xp(total_xp):
+        """Helper to calculate CEFR-like level progression from XP."""
+        level = 1
+        while total_xp >= UserProfile.get_xp_for_level(level + 1):
+            level += 1
+        return level
+
+    def get_xp_to_next_level(self):
+        """Return XP needed to reach the next level."""
+        next_level = self.current_level + 1
+        return max(0, UserProfile.get_xp_for_level(next_level) - self.total_xp)
+
+    def get_progress_to_next_level(self):
+        """Return percentage progress toward the next level."""
+        current_level_xp = UserProfile.get_xp_for_level(self.current_level)
+        next_level_xp = UserProfile.get_xp_for_level(self.current_level + 1)
+        xp_span = next_level_xp - current_level_xp
+        if xp_span <= 0:
+            return 100.0
+        xp_in_level = self.total_xp - current_level_xp
+        return min(100.0, max(0.0, (xp_in_level / xp_span) * 100))
+
+    @transaction.atomic
+    def award_xp(self, amount):
+        """
+        Award XP scoped to this language profile.
+
+        Mirrors UserProfile.award_xp but keeps progress per language.
+        """
+        if not isinstance(amount, (int, float)):
+            raise TypeError(f"XP amount must be numeric, got {type(amount).__name__}")
+
+        amount = int(amount)
+        if amount < 0:
+            raise ValueError(f"XP amount must be non-negative, got {amount}")
+        if amount == 0:
+            return {
+                'xp_awarded': 0,
+                'total_xp': self.total_xp,
+                'leveled_up': False,
+                'new_level': None,
+                'old_level': self.current_level
+            }
+
+        max_positive_int = 2147483647
+        if self.total_xp + amount > max_positive_int:
+            raise ValueError(
+                f"XP overflow: {self.total_xp} + {amount} = {self.total_xp + amount} "
+                f"exceeds maximum ({max_positive_int})"
+            )
+
+        with transaction.atomic():
+            old_level = self.current_level
+            self.total_xp += amount
+            new_level = self._calculate_level_from_xp(self.total_xp)
+            leveled_up = new_level > old_level
+            if leveled_up:
+                self.current_level = new_level
+                self.save(update_fields=['total_xp', 'current_level'])
+            else:
+                self.save(update_fields=['total_xp'])
+
+            return {
+                'xp_awarded': amount,
+                'total_xp': self.total_xp,
+                'leveled_up': leveled_up,
+                'new_level': new_level if leveled_up else None,
+                'old_level': old_level
+            }
+
+    def increment_minutes(self, minutes):
+        """Utility to add study minutes safely."""
+        if minutes <= 0:
+            return
+        self.total_minutes_studied += minutes
+        self.save(update_fields=['total_minutes_studied'])
+
+    def increment_lessons(self, count=1):
+        if count <= 0:
+            return
+        self.total_lessons_completed += count
+        self.save(update_fields=['total_lessons_completed'])
+
+    def increment_quizzes(self, count=1):
+        if count <= 0:
+            return
+        self.total_quizzes_taken += count
+        self.save(update_fields=['total_quizzes_taken'])
+
+
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     """
@@ -365,7 +522,11 @@ def create_user_profile(sender, instance, created, **kwargs):
     """
     if created:
         try:
-            UserProfile.objects.create(user=instance)
+            profile = UserProfile.objects.create(user=instance)
+            UserLanguageProfile.objects.get_or_create(
+                user=instance,
+                language=DEFAULT_LANGUAGE
+            )
         except (IntegrityError, ValidationError, ValueError, DatabaseError) as e:
             # Log specific errors but don't crash user creation
             # IntegrityError: Profile already exists (duplicate)
@@ -513,6 +674,11 @@ class LessonCompletion(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='lesson_completions')
     lesson_id = models.CharField(max_length=100)  # Reference to lesson (flexible for future)
     lesson_title = models.CharField(max_length=200, blank=True)
+    language = models.CharField(
+        max_length=50,
+        default=DEFAULT_LANGUAGE,
+        help_text='Language associated with the completed lesson'
+    )
     duration_minutes = models.IntegerField(default=0)  # Time spent on this lesson
     completed_at = models.DateTimeField(auto_now_add=True)
 
@@ -529,6 +695,11 @@ class QuizResult(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quiz_results')
     quiz_id = models.CharField(max_length=100)  # Reference to quiz (flexible for future)
     quiz_title = models.CharField(max_length=200, blank=True)
+    language = models.CharField(
+        max_length=50,
+        default=DEFAULT_LANGUAGE,
+        help_text='Language associated with the quiz content'
+    )
     score = models.IntegerField(default=0)  # Number of correct answers
     total_questions = models.IntegerField(default=0)  # Total questions in quiz
     completed_at = models.DateTimeField(auto_now_add=True)
@@ -552,7 +723,7 @@ class OnboardingQuestion(models.Model):
     """Cached multiple choice questions for onboarding assessment"""
     question_number = models.IntegerField()
     question_text = models.TextField()
-    language = models.CharField(max_length=50, default='Spanish')
+    language = models.CharField(max_length=50, default=DEFAULT_LANGUAGE)
     
     # Difficulty level (capped at B1)
     difficulty_level = models.CharField(
@@ -599,7 +770,7 @@ class OnboardingAttempt(models.Model):
         blank=True
     )
     session_key = models.CharField(max_length=100, blank=True, help_text="For guest tracking")
-    language = models.CharField(max_length=50, default='Spanish')
+    language = models.CharField(max_length=50, default=DEFAULT_LANGUAGE)
     
     # Timing
     started_at = models.DateTimeField(auto_now_add=True)
@@ -673,7 +844,7 @@ class Lesson(models.Model):
     """A language learning lesson"""
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    language = models.CharField(max_length=50, default='Spanish')
+    language = models.CharField(max_length=50, default=DEFAULT_LANGUAGE)
     difficulty_level = models.CharField(
         max_length=2,
         choices=[

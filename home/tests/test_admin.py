@@ -536,6 +536,7 @@ class TestAdminCRUDOperations(AdminTestCase):
             'lesson_id': 'lesson_001',
             'lesson_title': 'Introduction to Spanish',
             'duration_minutes': 30,
+            'language': 'Spanish',
         })
 
         # Should redirect after successful creation
@@ -558,6 +559,7 @@ class TestAdminCRUDOperations(AdminTestCase):
             'quiz_title': 'Spanish Vocabulary',
             'score': 18,
             'total_questions': 20,
+            'language': 'Spanish',
         })
 
         # Should redirect after successful creation

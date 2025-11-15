@@ -34,13 +34,13 @@ The URL patterns in home/urls.py MUST be in the correct order:
 If reversed, lesson detail pages will break! See home/urls.py for full explanation.
 
 HOW TO ADD A NEW LANGUAGE (For AI Assistants):
-1. Add metadata to LANGUAGE_METADATA in home/views.py:lessons_list
+1. Add metadata to LANGUAGE_METADATA in home/language_registry.py
 2. Create lessons in database with language='YourLanguage'
 3. This template will automatically display the new language button
 4. NO template changes needed!
 
 EXAMPLE - Adding French:
-Backend: Add to LANGUAGE_METADATA: 'French': {'native_name': 'Français', 'flag': '🇫🇷'}
+Backend: Add to LANGUAGE_METADATA: 'French': {'native_name': 'Français', 'flag': '🇫🇷', 'speech_code': 'fr-FR'}
 Database: Create lessons with language='French'
 Result: Template automatically shows "🇫🇷 Français" button
 

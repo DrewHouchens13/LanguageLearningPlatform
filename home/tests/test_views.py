@@ -2,7 +2,13 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse, resolve
 
-from home.models import UserProgress, LessonCompletion
+from home.models import (
+    UserProgress,
+    LessonCompletion,
+    UserLanguageProfile,
+    OnboardingQuestion,
+    UserProfile,
+)
 
 from home.views import landing, login_view, signup_view, logout_view, dashboard, progress_view
 
@@ -638,6 +644,30 @@ class TestProgressView(TestCase):
         for key in required_keys:
             self.assertIn(key, response.context)
 
+    def test_progress_view_includes_language_stats(self):
+        """Progress view exposes per-language stats when available."""
+        self.client.force_login(self.user)
+        UserProgress.objects.create(user=self.user)
+        UserLanguageProfile.objects.create(
+            user=self.user,
+            language='French',
+            total_minutes_studied=45,
+            total_lessons_completed=3,
+            total_quizzes_taken=2,
+            total_xp=250,
+            has_completed_onboarding=True,
+            proficiency_level='A2'
+        )
+
+        response = self.client.get(self.progress_url)
+
+        stats = response.context['language_stats']
+        self.assertEqual(len(stats), 1)
+        self.assertEqual(stats[0]['name'], 'French')
+        self.assertEqual(stats[0]['minutes'], 45)
+        self.assertEqual(stats[0]['lessons'], 3)
+        self.assertEqual(stats[0]['proficiency'], 'Elementary (A2)')
+
 class TestDashboardView(TestCase):
     """Test dashboard view"""
 
@@ -669,6 +699,75 @@ class TestDashboardView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'dashboard.html')
 
+
+
+# ============================================================================
+# ONBOARDING LANGUAGE SELECTION TESTS
+# ============================================================================
+
+class TestOnboardingLanguageSelection(TestCase):
+    """Ensure onboarding views respect language parameterization."""
+
+    def setUp(self):
+        self.client = Client()
+        self.quiz_url = reverse('onboarding_quiz')
+        self.welcome_url = reverse('onboarding_welcome')
+        self.user = User.objects.create_user(
+            username='learner',
+            email='learner@example.com',
+            password='securepass123'
+        )
+        self._create_question_set('French')
+
+    def _create_question_set(self, language):
+        """Helper to seed 10 onboarding questions for a language."""
+        OnboardingQuestion.objects.filter(language=language).delete()
+        for idx in range(10):
+            if idx < 4:
+                level = 'A1'
+                points = 1
+            elif idx < 7:
+                level = 'A2'
+                points = 2
+            else:
+                level = 'B1'
+                points = 3
+            OnboardingQuestion.objects.create(
+                question_number=idx + 1,
+                question_text=f'{language} question {idx + 1}',
+                language=language,
+                difficulty_level=level,
+                option_a='A',
+                option_b='B',
+                option_c='C',
+                option_d='D',
+                correct_answer='A',
+                difficulty_points=points,
+            )
+
+    def test_onboarding_quiz_renders_requested_language(self):
+        """Quiz view should load questions for the requested language."""
+        response = self.client.get(f'{self.quiz_url}?language=French')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['language'], 'French')
+        self.assertEqual(response.context['speech_code'], 'fr-FR')
+
+    def test_onboarding_welcome_allows_new_language(self):
+        """Users who completed one language can access another."""
+        self.client.force_login(self.user)
+        profile = self.user.profile
+        profile.has_completed_onboarding = True
+        profile.target_language = 'Spanish'
+        profile.save()
+        spanish_profile = UserLanguageProfile.objects.get(user=self.user, language='Spanish')
+        spanish_profile.has_completed_onboarding = True
+        spanish_profile.save()
+
+        response_other = self.client.get(f'{self.welcome_url}?language=French')
+        self.assertEqual(response_other.status_code, 200)
+
+        response_same = self.client.get(f'{self.welcome_url}?language=Spanish')
+        self.assertRedirects(response_same, reverse('dashboard'))
 
 
 # ============================================================================
