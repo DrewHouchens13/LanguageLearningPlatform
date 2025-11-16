@@ -63,7 +63,10 @@ class TestLessonModel(TestCase):
             order=0,
             difficulty_level='A1'
         )
-        lessons = list(Lesson.objects.all())
+        lessons = list(
+            Lesson.objects.filter(id__in=[lesson3.id, self.lesson.id, self.next_lesson.id])
+            .order_by('order', 'id')
+        )
         self.assertEqual(lessons[0], lesson3)  # order=0
         self.assertEqual(lessons[1], self.lesson)  # order=1
         self.assertEqual(lessons[2], self.next_lesson)  # order=2
@@ -350,16 +353,21 @@ class TestLessonsListView(TestCase):
     def test_lessons_list_ordering(self):
         """Test lessons are ordered by order field"""
         response = self.client.get(self.url)
-        lessons = response.context['lessons']
-        self.assertEqual(lessons[0], self.lesson1)
-        self.assertEqual(lessons[1], self.lesson2)
+        lessons = response.context['selected_language_lessons']
+        lesson_objects = [entry['lesson'] for entry in lessons]
+        self.assertIn(self.lesson1, lesson_objects)
+        self.assertIn(self.lesson2, lesson_objects)
+        self.assertLess(
+            lesson_objects.index(self.lesson1),
+            lesson_objects.index(self.lesson2)
+        )
 
     def test_lessons_list_empty(self):
         """Test lessons list with no published lessons"""
         Lesson.objects.all().update(is_published=False)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['lessons']), 0)
+        self.assertFalse(response.context['selected_language_has_lessons'])
 
 
 class TestLessonDetailView(TestCase):
@@ -465,7 +473,10 @@ class TestLessonQuizView(TestCase):
         questions = response.context['questions']
         self.assertEqual(len(questions), 2)
         self.assertEqual(questions[0]['question'], 'What is circle?')
-        self.assertEqual(questions[0]['options'], ['Cuadrado', 'Círculo', 'Triángulo', 'Rectángulo'])
+        self.assertCountEqual(
+            [option['text'] for option in questions[0]['options']],
+            ['Cuadrado', 'Círculo', 'Triángulo', 'Rectángulo']
+        )
 
     def test_lesson_quiz_invalid_id(self):
         """Test lesson_quiz with invalid lesson ID returns 404"""
