@@ -102,6 +102,34 @@
             margin-top: 1rem;
             color: #666;
         }
+        .pronounce-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(79, 70, 229, 0.12);
+            color: var(--primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            z-index: 2;
+        }
+        .pronounce-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
+        }
+        .flashcard-back .pronounce-btn {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+        }
+        .flashcard-text {
+            display: block;
+            text-align: center;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body>
@@ -120,10 +148,12 @@
                 <div class="flashcard" onclick="this.classList.toggle('flipped')">
                     <div class="flashcard-inner">
                         <div class="flashcard-front">
-                            {{ card.front_text }}
+                            <button class="pronounce-btn" type="button" aria-label="Play pronunciation" data-speak-text="{{ card.front_text }}" data-speak-lang="en-US">🔊</button>
+                            <span class="flashcard-text">{{ card.front_text }}</span>
                         </div>
                         <div class="flashcard-back">
-                            {{ card.back_text }}
+                            <button class="pronounce-btn" type="button" aria-label="Play pronunciation" data-speak-text="{{ card.back_text }}" data-speak-lang="{{ speech_code }}">🔊</button>
+                            <span class="flashcard-text">{{ card.back_text }}</span>
                         </div>
                     </div>
                 </div>
@@ -179,5 +209,6 @@
             }
         });
     </script>
+    {% include 'includes/pronunciation_script.html' with speech_code=speech_code %}
 </body>
 </html>

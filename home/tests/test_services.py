@@ -12,6 +12,7 @@ class OnboardingServiceTest(TestCase):
     
     def setUp(self):
         self.service = OnboardingService()
+        OnboardingQuestion.objects.filter(language__in=['Spanish', 'French']).delete()
         # Create 10 test questions for get_questions tests
         for i in range(1, 11):
             difficulty = 'A1' if i <= 4 else ('A2' if i <= 7 else 'B1')
@@ -133,6 +134,7 @@ class OnboardingServiceTest(TestCase):
     
     def test_get_questions_filters_by_language(self):
         """Test language filtering"""
+        OnboardingQuestion.objects.filter(language='French').delete()
         OnboardingQuestion.objects.create(
             question_number=1, question_text='French Q', language='French',
             difficulty_level='A1', option_a='A', option_b='B',

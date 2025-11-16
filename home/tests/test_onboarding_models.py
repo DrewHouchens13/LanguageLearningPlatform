@@ -80,7 +80,7 @@ class TestOnboardingQuestionModel(TestCase):
     def test_onboarding_question_diff_langs_same_num(self):
         """Test same question number allowed for different languages"""
         OnboardingQuestion.objects.create(
-            question_number=1,
+            question_number=101,
             question_text='Spanish question',
             language='Spanish',
             difficulty_level='A1',
@@ -90,7 +90,7 @@ class TestOnboardingQuestionModel(TestCase):
         
         # Should allow same question_number for different language
         french_question = OnboardingQuestion.objects.create(
-            question_number=1,
+            question_number=101,
             question_text='French question',
             language='French',
             difficulty_level='A1',

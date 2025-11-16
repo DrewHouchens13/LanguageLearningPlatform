@@ -3,81 +3,28 @@
 ================================================================================
 
 PURPOSE:
-This template displays the Daily Challenge page where users answer 5 quiz questions
-from their completed (or available) lessons to earn XP.
+This template presents the reimagined Daily Challenge, where learners earn XP by
+completing a meaningful action (new-language onboarding or a lesson in their
+current language) instead of filling out a quiz.
 
 URL: /quests/daily/
 BACKEND: home/views.py:daily_quest_view
 SERVICE: home/services/daily_quest_service.py
 
-HOW IT WORKS:
-1. Backend generates ONE daily quest with 5 questions (via DailyQuestService)
-2. Questions are personalized based on user's completed lessons
-3. User selects answers using radio buttons
-4. Form submits to /quests/daily/submit/
-5. Backend calculates score and awards XP
+KEY IDEAS:
+1. Users see today's status, reward, and recommended actions.
+2. Completing either action awards the XP automatically (logged server-side).
+3. Weekly and lifetime stats reinforce consistency.
 
-TEMPLATE VARIABLES RECEIVED:
-- quest: DailyQuest object (has date, xp_reward, is_active)
-- questions: List of DailyQuestQuestion objects (5 items)
-- has_completed_today: Boolean (True if user already completed today's quest)
-- user_attempt: UserDailyQuestAttempt object (if completed)
-
-QUESTION DISPLAY LOGIC:
-Each question displays:
-- Question text (e.g., "What color is 'rojo'?")
-- 4 radio button options (from question.options JSON field)
-- Hidden input with correct answer index (for submission)
-
-FORM SUBMISSION:
-- Method: POST
-- Action: {% url 'daily_quest_submit' %}
-- CSRF token included
-- Data: question_{id}={selected_index} for each question
-
-COMPLETION STATES:
-1. NOT COMPLETED:
-   - Shows 5 questions with radio buttons
-   - Submit button enabled
-   - XP reward displayed
-
-2. ALREADY COMPLETED:
-   - Shows score and XP earned
-   - Submit button disabled or hidden
-   - Message: "You've already completed today's challenge!"
-
-XP REWARDS:
-- Base: 50 XP
-- Bonus: +10 XP per correct answer (max 50)
-- Perfect score: 100 XP total
-
-HOW MULTI-LANGUAGE WORKS:
-Questions automatically come from ALL completed lessons across ALL languages:
-- User completed Spanish Colors → Spanish color questions in pool
-- User completed French Greetings → French greeting questions in pool
-- Daily quest randomly selects 5 from combined pool
-- NO template changes needed for new languages!
-
-EXAMPLE - User with multiple languages:
-User has completed:
-- Spanish: Colors, Shapes
-- French: Greetings, Numbers
-Daily quest might include:
-- Q1: Spanish color
-- Q2: French greeting
-- Q3: Spanish shape
-- Q4: French number
-- Q5: Spanish color
-(Randomized each day)
+TEMPLATE VARIABLES:
+- challenge: dict from DailyQuestService.get_today_challenge()
+- weekly_stats: dict summarizing trailing 7-day activity
+- lifetime_stats: dict summarizing all-time challenge activity
 
 RELATED FILES:
-- home/services/daily_quest_service.py - Quest generation logic
-- home/views.py (daily_quest_view, daily_quest_submit) - Request handlers
-- home/models.py (DailyQuest, DailyQuestQuestion, UserDailyQuestAttempt)
-
-TESTING:
-- See tests/test_daily_quest.py for test coverage
-- See local_testing/test_daily_quest_fix.py for live testing
+- home/services/daily_quest_service.py - challenge logic
+- home/templates/dashboard.html - dashboard card variant
+- home/templates/home/quest_history.html - historical log view
 
 ================================================================================
 -->
@@ -110,113 +57,83 @@ TESTING:
         </div>
       {% endif %}
 
-      <!-- Daily Challenge Header -->
       <section class="fade-in" style="margin-top: var(--space-xl);">
         <div class="text-center mb-lg">
           <h1 class="page-title">Daily Challenge 🎯</h1>
-          <p class="text-muted">Answer 5 random questions to earn XP!</p>
-          <p class="text-muted">{{ quest.date|date:"F j, Y" }}</p>
+          <p class="text-muted">Earn bonus XP by taking action every day.</p>
+          <p class="text-muted">{% if challenge %}{{ challenge.date|date:"F j, Y" }}{% endif %}</p>
         </div>
 
-        {% if error %}
-          <!-- Error State -->
+        {% if not challenge %}
           <div class="card card-bordered fade-in-up" style="max-width: 700px; margin: 0 auto;">
             <div class="card-body text-center">
               <div style="font-size: 3rem; margin-bottom: var(--space-md);">⚠️</div>
               <h2 class="card-title mb-sm">Challenge Not Available</h2>
-              <p class="text-muted mb-lg">{{ error }}</p>
+              <p class="text-muted mb-lg">We couldn't load today's challenge. Please try again shortly.</p>
               <a href="{% if IS_DEVEDU %}../../dashboard/{% else %}{% url 'dashboard' %}{% endif %}" class="btn btn-primary">
                 Back to Dashboard
               </a>
             </div>
           </div>
+        {% else %}
+          <div class="card card-bordered fade-in-up" style="max-width: 800px; margin: 0 auto;">
+            <div class="card-body">
+              <div style="display: flex; flex-direction: column; gap: var(--space-lg);">
+                <div>
+                  <p class="challenge-label">Today's Daily Challenge</p>
+                  <h2 class="card-title" style="margin: 0;">Complete the task below</h2>
+                  <p class="text-muted" style="margin-top: var(--space-xs);">Earn {{ challenge.xp_reward }} XP by finishing today's assignment.</p>
+                </div>
 
-        {% elif attempt and attempt.is_completed %}
-          <!-- Completed State -->
-          <div class="card card-bordered fade-in-up" style="max-width: 700px; margin: 0 auto;">
-            <div class="card-body text-center">
-              <div style="font-size: 4rem; margin-bottom: var(--space-md);">🎉</div>
-              <h2 class="card-title mb-sm">Challenge Completed!</h2>
-              <p class="text-muted mb-md">Great work! Here are your results:</p>
+                {% if challenge.completed %}
+                  <div style="display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-md); background: rgba(16, 185, 129, 0.15); border-radius: var(--radius-md);">
+                    <span style="font-size: 1.8rem;">✅</span>
+                    <div>
+                      <p style="font-weight: 600; color: var(--color-success); margin: 0;">Challenge Completed!</p>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">Come back tomorrow for a new task.</p>
+                    </div>
+                  </div>
+                {% else %}
+                  <div class="action-card">
+                    <p class="text-muted" style="margin-bottom: var(--space-xxs); text-transform: uppercase; letter-spacing: 0.1em; font-size: var(--text-xs);">
+                      {% if challenge.challenge_type == 'onboarding' %}Onboarding Challenge{% else %}Lesson Challenge{% endif %}
+                    </p>
+                    <h4 style="margin: 0;">{{ challenge.primary_action.label }}</h4>
+                    <p class="text-muted" style="font-size: var(--font-size-sm); margin-top: var(--space-xs);">
+                      {{ challenge.primary_action.description }}
+                    </p>
+                    <a href="{% firstof challenge.primary_action.cta_url '#' %}" class="btn btn-primary mt-sm" style="display: inline-flex; align-items: center; gap: var(--space-xs);" rel="noopener noreferrer">
+                      <span>{{ challenge.primary_action.icon }}</span>
+                      <span>{{ challenge.primary_action.cta_label }}</span>
+                    </a>
+                  </div>
+                {% endif %}
 
-              <div style="background: var(--color-surface); padding: var(--space-lg); border-radius: var(--radius-md); margin-bottom: var(--space-lg);">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-md);">
+                <div style="border-top: 1px solid var(--border); padding-top: var(--space-md); display: flex; gap: var(--space-md); align-items: center;">
+                  <span style="font-size: 1.75rem;">⭐</span>
                   <div>
-                    <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Score</p>
-                    <p style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-primary);">{{ attempt.score }}/{{ attempt.total_questions }}</p>
-                  </div>
-                  <div>
-                    <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">XP Earned</p>
-                    <p style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--color-success);">+{{ attempt.xp_earned }}</p>
-                  </div>
-                  <div>
-                    <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Accuracy</p>
-                    <p style="font-size: var(--font-size-2xl); font-weight: 700;">{% widthratio attempt.score attempt.total_questions 100 %}%</p>
+                    <strong>Finish the challenge, earn XP</strong>
+                    <p class="text-muted" style="margin: 0;">Complete today's assignment to instantly bank {{ challenge.xp_reward }} XP and keep your momentum going.</p>
                   </div>
                 </div>
-              </div>
-
-              <p class="text-muted mb-lg">Come back tomorrow for a new challenge!</p>
-
-              <div style="display: flex; gap: var(--space-md); justify-content: center; flex-wrap: wrap;">
-                <a href="{% if IS_DEVEDU %}../../dashboard/{% else %}{% url 'dashboard' %}{% endif %}" class="btn btn-outline">
-                  Back to Dashboard
-                </a>
-                <a href="{% if IS_DEVEDU %}../history/{% else %}{% url 'quest_history' %}{% endif %}" class="btn btn-primary">
-                  View Challenge History
-                </a>
               </div>
             </div>
           </div>
 
-        {% else %}
-          <!-- Active Challenge -->
-          <div class="card card-bordered fade-in-up" style="max-width: 800px; margin: 0 auto;">
-            <div class="card-body">
-              <div class="mb-lg">
-                <h2 class="card-title mb-sm">{{ quest.title }}</h2>
-                <p class="text-muted">{{ quest.description }}</p>
-                <div style="display: flex; align-items: center; gap: var(--space-sm); margin-top: var(--space-md);">
-                  <span>⭐</span>
-                  <span style="font-weight: 600; color: var(--color-success);">Reward: {{ quest.xp_reward }} XP</span>
-                </div>
+          <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-lg); margin-top: var(--space-2xl);">
+            <div class="card card-bordered fade-in-up">
+              <div class="card-body">
+                <p class="text-muted" style="margin-bottom: var(--space-xs);">Weekly streak</p>
+                <h3 style="margin: 0;">{{ weekly_stats.challenges_completed }} completions</h3>
+                <p class="text-muted" style="margin: 0;">{{ weekly_stats.xp_earned }} XP earned this week</p>
               </div>
-
-              <form method="POST" action="{% if IS_DEVEDU %}../submit/{% else %}{% url 'daily_quest_submit' %}{% endif %}">
-                {% csrf_token %}
-
-                {% for question in questions %}
-                <div class="mb-xl" style="padding: var(--space-lg); background: var(--color-surface); border-radius: var(--radius-md);">
-                  <div style="display: flex; align-items: start; gap: var(--space-sm); margin-bottom: var(--space-md);">
-                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: var(--color-primary); color: white; border-radius: var(--radius-full); font-weight: 700; font-size: var(--font-size-sm); flex-shrink: 0;">{{ forloop.counter }}</span>
-                    <p style="font-weight: 600; margin: 0; flex: 1;">{{ question.question_text }}</p>
-                  </div>
-
-                  {% if question.formatted_options %}
-                    <!-- Multiple Choice -->
-                    <div style="display: grid; gap: var(--space-sm);">
-                      {% for option_idx, option_text in question.formatted_options %}
-                      <label style="display: flex; align-items: center; padding: var(--space-md); background: white; border: 2px solid var(--color-border); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
-                        <input type="radio" name="question_{{ question.id }}" value="{{ option_idx }}" required style="margin-right: var(--space-sm);">
-                        <span>{{ option_text }}</span>
-                      </label>
-                      {% endfor %}
-                    </div>
-                  {% else %}
-                    <!-- Text Input -->
-                    <input type="text" name="question_{{ question.id }}" required
-                           placeholder="Type your answer here..."
-                           style="width: 100%; padding: var(--space-md); border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-base);">
-                  {% endif %}
-                </div>
-                {% endfor %}
-
-                <div class="text-center mt-xl">
-                  <button type="submit" class="btn btn-primary btn-lg">
-                    Submit Challenge →
-                  </button>
-                </div>
-              </form>
+            </div>
+            <div class="card card-bordered fade-in-up">
+              <div class="card-body">
+                <p class="text-muted" style="margin-bottom: var(--space-xs);">All time</p>
+                <h3 style="margin: 0;">{{ lifetime_stats.challenges_completed }} challenges</h3>
+                <p class="text-muted" style="margin: 0;">{{ lifetime_stats.xp_earned }} XP earned overall</p>
+              </div>
             </div>
           </div>
         {% endif %}
@@ -230,23 +147,20 @@ TESTING:
     </footer>
 
     <style>
-      /* Radio button hover effect */
-      label:has(input[type="radio"]):hover {
-        border-color: var(--color-primary);
-        background: var(--color-primary-light, #f0f9ff);
+      .action-card {
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border);
+        padding: var(--space-lg);
+        background: #fff;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
       }
-
-      label:has(input[type="radio"]:checked) {
-        border-color: var(--color-primary);
-        background: var(--color-primary-light, #f0f9ff);
-        font-weight: 600;
-      }
-
-      /* Text input focus */
-      input[type="text"]:focus {
-        outline: none;
-        border-color: var(--color-primary);
-        box-shadow: 0 0 0 3px var(--color-primary-light, #f0f9ff);
+      .challenge-label {
+        font-size: var(--text-sm);
+        font-weight: 700;
+        color: var(--primary);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: var(--space-xxs);
       }
     </style>
   </body>

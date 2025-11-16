@@ -254,6 +254,7 @@ class TestOnboardingServiceGetQuestions(TestCase):
     def setUp(self):
         """Create test questions"""
         self.service = OnboardingService()
+        OnboardingQuestion.objects.filter(language__in=['Spanish', 'French']).delete()
         
         # Create 10 Spanish questions
         for i in range(1, 11):
@@ -287,13 +288,14 @@ class TestOnboardingServiceGetQuestions(TestCase):
 
     def test_get_questions_for_nonexistent_language(self):
         """Test retrieving questions for language with no questions"""
-        questions = self.service.get_questions_for_language('French')
+        questions = self.service.get_questions_for_language('Klingon')
         
         self.assertEqual(questions.count(), 0)
 
     def test_get_questions_filters_by_language(self):
         """Test that questions are filtered by language"""
         # Add a French question
+        OnboardingQuestion.objects.filter(language='French').delete()
         OnboardingQuestion.objects.create(
             question_number=1,
             question_text='French question',

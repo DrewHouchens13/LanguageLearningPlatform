@@ -111,15 +111,52 @@ RELATED FILES:
             </a>
         </div>
 
-        <!-- Header -->
-        <div class="lessons-header fade-in text-center" style="margin-bottom: var(--space-3xl);">
-            <h2 style="font-size: var(--font-size-4xl); font-weight: 800;">
-                {{ language }} Lessons
-            </h2>
-            <p style="font-size: var(--font-size-lg); color: var(--color-text-muted);">{{ lessons_with_icons|length }} lesson{{ lessons_with_icons|length|pluralize }} available</p>
+        <!-- Header with Current Language -->
+        <div class="lessons-header fade-in" style="margin-bottom: var(--space-3xl);">
+            <div style="display: flex; align-items: center; justify-content: center; gap: var(--space-md); margin-bottom: var(--space-md); flex-wrap: wrap;">
+                <span style="font-size: 3rem;">{{ language_metadata.flag }}</span>
+                <div style="text-align: center;">
+                    <div style="font-size: var(--text-sm); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em;">Current Language</div>
+                    <h2 style="font-size: var(--font-size-4xl); font-weight: 800; margin: 0;">
+                        {{ language_metadata.native_name }}
+                    </h2>
+                </div>
+            </div>
+            {% if has_completed_onboarding %}
+                <p style="font-size: var(--font-size-lg); color: var(--color-text-muted); text-align: center;">{{ lessons_with_icons|length }} lesson{{ lessons_with_icons|length|pluralize }} available</p>
+            {% endif %}
         </div>
 
-        {% if lessons_with_icons %}
+        {% if not user.is_authenticated %}
+            <!-- Guest User - Must Login -->
+            <div class="empty-state fade-in">
+                <div class="empty-state-icon">🔒</div>
+                <h3>Login Required</h3>
+                <p>Please log in to access {{ language }} lessons</p>
+                <a href="{% url 'login' %}" class="btn btn-primary btn-lg" style="margin-top: var(--space-lg);">
+                    Login to Continue
+                </a>
+            </div>
+        {% elif not has_completed_onboarding %}
+            <!-- User Must Complete Onboarding -->
+            <div class="empty-state fade-in">
+                <div class="empty-state-icon">🎯</div>
+                <h3>Complete Your {{ language }} Assessment First</h3>
+                <p>To unlock {{ language }} lessons, please complete the placement test to determine your proficiency level.</p>
+                <div style="padding: var(--space-lg); background: var(--gray-100); border-radius: var(--radius-lg); margin: var(--space-xl) auto; max-width: 500px;">
+                    <h4 style="margin-top: 0;">What you'll get:</h4>
+                    <ul style="text-align: left; margin: 0;">
+                        <li>✓ Personalized lesson recommendations</li>
+                        <li>✓ Track your progress</li>
+                        <li>✓ Earn XP and level up</li>
+                        <li>✓ Unlock all {{ language }} content</li>
+                    </ul>
+                </div>
+                <a href="{% url 'onboarding_welcome' %}?language={{ language }}" class="btn btn-primary btn-lg" style="margin-top: var(--space-lg);">
+                    Take {{ language }} Placement Test
+                </a>
+            </div>
+        {% elif lessons_with_icons %}
             <!-- Lessons Grid -->
             <div class="fade-in-up">
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-xl);">

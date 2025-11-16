@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Spanish Level - Language Learning Platform</title>
+    <title>Your {{ attempt.language }} Level - Language Learning Platform</title>
     {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
     <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
     <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
@@ -136,7 +136,7 @@
       <section class="card mb-2xl text-center fade-in">
         <div class="card-body" style="padding: var(--space-3xl);">
           <h2 class="text-5xl font-black mb-lg">🎉 Assessment Complete!</h2>
-          <p class="text-xl mb-xl">Your Spanish Proficiency Level:</p>
+          <p class="text-xl mb-xl">Your {{ attempt.language }} Proficiency Level:</p>
           <div class="level-badge level-{{ attempt.calculated_level }}">
             {{ attempt.calculated_level }}
           </div>

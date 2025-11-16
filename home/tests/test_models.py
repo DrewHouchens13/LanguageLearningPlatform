@@ -11,7 +11,8 @@ from datetime import timedelta
 
 from home.models import (
     UserProgress, LessonCompletion, QuizResult,
-    UserProfile, OnboardingQuestion, OnboardingAttempt, OnboardingAnswer
+    UserProfile, OnboardingQuestion, OnboardingAttempt, OnboardingAnswer,
+    UserLanguageProfile,
 )
 
 
@@ -491,6 +492,7 @@ class TestOnboardingQuestionModel(TestCase):
 
     def test_onboarding_question_diff_langs_same_num(self):
         """Test same question number allowed for different languages"""
+        OnboardingQuestion.objects.filter(language__in=['Spanish', 'French']).delete()
         OnboardingQuestion.objects.create(
             question_number=1,
             question_text='Spanish question',
@@ -792,3 +794,43 @@ class TestOnboardingAnswerModel(TestCase):
             OnboardingAnswer.objects.filter(attempt_id=attempt_id).count(),
             0
         )
+
+
+class TestUserLanguageProfileModel(TestCase):
+    """Tests for per-language progress tracking."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='polyglot',
+            email='poly@example.com',
+            password='securepass123'
+        )
+        self.language_profile = UserLanguageProfile.objects.create(
+            user=self.user,
+            language='French'
+        )
+
+    def test_unique_language_per_user(self):
+        """Users cannot have duplicate language profiles."""
+        with self.assertRaises(IntegrityError):
+            UserLanguageProfile.objects.create(user=self.user, language='French')
+
+    def test_award_xp_updates_totals(self):
+        """award_xp increments XP totals and levels."""
+        result = self.language_profile.award_xp(150)
+        self.language_profile.refresh_from_db()
+
+        self.assertEqual(result['xp_awarded'], 150)
+        self.assertEqual(self.language_profile.total_xp, 150)
+        self.assertGreaterEqual(self.language_profile.current_level, 1)
+
+    def test_increment_helpers_update_counts(self):
+        """Increment helpers adjust study counters."""
+        self.language_profile.increment_minutes(30)
+        self.language_profile.increment_lessons(2)
+        self.language_profile.increment_quizzes(1)
+        self.language_profile.refresh_from_db()
+
+        self.assertEqual(self.language_profile.total_minutes_studied, 30)
+        self.assertEqual(self.language_profile.total_lessons_completed, 2)
+        self.assertEqual(self.language_profile.total_quizzes_taken, 1)

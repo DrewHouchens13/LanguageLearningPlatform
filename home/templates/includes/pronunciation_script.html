@@ -1,0 +1,84 @@
+{% if speech_code %}
+<script>
+(function() {
+  if (!('speechSynthesis' in window)) {
+    console.warn('Speech synthesis API not supported in this browser.');
+    return;
+  }
+
+  const defaultVoiceCode = '{{ speech_code|escapejs }}';
+  const fallbackVoiceCode = 'en-US';
+  let availableVoices = [];
+  let isSpeaking = false;
+
+  function loadVoices() {
+    availableVoices = window.speechSynthesis.getVoices();
+  }
+
+  function sanitizePronunciationText(text) {
+    if (!text) {
+      return '';
+    }
+    return text
+      .replace(/\s*\([^)]*\)/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function getVoice(code) {
+    if (!code || !availableVoices.length) {
+      return null;
+    }
+    return availableVoices.find(voice => voice.lang === code) || null;
+  }
+
+  function speakText(text, langCode) {
+    if (!text) {
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voice = getVoice(langCode) || getVoice(defaultVoiceCode) || getVoice(fallbackVoiceCode);
+    if (voice) {
+      utterance.voice = voice;
+    }
+    utterance.lang = (voice && voice.lang) || langCode || defaultVoiceCode;
+    utterance.rate = 1.05;
+    isSpeaking = true;
+    utterance.onend = () => {
+      isSpeaking = false;
+    };
+    window.speechSynthesis.speak(utterance);
+  }
+
+  document.addEventListener('click', function(event) {
+    const button = event.target.closest('[data-speak-text]');
+    if (!button) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    const rawText = button.getAttribute('data-speak-text');
+    const text = sanitizePronunciationText(rawText);
+    if (!text) {
+      return;
+    }
+    const langAttr = button.getAttribute('data-speak-lang');
+    speakText(text, langAttr || defaultVoiceCode);
+  }, true);
+
+  if (window.speechSynthesis.onvoiceschanged !== undefined) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+  loadVoices();
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && isSpeaking) {
+      window.speechSynthesis.cancel();
+      isSpeaking = false;
+    }
+  });
+})();
+</script>
+{% endif %}
+

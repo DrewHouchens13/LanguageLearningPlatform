@@ -33,6 +33,13 @@
             font-weight: 600;
             margin-bottom: 1.5rem;
             color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: var(--space-sm);
+        }
+        .question-text span {
+            flex: 1;
         }
         .options {
             display: flex;
@@ -40,12 +47,19 @@
             gap: 1rem;
         }
         .option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            justify-content: space-between;
             padding: 1rem;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
             background: white;
+        }
+        .option span {
+            flex: 1;
         }
         .option:hover {
             border-color: var(--primary);
@@ -77,6 +91,21 @@
             background: #ccc;
             cursor: not-allowed;
         }
+        .pronounce-inline-btn {
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary);
+            font-size: 1rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+        .pronounce-inline-btn:hover {
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
@@ -93,18 +122,20 @@
             {% for q in questions %}
             <div class="question-card">
                 <div class="question-text">
-                    {{ forloop.counter }}. {{ q.question }}
+                    <span>{{ forloop.counter }}. {{ q.question }}</span>
+                    <button class="pronounce-inline-btn" type="button" aria-label="Play pronunciation" data-speak-text="{{ q.question }}" data-speak-lang="en-US">🔊</button>
                 </div>
                 <div class="options">
                     {% for option in q.options %}
                     <label class="option">
                         <input type="radio" 
                                name="question_{{ q.id }}" 
-                               value="{{ forloop.counter0 }}"
+                               value="{{ option.index }}"
                                data-question-id="{{ q.id }}"
                                required
                                style="margin-right: 0.5rem;">
-                        {{ option }}
+                        <span>{{ option.text }}</span>
+                        <button class="pronounce-inline-btn" type="button" aria-label="Play pronunciation" data-speak-text="{{ option.text }}" data-speak-lang="{{ speech_code }}">🔊</button>
                     </label>
                     {% endfor %}
                 </div>
@@ -160,5 +191,6 @@
             }
         });
     </script>
+    {% include 'includes/pronunciation_script.html' with speech_code=speech_code %}
 </body>
 </html>

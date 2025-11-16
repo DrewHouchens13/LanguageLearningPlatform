@@ -11,6 +11,96 @@
     <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
     <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
     <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
+    <style>
+      .language-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .language-table th,
+      .language-table td {
+        padding: var(--space-md) var(--space-lg);
+        text-align: left;
+        border-bottom: 1px solid var(--gray-200);
+      }
+      .language-table tbody tr:hover {
+        background: rgba(20, 184, 166, 0.08);
+      }
+      .language-name {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+      }
+      .language-name .language-flag {
+        font-size: 1.75rem;
+      }
+      .language-chip-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        justify-content: center;
+      }
+      .language-chip {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: var(--space-sm) var(--space-lg);
+        border-radius: var(--radius-full);
+        border: 1px solid var(--gray-200);
+        text-decoration: none;
+        font-weight: 600;
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+      }
+      .language-chip:hover {
+        border-color: var(--primary);
+        box-shadow: 0 8px 20px rgba(20, 184, 166, 0.15);
+      }
+      .table-action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.35rem 0.9rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: var(--text-sm);
+        text-decoration: none;
+        color: white;
+        background: var(--gradient-primary);
+      }
+      .table-action-btn.secondary {
+        background: var(--gray-200);
+        color: var(--text-primary);
+      }
+      .xp-progress-shell {
+        width: 100%;
+        height: 20px;
+        border-radius: var(--radius-full);
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.95), rgba(255, 245, 236, 0.95));
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        box-shadow: inset 0 3px 8px rgba(15, 23, 42, 0.12);
+        overflow: hidden;
+        position: relative;
+      }
+      .xp-progress-shell::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0));
+        pointer-events: none;
+      }
+      .xp-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ff6b6b 0%, #ff9770 100%);
+        border-radius: var(--radius-full);
+        transition: width 0.5s ease;
+      }
+      @media (max-width: 768px) {
+        .language-table th,
+        .language-table td {
+          padding: var(--space-sm) var(--space-md);
+        }
+      }
+    </style>
   </head>
   <body>
     {% include '_nav.html' %}
@@ -70,8 +160,8 @@
               <div style="font-size: var(--text-sm); margin-bottom: var(--space-xs); color: var(--text-secondary); text-align: center;">
                 Progress to Level {{ user_profile.current_level|add:1 }} ({{ xp_progress_percent|floatformat:0 }}%)
               </div>
-              <div style="width: 100%; height: 20px; background: var(--gray-200); border-radius: var(--radius-full); overflow: hidden;">
-                <div style="height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); width: {{ xp_progress_percent }}%; transition: width 0.5s ease;"></div>
+              <div class="xp-progress-shell">
+                <div class="xp-progress-fill" style="width: {{ xp_progress_percent }}%;"></div>
               </div>
             </div>
           </div>
@@ -82,7 +172,7 @@
         {% if user_profile and user_profile.has_completed_onboarding %}
         <section class="card mt-2xl">
           <div class="card-header">
-            <h3>Your Spanish Proficiency</h3>
+            <h3>Your {{ user_profile.target_language }} Proficiency</h3>
           </div>
           <div class="card-body text-center">
             <div class="mb-xl">
@@ -99,29 +189,71 @@
             {% endif %}
           </div>
         </section>
-        {% elif pending_languages %}
+        {% endif %}
+
+        {% if pending_languages %}
         <section class="card mt-2xl">
           <div class="card-body text-center">
-            <h3 class="text-3xl font-bold mb-md">Discover Your Language Proficiency</h3>
-            <p class="mb-md text-lg">Take our quick 10-question assessment to determine your proficiency level.</p>
-
-            {% if pending_languages|length == 1 %}
-              <!-- Single language available -->
-              <p class="mb-xl" style="font-weight: 600;">Available: {{ pending_languages.0 }}</p>
-              <a href="{% url 'onboarding_welcome' %}?language={{ pending_languages.0 }}" class="btn btn-accent btn-lg">
-                Take {{ pending_languages.0 }} Assessment
+            <h3 class="text-3xl font-bold mb-md">Discover Your Next Language</h3>
+            <p class="mb-md text-lg">Take a quick 10-question assessment to unlock personalized lessons.</p>
+            <div class="language-chip-grid">
+              {% for language in pending_languages %}
+              <a href="{% url 'onboarding_welcome' %}?language={{ language.name }}" class="language-chip">
+                <span class="language-flag">{{ language.flag }}</span>
+                {{ language.native_name }}
               </a>
-            {% else %}
-              <!-- Multiple languages available -->
-              <p class="mb-lg">Choose a language:</p>
-              <div style="display: flex; flex-wrap: wrap; gap: var(--space-md); justify-content: center;">
-                {% for language in pending_languages %}
-                  <a href="{% url 'onboarding_welcome' %}?language={{ language }}" class="btn btn-accent">
-                    {{ language }}
-                  </a>
-                {% endfor %}
-              </div>
-            {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+        {% endif %}
+
+        {% if language_stats %}
+        <section class="card mt-2xl">
+          <div class="card-header">
+            <h3>Language Activity Overview</h3>
+          </div>
+          <div class="card-body">
+            <div style="overflow-x: auto;">
+              <table class="language-table">
+                <thead>
+                  <tr>
+                    <th>Language</th>
+                    <th>Minutes</th>
+                    <th>Lessons</th>
+                    <th>XP</th>
+                    <th>Proficiency</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for stat in language_stats %}
+                  <tr>
+                    <td>
+                      <div class="language-name">
+                        <span class="language-flag">{{ stat.flag }}</span>
+                        <div>
+                          <strong>{{ stat.native_name }}</strong>
+                          <div class="text-sm text-secondary">{{ stat.name }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{{ stat.minutes }}</td>
+                    <td>{{ stat.lessons }}</td>
+                    <td>{{ stat.xp }}</td>
+                    <td>{{ stat.proficiency }}</td>
+                    <td style="text-align: right;">
+                      {% if stat.has_completed_onboarding %}
+                        <a href="{% url 'lessons_by_language' stat.slug %}" class="table-action-btn">Continue</a>
+                      {% else %}
+                        <a href="{% url 'onboarding_welcome' %}?language={{ stat.name }}" class="table-action-btn secondary">Finish Assessment</a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
         {% endif %}

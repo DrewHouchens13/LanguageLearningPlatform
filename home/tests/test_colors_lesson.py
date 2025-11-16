@@ -296,17 +296,24 @@ class TestColorsLessonIntegration(TestCase):
         url = reverse('lessons_list')
         response = client.get(url)
 
-        lessons = list(response.context['lessons'])
-        self.assertEqual(len(lessons), 2)
-        self.assertEqual(lessons[0], self.shapes_lesson)
-        self.assertEqual(lessons[1], self.colors_lesson)
+        lessons = response.context['selected_language_lessons']
+        lesson_objects = [entry['lesson'] for entry in lessons]
+        self.assertIn(self.shapes_lesson, lesson_objects)
+        self.assertIn(self.colors_lesson, lesson_objects)
+        self.assertLess(
+            lesson_objects.index(self.shapes_lesson),
+            lesson_objects.index(self.colors_lesson)
+        )
 
     def test_colors_lesson_order_is_correct(self):
         """Test colors lesson has correct order (after shapes)"""
         self.assertEqual(self.shapes_lesson.order, 1)
         self.assertEqual(self.colors_lesson.order, 2)
 
-        # Verify query ordering
-        lessons = list(Lesson.objects.filter(is_published=True))
-        self.assertEqual(lessons[0], self.shapes_lesson)
-        self.assertEqual(lessons[1], self.colors_lesson)
+        # Verify query ordering for Spanish lessons only
+        lessons = list(
+            Lesson.objects.filter(is_published=True, language='Spanish').order_by('order', 'id')
+        )
+        self.assertIn(self.shapes_lesson, lessons)
+        self.assertIn(self.colors_lesson, lessons)
+        self.assertLess(lessons.index(self.shapes_lesson), lessons.index(self.colors_lesson))
