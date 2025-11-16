@@ -23,12 +23,12 @@ class DailyChallengeServiceTests(TestCase):
         )
         self.profile = UserProfile.objects.get(user=self.user)
 
-    @patch('home.services.daily_quest_service.random.Random.choice')
+    @patch('home.services.daily_quest_service.DailyQuestService._deterministic_choice')
     @patch('home.services.daily_quest_service.timezone.localdate')
     def test_get_today_challenge_can_assign_onboarding(self, mock_date, mock_choice):
         """When pending languages exist, an onboarding task can be assigned."""
         mock_date.return_value = date(2025, 11, 16)
-        mock_choice.side_effect = lambda seq: seq[-1]  # Prefer onboarding candidate
+        mock_choice.side_effect = lambda seq, key: seq[-1]  # Prefer onboarding candidate
 
         challenge = DailyQuestService.get_today_challenge(self.user)
 
@@ -38,12 +38,12 @@ class DailyChallengeServiceTests(TestCase):
         self.assertIn('Complete onboarding for', action['label'])
         self.assertIn(action['language'], action['label'])
 
-    @patch('home.services.daily_quest_service.random.Random.choice')
+    @patch('home.services.daily_quest_service.DailyQuestService._deterministic_choice')
     @patch('home.services.daily_quest_service.timezone.localdate')
     def test_get_today_challenge_defaults_to_lesson_without_pending_languages(self, mock_date, mock_choice):
         """If every language is onboarded, challenge falls back to a lesson task."""
         mock_date.return_value = date(2025, 11, 17)
-        mock_choice.side_effect = lambda seq: seq[0]
+        mock_choice.side_effect = lambda seq, key: seq[0]
 
         for entry in get_supported_languages():
             UserLanguageProfile.objects.update_or_create(

@@ -7,8 +7,8 @@ an additional language or by finishing a lesson in the language they are
 currently studying.
 """
 
+import hashlib
 import logging
-import random
 from datetime import timedelta
 from typing import Dict, List, Optional
 
@@ -53,12 +53,12 @@ class DailyQuestService:
         pending_languages = DailyQuestService._get_pending_languages(user)
         target_language = DailyQuestService._get_target_language(user)
 
-        seed = int(f"{today.strftime('%Y%m%d')}{user.id}")
-        rng = random.Random(seed)
-
         onboarding_action = None
         if pending_languages:
-            selected_language = rng.choice(pending_languages)
+            selected_language = DailyQuestService._deterministic_choice(
+                pending_languages,
+                f"{today.isoformat()}:{user.id}:language"
+            )
             onboarding_action = DailyQuestService._build_onboarding_action(selected_language)
 
         lesson_action = DailyQuestService._build_lesson_action(target_language)
@@ -67,7 +67,10 @@ class DailyQuestService:
         if onboarding_action:
             candidates.append(('onboarding', onboarding_action))
 
-        challenge_type, primary_action = rng.choice(candidates)
+        challenge_type, primary_action = DailyQuestService._deterministic_choice(
+            candidates,
+            f"{today.isoformat()}:{user.id}:mode"
+        )
 
         return {
             'date': today,
@@ -187,6 +190,14 @@ class DailyQuestService:
             'cta_url': reverse('lessons_by_language', args=[slug]),
             'icon': '📘',
         }
+
+    @staticmethod
+    def _deterministic_choice(options, key):
+        if not options:
+            return None
+        digest = hashlib.sha256(key.encode('utf-8')).digest()
+        index = int.from_bytes(digest[:8], byteorder='big') % len(options)
+        return options[index]
 
     @staticmethod
     def _mark_completed(user, completed_via: str, language: str, metadata: Optional[Dict[str, str]] = None):
