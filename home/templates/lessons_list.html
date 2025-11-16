@@ -225,7 +225,7 @@ RELATED FILES:
                     <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
                         Login to Access Lessons
                     </a>
-                    <a href="{% url 'onboarding_welcome' %}" class="btn btn-accent btn-lg">
+            <a href="{% url 'onboarding_welcome' %}" class="btn btn-accent btn-lg">
                         Take Placement Test
                     </a>
                 </div>
@@ -255,7 +255,7 @@ RELATED FILES:
             </summary>
             <div class="language-switcher-menu">
               {% for option in language_dropdown %}
-              <a href="{{ option.url }}" class="{% if option.is_active %}active{% endif %} {% if option.locked %}locked{% endif %}">
+              <a href="{% if option.url %}{{ option.url }}{% else %}#{% endif %}" class="{% if option.is_active %}active{% endif %} {% if option.locked %}locked{% endif %}">
                 <span class="flag">{{ option.flag }}</span>
                 <span>{{ option.native_name }}</span>
                 {% if option.locked %}
@@ -273,7 +273,7 @@ RELATED FILES:
             <div class="empty-state-icon">🔒</div>
             <h3>Unlock {{ selected_language }} Lessons</h3>
             <p>Complete the {{ selected_language }} placement to personalize your experience and access every lesson.</p>
-            <a href="{% url 'onboarding_welcome' %}?language={{ selected_language }}" class="btn btn-primary btn-lg" style="margin-top: var(--space-lg);">
+            <a href="{% url 'onboarding_welcome' %}?language={{ selected_language|urlencode }}" class="btn btn-primary btn-lg" style="margin-top: var(--space-lg);">
               Start {{ selected_language }} Onboarding
             </a>
           </div>

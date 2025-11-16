@@ -286,7 +286,7 @@
                     View History
                   </a>
                 {% else %}
-                  <a href="{{ daily_challenge.primary_action.cta_url }}" class="btn btn-primary btn-lg" style="display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs);">
+                  <a href="{% firstof daily_challenge.primary_action.cta_url '#' %}" class="btn btn-primary btn-lg" style="display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs);" rel="noopener noreferrer">
                     <span>{{ daily_challenge.primary_action.icon }}</span>
                     <span>{{ daily_challenge.primary_action.cta_label }}</span>
                   </a>

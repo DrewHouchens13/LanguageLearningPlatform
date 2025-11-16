@@ -102,7 +102,7 @@ RELATED FILES:
                     <p class="text-muted" style="font-size: var(--font-size-sm); margin-top: var(--space-xs);">
                       {{ challenge.primary_action.description }}
                     </p>
-                    <a href="{{ challenge.primary_action.cta_url }}" class="btn btn-primary mt-sm" style="display: inline-flex; align-items: center; gap: var(--space-xs);">
+                    <a href="{% firstof challenge.primary_action.cta_url '#' %}" class="btn btn-primary mt-sm" style="display: inline-flex; align-items: center; gap: var(--space-xs);" rel="noopener noreferrer">
                       <span>{{ challenge.primary_action.icon }}</span>
                       <span>{{ challenge.primary_action.cta_label }}</span>
                     </a>
