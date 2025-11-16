@@ -863,7 +863,7 @@ textarea.form-input {
   align-items: center;
   gap: 0.4rem;
   padding: 0.4rem 0.75rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-accent);
   border-radius: 16px;
   color: white;
   font-weight: 600;

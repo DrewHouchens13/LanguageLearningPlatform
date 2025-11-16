@@ -1126,3 +1126,39 @@ class UserDailyQuestAttempt(models.Model):
             return 0
         max_xp = self.daily_quest.xp_reward
         return int((self.correct_answers / self.total_questions) * max_xp)
+
+
+class DailyChallengeLog(models.Model):
+    """
+    Track how authenticated users satisfy the new daily challenge.
+
+    Each user can have at most one record per calendar date noting whether
+    they completed the challenge via lesson practice or new-language onboarding.
+    """
+
+    CHALLENGE_TYPES = [
+        ('lesson', 'Lesson Completion'),
+        ('onboarding', 'New Language Onboarding'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='daily_challenges'
+    )
+    date = models.DateField(default=timezone.now, db_index=True)
+    completed_via = models.CharField(max_length=20, choices=CHALLENGE_TYPES)
+    language = models.CharField(max_length=50, blank=True)
+    xp_awarded = models.PositiveIntegerField(default=0)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date', '-created_at']
+        unique_together = [['user', 'date']]
+        verbose_name = "Daily Challenge Log"
+        verbose_name_plural = "Daily Challenge Logs"
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date} ({self.completed_via})"

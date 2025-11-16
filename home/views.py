@@ -29,6 +29,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email as django_validate_email
 from django.db import DatabaseError, IntegrityError
+from django.db.models import Sum
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import TemplateDoesNotExist
@@ -48,8 +49,7 @@ from .language_registry import (
     normalize_language_name,
 )
 from .models import (
-    DailyQuest,
-    DailyQuestQuestion,
+    DailyChallengeLog,
     Lesson,
     LessonAttempt,
     LessonCompletion,
@@ -58,11 +58,11 @@ from .models import (
     OnboardingAttempt,
     OnboardingQuestion,
     QuizResult,
-    UserDailyQuestAttempt,
     UserProfile,
     UserProgress,
     UserLanguageProfile,
 )
+from .services.daily_quest_service import DailyQuestService
 from .services.onboarding_service import OnboardingService
 
 # Configure logger for security events
@@ -611,6 +611,10 @@ def _link_onboarding_attempt_to_user(request, user):
                     minutes=total_time_minutes,
                     quizzes=1
                 )
+                
+                DailyQuestService.handle_onboarding_completion(user, normalized_language)
+
+                DailyQuestService.handle_onboarding_completion(user, normalized_language)
 
             logger.info('Linked onboarding attempt %s to user %s', attempt.id, user.username)
 
@@ -681,15 +685,8 @@ def login_view(request):
             # Link onboarding attempt if exists (SOFA - extracted function)
             linked_attempt = _link_onboarding_attempt_to_user(request, user)
             if linked_attempt:
-                messages.success(
-                    request,
-                    f'Welcome back, {user.first_name or user.username}! '
-                    'Your assessment results have been saved.'
-                )
                 results_url = f"{reverse('onboarding_results')}?attempt={linked_attempt.id}"
                 return redirect(results_url)
-
-            messages.success(request, f'Welcome back, {user.first_name or user.username}!')
 
             # Redirect to next page if specified and safe
             next_page = request.GET.get('next', '')
@@ -943,54 +940,16 @@ def dashboard(request):
                 request.session.pop('onboarding_attempt_id', None)
     
     # Get today's daily quests status (Sprint 3 - Issue #18)
-    from datetime import date, datetime
-    from home.services.daily_quest_service import DailyQuestService
-    
-    daily_quests = None
-    any_quest_available = False
+    daily_challenge = None
     try:
-        today = date.today()
-        quests = DailyQuestService.generate_quests_for_date(today)
-        
-        # Check completion status for both quests
-        time_complete = UserDailyQuestAttempt.objects.filter(
-            user=request.user,
-            daily_quest=quests['time_quest'],
-            is_completed=True
-        ).exists()
-        
-        lesson_complete = UserDailyQuestAttempt.objects.filter(
-            user=request.user,
-            daily_quest=quests['lesson_quest'],
-            is_completed=True
-        ).exists()
-        
-        # Calculate time progress
-        today_start = datetime.combine(today, datetime.min.time())
-        today_lessons = LessonCompletion.objects.filter(
-            user=request.user,
-            completed_at__gte=today_start
+        daily_challenge = DailyQuestService.get_today_challenge(request.user)
+        logger.info(
+            'Daily challenge loaded for dashboard: completed=%s via=%s',
+            daily_challenge['completed'],
+            daily_challenge['completed_via']
         )
-        time_progress = sum(completion.duration_minutes for completion in today_lessons)
-        
-        daily_quests = {
-            'time_quest': quests['time_quest'],
-            'lesson_quest': quests['lesson_quest'],
-            'time_complete': time_complete,
-            'lesson_complete': lesson_complete,
-            'time_progress': time_progress,
-            'both_complete': time_complete and lesson_complete
-        }
-        any_quest_available = not (time_complete and lesson_complete)
-        # Log quest generation success (safely handle None values)
-        time_id = quests['time_quest'].id if quests['time_quest'] else 'None'
-        lesson_id = quests['lesson_quest'].id if quests['lesson_quest'] else 'None'
-        logger.info('Daily quests generated successfully for dashboard: time=%s, lesson=%s',
-                   time_id, lesson_id)
     except Exception as e:  # pylint: disable=broad-exception-caught
-        # If quest generation fails (e.g., no lessons available), log and continue
-        # Broad catch is intentional - dashboard should load even if quests fail
-        logger.error('Failed to generate daily quests for dashboard: %s', str(e), exc_info=True)
+        logger.error('Failed to load daily challenge for dashboard: %s', str(e), exc_info=True)
     
     # Get XP and streak data
     user_progress = None
@@ -1063,8 +1022,7 @@ def dashboard(request):
     context = {
         'has_completed_onboarding': has_completed_onboarding,
         'user_profile': user_profile,
-        'daily_quests': daily_quests,
-        'any_quest_available': any_quest_available,
+        'daily_challenge': daily_challenge,
         'user_progress': user_progress,
         'current_streak': current_streak,
         'xp_to_next_level': xp_to_next,
@@ -1782,6 +1740,8 @@ def submit_onboarding(request):
                 minutes=total_time_minutes,
                 quizzes=1
             )
+
+            DailyQuestService.handle_onboarding_completion(request.user, normalized_language)
             
             logger.info('Onboarding completed for user %s: %s (%s/%s)', request.user.username, calculated_level, total_score, total_possible)
         else:
@@ -2314,7 +2274,7 @@ def submit_lesson_quiz(request, lesson_id):
 
     # Initialize variables for later use
     xp_result = None
-    quest_info = None
+    challenge_result = None
 
     # Track stats for authenticated users
     if request.user.is_authenticated:
@@ -2343,10 +2303,10 @@ def submit_lesson_quiz(request, lesson_id):
         total_xp_awarded = base_xp + bonus_xp
 
         # Safely get or create profile (defensive programming)
+        normalized_language = normalize_language_name(lesson.language)
         try:
             profile = request.user.profile
         except UserProfile.DoesNotExist:
-            # Profile should exist (auto-created by signal), but create if missing
             profile = UserProfile.objects.create(user=request.user)
             logger.warning('UserProfile was missing for user %s, created new profile', request.user.username)
 
@@ -2367,6 +2327,10 @@ def submit_lesson_quiz(request, lesson_id):
 
         language_xp_result = _award_language_xp(request.user, lesson.language, total_xp_awarded)
 
+        if profile.target_language != normalized_language:
+            profile.target_language = normalized_language
+            profile.save(update_fields=['target_language'])
+
         # Update UserProgress
         user_progress, _ = UserProgress.objects.get_or_create(user=request.user)
         user_progress.total_quizzes_taken += 1
@@ -2383,8 +2347,12 @@ def submit_lesson_quiz(request, lesson_id):
             quizzes=1
         )
 
-        # Check if this completes daily quests (Sprint 3 - Issue #18)
-        quest_info = check_and_complete_daily_quests(request.user, lesson)
+        # Log the modern daily challenge completion
+        challenge_result = DailyQuestService.handle_lesson_completion(
+            request.user,
+            lesson.language,
+            lesson.title
+        )
 
         logger.info('Lesson quiz completed: %s - %s: %s/%s', request.user.username, lesson.title, score, total)
 
@@ -2417,8 +2385,8 @@ def submit_lesson_quiz(request, lesson_id):
                 }
         
         # Add quest info if quest was completed (Sprint 3 - Issue #18)
-        if request.user.is_authenticated and quest_info:
-            response_data['quest'] = quest_info
+        if request.user.is_authenticated and challenge_result:
+            response_data['daily_challenge'] = challenge_result
 
         return JsonResponse(response_data)
     return redirect('lesson_results', lesson_id=lesson.id, attempt_id=attempt.id)
@@ -2451,148 +2419,50 @@ def lesson_results(request, lesson_id, attempt_id):
 @login_required
 def daily_quest_view(request):
     """
-    Show today's daily challenge (ONE quest with 5 random questions).
+    Show today's interaction-based daily challenge card.
     """
-    from datetime import date
-    from home.services.daily_quest_service import DailyQuestService
-
-    today = date.today()
-
     try:
-        # Generate or get today's quest
-        quest = DailyQuestService.generate_quest_for_user(request.user, today)
+        challenge = DailyQuestService.get_today_challenge(request.user)
+        weekly_stats = DailyQuestService.get_weekly_stats(request.user)
+        lifetime_stats = DailyQuestService.get_lifetime_stats(request.user)
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error('Failed to load daily challenge page: %s', str(e), exc_info=True)
+        challenge = None
+        weekly_stats = {'challenges_completed': 0, 'xp_earned': 0}
+        lifetime_stats = {'challenges_completed': 0, 'xp_earned': 0}
 
-        # Check if user has already attempted this quest
-        attempt = UserDailyQuestAttempt.objects.filter(
-            user=request.user,
-            daily_quest=quest
-        ).first()
-
-        # Get quest questions
-        questions = DailyQuestQuestion.objects.filter(daily_quest=quest).order_by('order')
-
-        # Format options for template rendering (index, text) tuples
-        for question in questions:
-            if question.options:
-                question.formatted_options = [
-                    (idx, text) for idx, text in enumerate(question.options)
-                ]
-            else:
-                question.formatted_options = []
-
-        context = {
-            'quest': quest,
-            'questions': questions,
-            'attempt': attempt,
-        }
-
-    except ValueError as e:
-        # Not enough questions available
-        context = {
-            'error': str(e),
-            'quest': None,
-        }
-
+    context = {
+        'challenge': challenge,
+        'weekly_stats': weekly_stats,
+        'lifetime_stats': lifetime_stats,
+    }
     return render(request, 'home/daily_quest.html', context)
 
 
 @login_required
 def daily_quest_submit(request):
     """
-    Handle daily quest submission and calculate score.
+    Legacy endpoint kept for backward compatibility.
+
+    Users are redirected back to the daily challenge page with guidance.
     """
-    from datetime import date
-    from home.services.daily_quest_service import DailyQuestService
-
-    if request.method != 'POST':
-        return redirect('daily_quest')
-
-    today = date.today()
-    quest = DailyQuest.objects.filter(date=today).first()
-
-    if not quest:
-        messages.error(request, "No quest available for today.")
-        return redirect('daily_quest')
-
-    # Check if already completed
-    existing_attempt = UserDailyQuestAttempt.objects.filter(
-        user=request.user,
-        daily_quest=quest,
-        is_completed=True
-    ).first()
-
-    if existing_attempt:
-        messages.warning(request, "You've already completed today's challenge!")
-        return redirect('daily_quest')
-
-    # Collect submitted answers
-    submitted_answers = {}
-    for key, value in request.POST.items():
-        if key.startswith('question_'):
-            question_id = key.replace('question_', '')
-            submitted_answers[question_id] = value
-
-    # Calculate score
-    correct, total, xp_earned = DailyQuestService.calculate_quest_score(
-        quest, submitted_answers
-    )
-
-    # Create or update attempt
-    _attempt, _created = UserDailyQuestAttempt.objects.update_or_create(
-        user=request.user,
-        daily_quest=quest,
-        defaults={
-            'correct_answers': correct,
-            'total_questions': total,
-            'xp_earned': xp_earned,
-            'is_completed': True,
-            'completed_at': timezone.now()
-        }
-    )
-
-    # Award XP to user
-    request.user.profile.award_xp(xp_earned)
-
-    # Success message
-    messages.success(
+    messages.info(
         request,
-        f"Challenge complete! You scored {correct}/{total} and earned {xp_earned} XP!"
+        "The daily challenge no longer uses quiz submissions. Complete a lesson or new-language onboarding to earn today's reward."
     )
-
-    logger.info(
-        'Daily quest completed: %s scored %d/%d, earned %d XP',
-        request.user.username, correct, total, xp_earned
-    )
-
     return redirect('daily_quest')
-
-
-def check_and_complete_daily_quests(user, lesson, duration_minutes=5):
-    """
-    DEPRECATED - Legacy function for old two-quest system.
-    Now does nothing since quests are standalone challenges.
-
-    Kept for backward compatibility.
-    """
-    return None
 
 
 @login_required
 def quest_history(request):
     """
-    Show all completed quests and total XP earned.
+    Show history of completed daily challenges using the new log model.
     """
-    attempts = UserDailyQuestAttempt.objects.filter(
-        user=request.user,
-        is_completed=True
-    ).select_related('daily_quest').order_by('-started_at')
-
-    # Calculate total XP from quests
-    total_quest_xp = sum(attempt.xp_earned for attempt in attempts)
+    logs = DailyChallengeLog.objects.filter(user=request.user).order_by('-date', '-created_at')
+    total_quest_xp = logs.aggregate(total=Sum('xp_awarded'))['total'] or 0
 
     context = {
-        'attempts': attempts,
+        'logs': logs,
         'total_quest_xp': total_quest_xp,
     }
-
     return render(request, 'home/quest_history.html', context)

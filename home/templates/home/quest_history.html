@@ -33,7 +33,7 @@
           <h1 class="page-title">Quest History 📜</h1>
         </div>
 
-        {% if attempts %}
+        {% if logs %}
           <!-- Total Stats Card -->
           <div class="card card-bordered fade-in-up mb-lg" style="max-width: 800px; margin-left: auto; margin-right: auto; margin-bottom: var(--space-lg);">
             <div class="card-body text-center">
@@ -42,39 +42,41 @@
               </div>
               <h3 class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Total Quest XP Earned</h3>
               <p style="font-size: var(--font-size-3xl); font-weight: 700; color: var(--color-success);">{{ total_quest_xp }}</p>
-              <p class="text-muted" style="font-size: var(--font-size-sm);">{{ attempts|length }} quest{{ attempts|length|pluralize }} completed</p>
+              <p class="text-muted" style="font-size: var(--font-size-sm);">{{ logs|length }} challenge{{ logs|length|pluralize }} completed</p>
             </div>
           </div>
 
           <!-- Quest List -->
           <div class="quest-list" style="max-width: 800px; margin: 0 auto;">
-            {% for attempt in attempts %}
+            {% for entry in logs %}
               <div class="card card-bordered fade-in-up mb-md" style="animation-delay: {{ forloop.counter0|add:1|stringformat:'d' }}00ms;">
                 <div class="card-body">
                   <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--space-sm);">
                     <div>
-                      <h3 class="card-title" style="margin-bottom: var(--space-xs);">{{ attempt.daily_quest.title }}</h3>
+                      <h3 class="card-title" style="margin-bottom: var(--space-xs);">
+                        {% if entry.completed_via == 'onboarding' %}🚀 Onboarded{% else %}📘 Lesson{% endif %} · {{ entry.language|default:"Any" }}
+                      </h3>
                       <p class="text-muted" style="font-size: var(--font-size-sm);">
-                        📅 {{ attempt.daily_quest.date|date:"F j, Y" }}
+                        📅 {{ entry.date|date:"F j, Y" }}
                       </p>
                     </div>
                     <span class="badge" style="background: var(--color-success); color: white; padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm); font-size: var(--font-size-sm);">
-                      +{{ attempt.xp_earned }} XP
+                      +{{ entry.xp_awarded }} XP
                     </span>
                   </div>
                   
-                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-md); margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px solid var(--color-border);">
+                  <div style="display: flex; flex-wrap: wrap; gap: var(--space-xl); margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px solid var(--color-border);">
                     <div>
-                      <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Score</p>
-                      <p style="font-weight: 600;">{{ attempt.correct_answers }}/{{ attempt.total_questions }}</p>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Completed Via</p>
+                      <p style="font-weight: 600; text-transform: capitalize;">{{ entry.completed_via }}</p>
                     </div>
                     <div>
-                      <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Accuracy</p>
-                      <p style="font-weight: 600;">{{ attempt.score_percentage }}%</p>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Language</p>
+                      <p style="font-weight: 600;">{{ entry.language|default:"Mixed" }}</p>
                     </div>
                     <div>
-                      <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Completed</p>
-                      <p style="font-weight: 600;">{{ attempt.completed_at|date:"M j, g:i A" }}</p>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Logged At</p>
+                      <p style="font-weight: 600;">{{ entry.created_at|date:"M j, g:i A" }}</p>
                     </div>
                   </div>
                 </div>
@@ -91,7 +93,7 @@
               <h2 class="card-title mb-sm">No Quests Completed Yet</h2>
               <p class="text-muted mb-lg">Start your first daily quest to earn XP and track your progress!</p>
               <a href="{% if IS_DEVEDU %}../../quests/daily/{% else %}{% url 'daily_quest' %}{% endif %}" class="btn btn-primary">
-                Try Today's Quest
+                Open Daily Challenge
               </a>
             </div>
           </div>

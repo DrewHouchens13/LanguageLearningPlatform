@@ -56,7 +56,7 @@
         border-bottom: 1px solid var(--gray-200);
       }
       .xp-table tbody tr:hover {
-        background: rgba(79, 70, 229, 0.04);
+        background: rgba(20, 184, 166, 0.08);
       }
       .xp-progress-track {
         width: 100%;
@@ -67,7 +67,7 @@
       }
       .xp-progress-fill {
         height: 100%;
-        background: linear-gradient(90deg, #fb7185 0%, #f472b6 100%);
+        background: linear-gradient(90deg, #ff6b6b 0%, #ff9770 100%);
       }
       .language-chip-grid {
         display: flex;
@@ -89,7 +89,7 @@
       }
       .language-chip:hover {
         border-color: var(--primary);
-        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.15);
+        box-shadow: 0 8px 20px rgba(20, 184, 166, 0.15);
       }
       .xp-overview-card {
         background: linear-gradient(135deg, rgba(254, 242, 242, 0.9), #fff);
@@ -244,49 +244,51 @@
       </section>
       {% endif %}
 
-      <!-- Daily Challenge Card -->
-      {% if daily_quest %}
-        <section class="card card-bordered fade-in-up delay-150" style="margin-top: var(--space-3xl); margin-bottom: var(--space-2xl); background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #0ea5e9;">
+      {% if daily_challenge %}
+        <section class="card card-bordered fade-in-up delay-150" style="margin-top: var(--space-3xl); margin-bottom: var(--space-2xl); background: linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%); border: 2px solid #14b8a6;">
           <div class="card-body">
-            <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: var(--space-md);">
-              <div style="flex: 1; min-width: 250px;">
+            <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: var(--space-lg);">
+              <div style="flex: 1; min-width: 260px;">
                 <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-xs);">
                   <span style="font-size: 2rem;">🎯</span>
                   <h3 class="card-title" style="margin: 0;">Daily Challenge</h3>
                 </div>
-                <p class="text-muted" style="margin-bottom: var(--space-md);">{{ daily_quest.date|date:"F j, Y" }}</p>
+                <p class="text-muted" style="margin-bottom: var(--space-sm);">{{ daily_challenge.date|date:"F j, Y" }}</p>
 
-                {% if quest_complete %}
-                  <div style="display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-md); background: var(--color-success-light, #d1fae5); border-radius: var(--radius-md); margin-bottom: var(--space-md);">
+                {% if daily_challenge.completed %}
+                  <div style="display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-md); background: rgba(16, 185, 129, 0.15); border-radius: var(--radius-md); margin-bottom: var(--space-md);">
                     <span style="font-size: 1.5rem;">✅</span>
                     <div>
-                      <p style="font-weight: 600; color: var(--color-success); margin: 0;">Challenge Completed!</p>
-                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">Come back tomorrow for a new challenge</p>
+                      <p style="font-weight: 600; color: var(--color-success); margin: 0;">Nice work!</p>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">You earned today's {{ daily_challenge.completed_via }} bonus.</p>
                     </div>
                   </div>
                 {% else %}
-                  <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-md); background: var(--color-surface); border-radius: var(--radius-md); margin-bottom: var(--space-md);">
-                    <div>
-                      <p style="font-weight: 600; margin-bottom: var(--space-xs);">📚 {{ daily_quest.title }}</p>
-                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">{{ daily_quest.description }}</p>
-                    </div>
-                  </div>
-
-                  <div style="display: flex; align-items: center; gap: var(--space-xs);">
-                    <span>⭐</span>
-                    <span style="font-weight: 600; color: var(--color-success);">{{ daily_quest.xp_reward }} XP available</span>
+                  <div style="padding: var(--space-md); background: var(--surface); border-radius: var(--radius-md); margin-bottom: var(--space-md);">
+                    <p style="font-weight: 600; margin-bottom: var(--space-xs);">
+                      {{ daily_challenge.primary_action.label }}
+                    </p>
+                    <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">
+                      {{ daily_challenge.primary_action.description }}
+                    </p>
                   </div>
                 {% endif %}
+
+                <div style="display: flex; align-items: center; gap: var(--space-xs);">
+                  <span>⭐</span>
+                  <span style="font-weight: 600; color: var(--accent);">{{ daily_challenge.xp_reward }} XP available</span>
+                </div>
               </div>
 
-              <div style="display: flex; align-items: center;">
-                {% if quest_complete %}
+              <div style="display: flex; flex-direction: column; gap: var(--space-sm); min-width: 220px;">
+                {% if daily_challenge.completed %}
                   <a href="{% url 'quest_history' %}" class="btn btn-outline">
                     View History
                   </a>
                 {% else %}
-                  <a href="{% url 'daily_quest' %}" class="btn btn-primary btn-lg">
-                    Start Challenge →
+                  <a href="{{ daily_challenge.primary_action.cta_url }}" class="btn btn-primary btn-lg" style="display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs);">
+                    <span>{{ daily_challenge.primary_action.icon }}</span>
+                    <span>{{ daily_challenge.primary_action.cta_label }}</span>
                   </a>
                 {% endif %}
               </div>

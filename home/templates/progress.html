@@ -23,7 +23,7 @@
         border-bottom: 1px solid var(--gray-200);
       }
       .language-table tbody tr:hover {
-        background: rgba(79, 70, 229, 0.04);
+        background: rgba(20, 184, 166, 0.08);
       }
       .language-name {
         display: flex;
@@ -53,7 +53,7 @@
       }
       .language-chip:hover {
         border-color: var(--primary);
-        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.15);
+        box-shadow: 0 8px 20px rgba(20, 184, 166, 0.15);
       }
       .table-action-btn {
         display: inline-flex;
@@ -70,6 +70,29 @@
       .table-action-btn.secondary {
         background: var(--gray-200);
         color: var(--text-primary);
+      }
+      .xp-progress-shell {
+        width: 100%;
+        height: 20px;
+        border-radius: var(--radius-full);
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.95), rgba(255, 245, 236, 0.95));
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        box-shadow: inset 0 3px 8px rgba(15, 23, 42, 0.12);
+        overflow: hidden;
+        position: relative;
+      }
+      .xp-progress-shell::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0));
+        pointer-events: none;
+      }
+      .xp-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ff6b6b 0%, #ff9770 100%);
+        border-radius: var(--radius-full);
+        transition: width 0.5s ease;
       }
       @media (max-width: 768px) {
         .language-table th,
@@ -137,8 +160,8 @@
               <div style="font-size: var(--text-sm); margin-bottom: var(--space-xs); color: var(--text-secondary); text-align: center;">
                 Progress to Level {{ user_profile.current_level|add:1 }} ({{ xp_progress_percent|floatformat:0 }}%)
               </div>
-              <div style="width: 100%; height: 20px; background: var(--gray-200); border-radius: var(--radius-full); overflow: hidden;">
-                <div style="height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); width: {{ xp_progress_percent }}%; transition: width 0.5s ease;"></div>
+              <div class="xp-progress-shell">
+                <div class="xp-progress-fill" style="width: {{ xp_progress_percent }}%;"></div>
               </div>
             </div>
           </div>
