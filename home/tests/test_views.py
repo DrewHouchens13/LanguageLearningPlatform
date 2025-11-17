@@ -752,8 +752,8 @@ class TestOnboardingLanguageSelection(TestCase):
         self.assertEqual(response.context['language'], 'French')
         self.assertEqual(response.context['speech_code'], 'fr-FR')
 
-    def test_onboarding_welcome_allows_new_language(self):
-        """Users who completed one language can access another."""
+    def test_onboarding_welcome_allows_retake_and_new_language(self):
+        """Users who completed one language can retake it or choose another."""
         self.client.force_login(self.user)
         profile = self.user.profile
         profile.has_completed_onboarding = True
@@ -767,7 +767,7 @@ class TestOnboardingLanguageSelection(TestCase):
         self.assertEqual(response_other.status_code, 200)
 
         response_same = self.client.get(f'{self.welcome_url}?language=Spanish')
-        self.assertRedirects(response_same, reverse('dashboard'))
+        self.assertEqual(response_same.status_code, 200)
 
 
 # ============================================================================

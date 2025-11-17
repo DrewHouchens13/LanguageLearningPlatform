@@ -250,8 +250,8 @@ class TestCompleteAuthenticatedOnboardingFlow(TestCase):
         self.assertTrue(profile.has_completed_onboarding)
         self.assertEqual(profile.proficiency_level, 'B1')
 
-    def test_authenticated_user_cannot_retake_quiz(self):
-        """Test authenticated user cannot retake quiz after completion"""
+    def test_authenticated_user_can_retake_quiz(self):
+        """Authenticated users can restart the quiz even after finishing."""
         # First attempt - all correct (B1)
         response = self.client.get(reverse('onboarding_quiz'))
         attempt1_id = response.context['attempt_id']
@@ -269,16 +269,18 @@ class TestCompleteAuthenticatedOnboardingFlow(TestCase):
         profile = UserProfile.objects.get(user=self.user)
         self.assertEqual(profile.proficiency_level, 'B1')
         
-        # Try to access quiz again - should be redirected to dashboard
+        # Try to access quiz again - retake is allowed
         response = self.client.get(reverse('onboarding_quiz'))
-        self.assertRedirects(response, reverse('dashboard'))
-        
-        # Try to access welcome page again - should be redirected to dashboard
+        self.assertEqual(response.status_code, 200)
+        attempt2_id = response.context['attempt_id']
+        self.assertNotEqual(attempt1_id, attempt2_id)
+
+        # Welcome page should also be accessible
         response = self.client.get(reverse('onboarding_welcome'))
-        self.assertRedirects(response, reverse('dashboard'))
-        
-        # Verify only one attempt exists
-        self.assertEqual(OnboardingAttempt.objects.filter(user=self.user).count(), 1)
+        self.assertEqual(response.status_code, 200)
+
+        # Verify a second attempt record exists
+        self.assertEqual(OnboardingAttempt.objects.filter(user=self.user).count(), 2)
 
 
 class TestOnboardingLevelCalculationIntegration(TestCase):
