@@ -190,7 +190,51 @@
                 alert('Error submitting quiz. Please try again.');
             }
         });
-    </script>
-    {% include 'includes/pronunciation_script.html' with speech_code=speech_code %}
+<script>
+document.querySelectorAll('[data-speak-text]').forEach(button => {
+    button.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const text = button.getAttribute('data-speak-text');
+        const lang = button.getAttribute('data-speak-lang');
+        const originalIcon = button.textContent;
+        
+        button.disabled = true;
+        button.textContent = '⏳';
+        
+        try {
+            const response = await fetch('/speech/generate/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ text: text, lang: lang })
+            });
+            
+            if (!response.ok) throw new Error('Failed');
+            
+            const audioBlob = await response.blob();
+            const audio = new Audio(URL.createObjectURL(audioBlob));
+            
+            button.textContent = '▶️';
+            audio.onended = () => {
+                button.disabled = false;
+                button.textContent = originalIcon;
+            };
+            audio.onerror = () => { throw new Error('Audio failed'); };
+            
+            await audio.play();
+            
+        } catch (error) {
+            console.error('TTS Error:', error);
+            button.disabled = false;
+            button.textContent = '❌';
+            setTimeout(() => button.textContent = originalIcon, 2000);
+        }
+    });
+});
+</script>
 </body>
 </html>

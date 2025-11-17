@@ -50,6 +50,9 @@ urlpatterns = [
     path("lessons/<int:lesson_id>/submit/", views.submit_lesson_quiz, name="submit_lesson_quiz"),
     path("lessons/<int:lesson_id>/results/<int:attempt_id>/", views.lesson_results, name="lesson_results"),
     path("lessons/<str:language>/", views.lessons_by_language, name="lessons_by_language"),
+    # Speech generation paths
+    path("speech/generate/", views.generate_onboarding_speech, name="generate_onboarding_speech"),
+    path("lessons/<int:lesson_id>/speech/<int:card_order>/", views.generate_onboarding_speech, name="generate_speech"),
 
     # Daily Quest paths
     path("quests/daily/", views.daily_quest_view, name="daily_quest"),

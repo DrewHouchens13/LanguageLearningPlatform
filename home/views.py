@@ -39,6 +39,11 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import url_has_allowed_host_and_scheme, urlsafe_base64_encode, urlsafe_base64_decode
 from django.views.decorators.http import require_http_methods, require_POST
+from openai import OpenAI
+from django.conf import settings
+from openai import OpenAI
+import re
+from django.http import HttpResponse
 
 # Local application imports
 from .language_registry import (
@@ -2466,3 +2471,39 @@ def quest_history(request):
         'total_quest_xp': total_quest_xp,
     }
     return render(request, 'home/quest_history.html', context)
+
+
+@require_http_methods(["POST"])
+def generate_onboarding_speech(request):
+    """Generate speech for any text using OpenAI TTS"""
+    print("TTS request received")  # Debug
+    try:
+        if not settings.OPENAI_API_KEY:
+            return HttpResponse("OpenAI TTS not available", status=503)
+
+        data = json.loads(request.body)
+        text = data.get('text', '')
+        lang = data.get('lang', 'es-ES')
+
+        if not text:
+            return HttpResponse("No text provided", status=400)
+
+        # Remove parentheses from text
+        text = re.sub(r'\s*\([^)]*\)', ' ', text).strip()
+
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
+        voice = "alloy" if 'es' in lang.lower() else "echo"
+
+        response = client.audio.speech.create(
+            model="tts-1",
+            voice=voice,
+            input=text,
+            speed=0.9
+        )
+
+        return HttpResponse(response.content, content_type='audio/mpeg')
+
+    except Exception as e:
+        logging.error(f"TTS Error: {str(e)}")
+        return HttpResponse(f"Error: {str(e)}", status=500)
