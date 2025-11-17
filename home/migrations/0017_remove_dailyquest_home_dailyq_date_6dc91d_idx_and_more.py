@@ -3,6 +3,22 @@
 from django.db import migrations, models
 
 
+def dedupe_dailyquests(apps, schema_editor):
+    DailyQuest = apps.get_model('home', 'DailyQuest')
+    seen = set()
+    for quest in DailyQuest.objects.order_by('date', 'language', 'id'):
+        language = quest.language or 'Spanish'
+        if quest.language != language:
+            quest.language = language
+            quest.save(update_fields=['language'])
+
+        key = (quest.date, language)
+        if key in seen:
+            quest.delete()
+        else:
+            seen.add(key)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -23,6 +39,7 @@ class Migration(migrations.Migration):
             name='language',
             field=models.CharField(db_index=True, default='Spanish', help_text='Language this challenge targets (matches user profile language)', max_length=50),
         ),
+        migrations.RunPython(dedupe_dailyquests, migrations.RunPython.noop),
         migrations.AlterUniqueTogether(
             name='dailyquest',
             unique_together={('date', 'language')},
