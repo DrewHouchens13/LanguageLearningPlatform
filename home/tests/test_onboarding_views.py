@@ -345,7 +345,7 @@ class TestOnboardingResultsView(TestCase):
 
 
 class TestOnboardingRetakeBlocking(TestCase):
-    """Test that users cannot retake onboarding once completed"""
+    """Users should always be able to retake onboarding (legacy + new)."""
 
     def setUp(self):
         """Create test user, questions, and completed attempt"""
@@ -367,8 +367,8 @@ class TestOnboardingRetakeBlocking(TestCase):
                 difficulty_points=points
             )
 
-    def test_auth_user_cant_retake_welcome(self):
-        """Authenticated users who completed onboarding are redirected from welcome page"""
+    def test_auth_user_can_retake_welcome(self):
+        """Authenticated users with completed onboarding can still access welcome page."""
         # Use auto-created profile and mark as completed
         profile = self.user.profile
         profile.proficiency_level = 'A2'
@@ -379,10 +379,11 @@ class TestOnboardingRetakeBlocking(TestCase):
 
         response = self.client.get(reverse('onboarding_welcome'))
 
-        self.assertRedirects(response, reverse('dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'onboarding/welcome.html')
 
-    def test_authenticated_user_blocked_from_retaking_quiz(self):
-        """Authenticated users who completed onboarding are redirected from quiz page"""
+    def test_authenticated_user_can_retake_quiz(self):
+        """Authenticated users can launch quiz even after previously completing."""
         # Use auto-created profile and mark as completed
         profile = self.user.profile
         profile.proficiency_level = 'A2'
@@ -393,10 +394,11 @@ class TestOnboardingRetakeBlocking(TestCase):
 
         response = self.client.get(reverse('onboarding_quiz'))
 
-        self.assertRedirects(response, reverse('dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(OnboardingAttempt.objects.count(), 0)
         
-    def test_guest_with_session_done_cant_retake(self):
-        """Guests who completed in same session are blocked from retaking"""
+    def test_guest_with_session_done_can_retake(self):
+        """Guests can restart even if prior attempt in same session was completed."""
         from django.utils import timezone
         
         # Create a completed guest attempt
@@ -417,7 +419,9 @@ class TestOnboardingRetakeBlocking(TestCase):
         
         response = self.client.get(reverse('onboarding_welcome'))
         
-        self.assertRedirects(response, reverse('landing'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'onboarding/welcome.html')
+        self.assertNotIn('onboarding_attempt_id', self.client.session)
         
     def test_new_guest_can_still_take_onboarding(self):
         """New guests without completed session can still take onboarding"""

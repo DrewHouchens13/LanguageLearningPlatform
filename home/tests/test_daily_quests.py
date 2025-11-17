@@ -72,7 +72,7 @@ class TestDailyQuestModel(TestCase):
             xp_reward=75
         )
 
-        expected = "Daily Quest - 2025-11-13 - flashcard - Daily Colors Challenge"
+        expected = "Daily Quest - 2025-11-13 - Spanish - Daily Colors Challenge"
         self.assertEqual(str(quest), expected)
 
     def test_daily_quest_ordering(self):

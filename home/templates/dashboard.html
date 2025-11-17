@@ -253,23 +253,31 @@
                   <span style="font-size: 2rem;">🎯</span>
                   <h3 class="card-title" style="margin: 0;">Daily Challenge</h3>
                 </div>
-                <p class="text-muted" style="margin-bottom: var(--space-sm);">{{ daily_challenge.date|date:"F j, Y" }}</p>
+                <p class="text-muted" style="margin-bottom: var(--space-sm);">
+                  {{ daily_challenge.quest.date|date:"F j, Y" }} · {{ daily_challenge.quest.language }}
+                </p>
 
-                {% if daily_challenge.completed %}
+                {% if daily_challenge.is_completed %}
                   <div style="display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-md); background: rgba(16, 185, 129, 0.15); border-radius: var(--radius-md); margin-bottom: var(--space-md);">
                     <span style="font-size: 1.5rem;">✅</span>
                     <div>
                       <p style="font-weight: 600; color: var(--color-success); margin: 0;">Nice work!</p>
-                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">You earned today's {{ daily_challenge.completed_via }} bonus.</p>
+                      {% if daily_challenge.attempt %}
+                        <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">
+                          Scored {{ daily_challenge.attempt.correct_answers }}/{{ daily_challenge.attempt.total_questions }} · +{{ daily_challenge.attempt.xp_earned }} XP
+                        </p>
+                      {% else %}
+                        <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">Come back tomorrow for a brand new quiz.</p>
+                      {% endif %}
                     </div>
                   </div>
                 {% else %}
                   <div style="padding: var(--space-md); background: var(--surface); border-radius: var(--radius-md); margin-bottom: var(--space-md);">
                     <p style="font-weight: 600; margin-bottom: var(--space-xs);">
-                      {{ daily_challenge.primary_action.label }}
+                      Answer 5 {{ daily_challenge.quest.language }} questions inspired by {{ daily_challenge.quest.based_on_lesson.title }}.
                     </p>
                     <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">
-                      {{ daily_challenge.primary_action.description }}
+                      Earn bonus XP by finishing today's quiz before midnight.
                     </p>
                   </div>
                 {% endif %}
@@ -281,14 +289,13 @@
               </div>
 
               <div style="display: flex; flex-direction: column; gap: var(--space-sm); min-width: 220px;">
-                {% if daily_challenge.completed %}
+                {% if daily_challenge.is_completed %}
                   <a href="{% url 'quest_history' %}" class="btn btn-outline">
                     View History
                   </a>
                 {% else %}
-                  <a href="{% firstof daily_challenge.primary_action.cta_url '#' %}" class="btn btn-primary btn-lg" style="display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs);" rel="noopener noreferrer">
-                    <span>{{ daily_challenge.primary_action.icon }}</span>
-                    <span>{{ daily_challenge.primary_action.cta_label }}</span>
+                  <a href="{% url 'daily_quest' %}" class="btn btn-primary btn-lg" style="display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs);">
+                    <span>Start Challenge</span>
                   </a>
                 {% endif %}
               </div>

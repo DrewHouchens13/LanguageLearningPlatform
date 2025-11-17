@@ -60,62 +60,74 @@ RELATED FILES:
       <section class="fade-in" style="margin-top: var(--space-xl);">
         <div class="text-center mb-lg">
           <h1 class="page-title">Daily Challenge 🎯</h1>
-          <p class="text-muted">Earn bonus XP by taking action every day.</p>
-          <p class="text-muted">{% if challenge %}{{ challenge.date|date:"F j, Y" }}{% endif %}</p>
+          <p class="text-muted">Answer 5 questions to keep your streak alive.</p>
+          <p class="text-muted">{% if challenge %}{{ challenge.quest.date|date:"F j, Y" }}{% endif %}</p>
         </div>
 
         {% if not challenge %}
           <div class="card card-bordered fade-in-up" style="max-width: 700px; margin: 0 auto;">
             <div class="card-body text-center">
-              <div style="font-size: 3rem; margin-bottom: var(--space-md);">⚠️</div>
-              <h2 class="card-title mb-sm">Challenge Not Available</h2>
-              <p class="text-muted mb-lg">We couldn't load today's challenge. Please try again shortly.</p>
-              <a href="{% if IS_DEVEDU %}../../dashboard/{% else %}{% url 'dashboard' %}{% endif %}" class="btn btn-primary">
+              <div style="font-size: 3rem; margin-bottom: var(--space-md);">📚</div>
+              <h2 class="card-title mb-sm">No Challenge Available</h2>
+              <p class="text-muted mb-lg">We need at least one published lesson in your target language. Switch languages or complete onboarding to unlock the quiz.</p>
+              <a href="{% url 'dashboard' %}" class="btn btn-primary">
                 Back to Dashboard
               </a>
             </div>
           </div>
         {% else %}
-          <div class="card card-bordered fade-in-up" style="max-width: 800px; margin: 0 auto;">
+          <div class="card card-bordered fade-in-up" style="max-width: 900px; margin: 0 auto;">
             <div class="card-body">
               <div style="display: flex; flex-direction: column; gap: var(--space-lg);">
                 <div>
-                  <p class="challenge-label">Today's Daily Challenge</p>
-                  <h2 class="card-title" style="margin: 0;">Complete the task below</h2>
-                  <p class="text-muted" style="margin-top: var(--space-xs);">Earn {{ challenge.xp_reward }} XP by finishing today's assignment.</p>
+                  <p class="challenge-label">Today's Quiz · {{ challenge.quest.language }}</p>
+                  <h2 class="card-title" style="margin: 0;">{{ challenge.language_metadata.flag }} {{ challenge.language_metadata.native_name }}</h2>
+                  <p class="text-muted" style="margin-top: var(--space-xs);">
+                    Earn {{ challenge.xp_reward }} XP by mastering vocabulary from {{ challenge.quest.based_on_lesson.title }}.
+                  </p>
                 </div>
 
-                {% if challenge.completed %}
-                  <div style="display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-md); background: rgba(16, 185, 129, 0.15); border-radius: var(--radius-md);">
-                    <span style="font-size: 1.8rem;">✅</span>
-                    <div>
-                      <p style="font-weight: 600; color: var(--color-success); margin: 0;">Challenge Completed!</p>
-                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">Come back tomorrow for a new task.</p>
+                {% if challenge.is_completed %}
+                  <div style="padding: var(--space-lg); background: rgba(16, 185, 129, 0.15); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: var(--space-xs);">
+                    <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                      <span style="font-size: 2rem;">✅</span>
+                      <div>
+                        <p style="font-weight: 600; color: var(--color-success); margin: 0;">Challenge Completed!</p>
+                        {% if challenge.attempt %}
+                          <p class="text-muted" style="margin: 0;">Score: {{ challenge.attempt.correct_answers }}/{{ challenge.attempt.total_questions }} · +{{ challenge.attempt.xp_earned }} XP</p>
+                        {% else %}
+                          <p class="text-muted" style="margin: 0;">Come back tomorrow for a new set of questions.</p>
+                        {% endif %}
+                      </div>
+                    </div>
+                    <div class="mt-sm">
+                      <a href="{% url 'quest_history' %}" class="btn btn-outline">View Challenge History</a>
                     </div>
                   </div>
                 {% else %}
-                  <div class="action-card">
-                    <p class="text-muted" style="margin-bottom: var(--space-xxs); text-transform: uppercase; letter-spacing: 0.1em; font-size: var(--text-xs);">
-                      {% if challenge.challenge_type == 'onboarding' %}Onboarding Challenge{% else %}Lesson Challenge{% endif %}
-                    </p>
-                    <h4 style="margin: 0;">{{ challenge.primary_action.label }}</h4>
-                    <p class="text-muted" style="font-size: var(--font-size-sm); margin-top: var(--space-xs);">
-                      {{ challenge.primary_action.description }}
-                    </p>
-                    <a href="{% firstof challenge.primary_action.cta_url '#' %}" class="btn btn-primary mt-sm" style="display: inline-flex; align-items: center; gap: var(--space-xs);" rel="noopener noreferrer">
-                      <span>{{ challenge.primary_action.icon }}</span>
-                      <span>{{ challenge.primary_action.cta_label }}</span>
-                    </a>
-                  </div>
-                {% endif %}
+                  <form method="post" action="{% url 'daily_quest_submit' %}" class="action-card">
+                    {% csrf_token %}
+                    {% for question in challenge.questions %}
+                      <div style="margin-bottom: var(--space-lg);">
+                        <p class="text-muted" style="text-transform: uppercase; letter-spacing: 0.1em; font-size: var(--text-xs); margin-bottom: var(--space-xxs);">Question {{ forloop.counter }} / {{ challenge.questions|length }}</p>
+                        <h4 style="margin: 0 0 var(--space-sm);">{{ question.question_text }}</h4>
+                        <div class="question-options">
+                          {% for option in question.options %}
+                            <label class="option-item">
+                              <input type="radio" name="question_{{ question.id }}" value="{{ forloop.counter0 }}" required>
+                              <span>{{ option }}</span>
+                            </label>
+                          {% endfor %}
+                        </div>
+                      </div>
+                    {% endfor %}
 
-                <div style="border-top: 1px solid var(--border); padding-top: var(--space-md); display: flex; gap: var(--space-md); align-items: center;">
-                  <span style="font-size: 1.75rem;">⭐</span>
-                  <div>
-                    <strong>Finish the challenge, earn XP</strong>
-                    <p class="text-muted" style="margin: 0;">Complete today's assignment to instantly bank {{ challenge.xp_reward }} XP and keep your momentum going.</p>
-                  </div>
-                </div>
+                    <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                      <button type="submit" class="btn btn-primary btn-lg">Submit Challenge →</button>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin: 0;">⭐ Perfect score unlocks the full {{ challenge.xp_reward }} XP bonus.</p>
+                    </div>
+                  </form>
+                {% endif %}
               </div>
             </div>
           </div>
@@ -123,16 +135,16 @@ RELATED FILES:
           <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-lg); margin-top: var(--space-2xl);">
             <div class="card card-bordered fade-in-up">
               <div class="card-body">
-                <p class="text-muted" style="margin-bottom: var(--space-xs);">Weekly streak</p>
+                <p class="text-muted" style="margin-bottom: var(--space-xs);">This week</p>
                 <h3 style="margin: 0;">{{ weekly_stats.challenges_completed }} completions</h3>
-                <p class="text-muted" style="margin: 0;">{{ weekly_stats.xp_earned }} XP earned this week</p>
+                <p class="text-muted" style="margin: 0;">{{ weekly_stats.xp_earned }} XP · {{ weekly_stats.accuracy|floatformat:0 }}% accuracy</p>
               </div>
             </div>
             <div class="card card-bordered fade-in-up">
               <div class="card-body">
                 <p class="text-muted" style="margin-bottom: var(--space-xs);">All time</p>
                 <h3 style="margin: 0;">{{ lifetime_stats.challenges_completed }} challenges</h3>
-                <p class="text-muted" style="margin: 0;">{{ lifetime_stats.xp_earned }} XP earned overall</p>
+                <p class="text-muted" style="margin: 0;">{{ lifetime_stats.xp_earned }} XP · {{ lifetime_stats.accuracy|floatformat:0 }}% accuracy</p>
               </div>
             </div>
           </div>
@@ -153,6 +165,7 @@ RELATED FILES:
         padding: var(--space-lg);
         background: #fff;
         box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+        margin-top: var(--space-md);
       }
       .challenge-label {
         font-size: var(--text-sm);
@@ -161,6 +174,28 @@ RELATED FILES:
         letter-spacing: 0.08em;
         text-transform: uppercase;
         margin-bottom: var(--space-xxs);
+      }
+      .question-options {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+      }
+      .option-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: var(--space-sm);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .option-item input {
+        margin: 0;
+      }
+      .option-item:hover {
+        border-color: var(--primary);
+        background: rgba(14, 165, 233, 0.08);
       }
     </style>
   </body>

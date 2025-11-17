@@ -9,11 +9,9 @@ import logging
 from functools import wraps
 
 # Django imports
-from django.contrib import messages
-from django.shortcuts import redirect
 
 # Local application imports
-from .models import OnboardingAttempt, UserProfile
+from .models import OnboardingAttempt
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -25,35 +23,22 @@ logger = logging.getLogger(__name__)
 
 def block_if_onboarding_completed(view_func):
     """
-    Decorator to redirect users who have already completed onboarding.
+    Legacy decorator retained for compatibility.
 
-    - Authenticated users with completed onboarding -> redirect to dashboard
-    - Guests with completed onboarding in session -> redirect to landing
-    - Others -> allow access
+    Forced retake policy: all users may re-open onboarding regardless of previous completion.
+    This decorator now simply clears stale onboarding attempt references.
     """
+
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        """Wrapper function that checks onboarding completion status."""
-        # Check authenticated users
-        if request.user.is_authenticated:
-            try:
-                user_profile = UserProfile.objects.get(user=request.user)
-                if user_profile.has_completed_onboarding:
-                    messages.info(request, "You've already completed the placement assessment.")
-                    return redirect('dashboard')
-            except UserProfile.DoesNotExist:
-                pass  # No profile, allow access
-
-        # Check guest session
         attempt_id = request.session.get('onboarding_attempt_id')
         if attempt_id:
             try:
                 attempt = OnboardingAttempt.objects.get(id=attempt_id)
                 if attempt.completed_at:
-                    messages.info(request, "You've already completed the assessment. Please log in to save your results.")
-                    return redirect('landing')
+                    request.session.pop('onboarding_attempt_id', None)
             except OnboardingAttempt.DoesNotExist:
-                pass  # Invalid attempt, allow access
+                request.session.pop('onboarding_attempt_id', None)
 
         return view_func(request, *args, **kwargs)
 

@@ -33,7 +33,7 @@
           <h1 class="page-title">Quest History 📜</h1>
         </div>
 
-        {% if logs %}
+        {% if attempts %}
           <!-- Total Stats Card -->
           <div class="card card-bordered fade-in-up mb-lg" style="max-width: 800px; margin-left: auto; margin-right: auto; margin-bottom: var(--space-lg);">
             <div class="card-body text-center">
@@ -42,41 +42,41 @@
               </div>
               <h3 class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Total Quest XP Earned</h3>
               <p style="font-size: var(--font-size-3xl); font-weight: 700; color: var(--color-success);">{{ total_quest_xp }}</p>
-              <p class="text-muted" style="font-size: var(--font-size-sm);">{{ logs|length }} challenge{{ logs|length|pluralize }} completed</p>
+              <p class="text-muted" style="font-size: var(--font-size-sm);">{{ attempts|length }} challenge{{ attempts|length|pluralize }} completed</p>
             </div>
           </div>
 
           <!-- Quest List -->
           <div class="quest-list" style="max-width: 800px; margin: 0 auto;">
-            {% for entry in logs %}
+            {% for entry in attempts %}
               <div class="card card-bordered fade-in-up mb-md" style="animation-delay: {{ forloop.counter0|add:1|stringformat:'d' }}00ms;">
                 <div class="card-body">
                   <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--space-sm);">
                     <div>
                       <h3 class="card-title" style="margin-bottom: var(--space-xs);">
-                        {% if entry.completed_via == 'onboarding' %}🚀 Onboarded{% else %}📘 Lesson{% endif %} · {{ entry.language|default:"Any" }}
+                        📘 {{ entry.daily_quest.language }} · {{ entry.daily_quest.based_on_lesson.title }}
                       </h3>
                       <p class="text-muted" style="font-size: var(--font-size-sm);">
-                        📅 {{ entry.date|date:"F j, Y" }}
+                        📅 {{ entry.daily_quest.date|date:"F j, Y" }}
                       </p>
                     </div>
                     <span class="badge" style="background: var(--color-success); color: white; padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm); font-size: var(--font-size-sm);">
-                      +{{ entry.xp_awarded }} XP
+                      +{{ entry.xp_earned }} XP
                     </span>
                   </div>
                   
                   <div style="display: flex; flex-wrap: wrap; gap: var(--space-xl); margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px solid var(--color-border);">
                     <div>
-                      <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Completed Via</p>
-                      <p style="font-weight: 600; text-transform: capitalize;">{{ entry.completed_via }}</p>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Score</p>
+                      <p style="font-weight: 600;">{{ entry.correct_answers }}/{{ entry.total_questions }}</p>
                     </div>
                     <div>
                       <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Language</p>
-                      <p style="font-weight: 600;">{{ entry.language|default:"Mixed" }}</p>
+                      <p style="font-weight: 600;">{{ entry.daily_quest.language }}</p>
                     </div>
                     <div>
-                      <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Logged At</p>
-                      <p style="font-weight: 600;">{{ entry.created_at|date:"M j, g:i A" }}</p>
+                      <p class="text-muted" style="font-size: var(--font-size-sm); margin-bottom: var(--space-xs);">Completed At</p>
+                      <p style="font-weight: 600;">{{ entry.completed_at|date:"M j, g:i A" }}</p>
                     </div>
                   </div>
                 </div>
