@@ -85,6 +85,16 @@ class UserProfile(models.Model):
         default=1,
         help_text="Current level based on total XP earned"
     )
+    daily_challenge_language = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Locked daily challenge language for the current day"
+    )
+    daily_challenge_language_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date the daily challenge language was last locked"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -990,16 +1000,23 @@ class LessonAttempt(models.Model):
 class DailyQuest(models.Model):
     """
     A daily quest generated from an existing lesson.
-    Two quests per day: one time-based, one lesson-based.
+    Quests are language-specific so every learner sees content
+    aligned with their current study language.
     """
     # Identification
     date = models.DateField(db_index=True)
     title = models.CharField(max_length=200)
     description = models.TextField()
+    language = models.CharField(
+        max_length=50,
+        default=DEFAULT_LANGUAGE,
+        db_index=True,
+        help_text='Language this challenge targets (matches user profile language)'
+    )
 
     # Source and Configuration
     based_on_lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
-    quest_type = models.CharField(max_length=20)  # 'study' (time-based), 'quiz' (lesson-based)
+    quest_type = models.CharField(max_length=20)  # 'quiz' (single-mode for now)
 
     # Rewards
     xp_reward = models.IntegerField()
@@ -1011,15 +1028,16 @@ class DailyQuest(models.Model):
         ordering = ['-date']
         indexes = [
             models.Index(fields=['date']),
-            models.Index(fields=['date', 'quest_type']),
+            models.Index(fields=['date', 'language']),
+            models.Index(fields=['language']),
         ]
-        # Allow two quests per day, but only one of each type
-        unique_together = [['date', 'quest_type']]
+        # One quest per language per day
+        unique_together = [['date', 'language']]
         verbose_name = "Daily Quest"
         verbose_name_plural = "Daily Quests"
 
     def __str__(self):
-        return f"Daily Quest - {self.date} - {self.quest_type} - {self.title}"
+        return f"Daily Quest - {self.date} - {self.language} - {self.title}"
 
 
 class DailyQuestQuestion(models.Model):

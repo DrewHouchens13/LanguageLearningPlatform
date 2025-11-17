@@ -1,286 +1,335 @@
 """
-Service for the modernized daily challenge experience.
+Quiz-style daily challenge service.
 
-This module replaces the legacy quiz-style daily quest with an interaction-
-focused challenge. Users now complete the challenge by either onboarding into
-an additional language or by finishing a lesson in the language they are
-currently studying.
+Generates five-question multiple choice quizzes per user language each day,
+tracks attempts, and awards XP proportional to performance.
 """
 
-import hashlib
-import logging
-from datetime import timedelta
-from typing import Dict, List, Optional
+from __future__ import annotations
 
-from django.db.models import Sum
-from django.urls import reverse
+import logging
+import secrets
+from datetime import timedelta
+from typing import Dict, List, Optional, Sequence, Tuple
+
+from django.db import IntegrityError, transaction
+from django.db.models import Count, Sum
 from django.utils import timezone
-from django.db.utils import OperationalError
 
 from home.language_registry import (
     DEFAULT_LANGUAGE,
     get_language_metadata,
-    get_supported_languages,
     normalize_language_name,
 )
-from home.models import DailyChallengeLog, UserLanguageProfile, UserProfile
+from home.models import (
+    DailyQuest,
+    DailyQuestQuestion,
+    Lesson,
+    LessonAttempt,
+    UserDailyQuestAttempt,
+    UserProfile,
+)
 
 logger = logging.getLogger(__name__)
+_random = secrets.SystemRandom()
 
 
 class DailyQuestService:
-    """Business logic for the revamped daily challenge."""
+    """Business logic for the five-question daily challenge."""
 
-    XP_REWARD = 75
+    QUESTIONS_PER_CHALLENGE = 5
+    MIN_OPTIONS = 4
+    XP_RATIO = 0.75  # 75% of lesson XP
+    MIN_REWARD = 25  # floor so easier lessons still feel meaningful
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
     @staticmethod
-    def get_today_challenge(user) -> Dict[str, Optional[object]]:
-        """Return the challenge card data for the authenticated user."""
-        today = timezone.localdate()
-        log = None
-        try:
-            log = DailyChallengeLog.objects.filter(user=user, date=today).first()
-        except OperationalError:
-            logger.warning(
-                'DailyChallengeLog table missing while loading challenge for %s. '
-                'Did you run migrations?',
-                user.username
-            )
+    def get_today_challenge(user) -> Optional[Dict[str, object]]:
+        """
+        Return today's challenge metadata (quest + attempt) for the user.
 
-        pending_languages = DailyQuestService._get_pending_languages(user)
-        target_language = DailyQuestService._get_target_language(user)
-
-        onboarding_action = None
-        if pending_languages:
-            selected_language = DailyQuestService._deterministic_choice(
-                pending_languages,
-                f"{today.isoformat()}:{user.id}:language"
-            )
-            onboarding_action = DailyQuestService._build_onboarding_action(selected_language)
-
-        lesson_action = DailyQuestService._build_lesson_action(target_language)
-
-        candidates = [('lesson', lesson_action)]
-        if onboarding_action:
-            candidates.append(('onboarding', onboarding_action))
-
-        challenge_type, primary_action = DailyQuestService._deterministic_choice(
-            candidates,
-            f"{today.isoformat()}:{user.id}:mode"
-        )
-
-        return {
-            'date': today,
-            'completed': bool(log),
-            'completed_via': log.completed_via if log else None,
-            'xp_reward': DailyQuestService.XP_REWARD,
-            'challenge_type': challenge_type,
-            'pending_languages': pending_languages,
-            'target_language': target_language,
-            'primary_action': primary_action,
-            'secondary_action': None,
-            'log': log,
-        }
-
-    @staticmethod
-    def handle_lesson_completion(user, language: str, lesson_title: Optional[str] = None):
-        """Record challenge completion when a lesson is finished."""
+        Returns None if no eligible lessons exist for the user's language.
+        """
         if not user.is_authenticated:
             return None
 
-        normalized = normalize_language_name(language)
-        metadata = {'lesson_title': lesson_title} if lesson_title else {}
-        return DailyQuestService._mark_completed(user, 'lesson', normalized, metadata)
-
-    @staticmethod
-    def handle_onboarding_completion(user, language: str):
-        """Record challenge completion when onboarding finishes for a language."""
-        if not user.is_authenticated:
+        try:
+            quest = DailyQuestService._ensure_daily_quest(user)
+        except ValueError as exc:
+            logger.info('Daily quest unavailable for %s: %s', user.username, exc)
             return None
 
-        normalized = normalize_language_name(language)
-        metadata = {'onboarding_language': normalized}
-        return DailyQuestService._mark_completed(user, 'onboarding', normalized, metadata)
+        attempt = DailyQuestService._get_attempt(user, quest)
+        metadata = get_language_metadata(quest.language)
 
-    @staticmethod
-    def get_weekly_stats(user) -> Dict[str, int]:
-        """Aggregate challenge stats for the trailing 7-day window."""
-        week_ago = timezone.localdate() - timedelta(days=7)
-        try:
-            logs = DailyChallengeLog.objects.filter(user=user, date__gte=week_ago)
-            return DailyQuestService._compile_stats(logs)
-        except OperationalError:
-            logger.warning(
-                'DailyChallengeLog table missing while loading weekly stats for %s',
-                user.username
-            )
-            return DailyQuestService._empty_stats()
-
-    @staticmethod
-    def get_lifetime_stats(user) -> Dict[str, int]:
-        """Aggregate historical challenge stats for dashboards."""
-        try:
-            logs = DailyChallengeLog.objects.filter(user=user)
-            return DailyQuestService._compile_stats(logs)
-        except OperationalError:
-            logger.warning(
-                'DailyChallengeLog table missing while loading lifetime stats for %s',
-                user.username
-            )
-            return DailyQuestService._empty_stats()
-
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
-    @staticmethod
-    def _compile_stats(queryset):
-        total_xp = queryset.aggregate(total=Sum('xp_awarded'))['total'] or 0
-        lesson_count = queryset.filter(completed_via='lesson').count()
-        onboarding_count = queryset.filter(completed_via='onboarding').count()
         return {
-            'challenges_completed': queryset.count(),
-            'xp_earned': total_xp,
-            'lesson_completions': lesson_count,
-            'onboarding_completions': onboarding_count,
+            'quest': quest,
+            'attempt': attempt,
+            'questions': quest.questions.all(),
+            'language_metadata': metadata,
+            'is_completed': bool(attempt and attempt.is_completed),
+            'xp_reward': quest.xp_reward,
         }
 
     @staticmethod
-    def _empty_stats():
-        return {
-            'challenges_completed': 0,
-            'xp_earned': 0,
-            'lesson_completions': 0,
-            'onboarding_completions': 0,
-        }
+    def submit_challenge(user, post_data) -> Dict[str, object]:
+        """
+        Grade and record the user's submission for today's quest.
+        """
+        quest = DailyQuestService._ensure_daily_quest(user)
+        attempt = DailyQuestService._get_or_create_attempt(user, quest)
 
-    @staticmethod
-    def _build_onboarding_action(language: Dict[str, str]) -> Optional[Dict[str, str]]:
-        if not language:
-            return None
-
-        slug = language['slug']
-        english_name = language['name']
-        return {
-            'type': 'onboarding',
-            'language': english_name,
-            'native_name': language['native_name'],
-            'flag': language['flag'],
-            'label': f"Complete onboarding for {english_name}",
-            'description': 'Take the 10-question placement to unlock new lessons.',
-            'cta_label': f"Start {english_name} onboarding",
-            'cta_url': f"{reverse('onboarding_welcome')}?language={slug}",
-            'icon': '🚀',
-        }
-
-    @staticmethod
-    def _build_lesson_action(target_language: str) -> Dict[str, str]:
-        metadata = get_language_metadata(target_language)
-        slug = target_language.lower()
-        return {
-            'type': 'lesson',
-            'language': target_language,
-            'native_name': metadata['native_name'],
-            'flag': metadata['flag'],
-            'label': f"Complete a {metadata['native_name']} lesson",
-            'description': 'Finish any lesson in your current language to earn bonus XP.',
-            'cta_label': 'Browse lessons',
-            'cta_url': reverse('lessons_by_language', args=[slug]),
-            'icon': '📘',
-        }
-
-    @staticmethod
-    def _deterministic_choice(options, key):
-        if not options:
-            return None
-        digest = hashlib.sha256(key.encode('utf-8')).digest()
-        index = int.from_bytes(digest[:8], byteorder='big') % len(options)
-        return options[index]
-
-    @staticmethod
-    def _mark_completed(user, completed_via: str, language: str, metadata: Optional[Dict[str, str]] = None):
-        today = timezone.localdate()
-        metadata = metadata or {}
-
-        try:
-            log, created = DailyChallengeLog.objects.get_or_create(
-                user=user,
-                date=today,
-                defaults={
-                    'completed_via': completed_via,
-                    'language': language,
-                    'metadata': metadata,
-                }
-            )
-        except OperationalError:
-            logger.warning(
-                'DailyChallengeLog table missing while marking %s completion for %s',
-                completed_via,
-                user.username
-            )
-            return {
-                'completed': False,
-                'error': 'missing_table',
-            }
-
-        if not created:
+        if attempt.is_completed:
             return {
                 'already_completed': True,
-                'completed_via': log.completed_via,
-                'language': log.language,
-                'xp_awarded': log.xp_awarded,
+                'correct': attempt.correct_answers,
+                'total': attempt.total_questions,
+                'xp_awarded': attempt.xp_earned,
             }
 
-        profile = DailyQuestService._ensure_profile(user)
-        xp_awarded = DailyQuestService.XP_REWARD
+        correct, total = DailyQuestService.calculate_quest_score(quest, post_data)
+        attempt.correct_answers = correct
+        attempt.total_questions = total
+        attempt.xp_earned = attempt.calculate_xp()
+        attempt.is_completed = True
+        attempt.completed_at = timezone.now()
+        attempt.save(update_fields=[
+            'correct_answers',
+            'total_questions',
+            'xp_earned',
+            'is_completed',
+            'completed_at',
+        ])
 
-        try:
-            xp_result = profile.award_xp(xp_awarded)
-        except Exception as exc:  # pylint: disable=broad-except
-            logger.error('Failed to award XP for daily challenge: %s', exc)
-            xp_result = None
-
-        log.completed_via = completed_via
-        log.language = language
-        log.metadata = metadata
-        log.xp_awarded = xp_awarded
-        log.save(update_fields=['completed_via', 'language', 'metadata', 'xp_awarded', 'updated_at'])
+        xp_result = DailyQuestService._award_profile_xp(user, attempt.xp_earned)
 
         return {
-            'completed': True,
-            'completed_via': completed_via,
-            'language': language,
-            'xp_awarded': xp_awarded,
+            'correct': correct,
+            'total': total,
+            'xp_awarded': attempt.xp_earned,
             'xp_result': xp_result,
-            'log_id': log.id,
         }
 
     @staticmethod
-    def _get_pending_languages(user) -> List[Dict[str, str]]:
-        completed = set(
-            normalize_language_name(lang)
-            for lang in UserLanguageProfile.objects.filter(
-                user=user,
-                has_completed_onboarding=True
-            ).values_list('language', flat=True)
+    def get_weekly_stats(user) -> Dict[str, float]:
+        """
+        Aggregate stats for challenges completed within the past 7 days.
+        """
+        seven_days_ago = timezone.now() - timedelta(days=7)
+        attempts = UserDailyQuestAttempt.objects.filter(
+            user=user,
+            is_completed=True,
+            completed_at__gte=seven_days_ago,
         )
-
-        pending = []
-        for entry in get_supported_languages(include_flags=True):
-            normalized = normalize_language_name(entry['name'])
-            if normalized not in completed:
-                pending.append({
-                    **entry,
-                    'name': normalized,
-                })
-        return pending
+        return DailyQuestService._compile_stats(attempts)
 
     @staticmethod
-    def _get_target_language(user) -> str:
+    def get_lifetime_stats(user) -> Dict[str, float]:
+        """
+        Aggregate stats across all historical challenges for dashboards.
+        """
+        attempts = UserDailyQuestAttempt.objects.filter(
+            user=user,
+            is_completed=True,
+        )
+        return DailyQuestService._compile_stats(attempts)
+
+    @staticmethod
+    def calculate_quest_score(quest: DailyQuest, answers: Dict[str, str]) -> Tuple[int, int]:
+        """
+        Count how many answers are correct for the given quest submission.
+        """
+        correct = 0
+        total = quest.questions.count()
+
+        for question in quest.questions.all():
+            raw_value = answers.get(f'question_{question.id}')
+            try:
+                selected_index = int(raw_value)
+            except (TypeError, ValueError):
+                continue
+
+            if selected_index == question.correct_index:
+                correct += 1
+
+        return correct, total
+
+    # ------------------------------------------------------------------
+    # Quest generation helpers
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _ensure_daily_quest(user) -> DailyQuest:
+        """Fetch or create today's quest for the user's active language."""
+        today = timezone.localdate()
+        language = DailyQuestService._get_user_language(user)
+
+        quest = DailyQuest.objects.filter(date=today, language=language).first()
+        if quest:
+            return quest
+
+        return DailyQuestService._create_daily_quest(language, today, user)
+
+    @staticmethod
+    def _create_daily_quest(language: str, quest_date, user) -> DailyQuest:
+        """Create a new quest and snapshot its questions."""
+        lesson = DailyQuestService._select_random_lesson(language, user)
+        if lesson is None:
+            raise ValueError(f"No lessons available for {language}")
+
+        xp_reward = DailyQuestService._calculate_reward(lesson)
+        description = f"Answer 5 questions pulled from {lesson.title}."
+
+        try:
+            with transaction.atomic():
+                quest = DailyQuest.objects.create(
+                    date=quest_date,
+                    title=f"Daily {lesson.language} Challenge",
+                    description=description,
+                    language=language,
+                    based_on_lesson=lesson,
+                    quest_type='quiz',
+                    xp_reward=xp_reward,
+                )
+                DailyQuestService._generate_questions(quest, lesson)
+                return quest
+        except IntegrityError:
+            # Another request created it concurrently; fetch the existing row.
+            logger.info('Quest already existed for %s on %s', language, quest_date)
+            return DailyQuest.objects.get(date=quest_date, language=language)
+
+    @staticmethod
+    def _select_random_lesson(language: str, user) -> Optional[Lesson]:
+        """
+        Prefer lessons the user has completed, fallback to any published lesson.
+        """
+        lessons = Lesson.objects.filter(
+            language=language,
+            is_published=True,
+        ).annotate(
+            quiz_count=Count('quiz_questions'),
+            card_count=Count('cards'),
+        )
+
+        def has_enough_content(entry: Lesson) -> bool:
+            return max(entry.quiz_count, entry.card_count) >= DailyQuestService.QUESTIONS_PER_CHALLENGE
+
+        eligible = [lesson for lesson in lessons if has_enough_content(lesson)]
+        if not eligible:
+            return None
+
+        completed_ids = DailyQuestService._get_completed_lesson_ids(user, language)
+        prioritized = [lesson for lesson in eligible if lesson.id in completed_ids]
+        pool = prioritized or eligible
+        return _random.choice(pool)
+
+    @staticmethod
+    def _generate_questions(quest: DailyQuest, lesson: Lesson) -> None:
+        """Snapshot 5 questions (multiple choice) into DailyQuestQuestion."""
+        bank = DailyQuestService._build_question_bank(lesson)
+        if len(bank) < DailyQuestService.QUESTIONS_PER_CHALLENGE:
+            raise ValueError("Not enough questions to build the challenge.")
+
+        selected = _random.sample(bank, DailyQuestService.QUESTIONS_PER_CHALLENGE)
+        DailyQuestQuestion.objects.bulk_create([
+            DailyQuestQuestion(
+                daily_quest=quest,
+                question_text=item['question'],
+                answer_text=item['answer'],
+                options=item['options'],
+                correct_index=item['correct_index'],
+                order=index,
+                difficulty_level='medium',
+            )
+            for index, item in enumerate(selected, start=1)
+        ])
+
+    @staticmethod
+    def _build_question_bank(lesson: Lesson) -> List[Dict[str, object]]:
+        """Return a reusable bank of MC questions for the lesson."""
+        quiz_questions = list(lesson.quiz_questions.all())
+        bank: List[Dict[str, object]] = []
+
+        if len(quiz_questions) >= DailyQuestService.QUESTIONS_PER_CHALLENGE:
+            for question in quiz_questions:
+                options = list(question.options or [])
+                if len(options) < DailyQuestService.MIN_OPTIONS:
+                    continue
+                bank.append({
+                    'question': question.question,
+                    'options': options,
+                    'correct_index': question.correct_index,
+                    'answer': options[question.correct_index],
+                })
+        else:
+            cards = list(lesson.cards.all())
+            for card in cards:
+                distractors = [c.back_text for c in cards if c.id != card.id]
+                if len(distractors) < DailyQuestService.MIN_OPTIONS - 1:
+                    continue
+                options = DailyQuestService._build_options(card.back_text, distractors)
+                bank.append({
+                    'question': f'What is "{card.front_text}" in {lesson.language}?',
+                    'options': options,
+                    'correct_index': options.index(card.back_text),
+                    'answer': card.back_text,
+                })
+
+        return bank
+
+    @staticmethod
+    def _build_options(correct_answer: str, distractors: Sequence[str]) -> List[str]:
+        """Build a shuffled list of options with the correct answer included."""
+        sample = list(_random.sample(list(distractors), DailyQuestService.MIN_OPTIONS - 1))
+        sample.append(correct_answer)
+        _random.shuffle(sample)
+        return sample
+
+    @staticmethod
+    def _calculate_reward(lesson: Lesson) -> int:
+        reward = int(max(DailyQuestService.MIN_REWARD, lesson.xp_value * DailyQuestService.XP_RATIO))
+        return reward or DailyQuestService.MIN_REWARD
+
+    # ------------------------------------------------------------------
+    # Attempt helpers / stats
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _get_attempt(user, quest: DailyQuest) -> Optional[UserDailyQuestAttempt]:
+        return UserDailyQuestAttempt.objects.filter(user=user, daily_quest=quest).first()
+
+    @staticmethod
+    def _get_or_create_attempt(user, quest: DailyQuest) -> UserDailyQuestAttempt:
+        attempt, _ = UserDailyQuestAttempt.objects.get_or_create(
+            user=user,
+            daily_quest=quest,
+            defaults={'total_questions': DailyQuestService.QUESTIONS_PER_CHALLENGE},
+        )
+        return attempt
+
+    @staticmethod
+    def _get_completed_lesson_ids(user, language: str) -> set:
+        attempts = LessonAttempt.objects.filter(
+            user=user,
+            lesson__language=language,
+        ).values_list('lesson_id', flat=True)
+        return set(attempts)
+
+    @staticmethod
+    def _get_user_language(user) -> str:
         profile = DailyQuestService._ensure_profile(user)
-        return normalize_language_name(profile.target_language or DEFAULT_LANGUAGE)
+        today = timezone.localdate()
+        if (
+            profile.daily_challenge_language
+            and profile.daily_challenge_language_date == today
+        ):
+            return profile.daily_challenge_language
+
+        locked_language = normalize_language_name(profile.target_language or DEFAULT_LANGUAGE)
+        profile.daily_challenge_language = locked_language
+        profile.daily_challenge_language_date = today
+        profile.save(update_fields=['daily_challenge_language', 'daily_challenge_language_date'])
+        return locked_language
 
     @staticmethod
     def _ensure_profile(user) -> UserProfile:
@@ -288,3 +337,39 @@ class DailyQuestService:
             return user.profile
         except UserProfile.DoesNotExist:
             return UserProfile.objects.create(user=user)
+
+    @staticmethod
+    def _award_profile_xp(user, xp_awarded: int):
+        if xp_awarded <= 0:
+            return None
+
+        profile = DailyQuestService._ensure_profile(user)
+        try:
+            return profile.award_xp(xp_awarded)
+        except Exception as exc:  # pylint: disable=broad-except
+            logger.error('Failed to award XP for daily challenge: %s', exc, exc_info=True)
+            return None
+
+    @staticmethod
+    def _compile_stats(queryset) -> Dict[str, float]:
+        aggregates = queryset.aggregate(
+            correct=Sum('correct_answers'),
+            total=Sum('total_questions'),
+            xp=Sum('xp_earned'),
+            count=Count('id'),
+        )
+        accuracy = DailyQuestService._calculate_accuracy(
+            aggregates.get('correct') or 0,
+            aggregates.get('total') or 0,
+        )
+        return {
+            'challenges_completed': aggregates.get('count') or 0,
+            'xp_earned': aggregates.get('xp') or 0,
+            'accuracy': accuracy,
+        }
+
+    @staticmethod
+    def _calculate_accuracy(correct: int, total: int) -> float:
+        if not total:
+            return 0.0
+        return round((correct / total) * 100, 1)

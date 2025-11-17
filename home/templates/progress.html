@@ -90,9 +90,13 @@
       }
       .xp-progress-fill {
         height: 100%;
-        background: linear-gradient(90deg, #ff6b6b 0%, #ff9770 100%);
+        background: var(--gradient-accent);
         border-radius: var(--radius-full);
         transition: width 0.5s ease;
+        width: 0;
+      }
+      .stat-icon-challenges {
+        background: var(--gradient-accent);
       }
       @media (max-width: 768px) {
         .language-table th,
@@ -153,7 +157,7 @@
               </div>
               <div style="text-align: center;">
                 <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-xs);">XP to Next Level</div>
-                <div style="font-size: var(--text-4xl); font-weight: 700; color: var(--color-accent);">{{ xp_to_next_level|floatformat:0 }}</div>
+                <div style="font-size: var(--text-4xl); font-weight: 700; color: var(--text-primary);">{{ xp_to_next_level|floatformat:0 }}</div>
               </div>
             </div>
             <div>
@@ -161,7 +165,7 @@
                 Progress to Level {{ user_profile.current_level|add:1 }} ({{ xp_progress_percent|floatformat:0 }}%)
               </div>
               <div class="xp-progress-shell">
-                <div class="xp-progress-fill" style="width: {{ xp_progress_percent }}%;"></div>
+                <div class="xp-progress-fill" data-progress="{{ xp_progress_percent }}"></div>
               </div>
             </div>
           </div>
@@ -302,8 +306,12 @@
             </div>
 
             <div class="stat-card">
-              <div class="stat-icon" style="background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%); color: white;">
-                <span style="font-size: 2rem;">🎯</span>
+              <div class="stat-icon stat-icon-challenges">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <circle cx="12" cy="12" r="6"></circle>
+                  <circle cx="12" cy="12" r="2"></circle>
+                </svg>
               </div>
               <div class="stat-content">
                 <div class="stat-value">{{ weekly_challenges_completed }}</div>
@@ -312,24 +320,6 @@
             </div>
           </div>
 
-          <!-- Weekly Challenge Details -->
-          {% if weekly_challenges_completed > 0 %}
-          <div class="card mt-lg" style="max-width: 600px; margin-left: auto; margin-right: auto;">
-            <div class="card-body">
-              <h4 style="text-align: center; margin-bottom: var(--space-md);">Weekly Challenge Stats</h4>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg);">
-                <div style="text-align: center;">
-                  <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-xs);">XP Earned</div>
-                  <div style="font-size: var(--text-2xl); font-weight: 700; color: var(--color-success);">{{ weekly_challenge_xp }}</div>
-                </div>
-                <div style="text-align: center;">
-                  <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-xs);">Accuracy</div>
-                  <div style="font-size: var(--text-2xl); font-weight: 700; color: var(--color-primary);">{{ weekly_challenge_accuracy|floatformat:0 }}%</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          {% endif %}
         </section>
         
         <!-- Lifetime Stats -->
@@ -354,33 +344,6 @@
             </div>
           </div>
 
-          <!-- Lifetime Challenge Stats -->
-          {% if total_challenges_completed > 0 %}
-          <div class="card mt-xl" style="max-width: 800px; margin-left: auto; margin-right: auto;">
-            <div class="card-header">
-              <h3>Daily Challenge Performance 🎯</h3>
-            </div>
-            <div class="card-body">
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-xl);">
-                <div style="text-align: center;">
-                  <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-xs);">Challenges Completed</div>
-                  <div style="font-size: var(--text-3xl); font-weight: 700; color: var(--color-primary);">{{ total_challenges_completed }}</div>
-                </div>
-                <div style="text-align: center;">
-                  <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-xs);">Total XP Earned</div>
-                  <div style="font-size: var(--text-3xl); font-weight: 700; color: var(--color-success);">{{ total_challenge_xp }}</div>
-                </div>
-                <div style="text-align: center;">
-                  <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--space-xs);">Challenge Accuracy</div>
-                  <div style="font-size: var(--text-3xl); font-weight: 700; color: var(--color-accent);">{{ lifetime_challenge_accuracy|floatformat:0 }}%</div>
-                </div>
-              </div>
-              <div style="text-align: center; margin-top: var(--space-lg);">
-                <a href="{% url 'quest_history' %}" class="btn btn-primary">View Challenge History →</a>
-              </div>
-            </div>
-          </div>
-          {% endif %}
         </section>
         
         <!-- Empty State Message -->
@@ -467,6 +430,16 @@
           navCenter.classList.remove('active');
           navToggle.classList.remove('active');
         }
+      });
+
+      // Animate XP progress bar once data is available
+      document.querySelectorAll('.xp-progress-fill[data-progress]').forEach((bar) => {
+        const value = parseFloat(bar.dataset.progress);
+        if (isNaN(value)) return;
+        const clamped = Math.max(0, Math.min(value, 100));
+        requestAnimationFrame(() => {
+          bar.style.width = clamped + '%';
+        });
       });
     </script>
   </body>
