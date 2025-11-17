@@ -2478,7 +2478,7 @@ def generate_onboarding_speech(request):
     """Generate speech for any text using OpenAI TTS"""
     print("TTS request received")  # Debug
     try:
-        if not settings.OPENAI_API_KEY:
+        if not settings.OPEN_AI_API_KEY:
             return HttpResponse("OpenAI TTS not available", status=503)
 
         data = json.loads(request.body)
@@ -2491,7 +2491,7 @@ def generate_onboarding_speech(request):
         # Remove parentheses from text
         text = re.sub(r'\s*\([^)]*\)', ' ', text).strip()
 
-        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        client = OpenAI(api_key=settings.OPEN_AI_API_KEY)
 
         voice = "alloy" if 'es' in lang.lower() else "echo"
 
