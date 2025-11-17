@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
             name='language',
             field=models.CharField(db_index=True, default='Spanish', help_text='Language this challenge targets (matches user profile language)', max_length=50),
         ),
-        migrations.RunPython(dedupe_dailyquests, migrations.RunPython.noop),
+        migrations.RunPython(dedupe_dailyquests, migrations.RunPython.noop, atomic=False),
         migrations.AlterUniqueTogether(
             name='dailyquest',
             unique_together={('date', 'language')},
