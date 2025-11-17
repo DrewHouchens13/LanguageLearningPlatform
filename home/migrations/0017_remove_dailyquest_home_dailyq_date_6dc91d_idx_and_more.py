@@ -20,6 +20,11 @@ def dedupe_dailyquests(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    # Disable the default transaction wrapper so that the data cleanup step
+    # commits before we try to add the new unique constraint/indexes. Without
+    # this, PostgreSQL can complain about pending trigger events when we attempt
+    # to ALTER TABLE right after deleting duplicate quests.
+    atomic = False
 
     dependencies = [
         ('home', '0016_seed_global_lessons'),
