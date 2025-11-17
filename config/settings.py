@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dv##fju3puju_bg4otr!stbh)0y==ql!cf=^o87+li&k&)u!1w')
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', 'key goes here')
+OPEN_AI_API_KEY = os.environ.get('OPEN_AI_API_KEY', 'key goes here')
 
 
 # Development environment detection
