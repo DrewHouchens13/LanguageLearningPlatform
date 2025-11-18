@@ -20,6 +20,7 @@ import re
 import logging
 import random
 import time
+from collections import defaultdict
 from functools import wraps
 from smtplib import SMTPException
 
@@ -643,15 +644,19 @@ def _get_post_login_redirect(request, user):
     return redirect('dashboard')
 
 
-def login_view(request):
-    """Handle user login (SOFA refactored)."""
-    # If user is already logged in, redirect to home
-    if request.user.is_authenticated:
-        return HttpResponseRedirect('..')
+def _process_login_post(request):
+    """
+    Process POST login request.
 
-    if request.method != 'POST':
-        return render(request, 'login.html')
+    SOFA: Function Extraction - Reduces R0911 warning by consolidating POST logic.
+    Returns redirect response on success, None on failure (to re-render form).
 
+    Args:
+        request: Django request object (must be POST)
+
+    Returns:
+        HttpResponse: Redirect on success, None on failure
+    """
     # Rate limiting: Prevent brute force attacks
     is_allowed, _attempts_remaining, retry_after = check_rate_limit(
         request, action='login', limit=5, period=300
@@ -666,19 +671,19 @@ def login_view(request):
             request,
             f'Too many login attempts. Please try again in {retry_after // 60} minute(s).'
         )
-        return render(request, 'login.html')
+        return None
 
     username_or_email = request.POST.get('username_or_email', '').strip()
     password = request.POST.get('password', '')
 
-    # Validate input (SOFA - extracted function)
+    # Validate input
     if not _validate_login_input(request, username_or_email, password):
-        return render(request, 'login.html')
+        return None
 
-    # Find user (SOFA - extracted function)
+    # Find user
     user_obj = _find_user_by_username_or_email(request, username_or_email)
     if not user_obj:
-        return render(request, 'login.html')
+        return None
 
     # Authenticate user
     user = authenticate(request, username=user_obj.username, password=password)
@@ -690,14 +695,29 @@ def login_view(request):
             user_obj.username, get_client_ip(request)
         )
         messages.error(request, 'Invalid username/email or password.')
-        return render(request, 'login.html')
+        return None
 
     # Successful login
     login(request, user)
     logger.info('Successful login: %s from IP: %s', user.username, get_client_ip(request))
 
-    # Delegate redirect logic to helper (SOFA: Single Responsibility)
     return _get_post_login_redirect(request, user)
+
+
+def login_view(request):
+    """Handle user login (SOFA refactored)."""
+    # If user is already logged in, redirect to home
+    if request.user.is_authenticated:
+        return HttpResponseRedirect('..')
+
+    # Process POST login if submitted
+    if request.method == 'POST':
+        response = _process_login_post(request)
+        if response:
+            return response
+        # Fall through to render form on failure
+
+    return render(request, 'login.html')
 
 
 def signup_view(request):
@@ -1962,12 +1982,84 @@ def _build_lesson_icon_entries(lessons):
     return result
 
 
+def _get_user_language_context(request):
+    """
+    Get user profile and language context for lessons view.
+
+    SOFA: Function Extraction - Reduces R0914 warning by isolating profile logic.
+
+    Args:
+        request: Django request object
+
+    Returns:
+        tuple: (language_profile_map, current_language_profile, current_language, user_profile)
+    """
+    language_profile_map = {}
+    current_language_profile = None
+    current_language = DEFAULT_LANGUAGE
+    user_profile = None
+
+    if not request.user.is_authenticated:
+        return language_profile_map, current_language_profile, current_language, user_profile
+
+    # Get user profile and target language
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+        if user_profile.target_language:
+            current_language = normalize_language_name(user_profile.target_language)
+    except UserProfile.DoesNotExist:
+        pass
+
+    # Build language profile map
+    user_language_profiles = list(UserLanguageProfile.objects.filter(user=request.user))
+    language_profile_map = {lp.language: lp for lp in user_language_profiles}
+    current_language_profile = language_profile_map.get(current_language)
+
+    # Prefer first completed onboarding language as default if target not ready
+    completed_languages = [lp.language for lp in user_language_profiles if lp.has_completed_onboarding]
+    if completed_languages and (not current_language_profile or not current_language_profile.has_completed_onboarding):
+        current_language = completed_languages[0]
+        current_language_profile = language_profile_map.get(current_language)
+
+    return language_profile_map, current_language_profile, current_language, user_profile
+
+
+def _build_language_dropdown(grouped_lessons, language_profile_map, selected_language, lessons_base_url, is_authenticated):
+    """
+    Build language dropdown menu for lessons view.
+
+    SOFA: Function Extraction - Reduces R0914 warning by isolating dropdown logic.
+
+    Args:
+        grouped_lessons: Dict mapping language names to lesson lists
+        language_profile_map: Dict mapping language names to UserLanguageProfile objects
+        selected_language: Currently selected language name
+        lessons_base_url: Base URL for lessons list
+        is_authenticated: Whether user is authenticated
+
+    Returns:
+        list: List of dicts with language dropdown data
+    """
+    language_dropdown = []
+    for language_name, _lessons in grouped_lessons.items():
+        metadata = get_language_metadata(language_name)
+        profile = language_profile_map.get(language_name)
+        locked = not (is_authenticated and profile and profile.has_completed_onboarding)
+        language_dropdown.append({
+            'name': language_name,
+            'native_name': metadata.get('native_name', language_name),
+            'flag': metadata.get('flag', '🌐'),
+            'url': f"{lessons_base_url}?language={language_name}",
+            'locked': locked,
+            'is_active': language_name == selected_language,
+        })
+    return language_dropdown
+
+
 def lessons_list(request):
     """
     Display lessons for the user's selected language with inline navigation.
     """
-    from collections import defaultdict
-
     # Get all published lessons grouped by language for dropdown + rendering
     all_lessons = Lesson.objects.filter(is_published=True).order_by('language', 'order', 'id')
     grouped_lessons = defaultdict(list)
@@ -1979,29 +2071,8 @@ def lessons_list(request):
         for language, lessons in grouped_lessons.items()
     ]
 
-    # Build profile maps for onboarding status
-    language_profile_map = {}
-    current_language_profile = None
-    current_language = DEFAULT_LANGUAGE
-
-    if request.user.is_authenticated:
-        try:
-            user_profile = UserProfile.objects.get(user=request.user)
-            if user_profile.target_language:
-                current_language = normalize_language_name(user_profile.target_language)
-        except UserProfile.DoesNotExist:
-            user_profile = None
-        user_language_profiles = list(UserLanguageProfile.objects.filter(user=request.user))
-        language_profile_map = {lp.language: lp for lp in user_language_profiles}
-        current_language_profile = language_profile_map.get(current_language)
-
-        # Prefer first completed onboarding language as default if target not ready
-        completed_languages = [lp.language for lp in user_language_profiles if lp.has_completed_onboarding]
-        if completed_languages and (not current_language_profile or not current_language_profile.has_completed_onboarding):
-            current_language = completed_languages[0]
-            current_language_profile = language_profile_map.get(current_language)
-    else:
-        user_profile = None
+    # Get user language context (SOFA: Extracted helper)
+    language_profile_map, current_language_profile, current_language, user_profile = _get_user_language_context(request)
 
     # Determine which language to display (query param overrides default)
     requested_language = request.GET.get('language')
@@ -2023,20 +2094,15 @@ def lessons_list(request):
     selected_language_lessons = grouped_lessons.get(selected_language, [])
     selected_language_lessons_with_icons = _build_lesson_icon_entries(selected_language_lessons)
 
+    # Build language dropdown (SOFA: Extracted helper)
     lessons_base_url = reverse('lessons_list')
-    language_dropdown = []
-    for language_name, lessons in grouped_lessons.items():
-        metadata = get_language_metadata(language_name)
-        profile = language_profile_map.get(language_name)
-        locked = not (request.user.is_authenticated and profile and profile.has_completed_onboarding)
-        language_dropdown.append({
-            'name': language_name,
-            'native_name': metadata.get('native_name', language_name),
-            'flag': metadata.get('flag', '🌐'),
-            'url': f"{lessons_base_url}?language={language_name}",
-            'locked': locked,
-            'is_active': language_name == selected_language,
-        })
+    language_dropdown = _build_language_dropdown(
+        grouped_lessons,
+        language_profile_map,
+        selected_language,
+        lessons_base_url,
+        request.user.is_authenticated
+    )
 
     context = {
         'languages_with_lessons': languages_with_lessons,
