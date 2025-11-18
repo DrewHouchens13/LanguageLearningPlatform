@@ -2442,6 +2442,7 @@ def quest_history(request):
         'total_quest_xp': total_quest_xp,
     }
     return render(request, 'home/quest_history.html', context)
+
 @require_http_methods(["POST"])
 def generate_onboarding_speech(request):
     """Generate speech using ElevenLabs TTS (better for Spanish)"""
@@ -2458,8 +2459,17 @@ def generate_onboarding_speech(request):
         if not text:
             return HttpResponse("No text provided", status=400)
         
-        # Clean text - remove parentheses
-        text = re.sub(r'\s*\([^)]*\)', ' ', text).strip()
+        # Clean text - remove parentheses (safer regex)
+        # Remove content in parentheses without nested parentheses
+        while '(' in text:
+            start = text.find('(')
+            end = text.find(')', start)
+            if end == -1:
+                break
+            text = text[:start] + ' ' + text[end+1:]
+        
+        # Clean up extra whitespace
+        text = ' '.join(text.split()).strip()
         
         from elevenlabs.client import ElevenLabs
         
@@ -2467,11 +2477,7 @@ def generate_onboarding_speech(request):
         
         # Choose voice based on language
         if 'es' in lang.lower():
-            # Spanish voices (multilingual v2 model)
             voice_id = "pFZP5JQG7iQjIQuC4Bku"  # Lily - female Spanish
-            # Other options:
-            # "EXAVITQu4vr4xnSDxMaL" - Bella - Spanish female
-            # "onwK4e9ZLuTAKqWW03F9" - Daniel - Spanish male
         else:
             voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel - English female
         
@@ -2479,7 +2485,7 @@ def generate_onboarding_speech(request):
         audio = client.text_to_speech.convert(
             voice_id=voice_id,
             text=text,
-            model_id="eleven_multilingual_v2"  # Best for Spanish
+            model_id="eleven_multilingual_v2"
         )
         
         # Convert generator to bytes
@@ -2488,6 +2494,9 @@ def generate_onboarding_speech(request):
         return HttpResponse(audio_bytes, content_type='audio/mpeg')
         
     except Exception as e:
+        # Log the detailed error for debugging
         import logging
         logging.error(f"TTS Error: {str(e)}")
-        return HttpResponse(f"Error: {str(e)}", status=500)
+        
+        # Return generic error to user (don't expose internal details)
+        return HttpResponse("Text-to-speech generation failed", status=500)
