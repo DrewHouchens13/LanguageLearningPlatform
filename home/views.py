@@ -15,6 +15,8 @@ authentication checks, and error handling.
 """
 # Standard library imports
 import json
+import os
+import re
 import logging
 import random
 from functools import wraps
@@ -30,7 +32,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email as django_validate_email
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Sum
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponseRedirect, JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import TemplateDoesNotExist
 from django.template.loader import select_template
@@ -39,6 +41,7 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import url_has_allowed_host_and_scheme, urlsafe_base64_encode, urlsafe_base64_decode
 from django.views.decorators.http import require_http_methods, require_POST
+from django.conf import settings
 
 # Local application imports
 from .language_registry import (
@@ -2439,3 +2442,61 @@ def quest_history(request):
         'total_quest_xp': total_quest_xp,
     }
     return render(request, 'home/quest_history.html', context)
+
+@require_http_methods(["POST"])
+def generate_onboarding_speech(request):
+    """Generate speech using ElevenLabs TTS (better for Spanish)"""
+    try:
+        # Get API key from settings
+        elevenlabs_key = os.environ.get('ELEVENLABS_API_KEY')
+        if not elevenlabs_key:
+            return HttpResponse("TTS not available", status=503)
+        
+        data = json.loads(request.body)
+        text = data.get('text', '')
+        lang = data.get('lang', 'es-ES')
+        
+        if not text:
+            return HttpResponse("No text provided", status=400)
+        
+        # Clean text - remove parentheses (safer regex)
+        # Remove content in parentheses without nested parentheses
+        while '(' in text:
+            start = text.find('(')
+            end = text.find(')', start)
+            if end == -1:
+                break
+            text = text[:start] + ' ' + text[end+1:]
+        
+        # Clean up extra whitespace
+        text = ' '.join(text.split()).strip()
+        
+        from elevenlabs.client import ElevenLabs
+        
+        client = ElevenLabs(api_key=elevenlabs_key)
+        
+        # Choose voice based on language
+        if 'es' in lang.lower():
+            voice_id = "pFZP5JQG7iQjIQuC4Bku"  # Lily - female Spanish
+        else:
+            voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel - English female
+        
+        # Generate audio using text_to_speech
+        audio = client.text_to_speech.convert(
+            voice_id=voice_id,
+            text=text,
+            model_id="eleven_multilingual_v2"
+        )
+        
+        # Convert generator to bytes
+        audio_bytes = b''.join(audio)
+        
+        return HttpResponse(audio_bytes, content_type='audio/mpeg')
+        
+    except Exception as e:
+        # Log the detailed error for debugging
+        import logging
+        logging.error(f"TTS Error: {str(e)}")
+        
+        # Return generic error to user (don't expose internal details)
+        return HttpResponse("Text-to-speech generation failed", status=500)

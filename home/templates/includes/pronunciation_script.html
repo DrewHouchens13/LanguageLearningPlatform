@@ -1,84 +1,93 @@
 {% if speech_code %}
 <script>
-(function() {
+(async function() {
+  // Try AI TTS first, fall back to browser TTS
+  async function tryAITTS(text, lang) {
+    try {
+      const response = await fetch('/speech/generate/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value
+        },
+        body: JSON.stringify({ text: text, lang: lang }),
+        signal: AbortSignal.timeout(3000) // 3 second timeout
+      });
+      
+      if (!response.ok) return null;
+      
+      const audioBlob = await response.blob();
+      const audio = new Audio(URL.createObjectURL(audioBlob));
+      await audio.play();
+      return true;
+    } catch (error) {
+      console.log('AI TTS unavailable, using browser TTS');
+      return null;
+    }
+  }
+  
+  // Original browser TTS code
   if (!('speechSynthesis' in window)) {
     console.warn('Speech synthesis API not supported in this browser.');
     return;
   }
-
   const defaultVoiceCode = '{{ speech_code|escapejs }}';
   const fallbackVoiceCode = 'en-US';
   let availableVoices = [];
-  let isSpeaking = false;
-
+  
   function loadVoices() {
     availableVoices = window.speechSynthesis.getVoices();
   }
-
+  
   function sanitizePronunciationText(text) {
-    if (!text) {
-      return '';
-    }
-    return text
-      .replace(/\s*\([^)]*\)/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    if (!text) return '';
+    return text.replace(/\s*\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
   }
-
+  
   function getVoice(code) {
-    if (!code || !availableVoices.length) {
-      return null;
-    }
+    if (!code || !availableVoices.length) return null;
     return availableVoices.find(voice => voice.lang === code) || null;
   }
-
+  
   function speakText(text, langCode) {
-    if (!text) {
-      return;
-    }
+    if (!text) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     const voice = getVoice(langCode) || getVoice(defaultVoiceCode) || getVoice(fallbackVoiceCode);
-    if (voice) {
-      utterance.voice = voice;
-    }
+    if (voice) utterance.voice = voice;
     utterance.lang = (voice && voice.lang) || langCode || defaultVoiceCode;
     utterance.rate = 1.05;
-    isSpeaking = true;
-    utterance.onend = () => {
-      isSpeaking = false;
-    };
     window.speechSynthesis.speak(utterance);
   }
-
-  document.addEventListener('click', function(event) {
+  
+  // Main click handler with AI TTS + browser fallback
+  document.addEventListener('click', async function(event) {
     const button = event.target.closest('[data-speak-text]');
-    if (!button) {
-      return;
-    }
+    if (!button) return;
+    
     event.preventDefault();
     event.stopPropagation();
+    
     const rawText = button.getAttribute('data-speak-text');
     const text = sanitizePronunciationText(rawText);
-    if (!text) {
-      return;
-    }
+    if (!text) return;
+    
     const langAttr = button.getAttribute('data-speak-lang');
-    speakText(text, langAttr || defaultVoiceCode);
+    const lang = langAttr || defaultVoiceCode;
+    
+    // Try AI TTS first
+    const aiSuccess = await tryAITTS(text, lang);
+    
+    // If AI failed, use browser TTS
+    if (!aiSuccess) {
+      speakText(text, lang);
+    }
   }, true);
-
+  
   if (window.speechSynthesis.onvoiceschanged !== undefined) {
     window.speechSynthesis.onvoiceschanged = loadVoices;
   }
   loadVoices();
-
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden && isSpeaking) {
-      window.speechSynthesis.cancel();
-      isSpeaking = false;
-    }
-  });
 })();
 </script>
 {% endif %}
-
