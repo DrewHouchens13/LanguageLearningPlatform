@@ -1066,7 +1066,6 @@ def dashboard(request):
         user=request.user,
         language=preferred_language
     ).first()
-    current_language_metadata = get_language_metadata(preferred_language)
 
     overall_xp_row = None
     if user_profile:
@@ -1079,6 +1078,7 @@ def dashboard(request):
             'progress_percent': xp_progress_percent,
         }
 
+    # SOFA: Inline metadata call to reduce local variable count (R0914)
     context = {
         'has_completed_onboarding': has_completed_onboarding,
         'user_profile': user_profile,
@@ -1090,7 +1090,7 @@ def dashboard(request):
         'language_stats': language_stats,
         'pending_languages': pending_languages,
         'current_language_profile': current_language_profile,
-        'current_language_metadata': current_language_metadata,
+        'current_language_metadata': get_language_metadata(preferred_language),
         'current_language_name': preferred_language,
         'overall_xp_row': overall_xp_row,
     }
