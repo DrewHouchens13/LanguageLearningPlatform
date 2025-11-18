@@ -2779,3 +2779,123 @@ def generate_onboarding_speech(request):
 
         # Return generic error to user (don't expose internal details)
         return HttpResponse("Text-to-speech generation failed", status=500)
+
+
+# =============================================================================
+# YOUTUBE TRANSCRIPT FEATURE (Free API - No Key Required)
+# =============================================================================
+
+def youtube_transcript(request):
+    """
+    Display YouTube transcript extraction tool.
+
+    Allows users to paste a YouTube URL and view bilingual transcripts.
+    Uses the free YouTube Transcript API (no API key required).
+    """
+    return render(request, 'home/youtube_transcript.html')
+
+
+@require_http_methods(["POST"])
+def get_youtube_transcript_api(request):
+    """
+    API endpoint to fetch YouTube video transcript.
+
+    Extracts Spanish and English transcripts from a YouTube video.
+    Returns JSON with transcript data or error message.
+    """
+    try:
+        from youtube_transcript_api import YouTubeTranscriptApi
+        from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
+
+        data = json.loads(request.body)
+        video_url = data.get('video_url', '')
+
+        if not video_url:
+            return JsonResponse({"error": "No video URL provided"}, status=400)
+
+        # Extract video ID from URL
+        # Supports: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
+        video_id = None
+        if 'youtube.com/watch?v=' in video_url:
+            video_id = video_url.split('watch?v=')[1].split('&')[0]
+        elif 'youtu.be/' in video_url:
+            video_id = video_url.split('youtu.be/')[1].split('?')[0]
+        elif 'youtube.com/embed/' in video_url:
+            video_id = video_url.split('embed/')[1].split('?')[0]
+        else:
+            # Assume it's just the video ID
+            video_id = video_url.strip()
+
+        if not video_id:
+            return JsonResponse({"error": "Invalid YouTube URL"}, status=400)
+
+        logger.info("Fetching transcript for video ID: %s", video_id)
+
+        result = {
+            "video_id": video_id,
+            "video_url": f"https://www.youtube.com/watch?v={video_id}",
+            "transcripts": {}
+        }
+
+        # Try to get Spanish transcript
+        try:
+            spanish_transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['es'])
+            result["transcripts"]["spanish"] = {
+                "success": True,
+                "data": spanish_transcript,
+                "total_entries": len(spanish_transcript)
+            }
+            logger.info("Spanish transcript found: %d entries", len(spanish_transcript))
+        except NoTranscriptFound:
+            result["transcripts"]["spanish"] = {
+                "success": False,
+                "error": "No Spanish transcript available"
+            }
+        except Exception as e:
+            result["transcripts"]["spanish"] = {
+                "success": False,
+                "error": str(e)
+            }
+
+        # Try to get English transcript
+        try:
+            english_transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en'])
+            result["transcripts"]["english"] = {
+                "success": True,
+                "data": english_transcript,
+                "total_entries": len(english_transcript)
+            }
+            logger.info("English transcript found: %d entries", len(english_transcript))
+        except NoTranscriptFound:
+            result["transcripts"]["english"] = {
+                "success": False,
+                "error": "No English transcript available"
+            }
+        except Exception as e:
+            result["transcripts"]["english"] = {
+                "success": False,
+                "error": str(e)
+            }
+
+        # Check if we got at least one transcript
+        has_transcript = (
+            result["transcripts"].get("spanish", {}).get("success", False) or
+            result["transcripts"].get("english", {}).get("success", False)
+        )
+
+        if not has_transcript:
+            return JsonResponse({
+                "error": "No transcripts available for this video. Transcripts may be disabled by the video owner."
+            }, status=404)
+
+        return JsonResponse(result)
+
+    except TranscriptsDisabled:
+        return JsonResponse({
+            "error": "Transcripts are disabled for this video"
+        }, status=404)
+    except Exception as e:
+        logger.error("YouTube transcript error: %s", str(e))
+        return JsonResponse({
+            "error": f"Failed to fetch transcript: {str(e)}"
+        }, status=500)

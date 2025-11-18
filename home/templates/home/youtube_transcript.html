@@ -1,0 +1,276 @@
+<!--
+🤖 AI ASSISTANT INSTRUCTIONS - YOUTUBE TRANSCRIPT TOOL
+================================================================================
+
+PURPOSE:
+This template provides a tool for extracting bilingual transcripts from YouTube
+videos. Users can paste a YouTube URL and view Spanish/English transcripts
+side-by-side for language learning.
+
+URL: /youtube-transcript/
+BACKEND: home/views.py:youtube_transcript, get_youtube_transcript_api
+API: YouTube Transcript API (FREE - No API Key Required)
+
+KEY FEATURES:
+1. Extract transcripts from any YouTube video with captions
+2. Display Spanish and English transcripts side-by-side
+3. Show timestamps for each transcript segment
+4. No API key required - completely free to use
+
+USAGE:
+- Paste a YouTube URL (supports youtube.com, youtu.be, embed URLs)
+- Click "Get Transcript" to fetch bilingual captions
+- View Spanish and English side-by-side with timestamps
+
+RELATED FILES:
+- home/views.py - youtube_transcript, get_youtube_transcript_api views
+- home/urls.py - URL routing
+- FREE_API_USAGE_GUIDE.md - API documentation
+
+================================================================================
+-->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Transcript Tool - Language Learning Platform</title>
+    {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
+  </head>
+  <body>
+    {% include '_nav.html' %}
+
+    <main class="container">
+      <!-- Django Messages -->
+      {% if messages %}
+        <div class="mt-xl">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <section class="fade-in" style="margin-top: var(--space-xl);">
+        <div class="text-center mb-lg">
+          <h1 class="page-title">📹 YouTube Transcript Tool</h1>
+          <p class="text-muted">Extract bilingual transcripts from YouTube videos for language learning.</p>
+          <p class="text-muted" style="font-size: 0.875rem;">Free API - No registration required!</p>
+        </div>
+
+        <!-- Input Form -->
+        <div class="card card-bordered fade-in-up" style="max-width: 900px; margin: 0 auto;">
+          <div class="card-body">
+            <h2 class="card-title mb-md">Get Video Transcript</h2>
+
+            <form id="transcript-form" style="display: flex; flex-direction: column; gap: var(--space-md);">
+              {% csrf_token %}
+
+              <div>
+                <label for="video-url" class="form-label">YouTube URL</label>
+                <input
+                  type="text"
+                  id="video-url"
+                  name="video_url"
+                  class="form-input"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  required
+                  style="font-family: monospace;"
+                >
+                <p class="text-muted" style="font-size: 0.8125rem; margin-top: var(--space-xs);">
+                  Supports: youtube.com/watch?v=..., youtu.be/..., or just the video ID
+                </p>
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="submit-btn">
+                Get Transcript
+              </button>
+
+              <div id="loading" style="display: none; text-align: center; padding: var(--space-lg);">
+                <div style="font-size: 2rem; margin-bottom: var(--space-sm);">⏳</div>
+                <p class="text-muted">Fetching transcripts...</p>
+              </div>
+
+              <div id="error-message" style="display: none; padding: var(--space-md); background: rgba(239, 68, 68, 0.1); border-radius: var(--radius-md); color: var(--color-danger);">
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" style="display: none; margin-top: var(--space-xl); max-width: 900px; margin-left: auto; margin-right: auto;">
+          <!-- Video Preview -->
+          <div class="card card-bordered fade-in-up mb-lg">
+            <div class="card-body">
+              <h3 class="card-title mb-md">Video Preview</h3>
+              <div id="video-embed" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: var(--radius-md);">
+                <!-- YouTube iframe will be inserted here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Transcripts -->
+          <div class="card card-bordered fade-in-up">
+            <div class="card-body">
+              <h3 class="card-title mb-md">Bilingual Transcript</h3>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); margin-bottom: var(--space-md);">
+                <div>
+                  <h4 style="color: var(--color-primary); margin-bottom: var(--space-sm);">🇪🇸 Spanish</h4>
+                  <div id="spanish-status" class="text-muted"></div>
+                </div>
+                <div>
+                  <h4 style="color: var(--color-primary); margin-bottom: var(--space-sm);">🇬🇧 English</h4>
+                  <div id="english-status" class="text-muted"></div>
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg);">
+                <div id="spanish-transcript" style="max-height: 600px; overflow-y: auto; padding: var(--space-md); background: rgba(0, 0, 0, 0.02); border-radius: var(--radius-sm);">
+                  <!-- Spanish transcript entries will be inserted here -->
+                </div>
+                <div id="english-transcript" style="max-height: 600px; overflow-y: auto; padding: var(--space-md); background: rgba(0, 0, 0, 0.02); border-radius: var(--radius-sm);">
+                  <!-- English transcript entries will be inserted here -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('transcript-form');
+      const submitBtn = document.getElementById('submit-btn');
+      const loading = document.getElementById('loading');
+      const errorMessage = document.getElementById('error-message');
+      const resultsSection = document.getElementById('results-section');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const videoUrl = document.getElementById('video-url').value.trim();
+        if (!videoUrl) {
+          showError('Please enter a YouTube URL');
+          return;
+        }
+
+        // Reset UI
+        loading.style.display = 'block';
+        submitBtn.disabled = true;
+        errorMessage.style.display = 'none';
+        resultsSection.style.display = 'none';
+
+        try {
+          const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+          const response = await fetch('{% url "get_youtube_transcript_api" %}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ video_url: videoUrl })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to fetch transcript');
+          }
+
+          displayResults(data);
+
+        } catch (error) {
+          showError(error.message);
+        } finally {
+          loading.style.display = 'none';
+          submitBtn.disabled = false;
+        }
+      });
+
+      function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.style.display = 'block';
+      }
+
+      function formatTimestamp(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+      }
+
+      function displayResults(data) {
+        // Show video embed
+        const videoEmbed = document.getElementById('video-embed');
+        videoEmbed.innerHTML = `
+          <iframe
+            width="100%"
+            height="100%"
+            src="https://www.youtube.com/embed/${data.video_id}"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+          ></iframe>
+        `;
+
+        // Display Spanish transcript
+        const spanishStatus = document.getElementById('spanish-status');
+        const spanishTranscript = document.getElementById('spanish-transcript');
+
+        if (data.transcripts.spanish && data.transcripts.spanish.success) {
+          spanishStatus.textContent = `${data.transcripts.spanish.total_entries} entries`;
+          spanishStatus.style.color = 'var(--color-success)';
+
+          spanishTranscript.innerHTML = data.transcripts.spanish.data.map(entry => `
+            <div style="margin-bottom: var(--space-sm); padding-bottom: var(--space-sm); border-bottom: 1px solid rgba(0, 0, 0, 0.05);">
+              <div style="font-size: 0.75rem; color: var(--color-muted); margin-bottom: var(--space-xs);">
+                ${formatTimestamp(entry.start)}
+              </div>
+              <div>${entry.text}</div>
+            </div>
+          `).join('');
+        } else {
+          spanishStatus.textContent = data.transcripts.spanish.error || 'Not available';
+          spanishStatus.style.color = 'var(--color-danger)';
+          spanishTranscript.innerHTML = '<p class="text-muted">No Spanish transcript available for this video.</p>';
+        }
+
+        // Display English transcript
+        const englishStatus = document.getElementById('english-status');
+        const englishTranscript = document.getElementById('english-transcript');
+
+        if (data.transcripts.english && data.transcripts.english.success) {
+          englishStatus.textContent = `${data.transcripts.english.total_entries} entries`;
+          englishStatus.style.color = 'var(--color-success)';
+
+          englishTranscript.innerHTML = data.transcripts.english.data.map(entry => `
+            <div style="margin-bottom: var(--space-sm); padding-bottom: var(--space-sm); border-bottom: 1px solid rgba(0, 0, 0, 0.05);">
+              <div style="font-size: 0.75rem; color: var(--color-muted); margin-bottom: var(--space-xs);">
+                ${formatTimestamp(entry.start)}
+              </div>
+              <div>${entry.text}</div>
+            </div>
+          `).join('');
+        } else {
+          englishStatus.textContent = data.transcripts.english.error || 'Not available';
+          englishStatus.style.color = 'var(--color-danger)';
+          englishTranscript.innerHTML = '<p class="text-muted">No English transcript available for this video.</p>';
+        }
+
+        // Show results section
+        resultsSection.style.display = 'block';
+
+        // Scroll to results
+        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    </script>
+  </body>
+</html>

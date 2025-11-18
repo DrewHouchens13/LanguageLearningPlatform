@@ -58,6 +58,10 @@ urlpatterns = [
     path("quests/daily/", views.daily_quest_view, name="daily_quest"),
     path("quests/daily/submit/", views.daily_quest_submit, name="daily_quest_submit"),
     path("quests/history/", views.quest_history, name="quest_history"),
+
+    # YouTube Transcript Feature (Free API - No Key Required)
+    path("youtube-transcript/", views.youtube_transcript, name="youtube_transcript"),
+    path("youtube-transcript/api/", views.get_youtube_transcript_api, name="get_youtube_transcript_api"),
 ]
 
 
