@@ -1690,12 +1690,129 @@ def onboarding_quiz(request):
     return render(request, 'onboarding/quiz.html', context)
 
 
+def _process_onboarding_answers(answers, attempt):
+    """
+    Process onboarding answers and calculate score.
+
+    SOFA: Function Extraction - Reduces R0914/R0915 warnings by isolating answer processing.
+
+    Args:
+        answers: List of answer dicts from request
+        attempt: OnboardingAttempt object
+
+    Returns:
+        tuple: (answers_data, total_score, total_possible) or (None, None, None) if error
+
+    Raises:
+        OnboardingQuestion.DoesNotExist: If question ID is invalid
+    """
+    answers_data = []
+    total_score = 0
+    total_possible = 0
+
+    for answer_item in answers:
+        question_id = answer_item.get('question_id')
+        user_answer = answer_item.get('answer', '').strip().upper()
+        time_taken = answer_item.get('time_taken', 0)
+
+        # Get question (let exception propagate for error handling)
+        question = OnboardingQuestion.objects.get(id=question_id)
+
+        # Check if answer is correct
+        is_correct = user_answer == question.correct_answer.upper()
+
+        # Save answer
+        OnboardingAnswer.objects.create(
+            attempt=attempt,
+            question=question,
+            user_answer=user_answer,
+            is_correct=is_correct,
+            time_taken_seconds=time_taken
+        )
+
+        # Track for level calculation
+        answers_data.append({
+            'difficulty_level': question.difficulty_level,
+            'is_correct': is_correct,
+            'difficulty_points': question.difficulty_points,
+            'question_number': question.question_number
+        })
+
+        # Calculate score
+        total_possible += question.difficulty_points
+        if is_correct:
+            total_score += question.difficulty_points
+
+    return answers_data, total_score, total_possible
+
+
+def _update_onboarding_user_profile(request, attempt, calculated_level, total_score, total_possible, answers):
+    """
+    Update user profile and stats after onboarding completion.
+
+    SOFA: Function Extraction - Reduces R0914/R0915 warnings by isolating profile updates.
+
+    Args:
+        request: Django request object
+        attempt: OnboardingAttempt object
+        calculated_level: Calculated proficiency level
+        total_score: Total score achieved
+        total_possible: Total possible score
+        answers: List of answer dicts (for time calculation)
+    """
+    user_profile, _created = UserProfile.objects.get_or_create(user=request.user)
+    normalized_language = normalize_language_name(attempt.language)
+    user_profile.proficiency_level = calculated_level
+    user_profile.has_completed_onboarding = True
+    user_profile.onboarding_completed_at = timezone.now()
+    user_profile.target_language = normalized_language
+    user_profile.save()
+
+    _upsert_language_onboarding(
+        request.user,
+        normalized_language,
+        calculated_level,
+        attempt.completed_at
+    )
+
+    # Create QuizResult for stats tracking
+    QuizResult.objects.create(
+        user=request.user,
+        quiz_id=f'onboarding_{attempt.language}',
+        quiz_title=f'{attempt.language} Placement Assessment',
+        language=normalized_language,
+        score=total_score,
+        total_questions=total_possible
+    )
+
+    # Calculate total time from all answers
+    total_time_minutes = sum(
+        answer_item.get('time_taken', 0) for answer_item in answers
+    ) // 60  # Convert seconds to minutes
+
+    # Update UserProgress
+    user_progress, _ = UserProgress.objects.get_or_create(user=request.user)
+    user_progress.total_minutes_studied += total_time_minutes
+    user_progress.total_quizzes_taken += 1
+    user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
+    user_progress.save()
+
+    _increment_language_study_stats(
+        request.user,
+        normalized_language,
+        minutes=total_time_minutes,
+        quizzes=1
+    )
+
+    logger.info('Onboarding completed for user %s: %s (%s/%s)', request.user.username, calculated_level, total_score, total_possible)
+
+
 def submit_onboarding(request):
     """
     Process onboarding quiz submission (AJAX endpoint).
-    
+
     POST: Accept answers, calculate level, update profile
-    
+
     Expects JSON:
     {
         "attempt_id": 123,
@@ -1704,7 +1821,7 @@ def submit_onboarding(request):
             ...
         ]
     }
-    
+
     Returns JSON:
     {
         "success": true,
@@ -1717,135 +1834,56 @@ def submit_onboarding(request):
     """
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
-    
+
     try:
         data = json.loads(request.body)
         attempt_id = data.get('attempt_id')
         answers = data.get('answers', [])
-        
-        # Validate input
+
+        # Validate input (SOFA: Early returns for guard clauses)
         if not attempt_id or not answers:
             return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
-        
+
         if len(answers) != 10:
             return JsonResponse({'success': False, 'error': 'Must answer all 10 questions'}, status=400)
-        
+
         # Get attempt
         try:
             attempt = OnboardingAttempt.objects.get(id=attempt_id)
         except OnboardingAttempt.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Invalid attempt ID'}, status=404)
-        
+
         # Check if already completed
         if attempt.completed_at:
             return JsonResponse({'success': False, 'error': 'Assessment already submitted'}, status=400)
-        
-        # Process answers and calculate score
-        answers_data = []
-        total_score = 0
-        total_possible = 0
-        
-        for answer_item in answers:
-            question_id = answer_item.get('question_id')
-            user_answer = answer_item.get('answer', '').strip().upper()
-            time_taken = answer_item.get('time_taken', 0)
-            
-            try:
-                question = OnboardingQuestion.objects.get(id=question_id)
-            except OnboardingQuestion.DoesNotExist:
-                return JsonResponse({'success': False, 'error': f'Invalid question ID: {question_id}'}, status=400)
-            
-            # Check if answer is correct
-            is_correct = user_answer == question.correct_answer.upper()
-            
-            # Save answer
-            OnboardingAnswer.objects.create(
-                attempt=attempt,
-                question=question,
-                user_answer=user_answer,
-                is_correct=is_correct,
-                time_taken_seconds=time_taken
-            )
-            
-            # Track for level calculation
-            answers_data.append({
-                'difficulty_level': question.difficulty_level,
-                'is_correct': is_correct,
-                'difficulty_points': question.difficulty_points,
-                'question_number': question.question_number
-            })
-            
-            # Calculate score
-            total_possible += question.difficulty_points
-            if is_correct:
-                total_score += question.difficulty_points
-        
+
+        # Process answers and calculate score (SOFA: Extracted helper)
+        try:
+            answers_data, total_score, total_possible = _process_onboarding_answers(answers, attempt)
+        except OnboardingQuestion.DoesNotExist as e:
+            return JsonResponse({'success': False, 'error': f'Invalid question ID: {e}'}, status=400)
+
         # Calculate proficiency level
-        service = OnboardingService()
-        calculated_level = service.calculate_proficiency_level(answers_data)
-        
+        calculated_level = OnboardingService().calculate_proficiency_level(answers_data)
+
         # Update attempt
         attempt.calculated_level = calculated_level
         attempt.total_score = total_score
         attempt.total_possible = total_possible
         attempt.completed_at = timezone.now()
         attempt.save()
-        
-        # For authenticated users, update profile AND stats
+
+        # For authenticated users, update profile AND stats (SOFA: Extracted helper)
         if request.user.is_authenticated:
-            user_profile, _created = UserProfile.objects.get_or_create(user=request.user)
-            normalized_language = normalize_language_name(attempt.language)
-            user_profile.proficiency_level = calculated_level
-            user_profile.has_completed_onboarding = True
-            user_profile.onboarding_completed_at = timezone.now()
-            user_profile.target_language = normalized_language
-            user_profile.save()
-
-            _upsert_language_onboarding(
-                request.user,
-                normalized_language,
-                calculated_level,
-                attempt.completed_at
-            )
-            
-            # Create QuizResult for stats tracking
-            QuizResult.objects.create(
-                user=request.user,
-                quiz_id=f'onboarding_{attempt.language}',
-                quiz_title=f'{attempt.language} Placement Assessment',
-                language=normalized_language,
-                score=total_score,
-                total_questions=total_possible
-            )
-            
-            # Calculate total time from all answers
-            total_time_minutes = sum(
-                answer_item.get('time_taken', 0) for answer_item in answers
-            ) // 60  # Convert seconds to minutes
-            
-            # Update UserProgress
-            user_progress, _ = UserProgress.objects.get_or_create(user=request.user)
-            user_progress.total_minutes_studied += total_time_minutes
-            user_progress.total_quizzes_taken += 1
-            user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
-            user_progress.save()
-
-            _increment_language_study_stats(
-                request.user,
-                normalized_language,
-                minutes=total_time_minutes,
-                quizzes=1
-            )
-            
-            logger.info('Onboarding completed for user %s: %s (%s/%s)', request.user.username, calculated_level, total_score, total_possible)
+            _update_onboarding_user_profile(request, attempt, calculated_level, total_score, total_possible, answers)
         else:
             # For guests, store attempt_id in session
             request.session['onboarding_attempt_id'] = attempt.id
             logger.info('Onboarding completed for guest session %s: %s (%s/%s)', attempt.session_key, calculated_level, total_score, total_possible)
-        
+
         # Calculate percentage
         percentage = round((total_score / total_possible * 100), 1) if total_possible > 0 else 0
-        
+
         return JsonResponse({
             'success': True,
             'level': calculated_level,
@@ -1854,7 +1892,7 @@ def submit_onboarding(request):
             'percentage': percentage,
             'redirect_url': f'/onboarding/results/?attempt={attempt.id}'
         })
-        
+
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
     except (KeyError, ValueError, AttributeError, TypeError) as e:
