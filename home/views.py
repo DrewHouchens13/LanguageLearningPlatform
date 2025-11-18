@@ -2386,38 +2386,19 @@ def lesson_quiz(request, lesson_id):
     return render(request, template_name, context)
 
 
-@require_http_methods(["POST"])
-def submit_lesson_quiz(request, lesson_id):
-    """Process lesson quiz submission."""
-    lesson = get_object_or_404(Lesson, id=lesson_id, is_published=True)
+def _evaluate_lesson_quiz_answers(answers, lesson):
+    """
+    Evaluate lesson quiz answers and calculate score.
 
-    # Initialize XP result variables (defensive programming - SOFA: Single Responsibility)
-    xp_result = None
-    language_xp_result = None
+    SOFA: Function Extraction - Reduces R0914/R0915/R0912 warnings by isolating answer evaluation.
 
-    # Accept JSON body or regular POST
-    try:
-        if request.content_type == 'application/json':
-            payload = json.loads(request.body.decode('utf-8'))
-        else:
-            payload = request.POST.dict()
-    except (json.JSONDecodeError, UnicodeDecodeError):
-        logger.warning("Invalid JSON payload in quiz submission for lesson %s", lesson_id)
-        return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+    Args:
+        answers: List of answer dicts from request
+        lesson: Lesson object
 
-    answers = payload.get('answers')
-
-    # Handle answers as JSON string (for backwards compatibility with form-encoded submissions)
-    if answers and isinstance(answers, str):
-        try:
-            answers = json.loads(answers)
-        except (json.JSONDecodeError, TypeError):
-            logger.warning("Failed to parse answers JSON string for lesson %s", lesson_id)
-            return JsonResponse({'error': 'Invalid answers format - must be valid JSON'}, status=400)
-
-    if not answers or not isinstance(answers, list):
-        return JsonResponse({'error': 'No answers provided or invalid format'}, status=400)
-
+    Returns:
+        tuple: (score, total) - number correct and total questions answered
+    """
     # Fetch all quiz questions for this lesson in one query (performance optimization)
     # Create a dictionary for O(1) lookup by question ID
     questions = {q.id: q for q in LessonQuizQuestion.objects.filter(lesson=lesson)}
@@ -2447,89 +2428,116 @@ def submit_lesson_quiz(request, lesson_id):
         if int(sel) == int(q.correct_index):
             score += 1
 
-    attempt = LessonAttempt.objects.create(
-        lesson=lesson,
-        user=request.user if request.user.is_authenticated else None,
+    return score, total
+
+
+def _update_lesson_quiz_user_stats(request, lesson, score, total):
+    """
+    Update user stats and award XP after lesson quiz completion.
+
+    SOFA: Function Extraction - Reduces R0914/R0915/R0912 warnings by isolating stats updates.
+
+    Args:
+        request: Django request object
+        lesson: Lesson object
+        score: Quiz score
+        total: Total questions
+
+    Returns:
+        tuple: (xp_result, language_xp_result) - XP award results or (None, None)
+    """
+    # Create QuizResult for stats tracking
+    QuizResult.objects.create(
+        user=request.user,
+        quiz_id=f'lesson_{lesson.id}',
+        quiz_title=lesson.title,
+        language=lesson.language,
         score=score,
-        total=total
+        total_questions=total
     )
 
-    # Initialize variables for later use
+    # Create LessonCompletion record
+    LessonCompletion.objects.create(
+        user=request.user,
+        lesson_id=str(lesson.id),
+        lesson_title=lesson.title,
+        language=lesson.language,
+        duration_minutes=5  # Estimated time per lesson quiz
+    )
+
+    # Award XP for lesson completion (Sprint 3 - Issue #17)
+    base_xp = 50  # Base XP per lesson
+    bonus_xp = 10 if total > 0 and score == total else 0  # Bonus for perfect score
+    total_xp_awarded = base_xp + bonus_xp
+
+    # Safely get or create profile (defensive programming)
+    normalized_language = normalize_language_name(lesson.language)
+    try:
+        profile = request.user.profile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=request.user)
+        logger.warning('UserProfile was missing for user %s, created new profile', request.user.username)
+
+    # Award XP with error handling
     xp_result = None
-
-    # Track stats for authenticated users
-    if request.user.is_authenticated:
-        # Create QuizResult for stats tracking
-        QuizResult.objects.create(
-            user=request.user,
-            quiz_id=f'lesson_{lesson.id}',
-            quiz_title=lesson.title,
-            language=lesson.language,
-            score=score,
-            total_questions=total
+    try:
+        xp_result = profile.award_xp(total_xp_awarded)
+        logger.info(
+            'XP awarded: %s earned %s XP (Level %s -> %s)',
+            request.user.username,
+            xp_result["xp_awarded"],
+            xp_result["old_level"],
+            xp_result["new_level"] or xp_result["old_level"]
         )
-        
-        # Create LessonCompletion record
-        LessonCompletion.objects.create(
-            user=request.user,
-            lesson_id=str(lesson.id),
-            lesson_title=lesson.title,
-            language=lesson.language,
-            duration_minutes=5  # Estimated time per lesson quiz
-        )
+    except (ValueError, TypeError) as e:
+        # XP awarding failed, log but don't block lesson completion
+        logger.error('Failed to award XP for user %s: %s', request.user.username, str(e))
 
-        # Award XP for lesson completion (Sprint 3 - Issue #17)
-        base_xp = 50  # Base XP per lesson
-        bonus_xp = 10 if total > 0 and score == total else 0  # Bonus for perfect score
-        total_xp_awarded = base_xp + bonus_xp
+    language_xp_result = _award_language_xp(request.user, lesson.language, total_xp_awarded)
 
-        # Safely get or create profile (defensive programming)
-        normalized_language = normalize_language_name(lesson.language)
-        try:
-            profile = request.user.profile
-        except UserProfile.DoesNotExist:
-            profile = UserProfile.objects.create(user=request.user)
-            logger.warning('UserProfile was missing for user %s, created new profile', request.user.username)
+    if profile.target_language != normalized_language:
+        profile.target_language = normalized_language
+        profile.save(update_fields=['target_language'])
 
-        # Award XP with error handling
-        try:
-            xp_result = profile.award_xp(total_xp_awarded)
-            logger.info(
-                'XP awarded: %s earned %s XP (Level %s -> %s)',
-                request.user.username,
-                xp_result["xp_awarded"],
-                xp_result["old_level"],
-                xp_result["new_level"] or xp_result["old_level"]
-            )
-        except (ValueError, TypeError) as e:
-            # XP awarding failed, log but don't block lesson completion
-            logger.error('Failed to award XP for user %s: %s', request.user.username, str(e))
-            xp_result = None
+    # Update UserProgress
+    user_progress, _ = UserProgress.objects.get_or_create(user=request.user)
+    user_progress.total_quizzes_taken += 1
+    user_progress.total_lessons_completed += 1
+    user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
+    user_progress.update_streak()  # Update streak when lesson completed
+    user_progress.save()
 
-        language_xp_result = _award_language_xp(request.user, lesson.language, total_xp_awarded)
+    _increment_language_study_stats(
+        request.user,
+        lesson.language,
+        minutes=5,
+        lessons=1,
+        quizzes=1
+    )
 
-        if profile.target_language != normalized_language:
-            profile.target_language = normalized_language
-            profile.save(update_fields=['target_language'])
+    logger.info('Lesson quiz completed: %s - %s: %s/%s', request.user.username, lesson.title, score, total)
 
-        # Update UserProgress
-        user_progress, _ = UserProgress.objects.get_or_create(user=request.user)
-        user_progress.total_quizzes_taken += 1
-        user_progress.total_lessons_completed += 1
-        user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
-        user_progress.update_streak()  # Update streak when lesson completed
-        user_progress.save()
+    return xp_result, language_xp_result
 
-        _increment_language_study_stats(
-            request.user,
-            lesson.language,
-            minutes=5,
-            lessons=1,
-            quizzes=1
-        )
 
-        logger.info('Lesson quiz completed: %s - %s: %s/%s', request.user.username, lesson.title, score, total)
+def _build_lesson_quiz_response(request, lesson, attempt, score, total, xp_result, language_xp_result):
+    """
+    Build JSON or redirect response for lesson quiz submission.
 
+    SOFA: Function Extraction - Reduces R0914/R0912 warnings by isolating response building.
+
+    Args:
+        request: Django request object
+        lesson: Lesson object
+        attempt: LessonAttempt object
+        score: Quiz score
+        total: Total questions
+        xp_result: XP award result dict or None
+        language_xp_result: Language XP award result dict or None
+
+    Returns:
+        HttpResponse: JsonResponse or redirect
+    """
     # If request from JS expect JSON
     if request.content_type == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         response_data = {
@@ -2557,9 +2565,58 @@ def submit_lesson_quiz(request, lesson_id):
                     'leveled_up': language_xp_result['leveled_up'],
                     'new_level': language_xp_result['new_level'],
                 }
-        
+
         return JsonResponse(response_data)
     return redirect('lesson_results', lesson_id=lesson.id, attempt_id=attempt.id)
+
+
+@require_http_methods(["POST"])
+def submit_lesson_quiz(request, lesson_id):
+    """Process lesson quiz submission."""
+    lesson = get_object_or_404(Lesson, id=lesson_id, is_published=True)
+
+    # Accept JSON body or regular POST
+    try:
+        if request.content_type == 'application/json':
+            payload = json.loads(request.body.decode('utf-8'))
+        else:
+            payload = request.POST.dict()
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        logger.warning("Invalid JSON payload in quiz submission for lesson %s", lesson_id)
+        return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+
+    answers = payload.get('answers')
+
+    # Handle answers as JSON string (for backwards compatibility with form-encoded submissions)
+    if answers and isinstance(answers, str):
+        try:
+            answers = json.loads(answers)
+        except (json.JSONDecodeError, TypeError):
+            logger.warning("Failed to parse answers JSON string for lesson %s", lesson_id)
+            return JsonResponse({'error': 'Invalid answers format - must be valid JSON'}, status=400)
+
+    if not answers or not isinstance(answers, list):
+        return JsonResponse({'error': 'No answers provided or invalid format'}, status=400)
+
+    # Evaluate answers (SOFA: Extracted helper)
+    score, total = _evaluate_lesson_quiz_answers(answers, lesson)
+
+    # Create attempt record
+    attempt = LessonAttempt.objects.create(
+        lesson=lesson,
+        user=request.user if request.user.is_authenticated else None,
+        score=score,
+        total=total
+    )
+
+    # Track stats for authenticated users (SOFA: Extracted helper)
+    xp_result = None
+    language_xp_result = None
+    if request.user.is_authenticated:
+        xp_result, language_xp_result = _update_lesson_quiz_user_stats(request, lesson, score, total)
+
+    # Build response (SOFA: Extracted helper)
+    return _build_lesson_quiz_response(request, lesson, attempt, score, total, xp_result, language_xp_result)
 
 
 def lesson_results(request, lesson_id, attempt_id):
