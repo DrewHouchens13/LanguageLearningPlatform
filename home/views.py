@@ -2133,34 +2133,31 @@ def lessons_list(request):
     if selected_language not in grouped_lessons and grouped_lessons:
         selected_language = next(iter(grouped_lessons.keys()))
 
-    selected_language_metadata = get_language_metadata(selected_language)
+    # Get selected language profile for context
     selected_language_profile = language_profile_map.get(selected_language)
-    selected_language_completed = bool(
-        request.user.is_authenticated and selected_language_profile and selected_language_profile.has_completed_onboarding
-    )
 
-    selected_language_lessons = grouped_lessons.get(selected_language, [])
-    selected_language_lessons_with_icons = _build_lesson_icon_entries(selected_language_lessons)
-
-    # Build language dropdown (SOFA: Extracted helper)
-    lessons_base_url = reverse('lessons_list')
+    # Build language dropdown (SOFA: Extracted helper, inline base URL to reduce R0914)
     language_dropdown = _build_language_dropdown(
         grouped_lessons,
         language_profile_map,
         selected_language,
-        lessons_base_url,
+        reverse('lessons_list'),
         request.user.is_authenticated
     )
 
+    # SOFA: Inline single-use variables to reduce R0914 (19→15 locals)
+    selected_language_lessons_list = grouped_lessons.get(selected_language, [])
     context = {
         'languages_with_lessons': languages_with_lessons,
         'language_dropdown': language_dropdown,
         'selected_language': selected_language,
-        'selected_language_metadata': selected_language_metadata,
+        'selected_language_metadata': get_language_metadata(selected_language),
         'selected_language_profile': selected_language_profile,
-        'selected_language_lessons': selected_language_lessons_with_icons,
-        'selected_language_completed': selected_language_completed,
-        'selected_language_has_lessons': bool(selected_language_lessons),
+        'selected_language_lessons': _build_lesson_icon_entries(selected_language_lessons_list),
+        'selected_language_completed': bool(
+            request.user.is_authenticated and selected_language_profile and selected_language_profile.has_completed_onboarding
+        ),
+        'selected_language_has_lessons': bool(selected_language_lessons_list),
         'current_language_name': current_language,
         'current_language_profile': current_language_profile,
         'current_language_metadata': get_language_metadata(current_language),
