@@ -1,3 +1,11 @@
+"""
+Onboarding integration tests.
+
+SOFA Refactoring (Sprint 4):
+- Avoid Repetition: Using test_helpers to eliminate duplicate setup code
+- Single Responsibility: Each test focuses on one complete flow
+"""
+
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -7,25 +15,13 @@ from home.models import (
 )
 import json
 
-
-def create_test_questions():
-    """Helper to create 10 test questions"""
-    questions = []
-    for i in range(1, 11):
-        difficulty = 'A1' if i <= 4 else ('A2' if i <= 7 else 'B1')
-        points = 1 if difficulty == 'A1' else (2 if difficulty == 'A2' else 3)
-        
-        question = OnboardingQuestion.objects.create(
-            question_number=i,
-            question_text=f'Question {i}',
-            language='Spanish',
-            difficulty_level=difficulty,
-            option_a='A', option_b='B', option_c='C', option_d='D',
-            correct_answer='A',
-            difficulty_points=points
-        )
-        questions.append(question)
-    return questions
+# SOFA: DRY - Use centralized test helpers instead of local duplicates
+from home.tests.test_helpers import (
+    create_test_user,
+    create_test_onboarding_questions as create_test_questions,  # Alias for compatibility
+    create_test_onboarding_attempt,
+    submit_onboarding_answers
+)
 
 
 class TestCompleteGuestOnboardingFlow(TestCase):
@@ -117,11 +113,7 @@ class TestCompleteGuestOnboardingFlow(TestCase):
     def test_guest_login_after_quiz_saves_results(self):
         """Test guest login after quiz saves onboarding results to account"""
         # Create existing user
-        user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='Pass123!@#'
-        )
+        user = create_test_user(password='Pass123!@#')  # SOFA: DRY
         
         # Step 1: Complete quiz as guest
         response = self.client.get(reverse('onboarding_quiz'))
@@ -209,11 +201,7 @@ class TestCompleteAuthenticatedOnboardingFlow(TestCase):
     def setUp(self):
         """Create user and questions"""
         self.client = Client()
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='Pass123!@#'
-        )
+        self.user = create_test_user(password='Pass123!@#')  # SOFA: DRY
         self.questions = create_test_questions()
         self.client.login(username='testuser', password='Pass123!@#')
 

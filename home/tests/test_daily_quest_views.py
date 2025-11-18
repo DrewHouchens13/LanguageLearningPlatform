@@ -1,5 +1,8 @@
 """
 Unit tests for the Daily Challenge views.
+
+SOFA Refactoring (Sprint 4):
+- Avoid Repetition: Using test_helpers to eliminate duplicate setup code
 """
 from datetime import date
 from types import SimpleNamespace
@@ -11,6 +14,13 @@ from django.urls import reverse
 from django.utils import timezone
 
 from home.models import DailyQuest, Lesson, LessonQuizQuestion, UserDailyQuestAttempt
+
+# SOFA: DRY - Import reusable test helpers
+from home.tests.test_helpers import (
+    create_test_user,
+    create_test_daily_quest,
+    create_test_daily_quest_attempt
+)
 
 
 class DailyChallengeViewTests(TestCase):
