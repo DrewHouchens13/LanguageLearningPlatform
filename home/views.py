@@ -973,6 +973,37 @@ def logout_view(request):
 
 
 @login_required
+def _cleanup_onboarding_session(request):
+    """
+    Clean up stale onboarding session data.
+
+    SOFA: Function Extraction - Reduces R0912/R0915 warnings by isolating session logic.
+
+    Args:
+        request: Django request object with session
+    """
+    if 'onboarding_attempt_id' not in request.session:
+        return
+
+    try:
+        attempt_id = request.session['onboarding_attempt_id']
+        attempt = OnboardingAttempt.objects.get(id=attempt_id)
+
+        # If attempt is already linked to this user, clear the session
+        if attempt.user == request.user:
+            request.session.pop('onboarding_attempt_id', None)
+            logger.info('Cleared stale onboarding session for user %s on dashboard', request.user.username)
+    except OnboardingAttempt.DoesNotExist:
+        # Invalid attempt ID, clear it
+        logger.warning('Invalid onboarding attempt ID in session for user %s, clearing', request.user.username)
+        request.session.pop('onboarding_attempt_id', None)
+    except (KeyError, AttributeError, ValueError) as e:
+        # Any other error, clear it to be safe
+        logger.error('Error checking onboarding session on dashboard: %s', str(e))
+        if 'onboarding_attempt_id' in request.session:
+            request.session.pop('onboarding_attempt_id', None)
+
+
 def dashboard(request):
     """
     Render the user dashboard (protected view).
@@ -988,28 +1019,10 @@ def dashboard(request):
         has_completed_onboarding = user_profile.has_completed_onboarding
     except UserProfile.DoesNotExist:
         has_completed_onboarding = False
-    
-    # Clean up stale onboarding session data
-    # (Prevents redirect issues on return visits with persistent sessions)
-    if 'onboarding_attempt_id' in request.session:
-        try:
-            attempt_id = request.session['onboarding_attempt_id']
-            attempt = OnboardingAttempt.objects.get(id=attempt_id)
-            
-            # If attempt is already linked to this user, clear the session
-            if attempt.user == request.user:
-                request.session.pop('onboarding_attempt_id', None)
-                logger.info('Cleared stale onboarding session for user %s on dashboard', request.user.username)
-        except OnboardingAttempt.DoesNotExist:
-            # Invalid attempt ID, clear it
-            logger.warning('Invalid onboarding attempt ID in session for user %s, clearing', request.user.username)
-            request.session.pop('onboarding_attempt_id', None)
-        except (KeyError, AttributeError, ValueError) as e:
-            # Any other error, clear it to be safe
-            logger.error('Error checking onboarding session on dashboard: %s', str(e))
-            if 'onboarding_attempt_id' in request.session:
-                request.session.pop('onboarding_attempt_id', None)
-    
+
+    # Clean up stale onboarding session data (SOFA: Extracted helper)
+    _cleanup_onboarding_session(request)
+
     # Get today's daily quests status (Sprint 3 - Issue #18)
     daily_challenge = None
     try:
@@ -1022,54 +1035,25 @@ def dashboard(request):
             )
     except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error('Failed to load daily challenge for dashboard: %s', str(e), exc_info=True)
-    
+
     # Get XP and streak data
     user_progress = None
     current_streak = 0
     xp_to_next = 0
     xp_progress_percent = 0
-    
+
     if user_profile:
         xp_to_next = user_profile.get_xp_to_next_level()
         xp_progress_percent = user_profile.get_progress_to_next_level()
-    
+
     try:
         user_progress = UserProgress.objects.get(user=request.user)
         current_streak = user_progress.current_streak
     except UserProgress.DoesNotExist:
         pass
-    
-    language_profiles = list(UserLanguageProfile.objects.filter(user=request.user))
-    language_profile_map = {lp.language: lp for lp in language_profiles}
-    supported_languages = get_supported_languages(include_flags=True)
 
-    language_stats = []
-    pending_languages = []
-    for entry in supported_languages:
-        profile = language_profile_map.get(entry['name'])
-        if profile and (
-            profile.has_completed_onboarding
-            or profile.total_minutes_studied > 0
-            or profile.total_lessons_completed > 0
-            or profile.total_xp > 0
-        ):
-            language_stats.append({
-                'name': entry['name'],
-                'native_name': entry['native_name'],
-                'flag': entry['flag'],
-                'slug': entry['slug'],
-                'minutes': profile.total_minutes_studied,
-                'lessons': profile.total_lessons_completed,
-                'xp': profile.total_xp,
-                'quizzes': profile.total_quizzes_taken,
-                'proficiency': profile.get_proficiency_level_display() if profile.proficiency_level else 'Not assessed',
-                'has_completed_onboarding': profile.has_completed_onboarding,
-                'level': profile.current_level,
-                'xp_to_next': profile.get_xp_to_next_level(),
-                'progress_percent': profile.get_progress_to_next_level(),
-            })
-        else:
-            pending_languages.append(entry)
+    # Get language statistics (SOFA: Reusing extracted helper)
+    language_stats, pending_languages = _get_language_statistics(request.user)
 
     preferred_language = DEFAULT_LANGUAGE
     if user_profile and user_profile.target_language:
@@ -1077,7 +1061,11 @@ def dashboard(request):
     elif language_stats:
         preferred_language = language_stats[0]['name']
 
-    current_language_profile = language_profile_map.get(preferred_language)
+    # Get current language profile
+    current_language_profile = UserLanguageProfile.objects.filter(
+        user=request.user,
+        language=preferred_language
+    ).first()
     current_language_metadata = get_language_metadata(preferred_language)
 
     overall_xp_row = None
