@@ -190,7 +190,6 @@ def get_client_ip(request):
                 should_trust_xff = True
             else:
                 # Production: raise exception to prevent running with unknown configuration
-                from django.core.exceptions import ImproperlyConfigured
                 logger.error(error_msg)
                 raise ImproperlyConfigured(error_msg)
 
@@ -1456,7 +1455,6 @@ def forgot_password_view(request):
             )
 
             # Render simulated email (for college project - no real SMTP)
-            from django.template.loader import render_to_string
             email_content = render_to_string('emails/password_reset_email.txt', {
                 'user': user,
                 'reset_url': reset_url,
@@ -1572,7 +1570,6 @@ def forgot_username_view(request):
             login_url = request.build_absolute_uri('/login/')
 
             # Render simulated email (for college project - no real SMTP)
-            from django.template.loader import render_to_string
             email_content = render_to_string('emails/username_reminder_email.txt', {
                 'user': user,
                 'site_name': 'Language Learning Platform',
@@ -1746,19 +1743,20 @@ def _process_onboarding_answers(answers, attempt):
     return answers_data, total_score, total_possible
 
 
-def _update_onboarding_user_profile(request, attempt, calculated_level, total_score, total_possible, answers):
+def _update_onboarding_user_profile(request, attempt, *, calculated_level, total_score, total_possible, answers):
     """
     Update user profile and stats after onboarding completion.
 
     SOFA: Function Extraction - Reduces R0914/R0915 warnings by isolating profile updates.
+    Uses keyword-only arguments to reduce R0917 warning.
 
     Args:
         request: Django request object
         attempt: OnboardingAttempt object
-        calculated_level: Calculated proficiency level
-        total_score: Total score achieved
-        total_possible: Total possible score
-        answers: List of answer dicts (for time calculation)
+        calculated_level: (keyword-only) Calculated proficiency level
+        total_score: (keyword-only) Total score achieved
+        total_possible: (keyword-only) Total possible score
+        answers: (keyword-only) List of answer dicts (for time calculation)
     """
     user_profile, _created = UserProfile.objects.get_or_create(user=request.user)
     normalized_language = normalize_language_name(attempt.language)
@@ -1875,7 +1873,13 @@ def submit_onboarding(request):
 
         # For authenticated users, update profile AND stats (SOFA: Extracted helper)
         if request.user.is_authenticated:
-            _update_onboarding_user_profile(request, attempt, calculated_level, total_score, total_possible, answers)
+            _update_onboarding_user_profile(
+                request, attempt,
+                calculated_level=calculated_level,
+                total_score=total_score,
+                total_possible=total_possible,
+                answers=answers
+            )
         else:
             # For guests, store attempt_id in session
             request.session['onboarding_attempt_id'] = attempt.id
@@ -2520,20 +2524,21 @@ def _update_lesson_quiz_user_stats(request, lesson, score, total):
     return xp_result, language_xp_result
 
 
-def _build_lesson_quiz_response(request, lesson, attempt, score, total, xp_result, language_xp_result):
+def _build_lesson_quiz_response(request, lesson, attempt, *, score, total, xp_result, language_xp_result):
     """
     Build JSON or redirect response for lesson quiz submission.
 
     SOFA: Function Extraction - Reduces R0914/R0912 warnings by isolating response building.
+    Uses keyword-only arguments to reduce R0917 warning.
 
     Args:
         request: Django request object
         lesson: Lesson object
         attempt: LessonAttempt object
-        score: Quiz score
-        total: Total questions
-        xp_result: XP award result dict or None
-        language_xp_result: Language XP award result dict or None
+        score: (keyword-only) Quiz score
+        total: (keyword-only) Total questions
+        xp_result: (keyword-only) XP award result dict or None
+        language_xp_result: (keyword-only) Language XP award result dict or None
 
     Returns:
         HttpResponse: JsonResponse or redirect
@@ -2616,7 +2621,13 @@ def submit_lesson_quiz(request, lesson_id):
         xp_result, language_xp_result = _update_lesson_quiz_user_stats(request, lesson, score, total)
 
     # Build response (SOFA: Extracted helper)
-    return _build_lesson_quiz_response(request, lesson, attempt, score, total, xp_result, language_xp_result)
+    return _build_lesson_quiz_response(
+        request, lesson, attempt,
+        score=score,
+        total=total,
+        xp_result=xp_result,
+        language_xp_result=language_xp_result
+    )
 
 
 def lesson_results(request, lesson_id, attempt_id):
