@@ -720,6 +720,165 @@ def login_view(request):
     return render(request, 'login.html')
 
 
+def _validate_signup_input(request, name, email, password, confirm_password):
+    """
+    Validate signup form input.
+
+    SOFA: Function Extraction - Reduces R0914/R0915 warnings by isolating validation logic.
+
+    Args:
+        request: Django request object (for messages)
+        name: User's full name
+        email: User's email address
+        password: User's password
+        confirm_password: Password confirmation
+
+    Returns:
+        tuple: (first_name, last_name) on success, (None, None) on failure
+    """
+    # Validate email format
+    try:
+        django_validate_email(email)
+    except ValidationError:
+        messages.error(request, 'Please enter a valid email address.')
+        return None, None
+
+    # Validate passwords match
+    if password != confirm_password:
+        messages.error(request, 'Passwords do not match.')
+        return None, None
+
+    # Validate password strength using Django's validators
+    try:
+        # Create a temporary user object for validation
+        temp_user = User(username=email.split('@')[0], email=email, first_name=name.split()[0] if name else '')
+        validate_password(password, user=temp_user)
+    except ValidationError as e:
+        # Display all password validation errors
+        for error in e.messages:
+            messages.error(request, error)
+        return None, None
+
+    # Split name into first and last name
+    name_parts = name.strip().split(' ', 1)
+    first_name = name_parts[0]
+    last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+    return first_name, last_name
+
+
+def _generate_unique_username(email):
+    """
+    Generate a unique username from email address.
+
+    SOFA: Function Extraction - Single Responsibility principle.
+
+    Args:
+        email: User's email address
+
+    Returns:
+        str: Unique username
+    """
+    username = email.split('@')[0]
+    original_username = username
+    counter = 1
+    while User.objects.filter(username=username).exists():
+        username = f"{original_username}{counter}"
+        counter += 1
+    return username
+
+
+def _link_guest_onboarding_to_user(request, user, first_name):
+    """
+    Link guest onboarding attempt to newly created user account.
+
+    SOFA: Function Extraction - Reduces R0914/R0915 warnings by isolating onboarding logic.
+
+    Args:
+        request: Django request object
+        user: Newly created User object
+        first_name: User's first name (for welcome message)
+
+    Returns:
+        HttpResponse: Redirect to onboarding results, or None to continue normal flow
+    """
+    onboarding_attempt_id = request.session.get('onboarding_attempt_id')
+    if not onboarding_attempt_id:
+        return None
+
+    try:
+        # Get the attempt
+        attempt = OnboardingAttempt.objects.get(id=onboarding_attempt_id)
+
+        # Link attempt to new user
+        attempt.user = user
+        attempt.save()
+
+        # Create user profile with onboarding data
+        user_profile, _ = UserProfile.objects.get_or_create(user=user)
+        normalized_language = normalize_language_name(attempt.language)
+        user_profile.proficiency_level = attempt.calculated_level
+        user_profile.has_completed_onboarding = True
+        user_profile.onboarding_completed_at = attempt.completed_at or timezone.now()
+        user_profile.target_language = normalized_language
+        user_profile.save()
+
+        _upsert_language_onboarding(
+            user,
+            normalized_language,
+            attempt.calculated_level,
+            attempt.completed_at
+        )
+
+        # Populate stats from guest onboarding
+        QuizResult.objects.create(
+            user=user,
+            quiz_id=f'onboarding_{attempt.language}',
+            quiz_title=f'{attempt.language} Placement Assessment',
+            language=normalized_language,
+            score=attempt.total_score,
+            total_questions=attempt.total_possible
+        )
+
+        # Calculate total time from all answers
+        total_time_minutes = sum(
+            answer.time_taken_seconds for answer in attempt.answers.all()
+        ) // 60  # Convert seconds to minutes
+
+        # Update UserProgress
+        user_progress, _ = UserProgress.objects.get_or_create(user=user)
+        user_progress.total_minutes_studied += total_time_minutes
+        user_progress.total_quizzes_taken += 1
+        user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
+        user_progress.save()
+
+        _increment_language_study_stats(
+            user,
+            normalized_language,
+            minutes=total_time_minutes,
+            quizzes=1
+        )
+
+        logger.info('Linked onboarding attempt %s to new user %s', attempt.id, user.username)
+
+        # Clear session AFTER getting the ID
+        request.session.pop('onboarding_attempt_id', None)
+
+        # Redirect to results page with attempt ID in URL
+        messages.success(request, f'Welcome to Language Learning Platform, {first_name}! Your assessment results have been saved.')
+        results_url = f"{reverse('onboarding_results')}?attempt={attempt.id}"
+        return redirect(results_url)
+    except OnboardingAttempt.DoesNotExist:
+        logger.warning('Onboarding attempt %s not found for new user %s', onboarding_attempt_id, user.username)
+        # Continue with normal signup flow
+    except (ValueError, TypeError, AttributeError) as e:
+        # Handle data/attribute errors gracefully
+        logger.error('Error linking onboarding attempt to new user %s: %s', user.username, str(e))
+        # Continue with normal signup flow - user is created, just onboarding link failed
+
+    return None
+
+
 def signup_view(request):
     """
     Handle user registration with comprehensive validation.
@@ -739,162 +898,63 @@ def signup_view(request):
     if request.user.is_authenticated:
         return HttpResponseRedirect('..')
 
-    if request.method == 'POST':
-        name = request.POST.get('name', '').strip()
-        email = request.POST.get('email', '').strip()
-        password = request.POST.get('password')
-        confirm_password = request.POST.get('confirm-password')
+    if request.method != 'POST':
+        return render(request, 'login.html')
 
-        # Validate email format
-        try:
-            django_validate_email(email)
-        except ValidationError:
-            messages.error(request, 'Please enter a valid email address.')
-            return render(request, 'login.html')
+    # Get form inputs
+    name = request.POST.get('name', '').strip()
+    email = request.POST.get('email', '').strip()
+    password = request.POST.get('password')
+    confirm_password = request.POST.get('confirm-password')
 
-        # Validate passwords match
-        if password != confirm_password:
-            messages.error(request, 'Passwords do not match.')
-            return render(request, 'login.html')
+    # Validate input (SOFA: Extracted helper)
+    first_name, last_name = _validate_signup_input(request, name, email, password, confirm_password)
+    if not first_name:
+        return render(request, 'login.html')
 
-        # Validate password strength using Django's validators
-        try:
-            # Create a temporary user object for validation
-            temp_user = User(username=email.split('@')[0], email=email, first_name=name.split()[0] if name else '')
-            validate_password(password, user=temp_user)
-        except ValidationError as e:
-            # Display all password validation errors
-            for error in e.messages:
-                messages.error(request, error)
-            return render(request, 'login.html')
+    # Generate unique username (SOFA: Extracted helper)
+    username = _generate_unique_username(email)
 
-        # Split name into first and last name
-        name_parts = name.strip().split(' ', 1)
-        first_name = name_parts[0]
-        last_name = name_parts[1] if len(name_parts) > 1 else ''
+    # Check if email already exists before attempting creation
+    if User.objects.filter(email=email).exists():
+        messages.error(request, 'An account with this email already exists.')
+        return render(request, 'login.html')
 
-        # Create username from email (before @ symbol)
-        username = email.split('@')[0]
+    try:
+        # Create new user
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name
+        )
+        logger.info('New user created: %s (%s) from IP: %s', user.username, email, get_client_ip(request))
 
-        # Check if username already exists, if so, add numbers
-        original_username = username
-        counter = 1
-        while User.objects.filter(username=username).exists():
-            username = f"{original_username}{counter}"
-            counter += 1
+    except IntegrityError as e:
+        # This shouldn't happen since we checked, but handle it anyway
+        logger.error('IntegrityError during user creation: %s from IP: %s', str(e), get_client_ip(request))
+        messages.error(request, 'An error occurred while creating your account. Please try again.')
+        return render(request, 'login.html')
+    except (ValueError, TypeError, ValidationError, DatabaseError) as e:
+        # Log unexpected validation/data/database errors for debugging (don't expose details to user)
+        exception_type = type(e).__name__
+        logger.error('Unexpected error during user creation: %s from IP: %s', exception_type, get_client_ip(request))
+        if settings.DEBUG:
+            logger.debug('User creation error details (DEBUG only): %s', str(e))
+        messages.error(request, 'An error occurred while creating your account. Please try again.')
+        return render(request, 'login.html')
 
-        # Check if email already exists before attempting creation
-        if User.objects.filter(email=email).exists():
-            messages.error(request, 'An account with this email already exists.')
-            return render(request, 'login.html')
+    # User created successfully, now log them in
+    login(request, user)
 
-        try:
-            # Create new user
-            user = User.objects.create_user(
-                username=username,
-                email=email,
-                password=password,
-                first_name=first_name,
-                last_name=last_name
-            )
-            logger.info('New user created: %s (%s) from IP: %s', user.username, email, get_client_ip(request))
+    # Check if user completed onboarding as a guest (SOFA: Extracted helper)
+    onboarding_redirect = _link_guest_onboarding_to_user(request, user, first_name)
+    if onboarding_redirect:
+        return onboarding_redirect
 
-        except IntegrityError as e:
-            # This shouldn't happen since we checked, but handle it anyway
-            logger.error('IntegrityError during user creation: %s from IP: %s', str(e), get_client_ip(request))
-            messages.error(request, 'An error occurred while creating your account. Please try again.')
-            return render(request, 'login.html')
-        except (ValueError, TypeError, ValidationError, DatabaseError) as e:
-            # Log unexpected validation/data/database errors for debugging (don't expose details to user)
-            # Note: settings already imported at module level (no shadowing - SOFA principle)
-            exception_type = type(e).__name__
-            logger.error('Unexpected error during user creation: %s from IP: %s', exception_type, get_client_ip(request))
-            if settings.DEBUG:
-                logger.debug('User creation error details (DEBUG only): %s', str(e))
-            messages.error(request, 'An error occurred while creating your account. Please try again.')
-            return render(request, 'login.html')
-
-        # User created successfully, now log them in
-        login(request, user)
-        
-        # Check if user completed onboarding as a guest
-        onboarding_attempt_id = request.session.get('onboarding_attempt_id')
-        if onboarding_attempt_id:
-            try:
-                # Get the attempt
-                attempt = OnboardingAttempt.objects.get(id=onboarding_attempt_id)
-                
-                # Link attempt to new user
-                attempt.user = user
-                attempt.save()
-                
-                # Create user profile with onboarding data
-                user_profile, _ = UserProfile.objects.get_or_create(user=user)
-                normalized_language = normalize_language_name(attempt.language)
-                user_profile.proficiency_level = attempt.calculated_level
-                user_profile.has_completed_onboarding = True
-                user_profile.onboarding_completed_at = attempt.completed_at or timezone.now()
-                user_profile.target_language = normalized_language
-                user_profile.save()
-
-                _upsert_language_onboarding(
-                    user,
-                    normalized_language,
-                    attempt.calculated_level,
-                    attempt.completed_at
-                )
-                
-                # Populate stats from guest onboarding
-                QuizResult.objects.create(
-                    user=user,
-                    quiz_id=f'onboarding_{attempt.language}',
-                    quiz_title=f'{attempt.language} Placement Assessment',
-                    language=normalized_language,
-                    score=attempt.total_score,
-                    total_questions=attempt.total_possible
-                )
-                
-                # Calculate total time from all answers
-                total_time_minutes = sum(
-                    answer.time_taken_seconds for answer in attempt.answers.all()
-                ) // 60  # Convert seconds to minutes
-                
-                # Update UserProgress
-                user_progress, _ = UserProgress.objects.get_or_create(user=user)
-                user_progress.total_minutes_studied += total_time_minutes
-                user_progress.total_quizzes_taken += 1
-                user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
-                user_progress.save()
-
-                _increment_language_study_stats(
-                    user,
-                    normalized_language,
-                    minutes=total_time_minutes,
-                    quizzes=1
-                )
-                
-                logger.info('Linked onboarding attempt %s to new user %s', attempt.id, user.username)
-                
-                # Clear session AFTER getting the ID
-                request.session.pop('onboarding_attempt_id', None)
-                
-                # Redirect to results page with attempt ID in URL
-                messages.success(request, f'Welcome to Language Learning Platform, {first_name}! Your assessment results have been saved.')
-                results_url = f"{reverse('onboarding_results')}?attempt={attempt.id}"
-                return redirect(results_url)
-            except OnboardingAttempt.DoesNotExist:
-                logger.warning('Onboarding attempt %s not found for new user %s', onboarding_attempt_id, user.username)
-                # Continue with normal signup flow
-            except (ValueError, TypeError, AttributeError) as e:
-                # Handle data/attribute errors gracefully
-                logger.error('Error linking onboarding attempt to new user %s: %s', user.username, str(e))
-                # Continue with normal signup flow - user is created, just onboarding link failed
-        
-        messages.success(request, f'Welcome to Language Learning Platform, {first_name}!')
-        # Redirect to dashboard (home for authenticated users)
-        return redirect('dashboard')
-
-    return render(request, 'login.html')
+    messages.success(request, f'Welcome to Language Learning Platform, {first_name}!')
+    return redirect('dashboard')
 
 
 @require_POST
