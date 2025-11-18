@@ -32,7 +32,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email as django_validate_email
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Sum
-from django.http import Http404, HttpResponseRedirect, JsonResponse, HttpResponseBadRequest, HttpResponse
+from django.http import Http404, HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import TemplateDoesNotExist
 from django.template.loader import select_template
@@ -46,7 +46,6 @@ from django.conf import settings
 # Local application imports
 from .language_registry import (
     DEFAULT_LANGUAGE,
-    LANGUAGE_METADATA,
     get_language_metadata,
     get_supported_languages,
     normalize_language_name,
@@ -2500,9 +2499,9 @@ def generate_onboarding_speech(request):
         return HttpResponse(audio_bytes, content_type='audio/mpeg')
         
     except Exception as e:
-        # Log the detailed error for debugging
-        import logging
-        logging.error(f"TTS Error: {str(e)}")
+        # Log the detailed error for debugging (SOFA: DRY - logging already imported at module level)
+        # Use lazy % formatting for performance (STYLE_GUIDE.md)
+        logger.error("TTS Error: %s", str(e))
 
         # Return generic error to user (don't expose internal details)
         return HttpResponse("Text-to-speech generation failed", status=500)
