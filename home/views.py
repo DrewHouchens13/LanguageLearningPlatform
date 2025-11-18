@@ -19,7 +19,9 @@ import os
 import re
 import logging
 import random
+import time
 from functools import wraps
+from smtplib import SMTPException
 
 # Django imports
 from django.contrib import messages
@@ -28,14 +30,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.mail import send_mail, BadHeaderError
 from django.core.validators import validate_email as django_validate_email
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Sum
 from django.http import Http404, HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import TemplateDoesNotExist
-from django.template.loader import select_template
+from django.template.loader import render_to_string, select_template
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
@@ -271,8 +274,22 @@ def check_rate_limit(request, action, limit=5, period=300):
     return True, limit - attempts - 1, 0
 
 
-def send_template_email(request, template_name, context, subject, recipient_email, log_prefix, max_retries=3):
+def send_template_email(
+    request,
+    template_name,
+    *,
+    context,
+    subject,
+    recipient_email,
+    log_prefix,
+    max_retries=3
+):
     """Send an email using a template with comprehensive error handling and retry logic.
+
+    SOFA Principles Applied:
+    - Single Responsibility: Only handles email sending, nothing else
+    - Avoid Repetition: Centralized email sending logic
+    - Function Signature: Keyword-only args (after *) for clarity and safety
 
     This helper function reduces code duplication for email sending operations
     like password reset and username reminders. Implements exponential backoff
@@ -281,11 +298,11 @@ def send_template_email(request, template_name, context, subject, recipient_emai
     Args:
         request: Django request object (for IP logging)
         template_name: Path to email template (e.g., 'emails/password_reset_email.txt')
-        context: Dictionary of template context variables
-        subject: Email subject line
-        recipient_email: Email address to send to
-        log_prefix: Prefix for log messages (e.g., 'Password reset email')
-        max_retries: Maximum number of retry attempts (default: 3)
+        context: (keyword-only) Dictionary of template context variables
+        subject: (keyword-only) Email subject line
+        recipient_email: (keyword-only) Email address to send to
+        log_prefix: (keyword-only) Prefix for log messages (e.g., 'Password reset email')
+        max_retries: (keyword-only) Maximum number of retry attempts (default: 3)
 
     Returns:
         bool: True if email sent successfully, False otherwise
@@ -297,20 +314,16 @@ def send_template_email(request, template_name, context, subject, recipient_emai
         success = send_template_email(
             request,
             'emails/password_reset_email.txt',
-            {'user': user, 'reset_url': url},
-            'Password Reset - Language Learning Platform',
-            user.email,
-            'Password reset email'
+            context={'user': user, 'reset_url': url},
+            subject='Password Reset - Language Learning Platform',
+            recipient_email=user.email,
+            log_prefix='Password reset email'
         )
-    """
-    from django.core.mail import send_mail, BadHeaderError
-    from django.template.loader import render_to_string
-    from django.core.exceptions import ImproperlyConfigured
-    from django.core.validators import validate_email
-    # Note: settings already imported at module level (no shadowing - SOFA principle)
-    from smtplib import SMTPException
-    import time
 
+    SOFA Note: Using keyword-only arguments (after *) reduces R0917 warning
+    and improves code clarity at call sites. Local imports moved to module level
+    to reduce R0914 (too-many-locals) warning.
+    """
     # Validate email configuration before attempting to send
     if not hasattr(settings, 'DEFAULT_FROM_EMAIL') or not settings.DEFAULT_FROM_EMAIL:
         error_msg = (
@@ -322,7 +335,7 @@ def send_template_email(request, template_name, context, subject, recipient_emai
 
     # Validate recipient email format before attempting to send
     try:
-        validate_email(recipient_email)
+        django_validate_email(recipient_email)
     except ValidationError:
         logger.error('Invalid recipient email format: %s for %s from IP: %s',
                      recipient_email, log_prefix, get_client_ip(request))
@@ -596,73 +609,95 @@ def _link_onboarding_attempt_to_user(request, user):
         return None
 
 
+def _get_post_login_redirect(request, user):
+    """
+    Determine redirect destination after successful login.
+
+    Priority: onboarding results > next parameter > dashboard
+
+    SOFA: Function Extraction - Reduces R0911 warning by consolidating redirect logic.
+
+    Args:
+        request: Django request object
+        user: Authenticated user object
+
+    Returns:
+        HttpResponse: Redirect to appropriate destination
+    """
+    # Check for onboarding link first
+    linked_attempt = _link_onboarding_attempt_to_user(request, user)
+    if linked_attempt:
+        results_url = f"{reverse('onboarding_results')}?attempt={linked_attempt.id}"
+        return redirect(results_url)
+
+    # Check for next page parameter
+    next_page = request.GET.get('next', '')
+    if next_page and url_has_allowed_host_and_scheme(
+        url=next_page,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure()
+    ):
+        return HttpResponseRedirect(next_page)
+
+    # Default redirect to dashboard
+    return redirect('dashboard')
+
+
 def login_view(request):
     """Handle user login (SOFA refactored)."""
     # If user is already logged in, redirect to home
     if request.user.is_authenticated:
         return HttpResponseRedirect('..')
 
-    if request.method == 'POST':
-        # Rate limiting: Prevent brute force attacks
-        is_allowed, _attempts_remaining, retry_after = check_rate_limit(
-            request, action='login', limit=5, period=300
+    if request.method != 'POST':
+        return render(request, 'login.html')
+
+    # Rate limiting: Prevent brute force attacks
+    is_allowed, _attempts_remaining, retry_after = check_rate_limit(
+        request, action='login', limit=5, period=300
+    )
+
+    if not is_allowed:
+        logger.warning(
+            'Login rate limit exceeded from IP: %s, retry after %s seconds',
+            get_client_ip(request), retry_after
         )
+        messages.error(
+            request,
+            f'Too many login attempts. Please try again in {retry_after // 60} minute(s).'
+        )
+        return render(request, 'login.html')
 
-        if not is_allowed:
-            logger.warning(
-                'Login rate limit exceeded from IP: %s, retry after %s seconds',
-                get_client_ip(request), retry_after
-            )
-            messages.error(
-                request,
-                f'Too many login attempts. Please try again in {retry_after // 60} minute(s).'
-            )
-            return render(request, 'login.html')
+    username_or_email = request.POST.get('username_or_email', '').strip()
+    password = request.POST.get('password', '')
 
-        username_or_email = request.POST.get('username_or_email', '').strip()
-        password = request.POST.get('password', '')
+    # Validate input (SOFA - extracted function)
+    if not _validate_login_input(request, username_or_email, password):
+        return render(request, 'login.html')
 
-        # Validate input (SOFA - extracted function)
-        if not _validate_login_input(request, username_or_email, password):
-            return render(request, 'login.html')
+    # Find user (SOFA - extracted function)
+    user_obj = _find_user_by_username_or_email(request, username_or_email)
+    if not user_obj:
+        return render(request, 'login.html')
 
-        # Find user (SOFA - extracted function)
-        user_obj = _find_user_by_username_or_email(request, username_or_email)
-        if not user_obj:
-            return render(request, 'login.html')
+    # Authenticate user
+    user = authenticate(request, username=user_obj.username, password=password)
 
-        # Authenticate user
-        user = authenticate(request, username=user_obj.username, password=password)
-
-        if user is not None:
-            login(request, user)
-            logger.info('Successful login: %s from IP: %s', user.username, get_client_ip(request))
-
-            # Link onboarding attempt if exists (SOFA - extracted function)
-            linked_attempt = _link_onboarding_attempt_to_user(request, user)
-            if linked_attempt:
-                results_url = f"{reverse('onboarding_results')}?attempt={linked_attempt.id}"
-                return redirect(results_url)
-
-            # Redirect to next page if specified and safe
-            next_page = request.GET.get('next', '')
-            if next_page and url_has_allowed_host_and_scheme(
-                url=next_page,
-                allowed_hosts={request.get_host()},
-                require_https=request.is_secure()
-            ):
-                return HttpResponseRedirect(next_page)
-
-            return redirect('dashboard')
-
+    if user is None:
         # Log failed login attempt (incorrect password)
         logger.warning(
             'Failed login attempt - incorrect password for: %s from IP: %s',
             user_obj.username, get_client_ip(request)
         )
         messages.error(request, 'Invalid username/email or password.')
+        return render(request, 'login.html')
 
-    return render(request, 'login.html')
+    # Successful login
+    login(request, user)
+    logger.info('Successful login: %s from IP: %s', user.username, get_client_ip(request))
+
+    # Delegate redirect logic to helper (SOFA: Single Responsibility)
+    return _get_post_login_redirect(request, user)
 
 
 def signup_view(request):
@@ -994,6 +1029,54 @@ def dashboard(request):
     return render(request, 'dashboard.html', context)
 
 
+def _get_language_statistics(user):
+    """
+    Get language statistics for progress view.
+
+    SOFA: Function Extraction - Reduces R0914 warning by isolating language stats logic.
+
+    Args:
+        user: Django User object
+
+    Returns:
+        tuple: (language_stats, pending_languages)
+            - language_stats: List of dicts with active language statistics
+            - pending_languages: List of dicts with languages not yet started
+    """
+    language_profiles = UserLanguageProfile.objects.filter(user=user)
+    language_profile_map = {lp.language: lp for lp in language_profiles}
+    supported_languages = get_supported_languages(include_flags=True)
+
+    language_stats = []
+    pending_languages = []
+
+    for entry in supported_languages:
+        profile = language_profile_map.get(entry['name'])
+        if profile and (
+            profile.has_completed_onboarding or
+            profile.total_minutes_studied > 0 or
+            profile.total_lessons_completed > 0 or
+            profile.total_xp > 0
+        ):
+            language_stats.append({
+                'name': entry['name'],
+                'native_name': entry['native_name'],
+                'flag': entry['flag'],
+                'slug': entry['slug'],
+                'minutes': profile.total_minutes_studied,
+                'lessons': profile.total_lessons_completed,
+                'xp': profile.total_xp,
+                'quizzes': profile.total_quizzes_taken,
+                'proficiency': profile.get_proficiency_level_display() if profile.proficiency_level else 'Not assessed',
+                'has_completed_onboarding': profile.has_completed_onboarding,
+                'level': profile.current_level,
+            })
+        else:
+            pending_languages.append(entry)
+
+    return language_stats, pending_languages
+
+
 def progress_view(request):
     """
     Display user progress dashboard or call-to-action for guests.
@@ -1035,36 +1118,8 @@ def progress_view(request):
             xp_to_next = 0
             progress_percent = 0
 
-        language_profiles = UserLanguageProfile.objects.filter(user=request.user)
-        language_profile_map = {lp.language: lp for lp in language_profiles}
-        supported_languages = get_supported_languages(include_flags=True)
-
-        language_stats = []
-        pending_languages = []
-
-        for entry in supported_languages:
-            profile = language_profile_map.get(entry['name'])
-            if profile and (
-                profile.has_completed_onboarding or
-                profile.total_minutes_studied > 0 or
-                profile.total_lessons_completed > 0 or
-                profile.total_xp > 0
-            ):
-                language_stats.append({
-                    'name': entry['name'],
-                    'native_name': entry['native_name'],
-                    'flag': entry['flag'],
-                    'slug': entry['slug'],
-                    'minutes': profile.total_minutes_studied,
-                    'lessons': profile.total_lessons_completed,
-                    'xp': profile.total_xp,
-                    'quizzes': profile.total_quizzes_taken,
-                    'proficiency': profile.get_proficiency_level_display() if profile.proficiency_level else 'Not assessed',
-                    'has_completed_onboarding': profile.has_completed_onboarding,
-                    'level': profile.current_level,
-                })
-            else:
-                pending_languages.append(entry)
+        # Get language statistics (SOFA: Extracted helper)
+        language_stats, pending_languages = _get_language_statistics(request.user)
 
         weekly_challenge = DailyQuestService.get_weekly_stats(request.user)
         lifetime_challenge = DailyQuestService.get_lifetime_stats(request.user)
@@ -2091,36 +2146,38 @@ def lessons_by_language(request, language):
 def _get_lesson_icon(lesson):
     """
     Helper function to determine lesson icon based on topic.
-    Follows DRY principle - single source of truth for icon mapping.
-    Uses early returns for clarity (Pylint prefers if over elif after return).
+
+    SOFA Principles Applied:
+    - Open/Closed: Dictionary mapping allows extension without modification
+    - Avoid Repetition: Single loop replaces 12 if statements
+    - Single Responsibility: Only determines icon, nothing else
+
+    Returns icon emoji based on lesson topic keywords.
     """
+    # SOFA: Open/Closed - Dictionary mapping (extensible without modification)
+    LESSON_ICON_MAP = {
+        'color': '🎨',
+        'shape': '🔷',
+        'number': '🔢',
+        'animal': '🐾',
+        'food': '🍎',
+        'family': '👨‍👩‍👧‍👦',
+        'greeting': '👋',
+        'verb': '⚡',
+        'adjective': '✨',
+        'time': '🕐',
+        'weather': '🌤️',
+        'clothing': '👕',
+    }
+
     slug = (lesson.slug or '').lower()
     title = lesson.title.lower()
 
-    if 'color' in slug or 'color' in title:
-        return '🎨'
-    if 'shape' in slug or 'shape' in title:
-        return '🔷'
-    if 'number' in slug or 'number' in title:
-        return '🔢'
-    if 'animal' in slug or 'animal' in title:
-        return '🐾'
-    if 'food' in slug or 'food' in title:
-        return '🍎'
-    if 'family' in slug or 'family' in title:
-        return '👨‍👩‍👧‍👦'
-    if 'greeting' in slug or 'greeting' in title:
-        return '👋'
-    if 'verb' in slug or 'verb' in title:
-        return '⚡'
-    if 'adjective' in slug or 'adjective' in title:
-        return '✨'
-    if 'time' in slug or 'time' in title:
-        return '🕐'
-    if 'weather' in slug or 'weather' in title:
-        return '🌤️'
-    if 'clothing' in slug or 'clothing' in title:
-        return '👕'
+    # SOFA: DRY - Single loop replaces 12 duplicate if statements
+    for keyword, icon in LESSON_ICON_MAP.items():
+        if keyword in slug or keyword in title:
+            return icon
+
     return '📚'  # Default icon
 
 
