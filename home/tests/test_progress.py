@@ -1,71 +1,46 @@
 """
 Progress tracking view tests.
+
+SOFA Refactoring (Sprint 4):
+- Avoid Repetition: Using test_helpers to eliminate duplicate setup code
+- Single Responsibility: Each test focuses on one aspect
 """
 
 from django.test import TestCase, Client
-from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
-from home.models import (
-    UserProgress, QuizResult, LessonCompletion,
-    OnboardingAttempt, OnboardingQuestion
-)
+from home.models import UserProgress, QuizResult, LessonCompletion
 import json
+
+# SOFA: DRY - Import reusable test helpers
+from home.tests.test_helpers import (
+    create_test_user,
+    create_test_onboarding_questions,
+    create_test_onboarding_attempt,
+    submit_onboarding_answers
+)
 
 
 class TestOnboardingStatsPopulation(TestCase):
     """Test that onboarding quiz populates progress stats"""
 
     def setUp(self):
-        """Create test user and questions"""
+        """Create test user and questions (SOFA: Using helpers to avoid duplication)"""
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
-        
-        # Create 10 questions
-        self.questions = []
-        for i in range(1, 11):
-            difficulty = 'A1' if i <= 4 else ('A2' if i <= 7 else 'B1')
-            points = 1 if difficulty == 'A1' else (2 if difficulty == 'A2' else 3)
-            
-            question = OnboardingQuestion.objects.create(
-                question_number=i,
-                question_text=f'Question {i}',
-                language='Spanish',
-                difficulty_level=difficulty,
-                option_a='A', option_b='B', option_c='C', option_d='D',
-                correct_answer='A',
-                difficulty_points=points
-            )
-            self.questions.append(question)
+        self.user = create_test_user()  # SOFA: Single Responsibility helper
+        self.questions = create_test_onboarding_questions()  # SOFA: DRY principle
 
     def test_onboarding_populates_quiz_accuracy(self):
         """Onboarding completion creates QuizResult and updates accuracy stats"""
         self.client.login(username='testuser', password='pass123')
-        
-        # Create attempt
-        attempt = OnboardingAttempt.objects.create(
-            user=self.user,
-            language='Spanish'
-        )
-        
-        # Submit onboarding (all correct)
-        answers = [
-            {'question_id': q.id, 'answer': 'A', 'time_taken': 10}
-            for q in self.questions
-        ]
-        
-        data = {
-            'attempt_id': attempt.id,
-            'answers': answers
-        }
-        
-        response = self.client.post(
-            reverse('submit_onboarding'),
-            data=json.dumps(data),
-            content_type='application/json'
-        )
-        
+
+        # SOFA: DRY - Use helper to avoid duplicate attempt creation
+        attempt = create_test_onboarding_attempt(self.user)
+
+        # SOFA: DRY - Use helper to avoid duplicate submission logic
+        response = submit_onboarding_answers(self.client, attempt, self.questions)
+
         self.assertEqual(response.status_code, 200)
         
         # Verify QuizResult was created
@@ -84,24 +59,21 @@ class TestOnboardingStatsPopulation(TestCase):
     def test_onboarding_populates_minutes_studied(self):
         """Onboarding time is added to total minutes studied"""
         self.client.login(username='testuser', password='pass123')
-        
-        # Create attempt
-        attempt = OnboardingAttempt.objects.create(
-            user=self.user,
-            language='Spanish'
-        )
-        
+
+        # SOFA: DRY - Use helper for attempt creation
+        attempt = create_test_onboarding_attempt(self.user)
+
         # Submit with known time (60 seconds per question = 600 seconds = 10 minutes)
         answers = [
             {'question_id': q.id, 'answer': 'A', 'time_taken': 60}
             for q in self.questions
         ]
-        
+
         data = {
             'attempt_id': attempt.id,
             'answers': answers
         }
-        
+
         self.client.post(
             reverse('submit_onboarding'),
             data=json.dumps(data),
@@ -115,29 +87,10 @@ class TestOnboardingStatsPopulation(TestCase):
     def test_onboarding_populates_quizzes_taken(self):
         """Onboarding increments total quizzes taken"""
         self.client.login(username='testuser', password='pass123')
-        
-        # Create attempt
-        attempt = OnboardingAttempt.objects.create(
-            user=self.user,
-            language='Spanish'
-        )
-        
-        # Submit onboarding
-        answers = [
-            {'question_id': q.id, 'answer': 'A', 'time_taken': 10}
-            for q in self.questions
-        ]
-        
-        data = {
-            'attempt_id': attempt.id,
-            'answers': answers
-        }
-        
-        self.client.post(
-            reverse('submit_onboarding'),
-            data=json.dumps(data),
-            content_type='application/json'
-        )
+
+        # SOFA: DRY - Use helpers to eliminate duplicate setup/submission code
+        attempt = create_test_onboarding_attempt(self.user)
+        submit_onboarding_answers(self.client, attempt, self.questions)
         
         # Verify quizzes count
         user_progress = UserProgress.objects.get(user=self.user)
@@ -146,29 +99,10 @@ class TestOnboardingStatsPopulation(TestCase):
     def test_onboarding_does_not_count_as_unit(self):
         """Onboarding does not create LessonCompletion or increment units completed"""
         self.client.login(username='testuser', password='pass123')
-        
-        # Create attempt
-        attempt = OnboardingAttempt.objects.create(
-            user=self.user,
-            language='Spanish'
-        )
-        
-        # Submit onboarding
-        answers = [
-            {'question_id': q.id, 'answer': 'A', 'time_taken': 10}
-            for q in self.questions
-        ]
-        
-        data = {
-            'attempt_id': attempt.id,
-            'answers': answers
-        }
-        
-        self.client.post(
-            reverse('submit_onboarding'),
-            data=json.dumps(data),
-            content_type='application/json'
-        )
+
+        # SOFA: DRY - Use helpers to eliminate duplicate setup/submission code
+        attempt = create_test_onboarding_attempt(self.user)
+        submit_onboarding_answers(self.client, attempt, self.questions)
         
         # Verify no LessonCompletion was created
         lesson_count = LessonCompletion.objects.filter(user=self.user).count()
@@ -181,24 +115,21 @@ class TestOnboardingStatsPopulation(TestCase):
     def test_weekly_stats_include_recent_onboarding(self):
         """Onboarding quiz accuracy shows in weekly stats"""
         self.client.login(username='testuser', password='pass123')
-        
-        # Create attempt
-        attempt = OnboardingAttempt.objects.create(
-            user=self.user,
-            language='Spanish'
-        )
-        
-        # Submit onboarding (120 seconds total = 2 minutes)
+
+        # SOFA: DRY - Use helper for attempt creation
+        attempt = create_test_onboarding_attempt(self.user)
+
+        # Submit onboarding (120 seconds total = 2 minutes) - custom time_taken
         answers = [
             {'question_id': q.id, 'answer': 'A', 'time_taken': 12}
             for q in self.questions
         ]
-        
+
         data = {
             'attempt_id': attempt.id,
             'answers': answers
         }
-        
+
         self.client.post(
             reverse('submit_onboarding'),
             data=json.dumps(data),
