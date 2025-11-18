@@ -25,6 +25,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dv##fju3puju_bg4otr!stbh)0y==ql!cf=^o87+li&k&)u!1w')
 ELEVENLABS_API_KEY = os.environ.get('e7ec548afe335fce4eaa04a2f2d518e6ecad7494ad67e2bf43a766f1816d9f5e')
 
+# =============================================================================
+# FREE API KEYS FOR LANGUAGE LEARNING FEATURES
+# =============================================================================
+# IMPORTANT: Set these as environment variables - NEVER commit API keys to code!
+# All of these have free tiers suitable for educational projects
+
+# Merriam-Webster Dictionary API - Free tier: 1000 requests/day
+# Use for: word definitions, pronunciations, synonyms, example sentences
+# Get your key: https://dictionaryapi.com/products/index
+MERRIAM_WEBSTER_API_KEY = os.environ.get('MERRIAM_WEBSTER_API_KEY')
+
+# DeepL Translation API - Free tier: 500,000 chars/month
+# Use for: high-quality Spanish ↔ English translation
+# Get your key: https://www.deepl.com/en/pro#developer
+DEEPL_API_KEY = os.environ.get('DEEPL_API_KEY')
+
+# Detect Language API - Free tier: 1000 detections/day
+# Use for: auto-detect if text is Spanish or English
+# Get your key: https://detectlanguage.com/plans
+DETECT_LANGUAGE_API_KEY = os.environ.get('DETECT_LANGUAGE_API_KEY')
+
 # Development environment detection
 # Set IS_DEVEDU=True environment variable when running in development proxies
 # IMPORTANT: This must be explicitly set via environment variable - it will NOT

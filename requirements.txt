@@ -11,6 +11,13 @@ Pillow==11.0.0             # Image processing for user avatars
 cloudinary==1.41.0         # Cloudinary SDK for cloud media storage
 django-cloudinary-storage==0.3.0  # Django storage backend for Cloudinary
 django-redis==5.4.0        # Redis cache backend for Django (production caching)
+openai==1.55.3             # OpenAI API for ChatGPT TTS (primary pronunciation)
+elevenlabs==1.12.0         # ElevenLabs TTS (fallback pronunciation)
+
+# Free API integrations for language learning features
+youtube-transcript-api==0.6.2  # Extract transcripts from YouTube videos (no API key needed)
+deepl==1.18.0              # DeepL translation API (500k chars/month free)
+detectlanguage==1.5.1      # Language detection API (1000 detections/day free)
 
 # Testing dependencies
 pytest==8.3.4              # Testing framework

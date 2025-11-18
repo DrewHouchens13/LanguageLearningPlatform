@@ -75,7 +75,14 @@ pytest home/tests.py::TestClassName::test_method_name
    - Target: 90%+ coverage
    - Only measures coverage for home/ and config/ apps (excludes local test files)
 
-10. **Live testing** - Run local server and run all live testing
+10. **Live testing** - Run local server and perform manual testing
+   ```bash
+   run_dev_server.bat
+   ```
+   - Server will start at http://127.0.0.1:8000/
+   - Test all critical user journeys (login, dashboard, daily quests, lessons)
+   - Verify all pages load correctly (HTTP 200)
+   - Test authentication flows and redirects
 
 11. **Commit & push** - Once everything passes
 

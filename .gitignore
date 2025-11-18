@@ -60,6 +60,7 @@ AI_code_reviews/
 *.sublime-project
 
 # Claude Code specific files (not needed for non-Claude users)
+.claude/
 CLAUDE.md
 agents.md
 SESSION_PROGRESS.md
