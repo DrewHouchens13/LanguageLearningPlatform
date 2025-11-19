@@ -1,8 +1,24 @@
+"""
+Onboarding views tests.
+
+SOFA Refactoring (Sprint 4):
+- Avoid Repetition: Using test_helpers to eliminate duplicate setup code
+- Single Responsibility: Each test focuses on one aspect
+"""
+
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
 from home.models import OnboardingQuestion, OnboardingAttempt, UserProfile
 import json
+
+# SOFA: DRY - Import reusable test helpers
+from home.tests.test_helpers import (
+    create_test_user,
+    create_test_onboarding_questions,
+    create_test_onboarding_attempt,
+    submit_onboarding_answers
+)
 
 
 class TestOnboardingWelcomeView(TestCase):
@@ -22,7 +38,7 @@ class TestOnboardingWelcomeView(TestCase):
 
     def test_welcome_accessible_to_authenticated(self):
         """Test onboarding welcome accessible to authenticated users"""
-        _ = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
+        _ = create_test_user()  # SOFA: DRY - Use helper to avoid duplication
         self.client.login(username='testuser', password='pass123')
         
         response = self.client.get(self.url)
@@ -31,7 +47,7 @@ class TestOnboardingWelcomeView(TestCase):
 
     def test_welcome_shows_profile_for_auth_no_onboarding(self):
         """Test welcome page shows user profile for authenticated users who haven't completed onboarding"""
-        user = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
+        user = create_test_user()  # SOFA: DRY - Use helper to avoid duplication
         # Profile is auto-created by signal, just get it and ensure onboarding is not completed
         profile = user.profile
         profile.has_completed_onboarding = False
@@ -49,24 +65,12 @@ class TestOnboardingQuizView(TestCase):
     """Test onboarding quiz page"""
 
     def setUp(self):
-        """Create test questions"""
+        """Create test questions (SOFA: Using helper to avoid duplication)"""
         self.client = Client()
         self.url = reverse('onboarding_quiz')
-        
-        # Create 10 Spanish questions
-        for i in range(1, 11):
-            difficulty = 'A1' if i <= 4 else ('A2' if i <= 7 else 'B1')
-            points = 1 if difficulty == 'A1' else (2 if difficulty == 'A2' else 3)
-            
-            OnboardingQuestion.objects.create(
-                question_number=i,
-                question_text=f'Question {i}',
-                language='Spanish',
-                difficulty_level=difficulty,
-                option_a='A', option_b='B', option_c='C', option_d='D',
-                correct_answer='A',
-                difficulty_points=points
-            )
+
+        # SOFA: DRY - Use helper to create test questions (eliminates duplicate code)
+        create_test_onboarding_questions()
 
     def test_quiz_loads_10_questions(self):
         """Test quiz page loads 10 questions"""
@@ -89,7 +93,7 @@ class TestOnboardingQuizView(TestCase):
 
     def test_quiz_creates_attempt_for_authenticated_user(self):
         """Test quiz creates OnboardingAttempt for authenticated user"""
-        user = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
+        user = create_test_user()  # SOFA: DRY - Use helper to avoid duplication
         self.client.login(username='testuser', password='pass123')
         
         response = self.client.get(self.url)
@@ -118,27 +122,13 @@ class TestSubmitOnboardingView(TestCase):
     """Test onboarding submission endpoint"""
 
     def setUp(self):
-        """Create test user and questions"""
+        """Create test user and questions (SOFA: Using helpers to avoid duplication)"""
         self.client = Client()
         self.url = reverse('submit_onboarding')
-        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
-        
-        # Create 10 questions
-        self.questions = []
-        for i in range(1, 11):
-            difficulty = 'A1' if i <= 4 else ('A2' if i <= 7 else 'B1')
-            points = 1 if difficulty == 'A1' else (2 if difficulty == 'A2' else 3)
-            
-            question = OnboardingQuestion.objects.create(
-                question_number=i,
-                question_text=f'Question {i}',
-                language='Spanish',
-                difficulty_level=difficulty,
-                option_a='A', option_b='B', option_c='C', option_d='D',
-                correct_answer='A',
-                difficulty_points=points
-            )
-            self.questions.append(question)
+        self.user = create_test_user()  # SOFA: DRY - Use helper
+
+        # SOFA: DRY - Use helper to create test questions (eliminates 14-line duplicate loop)
+        self.questions = create_test_onboarding_questions()
 
     def test_submit_requires_post(self):
         """Test submit endpoint requires POST"""
@@ -148,11 +138,8 @@ class TestSubmitOnboardingView(TestCase):
 
     def test_submit_with_all_correct_answers(self):
         """Test submission with all correct answers"""
-        # Create attempt
-        attempt = OnboardingAttempt.objects.create(
-            user=self.user,
-            language='Spanish'
-        )
+        # SOFA: DRY - Use helper to create attempt
+        attempt = create_test_onboarding_attempt(self.user)
         
         # Prepare submission data (all correct)
         answers = [
@@ -267,27 +254,14 @@ class TestOnboardingResultsView(TestCase):
     """Test onboarding results page"""
 
     def setUp(self):
-        """Create test data"""
+        """Create test data (SOFA: Using helpers to avoid duplication)"""
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
-        
-        # Create questions and attempt
-        self.questions = []
-        for i in range(1, 11):
-            difficulty = 'A1' if i <= 4 else ('A2' if i <= 7 else 'B1')
-            points = 1 if difficulty == 'A1' else (2 if difficulty == 'A2' else 3)
-            
-            question = OnboardingQuestion.objects.create(
-                question_number=i,
-                question_text=f'Question {i}',
-                language='Spanish',
-                difficulty_level=difficulty,
-                option_a='A', option_b='B', option_c='C', option_d='D',
-                correct_answer='A',
-                difficulty_points=points
-            )
-            self.questions.append(question)
-        
+        self.user = create_test_user()  # SOFA: DRY - Use helper
+
+        # SOFA: DRY - Use helper to create test questions (eliminates 14-line duplicate loop)
+        self.questions = create_test_onboarding_questions()
+
+        # Create completed attempt for results testing
         from django.utils import timezone
         self.attempt = OnboardingAttempt.objects.create(
             user=self.user,
@@ -348,24 +322,12 @@ class TestOnboardingRetakeBlocking(TestCase):
     """Users should always be able to retake onboarding (legacy + new)."""
 
     def setUp(self):
-        """Create test user, questions, and completed attempt"""
+        """Create test user and questions (SOFA: Using helpers to avoid duplication)"""
         self.client = Client()
-        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='pass123')
-        
-        # Create 10 questions
-        for i in range(1, 11):
-            difficulty = 'A1' if i <= 4 else ('A2' if i <= 7 else 'B1')
-            points = 1 if difficulty == 'A1' else (2 if difficulty == 'A2' else 3)
-            
-            OnboardingQuestion.objects.create(
-                question_number=i,
-                question_text=f'Question {i}',
-                language='Spanish',
-                difficulty_level=difficulty,
-                option_a='A', option_b='B', option_c='C', option_d='D',
-                correct_answer='A',
-                difficulty_points=points
-            )
+        self.user = create_test_user()  # SOFA: DRY - Use helper
+
+        # SOFA: DRY - Use helper to create test questions (eliminates 14-line duplicate loop)
+        create_test_onboarding_questions()
 
     def test_auth_user_can_retake_welcome(self):
         """Authenticated users with completed onboarding can still access welcome page."""

@@ -32,7 +32,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email as django_validate_email
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Sum
-from django.http import Http404, HttpResponseRedirect, JsonResponse, HttpResponseBadRequest, HttpResponse
+from django.http import Http404, HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import TemplateDoesNotExist
 from django.template.loader import select_template
@@ -46,7 +46,6 @@ from django.conf import settings
 # Local application imports
 from .language_registry import (
     DEFAULT_LANGUAGE,
-    LANGUAGE_METADATA,
     get_language_metadata,
     get_supported_languages,
     normalize_language_name,
@@ -143,7 +142,7 @@ def get_client_ip(request):
     - In production, X-Forwarded-For is only trusted from known proxies (Render, DevEDU)
     """
     import ipaddress
-    from django.conf import settings
+    # Note: settings already imported at module level (no shadowing - SOFA principle)
 
     # Get REMOTE_ADDR first (this is always the direct connection IP)
     remote_addr = request.META.get('REMOTE_ADDR', 'unknown')
@@ -308,7 +307,7 @@ def send_template_email(request, template_name, context, subject, recipient_emai
     from django.template.loader import render_to_string
     from django.core.exceptions import ImproperlyConfigured
     from django.core.validators import validate_email
-    from django.conf import settings
+    # Note: settings already imported at module level (no shadowing - SOFA principle)
     from smtplib import SMTPException
     import time
 
@@ -413,7 +412,7 @@ def _validate_login_input(request, username_or_email, password):
         return False
 
     # Allow only safe characters (alphanumeric, @, ., _, -, +)
-    import re
+    # Note: re already imported at module level (no shadowing - SOFA principle)
     if not re.match(r'^[a-zA-Z0-9@._+\-]+$', username_or_email):
         logger.warning(
             'Login attempt with invalid characters in username/email from IP: %s',
@@ -752,7 +751,7 @@ def signup_view(request):
             return render(request, 'login.html')
         except (ValueError, TypeError, ValidationError, DatabaseError) as e:
             # Log unexpected validation/data/database errors for debugging (don't expose details to user)
-            from django.conf import settings
+            # Note: settings already imported at module level (no shadowing - SOFA principle)
             exception_type = type(e).__name__
             logger.error('Unexpected error during user creation: %s from IP: %s', exception_type, get_client_ip(request))
             if settings.DEBUG:
@@ -2046,7 +2045,7 @@ def lessons_by_language(request, language):
     """
     # Validate language parameter to prevent SQL injection and invalid input
     # Language names should only contain letters, spaces, and hyphens
-    import re
+    # Note: re already imported at module level (no shadowing - SOFA principle)
     if not re.match(r'^[a-zA-Z\s\-]+$', language):
         # Invalid characters detected (e.g., SQL injection attempt)
         raise Http404("Invalid language parameter")
@@ -2174,8 +2173,9 @@ def lesson_quiz(request, lesson_id):
     try:
         template = select_template(template_candidates)
         template_name = template.template.name
-    except TemplateDoesNotExist:
-        raise Http404("Lesson quiz template is missing. Please contact support.")
+    except TemplateDoesNotExist as exc:
+        # SOFA: Proper exception chaining preserves debugging context
+        raise Http404("Lesson quiz template is missing. Please contact support.") from exc
 
     return render(request, template_name, context)
 
@@ -2184,6 +2184,10 @@ def lesson_quiz(request, lesson_id):
 def submit_lesson_quiz(request, lesson_id):
     """Process lesson quiz submission."""
     lesson = get_object_or_404(Lesson, id=lesson_id, is_published=True)
+
+    # Initialize XP result variables (defensive programming - SOFA: Single Responsibility)
+    xp_result = None
+    language_xp_result = None
 
     # Accept JSON body or regular POST
     try:
@@ -2366,8 +2370,9 @@ def lesson_results(request, lesson_id, attempt_id):
     try:
         template = select_template(template_candidates)
         template_name = template.template.name
-    except TemplateDoesNotExist:
-        raise Http404("Lesson results template is missing. Please contact support.")
+    except TemplateDoesNotExist as exc:
+        # SOFA: Proper exception chaining preserves debugging context
+        raise Http404("Lesson results template is missing. Please contact support.") from exc
 
     return render(request, template_name, context)
 
@@ -2494,9 +2499,9 @@ def generate_onboarding_speech(request):
         return HttpResponse(audio_bytes, content_type='audio/mpeg')
         
     except Exception as e:
-        # Log the detailed error for debugging
-        import logging
-        logging.error(f"TTS Error: {str(e)}")
-        
+        # Log the detailed error for debugging (SOFA: DRY - logging already imported at module level)
+        # Use lazy % formatting for performance (STYLE_GUIDE.md)
+        logger.error("TTS Error: %s", str(e))
+
         # Return generic error to user (don't expose internal details)
         return HttpResponse("Text-to-speech generation failed", status=500)

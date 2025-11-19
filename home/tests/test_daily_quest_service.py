@@ -1,5 +1,9 @@
 """
 Tests for the quiz-based DailyQuestService.
+
+SOFA Refactoring (Sprint 4):
+- Avoid Repetition: Using test_helpers to eliminate duplicate setup code
+- Single Responsibility: Each test focuses on one service method
 """
 from datetime import timedelta
 
@@ -16,16 +20,19 @@ from home.models import (
 )
 from home.services.daily_quest_service import DailyQuestService
 
+# SOFA: DRY - Import reusable test helpers
+from home.tests.test_helpers import (
+    create_test_user,
+    create_test_daily_quest,
+    create_test_daily_quest_attempt
+)
+
 
 class DailyQuestServiceTests(TestCase):
     """Validate quest generation, scoring, and stats."""
 
     def setUp(self):
-        self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='pass1234'
-        )
+        self.user = create_test_user(password='pass1234')  # SOFA: DRY
         self.lesson = Lesson.objects.create(
             title='Colors in Spanish',
             language='Spanish',
