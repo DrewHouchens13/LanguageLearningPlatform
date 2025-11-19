@@ -77,24 +77,36 @@ An interactive web application that helps users incorporate AI into their langua
    pip install -r requirements.txt
    ```
 
-4. **Run migrations**
+4. **Configure environment variables**
+   ```bash
+   # Copy the example file
+   cp .env.example .env
+
+   # Edit .env with your API keys (required for AI Chatbot & TTS)
+   # See ENV_SETUP_GUIDE.md for detailed instructions
+   ```
+
+   **📖 See [ENV_SETUP_GUIDE.md](ENV_SETUP_GUIDE.md) for complete environment configuration guide**
+
+5. **Run migrations**
    ```bash
    python manage.py migrate
    ```
 
-5. **Load guest data (optional)**
+6. **Load guest data (optional)**
    ```bash
    python manage.py loaddata home/fixtures/guest_data.json
    ```
 
-6. **Start the development server**
+7. **Start the development server**
    ```bash
    python manage.py runserver
    ```
 
-7. **Access the application**
+8. **Access the application**
    - Home: http://localhost:8000/
    - Admin Panel: http://localhost:8000/admin/
+   - Help & AI Chatbot: http://localhost:8000/help/
 
 ## Admin Panel
 
