@@ -319,11 +319,11 @@ def send_template_email(
             recipient_email=user.email,
             log_prefix='Password reset email'
         )
-
-    SOFA Note: Using keyword-only arguments (after *) reduces R0917 warning
-    and improves code clarity at call sites. Local imports moved to module level
-    to reduce R0914 (too-many-locals) warning.
     """
+    # SOFA Note: Using keyword-only arguments (after *) reduces R0917 warning
+    # and improves code clarity at call sites. Local imports moved to module level
+    # to reduce R0914 (too-many-locals) warning.
+
     # Validate email configuration before attempting to send
     if not hasattr(settings, 'DEFAULT_FROM_EMAIL') or not settings.DEFAULT_FROM_EMAIL:
         error_msg = (
@@ -2580,6 +2580,10 @@ def submit_lesson_quiz(request, lesson_id):
     """Process lesson quiz submission."""
     lesson = get_object_or_404(Lesson, id=lesson_id, is_published=True)
 
+    # Initialize XP result variables (defensive programming - SOFA: Single Responsibility)
+    xp_result = None
+    language_xp_result = None
+
     # Accept JSON body or regular POST
     try:
         if request.content_type == 'application/json':
@@ -2808,5 +2812,9 @@ def generate_onboarding_speech(request):
         return HttpResponse("TTS not available", status=503)
 
     except Exception as e:
+        # Log the detailed error for debugging (SOFA: DRY - logging already imported at module level)
+        # Use lazy % formatting for performance (STYLE_GUIDE.md)
         logger.error("TTS Error: %s", str(e))
+
+        # Return generic error to user (don't expose internal details)
         return HttpResponse("Text-to-speech generation failed", status=500)
