@@ -70,6 +70,7 @@ from .models import (
 from .services.daily_quest_service import DailyQuestService
 from .services.onboarding_service import OnboardingService
 from .services.help_service import HelpService
+from .services.chatbot_service import ChatbotService
 
 # Configure logger for security events
 # Note: IP address logging is standard security practice for:
@@ -2857,3 +2858,68 @@ def help_page(request):
     }
 
     return render(request, 'home/help.html', context)
+
+
+@require_POST
+def chatbot_query(request):
+    """
+    API endpoint for chatbot queries.
+
+    Accepts POST requests with JSON body containing:
+    - query: User's question (required)
+    - chat_history: Previous conversation messages (optional)
+
+    Returns JSON response with:
+    - response: AI-generated answer
+    - sources: Relevant documentation sections
+
+    SOFA Principles:
+    - Single Responsibility: Handle API request/response, delegate to service
+    - Function Extraction: AI logic in ChatbotService
+    - DRY: Reusable service for chatbot interactions
+
+    Access: Available to all users (guest, logged-in, admin)
+    Method: POST only
+    Content-Type: application/json
+    """
+    try:
+        # Parse JSON request body
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {'error': 'Invalid JSON in request body'},
+                status=400
+            )
+
+        # Validate required parameters
+        query = data.get('query', '').strip()
+        if not query:
+            return JsonResponse(
+                {'error': 'Query parameter is required'},
+                status=400
+            )
+
+        # Get optional chat history
+        chat_history = data.get('chat_history', [])
+
+        # Determine user role for documentation access
+        user_role = 'admin' if (request.user.is_authenticated and request.user.is_staff) else 'user'
+
+        # Get AI response from ChatbotService
+        result = ChatbotService.get_ai_response(
+            query=query,
+            user_role=user_role,
+            chat_history=chat_history
+        )
+
+        return JsonResponse(result, status=200)
+
+    except Exception as e:
+        # Log error in production
+        print(f"Chatbot API error: {e}")
+
+        return JsonResponse(
+            {'error': 'An error occurred while processing your request'},
+            status=500
+        )

@@ -25,6 +25,7 @@ urlpatterns = [
 
     # Help/Wiki system
     path("help/", views.help_page, name="help"),
+    path("chatbot/query/", views.chatbot_query, name="chatbot_query"),
 
     # Onboarding assessment paths
     path("onboarding/", views.onboarding_welcome, name="onboarding_welcome"),
