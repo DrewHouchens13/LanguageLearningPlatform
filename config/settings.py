@@ -23,12 +23,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dv##fju3puju_bg4otr!stbh)0y==ql!cf=^o87+li&k&)u!1w')
-ELEVENLABS_API_KEY = os.environ.get('e7ec548afe335fce4eaa04a2f2d518e6ecad7494ad67e2bf43a766f1816d9f5e')
 
 # TTS API Keys (OpenAI primary, ElevenLabs fallback)
 # IMPORTANT: Set these as environment variables - NEVER commit API keys to code!
 # Check both naming conventions for OpenAI API key
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY') or os.environ.get('OPEN_AI_API_KEY')
+ELEVENLABS_API_KEY = os.environ.get('ELEVENLABS_API_KEY')
 # Development environment detection
 # Set IS_DEVEDU=True environment variable when running in development proxies
 # IMPORTANT: This must be explicitly set via environment variable - it will NOT
