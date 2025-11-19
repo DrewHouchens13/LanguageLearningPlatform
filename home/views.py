@@ -1003,6 +1003,7 @@ def _cleanup_onboarding_session(request):
             request.session.pop('onboarding_attempt_id', None)
 
 
+@login_required
 def dashboard(request):
     """
     Render the user dashboard (protected view).
