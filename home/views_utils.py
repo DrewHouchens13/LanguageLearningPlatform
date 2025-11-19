@@ -200,8 +200,22 @@ def check_rate_limit(request, action, limit=5, period=300):
     return True, limit - attempts - 1, 0
 
 
-def send_template_email(request, template_name, context, subject, recipient_email, log_prefix, max_retries=3):
+def send_template_email(
+    request,
+    template_name,
+    *,
+    context,
+    subject,
+    recipient_email,
+    log_prefix,
+    max_retries=3
+):
     """Send an email using a template with comprehensive error handling and retry logic.
+
+    SOFA Principles Applied:
+    - Single Responsibility: Only handles email sending
+    - Avoid Repetition: Centralized utility (imported, not duplicated)
+    - Function Signature: Keyword-only args for clarity
 
     This helper function reduces code duplication for email sending operations
     like password reset and username reminders. Implements exponential backoff
@@ -210,11 +224,11 @@ def send_template_email(request, template_name, context, subject, recipient_emai
     Args:
         request: Django request object (for IP logging)
         template_name: Path to email template (e.g., 'emails/password_reset_email.txt')
-        context: Dictionary of template context variables
-        subject: Email subject line
-        recipient_email: Email address to send to
-        log_prefix: Prefix for log messages (e.g., 'Password reset email')
-        max_retries: Maximum number of retry attempts (default: 3)
+        context: (keyword-only) Dictionary of template context variables
+        subject: (keyword-only) Email subject line
+        recipient_email: (keyword-only) Email address to send to
+        log_prefix: (keyword-only) Prefix for log messages (e.g., 'Password reset email')
+        max_retries: (keyword-only) Maximum number of retry attempts (default: 3)
 
     Returns:
         bool: True if email sent successfully, False otherwise
@@ -226,10 +240,10 @@ def send_template_email(request, template_name, context, subject, recipient_emai
         success = send_template_email(
             request,
             'emails/password_reset_email.txt',
-            {'user': user, 'reset_url': url},
-            'Password Reset - Language Learning Platform',
-            user.email,
-            'Password reset email'
+            context={'user': user, 'reset_url': url},
+            subject='Password Reset - Language Learning Platform',
+            recipient_email=user.email,
+            log_prefix='Password reset email'
         )
     """
     from django.core.mail import send_mail, BadHeaderError

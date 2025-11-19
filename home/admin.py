@@ -14,7 +14,6 @@ from django.contrib.auth.models import User
 from django.contrib.auth import password_validation
 from django.contrib import messages
 from django.utils.html import format_html
-from django.core.exceptions import ValidationError
 from .models import (
     UserProgress,
     LessonCompletion,
@@ -70,6 +69,10 @@ def reset_password_to_default(modeladmin, request, queryset):
             # Using secrets.choice() for each character ensures cryptographic randomness
             alphabet = string.ascii_letters + string.digits + '!@#$%^&*'
             new_password = ''.join(secrets.choice(alphabet) for _ in range(16))
+
+            # Security: Ensure password was generated (should never be empty with range(16))
+            if not new_password:
+                raise ValueError("Failed to generate password - empty string")
 
             # Validate password with Django validators before setting
             password_validation.validate_password(new_password, user)
