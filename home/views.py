@@ -2724,58 +2724,89 @@ def quest_history(request):
 
 @require_http_methods(["POST"])
 def generate_onboarding_speech(request):
-    """Generate speech using ElevenLabs TTS (better for Spanish)"""
+    """Generate speech using OpenAI TTS (primary) with ElevenLabs fallback"""
     try:
-        # Get API key from settings
-        elevenlabs_key = os.environ.get('ELEVENLABS_API_KEY')
-        if not elevenlabs_key:
-            return HttpResponse("TTS not available", status=503)
-        
         data = json.loads(request.body)
         text = data.get('text', '')
         lang = data.get('lang', 'es-ES')
-        
+
         if not text:
             return HttpResponse("No text provided", status=400)
-        
-        # Clean text - remove parentheses (safer regex)
-        # Remove content in parentheses without nested parentheses
+
+        # Clean text - remove parentheses
         while '(' in text:
             start = text.find('(')
             end = text.find(')', start)
             if end == -1:
                 break
             text = text[:start] + ' ' + text[end+1:]
-        
-        # Clean up extra whitespace
         text = ' '.join(text.split()).strip()
-        
-        from elevenlabs.client import ElevenLabs
-        
-        client = ElevenLabs(api_key=elevenlabs_key)
-        
-        # Choose voice based on language
-        if 'es' in lang.lower():
-            voice_id = "pFZP5JQG7iQjIQuC4Bku"  # Lily - female Spanish
-        else:
-            voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel - English female
-        
-        # Generate audio using text_to_speech
-        audio = client.text_to_speech.convert(
-            voice_id=voice_id,
-            text=text,
-            model_id="eleven_multilingual_v2"
-        )
-        
-        # Convert generator to bytes
-        audio_bytes = b''.join(audio)
-        
-        return HttpResponse(audio_bytes, content_type='audio/mpeg')
-        
-    except Exception as e:
-        # Log the detailed error for debugging (SOFA: DRY - logging already imported at module level)
-        # Use lazy % formatting for performance (STYLE_GUIDE.md)
-        logger.error("TTS Error: %s", str(e))
 
-        # Return generic error to user (don't expose internal details)
+        # Add buffer at beginning to prevent browser audio cutoff
+        # The browser often cuts off first 100-200ms, so we add disposable content
+        text = 'Okay. ' + text
+
+        # Try OpenAI TTS first (primary)
+        openai_key = settings.OPENAI_API_KEY
+        if openai_key:
+            try:
+                from openai import OpenAI
+                client = OpenAI(api_key=openai_key)
+
+                # Choose voice and speed based on language
+                # For Spanish: use "alloy" (neutral, clearer) and slower speed
+                # For English: use "alloy" at normal speed
+                if 'es' in lang.lower():
+                    voice = "alloy"
+                    speed = 0.85  # Slower for Spanish pronunciation
+                else:
+                    voice = "alloy"
+                    speed = 1.0  # Normal speed for English
+
+                # Log the text being sent for debugging
+                logger.info("OpenAI TTS: lang=%s, voice=%s, speed=%s, text='%s'", lang, voice, speed, text)
+
+                response = client.audio.speech.create(
+                    model="tts-1",
+                    voice=voice,
+                    input=text,
+                    speed=speed
+                )
+
+                audio_bytes = response.content
+                return HttpResponse(audio_bytes, content_type='audio/mpeg')
+
+            except Exception as e:
+                logger.warning("OpenAI TTS failed, trying ElevenLabs fallback: %s", str(e))
+
+        # Fallback to ElevenLabs
+        elevenlabs_key = settings.ELEVENLABS_API_KEY
+        if elevenlabs_key:
+            try:
+                from elevenlabs.client import ElevenLabs
+                client = ElevenLabs(api_key=elevenlabs_key)
+
+                # Choose voice based on language
+                if 'es' in lang.lower():
+                    voice_id = "pFZP5JQG7iQjIQuC4Bku"  # Lily - female Spanish
+                else:
+                    voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel - English female
+
+                audio = client.text_to_speech.convert(
+                    voice_id=voice_id,
+                    text=text,
+                    model_id="eleven_multilingual_v2"
+                )
+
+                audio_bytes = b''.join(audio)
+                return HttpResponse(audio_bytes, content_type='audio/mpeg')
+
+            except Exception as e:
+                logger.error("ElevenLabs TTS also failed: %s", str(e))
+
+        # Both TTS services unavailable
+        return HttpResponse("TTS not available", status=503)
+
+    except Exception as e:
+        logger.error("TTS Error: %s", str(e))
         return HttpResponse("Text-to-speech generation failed", status=500)
