@@ -15,7 +15,6 @@ authentication checks, and error handling.
 """
 # Standard library imports
 import json
-import os
 import re
 import logging
 import random
@@ -2160,7 +2159,7 @@ def lessons_list(request):
     ]
 
     # Get user language context (SOFA: Extracted helper)
-    language_profile_map, current_language_profile, current_language, user_profile = _get_user_language_context(request)
+    language_profile_map, current_language_profile, current_language, _ = _get_user_language_context(request)
 
     # Determine which language to display (query param overrides default)
     requested_language = request.GET.get('language')

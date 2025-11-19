@@ -14,7 +14,6 @@ from django.contrib.auth.models import User
 from django.contrib.auth import password_validation
 from django.contrib import messages
 from django.utils.html import format_html
-from django.core.exceptions import ValidationError
 from .models import (
     UserProgress,
     LessonCompletion,

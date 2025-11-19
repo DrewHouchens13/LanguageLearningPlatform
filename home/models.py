@@ -507,12 +507,14 @@ class UserLanguageProfile(models.Model):
         self.save(update_fields=['total_minutes_studied'])
 
     def increment_lessons(self, count=1):
+        """Increment total lessons completed by count (atomic update)."""
         if count <= 0:
             return
         self.total_lessons_completed += count
         self.save(update_fields=['total_lessons_completed'])
 
     def increment_quizzes(self, count=1):
+        """Increment total quizzes taken by count (atomic update)."""
         if count <= 0:
             return
         self.total_quizzes_taken += count
@@ -532,7 +534,7 @@ def create_user_profile(sender, instance, created, **kwargs):
     """
     if created:
         try:
-            profile = UserProfile.objects.create(user=instance)
+            UserProfile.objects.create(user=instance)
             UserLanguageProfile.objects.get_or_create(
                 user=instance,
                 language=DEFAULT_LANGUAGE
