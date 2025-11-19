@@ -1855,8 +1855,9 @@ def submit_onboarding(request):
         # Process answers and calculate score (SOFA: Extracted helper)
         try:
             answers_data, total_score, total_possible = _process_onboarding_answers(answers, attempt)
-        except OnboardingQuestion.DoesNotExist as e:
-            return JsonResponse({'success': False, 'error': f'Invalid question ID: {e}'}, status=400)
+        except OnboardingQuestion.DoesNotExist:
+            # Security: Don't expose exception details to external users
+            return JsonResponse({'success': False, 'error': 'Invalid question ID'}, status=400)
 
         # Calculate proficiency level
         calculated_level = OnboardingService().calculate_proficiency_level(answers_data)
