@@ -69,6 +69,7 @@ from .models import (
 )
 from .services.daily_quest_service import DailyQuestService
 from .services.onboarding_service import OnboardingService
+from .services.help_service import HelpService
 
 # Configure logger for security events
 # Note: IP address logging is standard security practice for:
@@ -2815,3 +2816,44 @@ def generate_onboarding_speech(request):
 
         # Return generic error to user (don't expose internal details)
         return HttpResponse("Text-to-speech generation failed", status=500)
+
+
+# ============================================
+# HELP/WIKI SYSTEM VIEWS
+# ============================================
+
+def help_page(request):
+    """
+    Display help/wiki documentation page.
+
+    Accessible to all users (guest, logged-in, admin).
+    - Regular users: See User Guide only
+    - Admin users: See both User Guide + Admin Guide tabs
+
+    SOFA Principles:
+    - Single Responsibility: Render help page with appropriate documentation
+    - Function Extraction: Documentation loading delegated to HelpService
+    - DRY: Reusable service for both User and Admin guides
+
+    Args:
+        request: HTTP request object
+
+    Returns:
+        HttpResponse: Rendered help page template
+    """
+    # Determine if user is admin (access control)
+    is_admin = request.user.is_authenticated and request.user.is_staff
+
+    # Load User Guide (available to all users)
+    user_guide = HelpService.load_user_guide()
+
+    # Load Admin Guide only for admin users (access control)
+    admin_guide = HelpService.load_admin_guide() if is_admin else None
+
+    context = {
+        'is_admin': is_admin,
+        'user_guide': user_guide,
+        'admin_guide': admin_guide,
+    }
+
+    return render(request, 'home/help.html', context)

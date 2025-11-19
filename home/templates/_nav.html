@@ -34,6 +34,11 @@
            class="nav-link {% if request.path == '/progress/' %}active{% endif %}">
           Progress
         </a>
+        <a href="{% if IS_DEVEDU %}../help/{% else %}{% url 'help' %}{% endif %}"
+           class="nav-link {% if request.path == '/help/' %}active{% endif %}"
+           title="Help & Documentation">
+          Help
+        </a>
       {% endif %}
       {% if user.is_authenticated and user.is_staff %}
         <a href="{% if IS_DEVEDU %}../admin/{% else %}/admin/{% endif %}"

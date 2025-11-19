@@ -1,0 +1,492 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help & Documentation - Language Learning Platform</title>
+    {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
+    <style>
+        /* Help Page Styles - Purple gradient theme matching site */
+        .help-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Breadcrumb Navigation */
+        .breadcrumb {
+            background: none;
+            padding: 10px 0;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .breadcrumb a {
+            color: #7c3aed;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        /* Header */
+        .help-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .help-header h1 {
+            margin: 0 0 15px 0;
+            font-size: 2.5rem;
+        }
+
+        /* Search Bar */
+        .help-search {
+            max-width: 600px;
+            margin: 20px auto 0;
+        }
+
+        .help-search input {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+        }
+
+        .help-search input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.3);
+        }
+
+        /* Guide Tabs */
+        .guide-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .guide-tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.3s;
+        }
+
+        .guide-tab.active {
+            color: #7c3aed;
+            border-bottom-color: #7c3aed;
+        }
+
+        .guide-tab:hover {
+            color: #7c3aed;
+        }
+
+        /* Main Layout */
+        .help-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        /* Table of Contents Sidebar */
+        .toc-sidebar {
+            position: sticky;
+            top: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .toc-sidebar h3 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            color: #1f2937;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .toc-list li {
+            margin-bottom: 8px;
+        }
+
+        .toc-list a {
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .toc-list a:hover {
+            color: #7c3aed;
+        }
+
+        .toc-list .level-3 {
+            padding-left: 15px;
+            font-size: 13px;
+        }
+
+        /* Content Area */
+        .help-content {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .guide-panel {
+            display: none;
+        }
+
+        .guide-panel.active {
+            display: block;
+        }
+
+        /* Section Styles */
+        .help-section {
+            margin-bottom: 40px;
+            scroll-margin-top: 80px; /* Offset for fixed header */
+        }
+
+        .help-section h2 {
+            color: #1f2937;
+            font-size: 28px;
+            margin: 0 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .help-section h3 {
+            color: #374151;
+            font-size: 22px;
+            margin: 20px 0 10px 0;
+        }
+
+        .help-section p {
+            color: #4b5563;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .help-section ul, .help-section ol {
+            color: #4b5563;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .help-section code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            z-index: 100;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-5px);
+        }
+
+        .back-to-top.visible {
+            display: flex;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .help-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .toc-sidebar {
+                position: relative;
+                top: 0;
+            }
+
+            .help-header h1 {
+                font-size: 1.8rem;
+            }
+
+            .help-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include '_nav.html' %}
+
+    <main class="container" style="padding-top: var(--space-3xl);">
+        <div class="help-container">
+            <!-- Breadcrumb Navigation -->
+            <nav class="breadcrumb" aria-label="breadcrumb">
+                <a href="{% url 'landing' %}">Home</a> &gt;
+                <span>Help</span>
+            </nav>
+
+            <!-- Header with Search -->
+            <div class="help-header">
+                <h1>Help & Documentation</h1>
+                <p>Find answers and learn how to use the Language Learning Platform</p>
+
+                <div class="help-search">
+                    <input
+                        type="text"
+                        id="help-search-input"
+                        placeholder="Search help articles..."
+                        aria-label="Search help documentation"
+                    />
+                </div>
+            </div>
+
+            <!-- Guide Tabs (User Guide always shown, additional tabs for staff) -->
+            <div class="guide-tabs">
+                <button class="guide-tab active" data-guide="user" aria-label="User Guide tab">
+                    User Guide
+                </button>
+                {% if is_admin %}
+                <button class="guide-tab" data-guide="admin" aria-label="Admin Guide tab">
+                    Admin Guide
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- Main Layout -->
+            <div class="help-layout">
+                <!-- Table of Contents Sidebar -->
+                <aside class="toc-sidebar" aria-label="Help topics navigation">
+                    <h3>Table of Contents</h3>
+                    <ul class="toc-list" id="toc-list">
+                        <!-- Table of contents will be populated dynamically -->
+                    </ul>
+                </aside>
+
+                <!-- Content Area -->
+                <main class="help-content">
+                    <!-- User Guide Panel -->
+                    <div class="guide-panel active" id="user-guide-panel">
+                        {% if user_guide and user_guide.sections %}
+                            {% for section in user_guide.sections %}
+                                <div class="help-section" id="{{ section.id }}">
+                                    {% if section.level == 2 %}
+                                        <h2>{{ section.title }}</h2>
+                                    {% elif section.level == 3 %}
+                                        <h3>{{ section.title }}</h3>
+                                    {% endif %}
+
+                                    <div class="section-content">
+                                        {{ section.content|linebreaks }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <!-- Fallback content if USER_GUIDE.md not found -->
+                            <div class="help-section" id="getting-started">
+                                <h2>Getting Started</h2>
+                                <p>Welcome to the Language Learning Platform! This help documentation will guide you through using the platform effectively.</p>
+                            </div>
+
+                            <div class="help-section" id="creating-an-account">
+                                <h2>Creating an Account</h2>
+                                <p>To create an account, click the "Sign Up" button and fill in your details.</p>
+                            </div>
+
+                            <div class="help-section" id="daily-quests">
+                                <h2>Daily Quests</h2>
+                                <p>Complete daily quests to earn XP and maintain your learning streak!</p>
+                            </div>
+
+                            <div class="help-section" id="managing-your-account">
+                                <h2>Managing Your Account</h2>
+                                <p>Access your account settings to update your email, password, and profile information.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Additional guide panel for staff users -->
+                    {% if is_admin and admin_guide %}
+                    <div class="guide-panel" id="admin-guide-panel">
+                        {% for section in admin_guide.sections %}
+                            <div class="help-section" id="admin-{{ section.id }}">
+                                {% if section.level == 2 %}
+                                    <h2>{{ section.title }}</h2>
+                                {% elif section.level == 3 %}
+                                    <h3>{{ section.title }}</h3>
+                                {% endif %}
+
+                                <div class="section-content">
+                                    {{ section.content|linebreaks }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </main>
+            </div>
+
+            <!-- Back to Top Button -->
+            <div class="back-to-top" id="back-to-top" aria-label="Back to top">
+                ↑
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Language Learning Platform. Empowering language learners worldwide.</p>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const navToggle = document.querySelector('.nav-toggle');
+        const navCenter = document.querySelector('.nav-center');
+
+        if (navToggle && navCenter) {
+            navToggle.addEventListener('click', () => {
+                navCenter.classList.toggle('active');
+                navToggle.classList.toggle('active');
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!navToggle.contains(e.target) && !navCenter.contains(e.target)) {
+                    navCenter.classList.remove('active');
+                    navToggle.classList.remove('active');
+                }
+            });
+        }
+
+        // Tab Switching
+        document.querySelectorAll('.guide-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Update active tab
+                document.querySelectorAll('.guide-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                // Show corresponding panel
+                const guide = this.dataset.guide;
+                document.querySelectorAll('.guide-panel').forEach(panel => panel.classList.remove('active'));
+                document.getElementById(`${guide}-guide-panel`).classList.add('active');
+
+                // Update TOC
+                updateTOC(guide);
+            });
+        });
+
+        // Generate Table of Contents
+        function updateTOC(guide) {
+            const panel = document.getElementById(`${guide}-guide-panel`);
+            const sections = panel.querySelectorAll('.help-section');
+            const tocList = document.getElementById('toc-list');
+
+            tocList.innerHTML = '';
+
+            sections.forEach(section => {
+                const title = section.querySelector('h2, h3');
+                if (!title) return;
+
+                const li = document.createElement('li');
+                const level = title.tagName === 'H3' ? 'level-3' : 'level-2';
+                li.className = level;
+
+                const a = document.createElement('a');
+                a.href = `#${section.id}`;
+                a.textContent = title.textContent;
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    section.scrollIntoView({ behavior: 'smooth' });
+                    section.classList.add('highlighted');
+                    setTimeout(() => section.classList.remove('highlighted'), 2000);
+                });
+
+                li.appendChild(a);
+                tocList.appendChild(li);
+            });
+        }
+
+        // Initialize TOC on load
+        updateTOC('user');
+
+        // Back to Top Button
+        const backToTop = document.getElementById('back-to-top');
+
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
+
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Simple Search Functionality (client-side)
+        const searchInput = document.getElementById('help-search-input');
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+
+            if (query.length < 2) {
+                // Reset all sections if query is too short
+                document.querySelectorAll('.help-section').forEach(section => {
+                    section.style.display = 'block';
+                });
+                return;
+            }
+
+            // Filter sections based on query
+            document.querySelectorAll('.help-section').forEach(section => {
+                const title = section.querySelector('h2, h3')?.textContent.toLowerCase() || '';
+                const content = section.textContent.toLowerCase();
+
+                if (title.includes(query) || content.includes(query)) {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
