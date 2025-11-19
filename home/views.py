@@ -964,11 +964,7 @@ def logout_view(request):
     """
     logout(request)
     messages.success(request, 'You have been successfully logged out.')
-    # Use absolute redirect to avoid double prefix issue in admin
-    # Build absolute URL using request scheme and host
-    landing_url = reverse('landing')
-    absolute_url = request.build_absolute_uri(landing_url)
-    return HttpResponseRedirect(absolute_url)
+    return redirect('landing')
 
 
 @login_required
