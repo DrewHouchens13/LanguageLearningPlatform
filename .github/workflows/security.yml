@@ -24,6 +24,9 @@ jobs:
   bandit:
     name: Bandit - CWE Security Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -97,6 +100,9 @@ jobs:
   semgrep:
     name: Semgrep - Advanced CWE/OWASP Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
       - name: Checkout code
@@ -135,6 +141,9 @@ jobs:
   pip-audit:
     name: pip-audit - CVE Dependency Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -197,6 +206,8 @@ jobs:
   safety:
     name: Safety - Additional CVE Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
