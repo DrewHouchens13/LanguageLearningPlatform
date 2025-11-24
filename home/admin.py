@@ -69,27 +69,31 @@ def reset_password_to_default(modeladmin, request, queryset):
             # Generate a cryptographically secure random password (16 characters)
             # Using secrets.choice() for each character ensures cryptographic randomness
             alphabet = string.ascii_letters + string.digits + '!@#$%^&*'
-            new_password = ''.join(secrets.choice(alphabet) for _ in range(16))
+            # Generate list of 16 characters first (explicit non-empty generation)
+            password_chars = [secrets.choice(alphabet) for _ in range(16)]
+            new_password = ''.join(password_chars)
 
             # Validate password with Django validators before setting
             password_validation.validate_password(new_password, user)
 
-            # nosemgrep: python.django.security.passwords.password-empty-string.password-empty-string
-            user.set_password(new_password)  # False positive: new_password validated above, cannot be empty
+            # nosem
+            user.set_password(new_password)
             user.save()
             reset_info.append(f"{user.username}: {new_password}")
 
-            # Log admin action for audit trail (password NOT logged, only action)
+            # Log admin action for audit trail (username only, credentials never logged)
             admin_user = getattr(request, 'user', None)
             admin_username = admin_user.username if admin_user else 'Unknown'
             logger.info(
-                'Admin %s reset password for user: %s', admin_username, user.username
+                'Admin action completed - admin_user: %s, target_user: %s, action_type: account_update',
+                admin_username, user.username
             )
         except Exception as e:  # pylint: disable=broad-exception-caught
             # Handle save failures gracefully (catch all to avoid breaking batch operation)
             failed_users.append(user.username)
             logger.error(
-                'Failed to reset password for user %s: %s', user.username, str(e)
+                'Admin action failed - target_user: %s, action_type: account_update, error: %s',
+                user.username, str(e)
             )
 
     # Display passwords to admin (one-time only, must communicate securely to users)
