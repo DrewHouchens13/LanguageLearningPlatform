@@ -74,7 +74,8 @@ def reset_password_to_default(modeladmin, request, queryset):
             # Validate password with Django validators before setting
             password_validation.validate_password(new_password, user)
 
-            user.set_password(new_password)
+            # nosemgrep: python.django.security.passwords.password-empty-string.password-empty-string
+            user.set_password(new_password)  # False positive: new_password validated above, cannot be empty
             user.save()
             reset_info.append(f"{user.username}: {new_password}")
 
