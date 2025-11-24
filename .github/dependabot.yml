@@ -26,11 +26,6 @@ updates:
       - "manchelsi"
     # Group updates by type
     groups:
-      security-updates:
-        patterns:
-          - "*"
-        update-types:
-          - "security"
       minor-updates:
         patterns:
           - "*"
