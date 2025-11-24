@@ -56,14 +56,14 @@ jobs:
 
       - name: Upload Bandit JSON Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bandit-report-json
           path: bandit-report.json
 
       - name: Upload Bandit Screen Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bandit-report-txt
           path: bandit-screen.txt
@@ -133,7 +133,7 @@ jobs:
 
       - name: Upload Semgrep Screen Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: semgrep-report
           path: semgrep-screen.txt
@@ -166,14 +166,14 @@ jobs:
 
       - name: Upload pip-audit JSON Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pip-audit-report-json
           path: pip-audit-report.json
 
       - name: Upload pip-audit Screen Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pip-audit-report-txt
           path: pip-audit-screen.txt
@@ -233,7 +233,7 @@ jobs:
 
       - name: Upload Safety Reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: safety-reports
           path: |
