@@ -7,7 +7,7 @@ gunicorn==22.0.0           # WSGI HTTP server for production (fixes CVE-2024-682
 whitenoise==6.11.0          # Serve static files in production
 psycopg2-binary==2.9.11     # PostgreSQL adapter
 dj-database-url==2.1.0     # Parse database URL from environment
-Pillow==11.0.0             # Image processing for user avatars
+Pillow==12.0.0             # Image processing for user avatars
 cloudinary==1.44.1         # Cloudinary SDK for cloud media storage
 django-cloudinary-storage==0.3.0  # Django storage backend for Cloudinary
 django-redis==5.4.0        # Redis cache backend for Django (production caching)
