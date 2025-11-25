@@ -6,7 +6,7 @@ sqlparse==0.5.3
 gunicorn==22.0.0           # WSGI HTTP server for production (fixes CVE-2024-6827, CVE-2024-1135)
 whitenoise==6.11.0          # Serve static files in production
 psycopg2-binary==2.9.11     # PostgreSQL adapter
-dj-database-url==2.1.0     # Parse database URL from environment
+dj-database-url==3.0.1     # Parse database URL from environment
 Pillow==11.0.0             # Image processing for user avatars
 cloudinary==1.44.1         # Cloudinary SDK for cloud media storage
 django-cloudinary-storage==0.3.0  # Django storage backend for Cloudinary
