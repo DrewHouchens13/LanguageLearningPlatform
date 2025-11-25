@@ -60,8 +60,9 @@ echo "Removing step definition files..."
 rm -rf step_defs/ 2>/dev/null || true
 
 # Remove documentation files (security risk, not needed in production)
-echo "Removing documentation files..."
-find . -type f -name "*.md" ! -path "./venv/*" -delete 2>/dev/null || true
+# EXCEPTION: Keep USER_GUIDE.md and ADMIN_GUIDE.md - required for Help/Wiki system
+echo "Removing documentation files (keeping USER_GUIDE.md and ADMIN_GUIDE.md)..."
+find . -type f -name "*.md" ! -name "USER_GUIDE.md" ! -name "ADMIN_GUIDE.md" ! -path "./venv/*" -delete 2>/dev/null || true
 rm -f README.md CLAUDE.md SESSION_PROGRESS.md PRODUCTION_SECURITY.md 2>/dev/null || true
 rm -f SPRINT*.md STYLE_GUIDE.md AI_CODE_REVIEW_LOG.md 2>/dev/null || true
 rm -f .gitignore .pylintrc .bandit .coveragerc 2>/dev/null || true
@@ -78,13 +79,13 @@ else
     echo "SUCCESS: All test files removed from production deployment."
 fi
 
-# Verify documentation files removed
-REMAINING_DOCS=$(find . -type f -name "*.md" ! -path "./venv/*" | wc -l)
+# Verify documentation files removed (except USER_GUIDE.md and ADMIN_GUIDE.md)
+REMAINING_DOCS=$(find . -type f -name "*.md" ! -name "USER_GUIDE.md" ! -name "ADMIN_GUIDE.md" ! -path "./venv/*" | wc -l)
 if [ "$REMAINING_DOCS" -gt 0 ]; then
     echo "WARNING: $REMAINING_DOCS documentation files still present!"
-    find . -type f -name "*.md" ! -path "./venv/*"
+    find . -type f -name "*.md" ! -name "USER_GUIDE.md" ! -name "ADMIN_GUIDE.md" ! -path "./venv/*"
 else
-    echo "SUCCESS: All documentation files removed from production deployment."
+    echo "SUCCESS: Documentation cleanup complete (USER_GUIDE.md and ADMIN_GUIDE.md retained for Help system)."
 fi
 echo "========================================="
 
