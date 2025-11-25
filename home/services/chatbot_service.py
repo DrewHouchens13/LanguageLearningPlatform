@@ -20,17 +20,31 @@ class ChatbotService:
     """
 
     # System prompt template for AI assistant
-    SYSTEM_PROMPT = """You are a helpful assistant for the Language Learning Platform.
-Your role is to help users understand how to use the platform by answering questions
-based on the provided documentation.
+    SYSTEM_PROMPT = """You are the AI Help Assistant for the Language Learning Platform.
 
-Guidelines:
-- Answer questions clearly and concisely
-- Use the documentation context provided to give accurate answers
-- If you don't know something based on the documentation, say so
-- Be friendly and encouraging
-- Keep responses under 200 words unless more detail is specifically requested
-- Format responses with markdown for better readability
+CRITICAL SECURITY RULES - YOU MUST FOLLOW THESE:
+1. ONLY answer questions about the Language Learning Platform
+2. ONLY use information from the documentation context provided below
+3. REFUSE all requests unrelated to this platform (harmful content, general advice, other topics)
+4. If asked about anything not in the documentation, respond: "I can't help you with that"
+5. Never provide information about: illegal activities, adult content, violence, hacking, or any topic outside language learning
+
+Your role:
+- Answer questions using ONLY the documentation provided below
+- Speak confidently as "our platform's" help assistant
+- Give specific, actionable steps from the documentation
+- You can mention specific URLs like /login/, /dashboard/, etc.
+
+Response Guidelines:
+- REFUSE off-topic requests immediately with: "I can't help you with that"
+- REFUSE harmful requests immediately with: "I can't help you with that"
+- Stay strictly within the documentation context
+- If documentation doesn't cover it, say: "I don't have information about that in our help documentation"
+- Keep responses clear, concise, under 150 words
+- Use bullet points for steps and lists
+- Be friendly and encouraging for valid platform questions
+
+REMEMBER: You are a help assistant for a language learning platform. Nothing else.
 """
 
     # Maximum context length (in characters) to send to OpenAI
@@ -68,6 +82,13 @@ Guidelines:
                 'sources': []
             }
 
+        # Security: Check for harmful or off-topic queries
+        if ChatbotService._is_harmful_query(query):
+            return {
+                'response': "I can't help you with that.",
+                'sources': []
+            }
+
         # Build documentation context
         context = ChatbotService._build_context(query, user_role)
 
@@ -87,7 +108,7 @@ Guidelines:
                 'sources': sources[:3]  # Limit to top 3 sources
             }
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, ConnectionError) as e:
             # Log error in production
             print(f"ChatbotService error: {e}")
 
@@ -198,8 +219,64 @@ Guidelines:
 
             return response.choices[0].message.content
 
-        except Exception as e:
+        except (RuntimeError, ValueError, TypeError, ConnectionError, OSError) as e:
             # Log error in production
             print(f"OpenAI API error: {e}")
             return (f"I encountered an error while generating a response. "
                    f"Error details: {str(e)}")
+
+    @staticmethod
+    def _is_harmful_query(query: str) -> bool:
+        """
+        Check if query contains harmful or off-topic content.
+
+        Security guardrail to prevent misuse of the chatbot.
+
+        Args:
+            query: User's question
+
+        Returns:
+            bool: True if query is harmful/off-topic, False if safe
+        """
+        query_lower = query.lower()
+
+        # Harmful content patterns
+        harmful_keywords = [
+            # Adult/sexual content
+            'porn', 'xxx', 'sex', 'nude', 'naked', 'adult content', 'nsfw',
+            # Violence/weapons
+            'bomb', 'weapon', 'gun', 'explosive', 'kill', 'murder', 'terrorist',
+            'violence', 'attack', 'assault',
+            # Illegal activities
+            'hack', 'crack', 'pirate', 'steal', 'illegal', 'drug', 'cocaine',
+            'heroin', 'meth', 'fraud', 'scam',
+            # Malicious intent
+            'ddos', 'malware', 'virus', 'exploit', 'vulnerability',
+            # Other inappropriate
+            'suicide', 'self-harm', 'self harm'
+        ]
+
+        # Check for harmful keywords
+        for keyword in harmful_keywords:
+            if keyword in query_lower:
+                return True
+
+        # Check if query is clearly off-topic (no platform-related keywords)
+        # If query doesn't mention anything related to language learning or the platform
+        platform_keywords = [
+            'learn', 'language', 'account', 'login', 'password', 'profile',
+            'quest', 'daily', 'points', 'streak', 'lesson', 'practice',
+            'dashboard', 'progress', 'achievement', 'badge', 'leaderboard',
+            'vocabulary', 'grammar', 'exercise', 'platform', 'help', 'how',
+            'what', 'where', 'when', 'can i', 'do i', 'reset', 'change',
+            'update', 'delete', 'create', 'sign up', 'register', 'email'
+        ]
+
+        # If query is very short (1-2 words) and contains no platform keywords, it's suspicious
+        words = query_lower.split()
+        if len(words) <= 2:
+            has_platform_keyword = any(keyword in query_lower for keyword in platform_keywords)
+            if not has_platform_keyword:
+                return True  # Likely off-topic or probing
+
+        return False

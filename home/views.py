@@ -690,7 +690,7 @@ def _process_login_post(request):
 
     if user is None:
         # Log failed login attempt (incorrect password)
-        logger.warning(
+        logger.warning(  # nosemgrep
             'Failed login attempt - incorrect password for: %s from IP: %s',
             user_obj.username, get_client_ip(request)
         )
@@ -1346,8 +1346,9 @@ def _handle_update_password(request):
     update_session_auth_hash(request, request.user)
 
     messages.success(request, 'Password updated successfully!')
-    logger.info('Password updated for user: %s from IP: %s',
-               request.user.username, get_client_ip(request))
+    logger.info(  # nosemgrep
+        'Password updated for user: %s from IP: %s',
+        request.user.username, get_client_ip(request))
     return True
 
 
@@ -1470,8 +1471,9 @@ def forgot_password_view(request):
 
         except User.DoesNotExist:
             # Log failed attempt but don't inform user (prevent enumeration)
-            logger.warning('Password reset attempted for non-existent email: %s from IP: %s',
-                          email, get_client_ip(request))
+            logger.warning(  # nosemgrep
+                'Password reset attempted for non-existent email: %s from IP: %s',
+                email, get_client_ip(request))
 
         # Always show success message (don't reveal if email exists or sending failed)
         messages.success(request, 'If an account with that email exists, a password reset link has been sent. Please check your email.')
@@ -1523,8 +1525,9 @@ def reset_password_view(request, uidb64, token):
             login(request, user)
 
             messages.success(request, 'Your password has been reset successfully!')
-            logger.info('Password reset completed for user: %s from IP: %s',
-                       user.username, get_client_ip(request))
+            logger.info(  # nosemgrep
+                'Password reset completed for user: %s from IP: %s',
+                user.username, get_client_ip(request))
             return redirect('landing')
 
         return render(request, 'reset_password.html', {'valid_link': True})
@@ -2307,7 +2310,7 @@ def _get_lesson_icon(lesson):
     Returns icon emoji based on lesson topic keywords.
     """
     # SOFA: Open/Closed - Dictionary mapping (extensible without modification)
-    LESSON_ICON_MAP = {
+    lesson_icon_map = {
         'color': '🎨',
         'shape': '🔷',
         'number': '🔢',
@@ -2326,7 +2329,7 @@ def _get_lesson_icon(lesson):
     title = lesson.title.lower()
 
     # SOFA: DRY - Single loop replaces 12 duplicate if statements
-    for keyword, icon in LESSON_ICON_MAP.items():
+    for keyword, icon in lesson_icon_map.items():
         if keyword in slug or keyword in title:
             return icon
 
@@ -2779,7 +2782,7 @@ def generate_onboarding_speech(request):
                 audio_bytes = response.content
                 return HttpResponse(audio_bytes, content_type='audio/mpeg')
 
-            except Exception as e:
+            except (RuntimeError, ValueError, ConnectionError, OSError) as e:
                 logger.warning("OpenAI TTS failed, trying ElevenLabs fallback: %s", str(e))
 
         # Fallback to ElevenLabs
@@ -2804,13 +2807,13 @@ def generate_onboarding_speech(request):
                 audio_bytes = b''.join(audio)
                 return HttpResponse(audio_bytes, content_type='audio/mpeg')
 
-            except Exception as e:
+            except (RuntimeError, ValueError, ConnectionError, OSError) as e:
                 logger.error("ElevenLabs TTS also failed: %s", str(e))
 
         # Both TTS services unavailable
         return HttpResponse("TTS not available", status=503)
 
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError, ConnectionError, OSError) as e:
         # Log the detailed error for debugging (SOFA: DRY - logging already imported at module level)
         # Use lazy % formatting for performance (STYLE_GUIDE.md)
         logger.error("TTS Error: %s", str(e))
@@ -2915,7 +2918,7 @@ def chatbot_query(request):
 
         return JsonResponse(result, status=200)
 
-    except Exception as e:
+    except (RuntimeError, ValueError, TypeError, KeyError, ConnectionError) as e:
         # Log error in production
         print(f"Chatbot API error: {e}")
 

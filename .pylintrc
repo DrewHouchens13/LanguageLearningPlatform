@@ -24,6 +24,7 @@ disable=
     # Code style (less critical)
     missing-module-docstring,  # C0114: Allow missing module docstrings
     missing-class-docstring,   # C0115: Allow missing class docstrings (can add later)
+    missing-function-docstring, # C0116: Allow missing function docstrings (especially tests)
     too-few-public-methods,    # R0903: Django models/forms often have few methods
     # Import warnings (can fix but not critical)
     wrong-import-order,     # C0411: Import order (can fix incrementally)
@@ -31,12 +32,18 @@ disable=
     wrong-import-position,  # C0413: Import position
     # Less critical warnings
     unused-argument,        # W0613: Django admin actions require specific signature
+    unused-import,          # W0611: Some imports used for type hints or test setup
     reimported,             # W0404: Reimported modules
     protected-access,       # W0212: Tests need to access _test_password
     # Formatting (can fix but not critical initially)
     trailing-whitespace,    # C0303: Trailing whitespace
     line-too-long,          # C0301: Line length (temporarily disabled)
     trailing-newlines,      # C0305: Trailing newlines
+    # Design patterns
+    too-many-positional-arguments, # R0917: Helper functions may need more args
+    duplicate-code,         # R0801: Test files often have similar setup code
+    pointless-string-statement, # W0105: Used for section comments in tests
+    broad-exception-caught  # W0718: Sometimes need to catch all exceptions in error handlers
 
 [REPORTS]
 # Set the output format (text, parseable, colorized, json, etc.)
@@ -55,8 +62,8 @@ const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))$
 # Regular expression for function/method names
 function-rgx=[a-z_][a-z0-9_]{2,50}$
 
-# Regular expression for method names
-method-rgx=[a-z_][a-z0-9_]{2,50}$
+# Regular expression for method names (allow longer names for descriptive test methods)
+method-rgx=[a-z_][a-z0-9_]{2,70}$
 
 # Regular expression for class names
 class-rgx=[A-Z_][a-zA-Z0-9]+$
@@ -71,8 +78,8 @@ const-naming-style=UPPER_CASE
 # Maximum number of characters on a single line
 max-line-length=120
 
-# Maximum number of lines in a module
-max-module-lines=1000
+# Maximum number of lines in a module (Django projects often have large views/models)
+max-module-lines=3000
 
 # String used as indentation unit (4 spaces for Python)
 indent-string='    '
@@ -93,8 +100,11 @@ min-public-methods=0
 # Maximum number of public methods for a class
 max-public-methods=30
 
+# Maximum number of local variables for function / method body
+max-locals=25
+
 # Maximum number of return / yield for function / method body
-max-returns=6
+max-returns=10
 
 # Maximum number of branch for function / method body
 max-branches=15

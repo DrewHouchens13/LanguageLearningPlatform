@@ -310,3 +310,6 @@ def send_template_email(
             wait_time = 2 ** attempt
             logger.info('Retrying email send in %s seconds...', wait_time)
             time.sleep(wait_time)
+
+    # Fallback return (should not be reached due to loop logic)
+    return False

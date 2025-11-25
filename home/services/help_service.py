@@ -276,38 +276,97 @@ class HelpService:
     def _search_guide_sections(sections: List[Dict[str, str]], query: str,
                                guide_type: str) -> List[Dict[str, str]]:
         """
-        Search sections of a guide for a query.
+        Search sections of a guide for a query using keyword matching.
 
         DRY: Reusable for both User and Admin guides.
+        SOFA: Extract keywords to support natural language queries.
 
         Args:
             sections: List of section dictionaries to search
-            query: Search query string
+            query: Search query string (e.g., "How do I create an account?")
             guide_type: 'user' or 'admin'
 
         Returns:
             list: Matching sections with relevance scores
         """
         results = []
-        query_lower = query.lower()
+
+        # Extract keywords from query (remove common stop words)
+        keywords = HelpService._extract_keywords(query)
+
+        if not keywords:
+            return results
 
         for section in sections:
-            if query_lower in section['title'].lower() or query_lower in section['content'].lower():
-                # Calculate relevance score (simple title match = higher score)
-                score = 1.0 if query_lower in section['title'].lower() else 0.5
+            title_lower = section['title'].lower()
+            content_lower = section['content'].lower()
 
-                # Extract snippet around query
-                snippet = HelpService._extract_snippet(section['content'], query, max_length=200)
+            # Count keyword matches in title and content
+            title_matches = sum(1 for keyword in keywords if keyword in title_lower)
+            content_matches = sum(1 for keyword in keywords if keyword in content_lower)
+
+            # Only include if at least one keyword matches
+            if title_matches > 0 or content_matches > 0:
+                # Calculate relevance score based on matches
+                # Title matches weighted higher (2.0) than content matches (0.5)
+                score = (title_matches * 2.0) + (content_matches * 0.5)
+
+                # Normalize score (0.0 to 1.0)
+                max_possible = len(keywords) * 2.0
+                normalized_score = min(1.0, score / max_possible)
+
+                # Extract snippet around first keyword match
+                first_keyword = next(
+                    (kw for kw in keywords if kw in content_lower),
+                    keywords[0]
+                )
+                snippet = HelpService._extract_snippet(
+                    section['content'],
+                    first_keyword,
+                    max_length=200
+                )
 
                 results.append({
                     'section_id': section['id'],
                     'section_title': section['title'],
                     'guide_type': guide_type,
                     'snippet': snippet,
-                    'relevance_score': score
+                    'relevance_score': normalized_score
                 })
 
         return results
+
+    @staticmethod
+    def _extract_keywords(query: str) -> List[str]:
+        """
+        Extract keywords from search query by removing stop words.
+
+        SOFA: Function Extraction - Dedicated keyword extraction logic.
+
+        Args:
+            query: Search query string
+
+        Returns:
+            list: Keywords extracted from query
+        """
+        # Common English stop words to filter out
+        stop_words = {
+            'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'can', 'do',
+            'for', 'from', 'has', 'have', 'how', 'i', 'in', 'is', 'it',
+            'of', 'on', 'or', 'that', 'the', 'this', 'to', 'was', 'what',
+            'when', 'where', 'which', 'who', 'will', 'with', 'you', 'your',
+            'my', 'does', 'am', 'did', 'should', 'could', 'would'
+        }
+
+        # Split query into words and filter
+        words = query.lower().split()
+        keywords = [
+            word.strip('.,!?;:')  # Remove punctuation
+            for word in words
+            if len(word) > 2 and word.lower() not in stop_words
+        ]
+
+        return keywords
 
     @staticmethod
     def _extract_snippet(content: str, query: str, max_length: int = 200) -> str:

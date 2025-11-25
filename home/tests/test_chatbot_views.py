@@ -160,7 +160,7 @@ class ChatbotAPITests(TestCase):
     @patch('home.services.chatbot_service.ChatbotService.get_ai_response')
     def test_chatbot_query_handles_service_error(self, mock_service):
         """Chatbot query should handle service errors gracefully"""
-        mock_service.side_effect = Exception("Service error")
+        mock_service.side_effect = RuntimeError("Service error")
 
         response = self.client.post(
             reverse('chatbot_query'),
