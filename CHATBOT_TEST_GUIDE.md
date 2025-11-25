@@ -203,17 +203,19 @@ After PR #66 was merged, the AI chatbot showed errors in production:
 - "The AI assistant requires the OpenAI library to be installed. Please contact support."
 
 **Root Causes**:
-1. `openai` package was missing from `requirements.txt`
-2. `help_service.py` used relative file paths that didn't resolve in production
+1. `openai` package was missing from `requirements.txt` (fixed in PR #85)
+2. `help_service.py` used relative file paths that didn't resolve in production (fixed in PR #85)
+3. `build.sh` deletes ALL `.md` files including `USER_GUIDE.md` and `ADMIN_GUIDE.md` (fix pending)
 
-**Fixes Applied** (Branch: `help-wiki-aichatbot-system-fixes`):
+**Fixes Applied**:
 
-| File | Fix |
-|------|-----|
-| `requirements.txt` | Added `openai==1.57.0` |
-| `home/services/help_service.py` | Use `settings.BASE_DIR` for absolute paths |
-| `.env.example` | Standardized to `OPENAI_API_KEY` |
-| `ENV_SETUP_GUIDE.md` | Updated all API key references |
+| File | Fix | PR |
+|------|-----|-----|
+| `requirements.txt` | Added `openai==1.57.0` | #85 |
+| `home/services/help_service.py` | Use `settings.BASE_DIR` for absolute paths | #85 |
+| `.env.example` | Standardized to `OPENAI_API_KEY` | #85 |
+| `ENV_SETUP_GUIDE.md` | Updated all API key references | #85 |
+| `build.sh` | **Keep USER_GUIDE.md and ADMIN_GUIDE.md from deletion** | #86 |
 
 **Production Checklist**:
 - [ ] Ensure `OPENAI_API_KEY` is set in Render environment variables
