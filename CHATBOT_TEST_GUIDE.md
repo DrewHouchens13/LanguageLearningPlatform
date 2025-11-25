@@ -205,6 +205,7 @@ After PR #66 was merged, the AI chatbot showed errors in production:
 **Root Causes**:
 1. `openai` package was missing from `requirements.txt`
 2. `help_service.py` used relative file paths that didn't resolve in production
+3. `build.sh` was deleting ALL `.md` files including `USER_GUIDE.md` and `ADMIN_GUIDE.md`
 
 **Fixes Applied** (Branch: `help-wiki-aichatbot-system-fixes`):
 
@@ -214,6 +215,7 @@ After PR #66 was merged, the AI chatbot showed errors in production:
 | `home/services/help_service.py` | Use `settings.BASE_DIR` for absolute paths |
 | `.env.example` | Standardized to `OPENAI_API_KEY` |
 | `ENV_SETUP_GUIDE.md` | Updated all API key references |
+| `build.sh` | **Keep USER_GUIDE.md and ADMIN_GUIDE.md** - was deleting all .md files! |
 
 **Production Checklist**:
 - [ ] Ensure `OPENAI_API_KEY` is set in Render environment variables
