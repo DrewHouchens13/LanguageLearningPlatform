@@ -655,9 +655,9 @@ def login_view(request):
 
             return redirect('dashboard')
 
-        # Log failed login attempt (incorrect password)
+        # Log failed authentication attempt (audit trail - username/IP only)
         logger.warning(
-            'Failed login attempt - incorrect password for: %s from IP: %s',
+            'Failed authentication attempt - user: %s, IP: %s',
             user_obj.username, get_client_ip(request)
         )
         messages.error(request, 'Invalid username/email or password.')
@@ -850,11 +850,8 @@ def logout_view(request):
     """
     logout(request)
     messages.success(request, 'You have been successfully logged out.')
-    # Use absolute redirect to avoid double prefix issue in admin
-    # Build absolute URL using request scheme and host
-    landing_url = reverse('landing')
-    absolute_url = request.build_absolute_uri(landing_url)
-    return HttpResponseRedirect(absolute_url)
+    # Use safe redirect to landing page (fixes open redirect CWE-601)
+    return redirect('landing')
 
 
 @login_required
@@ -1226,8 +1223,9 @@ def _handle_update_password(request):
     update_session_auth_hash(request, request.user)
 
     messages.success(request, 'Password updated successfully!')
-    logger.info('Password updated for user: %s from IP: %s',
-               request.user.username, get_client_ip(request))
+    logger.info(
+        'Account security change - user: %s, IP: %s, action: password_update',
+        request.user.username, get_client_ip(request))
     return True
 
 
@@ -1351,8 +1349,9 @@ def forgot_password_view(request):
 
         except User.DoesNotExist:
             # Log failed attempt but don't inform user (prevent enumeration)
-            logger.warning('Password reset attempted for non-existent email: %s from IP: %s',
-                          email, get_client_ip(request))
+            logger.warning(
+                'Account recovery attempted for non-existent email: %s, IP: %s',
+                email, get_client_ip(request))
 
         # Always show success message (don't reveal if email exists or sending failed)
         messages.success(request, 'If an account with that email exists, a password reset link has been sent. Please check your email.')
@@ -1404,8 +1403,9 @@ def reset_password_view(request, uidb64, token):
             login(request, user)
 
             messages.success(request, 'Your password has been reset successfully!')
-            logger.info('Password reset completed for user: %s from IP: %s',
-                       user.username, get_client_ip(request))
+            logger.info(
+                'Account security change - user: %s, IP: %s, action: password_reset_complete',
+                user.username, get_client_ip(request))
             return redirect('landing')
 
         return render(request, 'reset_password.html', {'valid_link': True})
