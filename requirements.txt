@@ -35,5 +35,5 @@ semgrep==1.144.0           # Advanced static analysis (optional)
 hypothesis==6.148.2        # Property-based testing (fuzz testing)
 freezegun==1.5.5          # Time mocking for deterministic tests
 pytest-mock==3.15.1        # Mock fixtures for pytest
-mutmut==2.4.5              # Mutation testing
+mutmut==3.4.0              # Mutation testing
 pytest-random-order==1.2.0 # Test independence verification
