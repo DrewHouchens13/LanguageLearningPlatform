@@ -15,7 +15,7 @@ Markdown==3.7              # Markdown to HTML conversion for help documentation
 openai==1.57.0             # OpenAI API client for AI chatbot assistant
 
 # Testing dependencies
-pytest==8.3.4              # Testing framework
+pytest==9.0.1              # Testing framework
 pytest-django==4.11.1       # Django integration for pytest
 pytest-cov==6.0.0          # Coverage plugin for pytest
 pytest-xdist==3.8.0        # Parallel test execution (use -n auto flag)
