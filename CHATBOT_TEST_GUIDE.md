@@ -194,6 +194,32 @@
 - ChatbotService: Covered by 24 tests
 - Chatbot API endpoint: Covered by 13 tests
 
+## Production Deployment Fix (PR #85)
+
+**Issue Discovered**: 2025-11-25
+
+After PR #66 was merged, the AI chatbot showed errors in production:
+- "I can't help you with that."
+- "The AI assistant requires the OpenAI library to be installed. Please contact support."
+
+**Root Causes**:
+1. `openai` package was missing from `requirements.txt`
+2. `help_service.py` used relative file paths that didn't resolve in production
+
+**Fixes Applied** (Branch: `help-wiki-aichatbot-system-fixes`):
+
+| File | Fix |
+|------|-----|
+| `requirements.txt` | Added `openai==1.57.0` |
+| `home/services/help_service.py` | Use `settings.BASE_DIR` for absolute paths |
+| `.env.example` | Standardized to `OPENAI_API_KEY` |
+| `ENV_SETUP_GUIDE.md` | Updated all API key references |
+
+**Production Checklist**:
+- [ ] Ensure `OPENAI_API_KEY` is set in Render environment variables
+- [ ] Verify `openai` package is installed (in requirements.txt)
+- [ ] Check Render logs for any import errors after deploy
+
 ## Known Limitations
 
 1. **OpenAI API Key Required**:
