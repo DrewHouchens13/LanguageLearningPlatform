@@ -24,8 +24,8 @@ pytest home/tests.py::TestClassName::test_method_name
    ```bash
    pylint home/ config/ --rcfile=.pylintrc
    ```
-   - Target: 9.5+/10 score (current: 9.71-10.00/10)
-   - Fix any critical issues before proceeding
+   - Target: 10/10 score
+   - Fix all issues before proceeding
    - Runs on entire home/ and config/ directories, not just modified files
 
 3. **Run Bandit** - Security scan on ALL project files

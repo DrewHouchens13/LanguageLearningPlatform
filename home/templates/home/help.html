@@ -1,0 +1,561 @@
+{% load static markdown_extras %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help & Documentation - Language Learning Platform</title>
+    {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/help.css' %}">
+</head>
+<body>
+    {% include '_nav.html' %}
+
+    <main class="container" style="padding-top: var(--space-3xl);">
+        <div class="help-container">
+            <!-- Header with Search -->
+            <div class="help-header">
+                <h1>Help & Documentation</h1>
+                <p>Find answers and learn how to use the Language Learning Platform</p>
+
+                <div class="help-search">
+                    <input
+                        type="text"
+                        id="help-search-input"
+                        placeholder="Search help articles..."
+                        aria-label="Search help documentation"
+                    />
+                </div>
+            </div>
+
+            <!-- Guide Tabs (User Guide always shown, additional tabs for staff) -->
+            <div class="guide-tabs">
+                <button class="guide-tab active" data-guide="user" aria-label="User Guide tab">
+                    User Guide
+                </button>
+                {% if is_admin %}
+                <button class="guide-tab" data-guide="admin" aria-label="Admin Guide tab">
+                    Admin Guide
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- Main Layout -->
+            <div class="help-layout">
+                <!-- Table of Contents Sidebar -->
+                <aside class="toc-sidebar" aria-label="Help topics navigation">
+                    <h3>Table of Contents</h3>
+                    <ul class="toc-list" id="toc-list">
+                        <!-- Table of contents will be populated dynamically -->
+                    </ul>
+                </aside>
+
+                <!-- Content Area -->
+                <main class="help-content">
+                    <!-- User Guide Panel -->
+                    <div class="guide-panel active" id="user-guide-panel">
+                        {% if user_guide and user_guide.sections %}
+                            {% for section in user_guide.sections %}
+                                <div class="help-section" id="{{ section.id }}">
+                                    {% if section.level == 2 %}
+                                        <h2>{{ section.title }}</h2>
+                                    {% elif section.level == 3 %}
+                                        <h3>{{ section.title }}</h3>
+                                    {% endif %}
+
+                                    <div class="section-content">
+                                        {{ section.content|markdown }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <!-- Fallback content if USER_GUIDE.md not found -->
+                            <div class="help-section" id="getting-started">
+                                <h2>Getting Started</h2>
+                                <p>Welcome to the Language Learning Platform! This help documentation will guide you through using the platform effectively.</p>
+                            </div>
+
+                            <div class="help-section" id="creating-an-account">
+                                <h2>Creating an Account</h2>
+                                <p>To create an account, click the "Sign Up" button and fill in your details.</p>
+                            </div>
+
+                            <div class="help-section" id="daily-quests">
+                                <h2>Daily Quests</h2>
+                                <p>Complete daily quests to earn XP and maintain your learning streak!</p>
+                            </div>
+
+                            <div class="help-section" id="managing-your-account">
+                                <h2>Managing Your Account</h2>
+                                <p>Access your account settings to update your email, password, and profile information.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Additional guide panel for staff users -->
+                    {% if is_admin and admin_guide %}
+                    <div class="guide-panel" id="admin-guide-panel">
+                        {% for section in admin_guide.sections %}
+                            <div class="help-section" id="admin-{{ section.id }}">
+                                {% if section.level == 2 %}
+                                    <h2>{{ section.title }}</h2>
+                                {% elif section.level == 3 %}
+                                    <h3>{{ section.title }}</h3>
+                                {% endif %}
+
+                                <div class="section-content">
+                                    {{ section.content|markdown }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </main>
+            </div>
+
+            <!-- Back to Top Button -->
+            <div class="back-to-top" id="back-to-top" aria-label="Back to top">
+                ↑
+            </div>
+
+            <!-- AI Chatbot Widget -->
+            <div class="chatbot-container">
+                <!-- Chatbot Toggle Button -->
+                <button class="chatbot-toggle" id="chatbot-toggle" aria-label="Toggle AI Assistant">
+                    <span class="chatbot-icon">💬</span>
+                    <span class="chatbot-label">AI Assistant</span>
+                </button>
+
+                <!-- Chatbot Window -->
+                <div class="chatbot-window" id="chatbot-window">
+                    <div class="chatbot-header">
+                        <div class="chatbot-title">
+                            <span class="chatbot-icon">🤖</span>
+                            <span>Help Assistant</span>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="chatbot-clear" id="chatbot-clear" aria-label="Clear chat history" title="Clear chat history">
+                                🗑️
+                            </button>
+                            <button class="chatbot-close" id="chatbot-close" aria-label="Close chat">✕</button>
+                        </div>
+                    </div>
+
+                    <div class="chatbot-messages" id="chatbot-messages">
+                        <div class="chatbot-message bot-message">
+                            <div class="message-content">
+                                <p>Hi! I'm your AI help assistant. Ask me anything about using the Language Learning Platform!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chatbot-input-container">
+                        <textarea
+                            class="chatbot-input"
+                            id="chatbot-input"
+                            placeholder="Ask a question..."
+                            rows="1"
+                        ></textarea>
+                        <button class="chatbot-send" id="chatbot-send" aria-label="Send message">
+                            <span>Send</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Language Learning Platform. Empowering language learners worldwide.</p>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const navToggle = document.querySelector('.nav-toggle');
+        const navCenter = document.querySelector('.nav-center');
+
+        if (navToggle && navCenter) {
+            navToggle.addEventListener('click', () => {
+                navCenter.classList.toggle('active');
+                navToggle.classList.toggle('active');
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!navToggle.contains(e.target) && !navCenter.contains(e.target)) {
+                    navCenter.classList.remove('active');
+                    navToggle.classList.remove('active');
+                }
+            });
+        }
+
+        // Tab Switching
+        document.querySelectorAll('.guide-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Update active tab
+                document.querySelectorAll('.guide-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                // Show corresponding panel
+                const guide = this.dataset.guide;
+                document.querySelectorAll('.guide-panel').forEach(panel => panel.classList.remove('active'));
+                document.getElementById(`${guide}-guide-panel`).classList.add('active');
+
+                // Update TOC
+                updateTOC(guide);
+            });
+        });
+
+        // Generate Table of Contents
+        function updateTOC(guide) {
+            const panel = document.getElementById(`${guide}-guide-panel`);
+            const sections = panel.querySelectorAll('.help-section');
+            const tocList = document.getElementById('toc-list');
+
+            tocList.innerHTML = '';
+
+            sections.forEach(section => {
+                const title = section.querySelector('h2, h3');
+                if (!title) return;
+
+                const li = document.createElement('li');
+                const level = title.tagName === 'H3' ? 'level-3' : 'level-2';
+                li.className = level;
+
+                const a = document.createElement('a');
+                a.href = `#${section.id}`;
+                a.textContent = title.textContent;
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    section.scrollIntoView({ behavior: 'smooth' });
+                    section.classList.add('highlighted');
+                    setTimeout(() => section.classList.remove('highlighted'), 2000);
+                });
+
+                li.appendChild(a);
+                tocList.appendChild(li);
+            });
+        }
+
+        // Initialize TOC on load
+        updateTOC('user');
+
+        // Back to Top Button
+        const backToTop = document.getElementById('back-to-top');
+
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
+
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Simple Search Functionality (client-side)
+        const searchInput = document.getElementById('help-search-input');
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+
+            if (query.length < 2) {
+                // Reset all sections if query is too short
+                document.querySelectorAll('.help-section').forEach(section => {
+                    section.style.display = 'block';
+                });
+                return;
+            }
+
+            // Filter sections based on query
+            document.querySelectorAll('.help-section').forEach(section => {
+                const title = section.querySelector('h2, h3')?.textContent.toLowerCase() || '';
+                const content = section.textContent.toLowerCase();
+
+                if (title.includes(query) || content.includes(query)) {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+        });
+
+        // ========================================
+        // AI Chatbot Widget Functionality
+        // ========================================
+
+        // DOM Elements
+        const chatbotToggle = document.getElementById('chatbot-toggle');
+        const chatbotWindow = document.getElementById('chatbot-window');
+        const chatbotClose = document.getElementById('chatbot-close');
+        const chatbotMessages = document.getElementById('chatbot-messages');
+        const chatbotInput = document.getElementById('chatbot-input');
+        const chatbotSend = document.getElementById('chatbot-send');
+
+        // Chat history (stores all messages)
+        let chatHistory = [];
+
+        // Load chat history from localStorage on page load
+        function loadChatHistory() {
+            const saved = localStorage.getItem('chatbot_history');
+            if (saved) {
+                try {
+                    chatHistory = JSON.parse(saved);
+                    // Render saved messages
+                    chatHistory.forEach(msg => {
+                        if (msg.role === 'user') {
+                            appendUserMessage(msg.content, false); // Don't save again
+                        } else if (msg.role === 'assistant') {
+                            appendBotMessage(msg.content, false); // Don't save again
+                        }
+                    });
+                    // Scroll to bottom after loading all messages
+                    scrollToBottom();
+                } catch (e) {
+                    console.error('Failed to load chat history:', e);
+                    chatHistory = [];
+                }
+            }
+        }
+
+        // Save chat history to localStorage
+        function saveChatHistory() {
+            try {
+                localStorage.setItem('chatbot_history', JSON.stringify(chatHistory));
+            } catch (e) {
+                console.error('Failed to save chat history:', e);
+            }
+        }
+
+        // Clear chat history
+        function clearChatHistory() {
+            chatHistory = [];
+            localStorage.removeItem('chatbot_history');
+            // Clear messages except welcome message
+            chatbotMessages.innerHTML = `
+                <div class="chatbot-message bot-message">
+                    <div class="message-content">
+                        <p>Hi! I'm your AI help assistant. Ask me anything about using the Language Learning Platform!</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Toggle chatbot window
+        chatbotToggle.addEventListener('click', () => {
+            chatbotWindow.classList.toggle('open');
+            if (chatbotWindow.classList.contains('open')) {
+                chatbotInput.focus();
+            }
+        });
+
+        // Close chatbot window
+        chatbotClose.addEventListener('click', () => {
+            chatbotWindow.classList.remove('open');
+        });
+
+        // Clear chat history button
+        const chatbotClear = document.getElementById('chatbot-clear');
+        chatbotClear.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear the chat history?')) {
+                clearChatHistory();
+            }
+        });
+
+        // Append user message to chat
+        function appendUserMessage(message, save = true) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chatbot-message user-message';
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <p>${escapeHtml(message)}</p>
+                </div>
+            `;
+            chatbotMessages.appendChild(messageDiv);
+            scrollToBottom();
+
+            if (save) {
+                chatHistory.push({ role: 'user', content: message });
+                saveChatHistory();
+            }
+        }
+
+        // Append bot message to chat
+        function appendBotMessage(message, save = true) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chatbot-message bot-message';
+
+            // Support markdown-like formatting (basic)
+            const formattedMessage = formatBotMessage(message);
+
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    ${formattedMessage}
+                </div>
+            `;
+            chatbotMessages.appendChild(messageDiv);
+            scrollToBottom();
+
+            if (save) {
+                chatHistory.push({ role: 'assistant', content: message });
+                saveChatHistory();
+            }
+        }
+
+        // Show loading animation
+        function showLoading() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'chatbot-message bot-message chatbot-loading';
+            loadingDiv.id = 'chatbot-loading';
+            loadingDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="loading-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            `;
+            chatbotMessages.appendChild(loadingDiv);
+            scrollToBottom();
+        }
+
+        // Remove loading animation
+        function removeLoading() {
+            const loading = document.getElementById('chatbot-loading');
+            if (loading) {
+                loading.remove();
+            }
+        }
+
+        // Scroll to bottom of messages
+        function scrollToBottom() {
+            chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Format bot message (basic markdown support)
+        function formatBotMessage(message) {
+            // Escape HTML first
+            let formatted = escapeHtml(message);
+
+            // Convert **bold** to <strong>
+            formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+            // Convert *italic* to <em>
+            formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+            // Convert line breaks to <br>
+            formatted = formatted.replace(/\n/g, '<br>');
+
+            // Wrap in paragraph
+            return `<p>${formatted}</p>`;
+        }
+
+        // Send message to chatbot API
+        async function sendMessage() {
+            const message = chatbotInput.value.trim();
+
+            if (!message) {
+                return;
+            }
+
+            // Clear input
+            chatbotInput.value = '';
+            chatbotInput.style.height = 'auto'; // Reset height
+
+            // Add user message to chat
+            appendUserMessage(message);
+
+            // Show loading
+            showLoading();
+
+            try {
+                // Get CSRF token
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+
+                // Prepare chat history for API (last 5 messages only)
+                const recentHistory = chatHistory.slice(-10); // Last 10 messages
+
+                // Call chatbot API
+                const response = await fetch('/chatbot/query/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken || ''
+                    },
+                    body: JSON.stringify({
+                        query: message,
+                        chat_history: recentHistory
+                    })
+                });
+
+                // Remove loading
+                removeLoading();
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Append bot response
+                if (data.response) {
+                    appendBotMessage(data.response);
+                } else {
+                    appendBotMessage("I'm sorry, I couldn't generate a response. Please try again.");
+                }
+
+                // Optionally show sources
+                if (data.sources && data.sources.length > 0) {
+                    // You could display sources here if desired
+                    console.log('Relevant sources:', data.sources);
+                }
+
+            } catch (error) {
+                console.error('Chatbot API error:', error);
+                removeLoading();
+                appendBotMessage("I'm sorry, I encountered an error while processing your question. Please try again.");
+            }
+        }
+
+        // Send button click
+        chatbotSend.addEventListener('click', sendMessage);
+
+        // Enter key to send (Shift+Enter for new line)
+        chatbotInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Auto-resize textarea as user types
+        chatbotInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Load chat history on page load
+        loadChatHistory();
+
+        // Optional: Add clear chat button functionality
+        // You could add a button in the chatbot header to clear history
+        window.clearChatHistory = clearChatHistory; // Make it globally accessible for debugging
+
+    </script>
+</body>
+</html>

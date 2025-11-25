@@ -15,11 +15,13 @@ authentication checks, and error handling.
 """
 # Standard library imports
 import json
-import os
 import re
 import logging
 import random
+import time
+from collections import defaultdict
 from functools import wraps
+from smtplib import SMTPException
 
 # Django imports
 from django.contrib import messages
@@ -28,14 +30,15 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.mail import send_mail, BadHeaderError
 from django.core.validators import validate_email as django_validate_email
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Sum
 from django.http import Http404, HttpResponseRedirect, JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import TemplateDoesNotExist
-from django.template.loader import select_template
+from django.template.loader import render_to_string, select_template
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
@@ -66,6 +69,8 @@ from .models import (
 )
 from .services.daily_quest_service import DailyQuestService
 from .services.onboarding_service import OnboardingService
+from .services.help_service import HelpService
+from .services.chatbot_service import ChatbotService
 
 # Configure logger for security events
 # Note: IP address logging is standard security practice for:
@@ -186,7 +191,6 @@ def get_client_ip(request):
                 should_trust_xff = True
             else:
                 # Production: raise exception to prevent running with unknown configuration
-                from django.core.exceptions import ImproperlyConfigured
                 logger.error(error_msg)
                 raise ImproperlyConfigured(error_msg)
 
@@ -271,8 +275,22 @@ def check_rate_limit(request, action, limit=5, period=300):
     return True, limit - attempts - 1, 0
 
 
-def send_template_email(request, template_name, context, subject, recipient_email, log_prefix, max_retries=3):
+def send_template_email(
+    request,
+    template_name,
+    *,
+    context,
+    subject,
+    recipient_email,
+    log_prefix,
+    max_retries=3
+):
     """Send an email using a template with comprehensive error handling and retry logic.
+
+    SOFA Principles Applied:
+    - Single Responsibility: Only handles email sending, nothing else
+    - Avoid Repetition: Centralized email sending logic
+    - Function Signature: Keyword-only args (after *) for clarity and safety
 
     This helper function reduces code duplication for email sending operations
     like password reset and username reminders. Implements exponential backoff
@@ -281,11 +299,11 @@ def send_template_email(request, template_name, context, subject, recipient_emai
     Args:
         request: Django request object (for IP logging)
         template_name: Path to email template (e.g., 'emails/password_reset_email.txt')
-        context: Dictionary of template context variables
-        subject: Email subject line
-        recipient_email: Email address to send to
-        log_prefix: Prefix for log messages (e.g., 'Password reset email')
-        max_retries: Maximum number of retry attempts (default: 3)
+        context: (keyword-only) Dictionary of template context variables
+        subject: (keyword-only) Email subject line
+        recipient_email: (keyword-only) Email address to send to
+        log_prefix: (keyword-only) Prefix for log messages (e.g., 'Password reset email')
+        max_retries: (keyword-only) Maximum number of retry attempts (default: 3)
 
     Returns:
         bool: True if email sent successfully, False otherwise
@@ -297,19 +315,15 @@ def send_template_email(request, template_name, context, subject, recipient_emai
         success = send_template_email(
             request,
             'emails/password_reset_email.txt',
-            {'user': user, 'reset_url': url},
-            'Password Reset - Language Learning Platform',
-            user.email,
-            'Password reset email'
+            context={'user': user, 'reset_url': url},
+            subject='Password Reset - Language Learning Platform',
+            recipient_email=user.email,
+            log_prefix='Password reset email'
         )
     """
-    from django.core.mail import send_mail, BadHeaderError
-    from django.template.loader import render_to_string
-    from django.core.exceptions import ImproperlyConfigured
-    from django.core.validators import validate_email
-    # Note: settings already imported at module level (no shadowing - SOFA principle)
-    from smtplib import SMTPException
-    import time
+    # SOFA Note: Using keyword-only arguments (after *) reduces R0917 warning
+    # and improves code clarity at call sites. Local imports moved to module level
+    # to reduce R0914 (too-many-locals) warning.
 
     # Validate email configuration before attempting to send
     if not hasattr(settings, 'DEFAULT_FROM_EMAIL') or not settings.DEFAULT_FROM_EMAIL:
@@ -322,7 +336,7 @@ def send_template_email(request, template_name, context, subject, recipient_emai
 
     # Validate recipient email format before attempting to send
     try:
-        validate_email(recipient_email)
+        django_validate_email(recipient_email)
     except ValidationError:
         logger.error('Invalid recipient email format: %s for %s from IP: %s',
                      recipient_email, log_prefix, get_client_ip(request))
@@ -596,12 +610,107 @@ def _link_onboarding_attempt_to_user(request, user):
         return None
 
 
+def _get_post_login_redirect(request, user):
+    """
+    Determine redirect destination after successful login.
+
+    Priority: onboarding results > next parameter > dashboard
+
+    SOFA: Function Extraction - Reduces R0911 warning by consolidating redirect logic.
+
+    Args:
+        request: Django request object
+        user: Authenticated user object
+
+    Returns:
+        HttpResponse: Redirect to appropriate destination
+    """
+    # Check for onboarding link first
+    linked_attempt = _link_onboarding_attempt_to_user(request, user)
+    if linked_attempt:
+        results_url = f"{reverse('onboarding_results')}?attempt={linked_attempt.id}"
+        return redirect(results_url)
+
+    # Check for next page parameter
+    next_page = request.GET.get('next', '')
+    if next_page and url_has_allowed_host_and_scheme(
+        url=next_page,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure()
+    ):
+        return HttpResponseRedirect(next_page)
+
+    # Default redirect to dashboard
+    return redirect('dashboard')
+
+
+def _process_login_post(request):
+    """
+    Process POST login request.
+
+    SOFA: Function Extraction - Reduces R0911 warning by consolidating POST logic.
+    Returns redirect response on success, None on failure (to re-render form).
+
+    Args:
+        request: Django request object (must be POST)
+
+    Returns:
+        HttpResponse: Redirect on success, None on failure
+    """
+    # Rate limiting: Prevent brute force attacks
+    is_allowed, _attempts_remaining, retry_after = check_rate_limit(
+        request, action='login', limit=5, period=300
+    )
+
+    if not is_allowed:
+        logger.warning(
+            'Login rate limit exceeded from IP: %s, retry after %s seconds',
+            get_client_ip(request), retry_after
+        )
+        messages.error(
+            request,
+            f'Too many login attempts. Please try again in {retry_after // 60} minute(s).'
+        )
+        return None
+
+    username_or_email = request.POST.get('username_or_email', '').strip()
+    password = request.POST.get('password', '')
+
+    # Validate input
+    if not _validate_login_input(request, username_or_email, password):
+        return None
+
+    # Find user
+    user_obj = _find_user_by_username_or_email(request, username_or_email)
+    if not user_obj:
+        return None
+
+    # Authenticate user
+    user = authenticate(request, username=user_obj.username, password=password)
+
+    if user is None:
+        # Log failed login attempt (incorrect password)
+        logger.warning(  # nosemgrep
+            'Failed login attempt - incorrect password for: %s from IP: %s',
+            user_obj.username, get_client_ip(request)
+        )
+        messages.error(request, 'Invalid username/email or password.')
+        return None
+
+    # Successful login
+    login(request, user)
+    logger.info('Successful login: %s from IP: %s', user.username, get_client_ip(request))
+
+    return _get_post_login_redirect(request, user)
+
+
 def login_view(request):
     """Handle user login (SOFA refactored)."""
     # If user is already logged in, redirect to home
     if request.user.is_authenticated:
         return HttpResponseRedirect('..')
 
+    # Process POST login if submitted
     if request.method == 'POST':
         # Rate limiting: Prevent brute force attacks
         is_allowed, _attempts_remaining, retry_after = check_rate_limit(
@@ -665,6 +774,165 @@ def login_view(request):
     return render(request, 'login.html')
 
 
+def _validate_signup_input(request, name, email, password, confirm_password):
+    """
+    Validate signup form input.
+
+    SOFA: Function Extraction - Reduces R0914/R0915 warnings by isolating validation logic.
+
+    Args:
+        request: Django request object (for messages)
+        name: User's full name
+        email: User's email address
+        password: User's password
+        confirm_password: Password confirmation
+
+    Returns:
+        tuple: (first_name, last_name) on success, (None, None) on failure
+    """
+    # Validate email format
+    try:
+        django_validate_email(email)
+    except ValidationError:
+        messages.error(request, 'Please enter a valid email address.')
+        return None, None
+
+    # Validate passwords match
+    if password != confirm_password:
+        messages.error(request, 'Passwords do not match.')
+        return None, None
+
+    # Validate password strength using Django's validators
+    try:
+        # Create a temporary user object for validation
+        temp_user = User(username=email.split('@')[0], email=email, first_name=name.split()[0] if name else '')
+        validate_password(password, user=temp_user)
+    except ValidationError as e:
+        # Display all password validation errors
+        for error in e.messages:
+            messages.error(request, error)
+        return None, None
+
+    # Split name into first and last name
+    name_parts = name.strip().split(' ', 1)
+    first_name = name_parts[0]
+    last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+    return first_name, last_name
+
+
+def _generate_unique_username(email):
+    """
+    Generate a unique username from email address.
+
+    SOFA: Function Extraction - Single Responsibility principle.
+
+    Args:
+        email: User's email address
+
+    Returns:
+        str: Unique username
+    """
+    username = email.split('@')[0]
+    original_username = username
+    counter = 1
+    while User.objects.filter(username=username).exists():
+        username = f"{original_username}{counter}"
+        counter += 1
+    return username
+
+
+def _link_guest_onboarding_to_user(request, user, first_name):
+    """
+    Link guest onboarding attempt to newly created user account.
+
+    SOFA: Function Extraction - Reduces R0914/R0915 warnings by isolating onboarding logic.
+
+    Args:
+        request: Django request object
+        user: Newly created User object
+        first_name: User's first name (for welcome message)
+
+    Returns:
+        HttpResponse: Redirect to onboarding results, or None to continue normal flow
+    """
+    onboarding_attempt_id = request.session.get('onboarding_attempt_id')
+    if not onboarding_attempt_id:
+        return None
+
+    try:
+        # Get the attempt
+        attempt = OnboardingAttempt.objects.get(id=onboarding_attempt_id)
+
+        # Link attempt to new user
+        attempt.user = user
+        attempt.save()
+
+        # Create user profile with onboarding data
+        user_profile, _ = UserProfile.objects.get_or_create(user=user)
+        normalized_language = normalize_language_name(attempt.language)
+        user_profile.proficiency_level = attempt.calculated_level
+        user_profile.has_completed_onboarding = True
+        user_profile.onboarding_completed_at = attempt.completed_at or timezone.now()
+        user_profile.target_language = normalized_language
+        user_profile.save()
+
+        _upsert_language_onboarding(
+            user,
+            normalized_language,
+            attempt.calculated_level,
+            attempt.completed_at
+        )
+
+        # Populate stats from guest onboarding
+        QuizResult.objects.create(
+            user=user,
+            quiz_id=f'onboarding_{attempt.language}',
+            quiz_title=f'{attempt.language} Placement Assessment',
+            language=normalized_language,
+            score=attempt.total_score,
+            total_questions=attempt.total_possible
+        )
+
+        # Calculate total time from all answers
+        total_time_minutes = sum(
+            answer.time_taken_seconds for answer in attempt.answers.all()
+        ) // 60  # Convert seconds to minutes
+
+        # Update UserProgress
+        user_progress, _ = UserProgress.objects.get_or_create(user=user)
+        user_progress.total_minutes_studied += total_time_minutes
+        user_progress.total_quizzes_taken += 1
+        user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
+        user_progress.save()
+
+        _increment_language_study_stats(
+            user,
+            normalized_language,
+            minutes=total_time_minutes,
+            quizzes=1
+        )
+
+        logger.info('Linked onboarding attempt %s to new user %s', attempt.id, user.username)
+
+        # Clear session AFTER getting the ID
+        request.session.pop('onboarding_attempt_id', None)
+
+        # Redirect to results page with attempt ID in URL
+        messages.success(request, f'Welcome to Language Learning Platform, {first_name}! Your assessment results have been saved.')
+        results_url = f"{reverse('onboarding_results')}?attempt={attempt.id}"
+        return redirect(results_url)
+    except OnboardingAttempt.DoesNotExist:
+        logger.warning('Onboarding attempt %s not found for new user %s', onboarding_attempt_id, user.username)
+        # Continue with normal signup flow
+    except (ValueError, TypeError, AttributeError) as e:
+        # Handle data/attribute errors gracefully
+        logger.error('Error linking onboarding attempt to new user %s: %s', user.username, str(e))
+        # Continue with normal signup flow - user is created, just onboarding link failed
+
+    return None
+
+
 def signup_view(request):
     """
     Handle user registration with comprehensive validation.
@@ -684,162 +952,63 @@ def signup_view(request):
     if request.user.is_authenticated:
         return HttpResponseRedirect('..')
 
-    if request.method == 'POST':
-        name = request.POST.get('name', '').strip()
-        email = request.POST.get('email', '').strip()
-        password = request.POST.get('password')
-        confirm_password = request.POST.get('confirm-password')
+    if request.method != 'POST':
+        return render(request, 'login.html')
 
-        # Validate email format
-        try:
-            django_validate_email(email)
-        except ValidationError:
-            messages.error(request, 'Please enter a valid email address.')
-            return render(request, 'login.html')
+    # Get form inputs
+    name = request.POST.get('name', '').strip()
+    email = request.POST.get('email', '').strip()
+    password = request.POST.get('password')
+    confirm_password = request.POST.get('confirm-password')
 
-        # Validate passwords match
-        if password != confirm_password:
-            messages.error(request, 'Passwords do not match.')
-            return render(request, 'login.html')
+    # Validate input (SOFA: Extracted helper)
+    first_name, last_name = _validate_signup_input(request, name, email, password, confirm_password)
+    if not first_name:
+        return render(request, 'login.html')
 
-        # Validate password strength using Django's validators
-        try:
-            # Create a temporary user object for validation
-            temp_user = User(username=email.split('@')[0], email=email, first_name=name.split()[0] if name else '')
-            validate_password(password, user=temp_user)
-        except ValidationError as e:
-            # Display all password validation errors
-            for error in e.messages:
-                messages.error(request, error)
-            return render(request, 'login.html')
+    # Generate unique username (SOFA: Extracted helper)
+    username = _generate_unique_username(email)
 
-        # Split name into first and last name
-        name_parts = name.strip().split(' ', 1)
-        first_name = name_parts[0]
-        last_name = name_parts[1] if len(name_parts) > 1 else ''
+    # Check if email already exists before attempting creation
+    if User.objects.filter(email=email).exists():
+        messages.error(request, 'An account with this email already exists.')
+        return render(request, 'login.html')
 
-        # Create username from email (before @ symbol)
-        username = email.split('@')[0]
+    try:
+        # Create new user
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name
+        )
+        logger.info('New user created: %s (%s) from IP: %s', user.username, email, get_client_ip(request))
 
-        # Check if username already exists, if so, add numbers
-        original_username = username
-        counter = 1
-        while User.objects.filter(username=username).exists():
-            username = f"{original_username}{counter}"
-            counter += 1
+    except IntegrityError as e:
+        # This shouldn't happen since we checked, but handle it anyway
+        logger.error('IntegrityError during user creation: %s from IP: %s', str(e), get_client_ip(request))
+        messages.error(request, 'An error occurred while creating your account. Please try again.')
+        return render(request, 'login.html')
+    except (ValueError, TypeError, ValidationError, DatabaseError) as e:
+        # Log unexpected validation/data/database errors for debugging (don't expose details to user)
+        exception_type = type(e).__name__
+        logger.error('Unexpected error during user creation: %s from IP: %s', exception_type, get_client_ip(request))
+        if settings.DEBUG:
+            logger.debug('User creation error details (DEBUG only): %s', str(e))
+        messages.error(request, 'An error occurred while creating your account. Please try again.')
+        return render(request, 'login.html')
 
-        # Check if email already exists before attempting creation
-        if User.objects.filter(email=email).exists():
-            messages.error(request, 'An account with this email already exists.')
-            return render(request, 'login.html')
+    # User created successfully, now log them in
+    login(request, user)
 
-        try:
-            # Create new user
-            user = User.objects.create_user(
-                username=username,
-                email=email,
-                password=password,
-                first_name=first_name,
-                last_name=last_name
-            )
-            logger.info('New user created: %s (%s) from IP: %s', user.username, email, get_client_ip(request))
+    # Check if user completed onboarding as a guest (SOFA: Extracted helper)
+    onboarding_redirect = _link_guest_onboarding_to_user(request, user, first_name)
+    if onboarding_redirect:
+        return onboarding_redirect
 
-        except IntegrityError as e:
-            # This shouldn't happen since we checked, but handle it anyway
-            logger.error('IntegrityError during user creation: %s from IP: %s', str(e), get_client_ip(request))
-            messages.error(request, 'An error occurred while creating your account. Please try again.')
-            return render(request, 'login.html')
-        except (ValueError, TypeError, ValidationError, DatabaseError) as e:
-            # Log unexpected validation/data/database errors for debugging (don't expose details to user)
-            # Note: settings already imported at module level (no shadowing - SOFA principle)
-            exception_type = type(e).__name__
-            logger.error('Unexpected error during user creation: %s from IP: %s', exception_type, get_client_ip(request))
-            if settings.DEBUG:
-                logger.debug('User creation error details (DEBUG only): %s', str(e))
-            messages.error(request, 'An error occurred while creating your account. Please try again.')
-            return render(request, 'login.html')
-
-        # User created successfully, now log them in
-        login(request, user)
-        
-        # Check if user completed onboarding as a guest
-        onboarding_attempt_id = request.session.get('onboarding_attempt_id')
-        if onboarding_attempt_id:
-            try:
-                # Get the attempt
-                attempt = OnboardingAttempt.objects.get(id=onboarding_attempt_id)
-                
-                # Link attempt to new user
-                attempt.user = user
-                attempt.save()
-                
-                # Create user profile with onboarding data
-                user_profile, _ = UserProfile.objects.get_or_create(user=user)
-                normalized_language = normalize_language_name(attempt.language)
-                user_profile.proficiency_level = attempt.calculated_level
-                user_profile.has_completed_onboarding = True
-                user_profile.onboarding_completed_at = attempt.completed_at or timezone.now()
-                user_profile.target_language = normalized_language
-                user_profile.save()
-
-                _upsert_language_onboarding(
-                    user,
-                    normalized_language,
-                    attempt.calculated_level,
-                    attempt.completed_at
-                )
-                
-                # Populate stats from guest onboarding
-                QuizResult.objects.create(
-                    user=user,
-                    quiz_id=f'onboarding_{attempt.language}',
-                    quiz_title=f'{attempt.language} Placement Assessment',
-                    language=normalized_language,
-                    score=attempt.total_score,
-                    total_questions=attempt.total_possible
-                )
-                
-                # Calculate total time from all answers
-                total_time_minutes = sum(
-                    answer.time_taken_seconds for answer in attempt.answers.all()
-                ) // 60  # Convert seconds to minutes
-                
-                # Update UserProgress
-                user_progress, _ = UserProgress.objects.get_or_create(user=user)
-                user_progress.total_minutes_studied += total_time_minutes
-                user_progress.total_quizzes_taken += 1
-                user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
-                user_progress.save()
-
-                _increment_language_study_stats(
-                    user,
-                    normalized_language,
-                    minutes=total_time_minutes,
-                    quizzes=1
-                )
-                
-                logger.info('Linked onboarding attempt %s to new user %s', attempt.id, user.username)
-                
-                # Clear session AFTER getting the ID
-                request.session.pop('onboarding_attempt_id', None)
-                
-                # Redirect to results page with attempt ID in URL
-                messages.success(request, f'Welcome to Language Learning Platform, {first_name}! Your assessment results have been saved.')
-                results_url = f"{reverse('onboarding_results')}?attempt={attempt.id}"
-                return redirect(results_url)
-            except OnboardingAttempt.DoesNotExist:
-                logger.warning('Onboarding attempt %s not found for new user %s', onboarding_attempt_id, user.username)
-                # Continue with normal signup flow
-            except (ValueError, TypeError, AttributeError) as e:
-                # Handle data/attribute errors gracefully
-                logger.error('Error linking onboarding attempt to new user %s: %s', user.username, str(e))
-                # Continue with normal signup flow - user is created, just onboarding link failed
-        
-        messages.success(request, f'Welcome to Language Learning Platform, {first_name}!')
-        # Redirect to dashboard (home for authenticated users)
-        return redirect('dashboard')
-
-    return render(request, 'login.html')
+    messages.success(request, f'Welcome to Language Learning Platform, {first_name}!')
+    return redirect('dashboard')
 
 
 @require_POST
@@ -852,6 +1021,37 @@ def logout_view(request):
     messages.success(request, 'You have been successfully logged out.')
     # Use safe redirect to landing page (fixes open redirect CWE-601)
     return redirect('landing')
+
+
+def _cleanup_onboarding_session(request):
+    """
+    Clean up stale onboarding session data.
+
+    SOFA: Function Extraction - Reduces R0912/R0915 warnings by isolating session logic.
+
+    Args:
+        request: Django request object with session
+    """
+    if 'onboarding_attempt_id' not in request.session:
+        return
+
+    try:
+        attempt_id = request.session['onboarding_attempt_id']
+        attempt = OnboardingAttempt.objects.get(id=attempt_id)
+
+        # If attempt is already linked to this user, clear the session
+        if attempt.user == request.user:
+            request.session.pop('onboarding_attempt_id', None)
+            logger.info('Cleared stale onboarding session for user %s on dashboard', request.user.username)
+    except OnboardingAttempt.DoesNotExist:
+        # Invalid attempt ID, clear it
+        logger.warning('Invalid onboarding attempt ID in session for user %s, clearing', request.user.username)
+        request.session.pop('onboarding_attempt_id', None)
+    except (KeyError, AttributeError, ValueError) as e:
+        # Any other error, clear it to be safe
+        logger.error('Error checking onboarding session on dashboard: %s', str(e))
+        if 'onboarding_attempt_id' in request.session:
+            request.session.pop('onboarding_attempt_id', None)
 
 
 @login_required
@@ -870,28 +1070,10 @@ def dashboard(request):
         has_completed_onboarding = user_profile.has_completed_onboarding
     except UserProfile.DoesNotExist:
         has_completed_onboarding = False
-    
-    # Clean up stale onboarding session data
-    # (Prevents redirect issues on return visits with persistent sessions)
-    if 'onboarding_attempt_id' in request.session:
-        try:
-            attempt_id = request.session['onboarding_attempt_id']
-            attempt = OnboardingAttempt.objects.get(id=attempt_id)
-            
-            # If attempt is already linked to this user, clear the session
-            if attempt.user == request.user:
-                request.session.pop('onboarding_attempt_id', None)
-                logger.info('Cleared stale onboarding session for user %s on dashboard', request.user.username)
-        except OnboardingAttempt.DoesNotExist:
-            # Invalid attempt ID, clear it
-            logger.warning('Invalid onboarding attempt ID in session for user %s, clearing', request.user.username)
-            request.session.pop('onboarding_attempt_id', None)
-        except (KeyError, AttributeError, ValueError) as e:
-            # Any other error, clear it to be safe
-            logger.error('Error checking onboarding session on dashboard: %s', str(e))
-            if 'onboarding_attempt_id' in request.session:
-                request.session.pop('onboarding_attempt_id', None)
-    
+
+    # Clean up stale onboarding session data (SOFA: Extracted helper)
+    _cleanup_onboarding_session(request)
+
     # Get today's daily quests status (Sprint 3 - Issue #18)
     daily_challenge = None
     try:
@@ -904,36 +1086,96 @@ def dashboard(request):
             )
     except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error('Failed to load daily challenge for dashboard: %s', str(e), exc_info=True)
-    
+
     # Get XP and streak data
     user_progress = None
     current_streak = 0
     xp_to_next = 0
     xp_progress_percent = 0
-    
+
     if user_profile:
         xp_to_next = user_profile.get_xp_to_next_level()
         xp_progress_percent = user_profile.get_progress_to_next_level()
-    
+
     try:
         user_progress = UserProgress.objects.get(user=request.user)
         current_streak = user_progress.current_streak
     except UserProgress.DoesNotExist:
         pass
-    
-    language_profiles = list(UserLanguageProfile.objects.filter(user=request.user))
+
+    # Get language statistics (SOFA: Reusing extracted helper)
+    language_stats, pending_languages = _get_language_statistics(request.user)
+
+    preferred_language = DEFAULT_LANGUAGE
+    if user_profile and user_profile.target_language:
+        preferred_language = normalize_language_name(user_profile.target_language)
+    elif language_stats:
+        preferred_language = language_stats[0]['name']
+
+    # Get current language profile
+    current_language_profile = UserLanguageProfile.objects.filter(
+        user=request.user,
+        language=preferred_language
+    ).first()
+
+    overall_xp_row = None
+    if user_profile:
+        overall_xp_row = {
+            'label': 'Overall',
+            'flag': '⭐',
+            'level': user_profile.current_level,
+            'xp': user_profile.total_xp,
+            'xp_to_next': xp_to_next,
+            'progress_percent': xp_progress_percent,
+        }
+
+    # SOFA: Inline metadata call to reduce local variable count (R0914)
+    context = {
+        'has_completed_onboarding': has_completed_onboarding,
+        'user_profile': user_profile,
+        'daily_challenge': daily_challenge,
+        'user_progress': user_progress,
+        'current_streak': current_streak,
+        'xp_to_next_level': xp_to_next,
+        'xp_progress_percent': xp_progress_percent,
+        'language_stats': language_stats,
+        'pending_languages': pending_languages,
+        'current_language_profile': current_language_profile,
+        'current_language_metadata': get_language_metadata(preferred_language),
+        'current_language_name': preferred_language,
+        'overall_xp_row': overall_xp_row,
+    }
+    return render(request, 'dashboard.html', context)
+
+
+def _get_language_statistics(user):
+    """
+    Get language statistics for progress view.
+
+    SOFA: Function Extraction - Reduces R0914 warning by isolating language stats logic.
+
+    Args:
+        user: Django User object
+
+    Returns:
+        tuple: (language_stats, pending_languages)
+            - language_stats: List of dicts with active language statistics
+            - pending_languages: List of dicts with languages not yet started
+    """
+    language_profiles = UserLanguageProfile.objects.filter(user=user)
     language_profile_map = {lp.language: lp for lp in language_profiles}
     supported_languages = get_supported_languages(include_flags=True)
 
     language_stats = []
     pending_languages = []
+
     for entry in supported_languages:
         profile = language_profile_map.get(entry['name'])
         if profile and (
-            profile.has_completed_onboarding
-            or profile.total_minutes_studied > 0
-            or profile.total_lessons_completed > 0
-            or profile.total_xp > 0
+            profile.has_completed_onboarding or
+            profile.total_minutes_studied > 0 or
+            profile.total_lessons_completed > 0 or
+            profile.total_xp > 0
         ):
             language_stats.append({
                 'name': entry['name'],
@@ -947,48 +1189,11 @@ def dashboard(request):
                 'proficiency': profile.get_proficiency_level_display() if profile.proficiency_level else 'Not assessed',
                 'has_completed_onboarding': profile.has_completed_onboarding,
                 'level': profile.current_level,
-                'xp_to_next': profile.get_xp_to_next_level(),
-                'progress_percent': profile.get_progress_to_next_level(),
             })
         else:
             pending_languages.append(entry)
 
-    preferred_language = DEFAULT_LANGUAGE
-    if user_profile and user_profile.target_language:
-        preferred_language = normalize_language_name(user_profile.target_language)
-    elif language_stats:
-        preferred_language = language_stats[0]['name']
-
-    current_language_profile = language_profile_map.get(preferred_language)
-    current_language_metadata = get_language_metadata(preferred_language)
-
-    overall_xp_row = None
-    if user_profile:
-        overall_xp_row = {
-            'label': 'Overall',
-            'flag': '⭐',
-            'level': user_profile.current_level,
-            'xp': user_profile.total_xp,
-            'xp_to_next': xp_to_next,
-            'progress_percent': xp_progress_percent,
-        }
-
-    context = {
-        'has_completed_onboarding': has_completed_onboarding,
-        'user_profile': user_profile,
-        'daily_challenge': daily_challenge,
-        'user_progress': user_progress,
-        'current_streak': current_streak,
-        'xp_to_next_level': xp_to_next,
-        'xp_progress_percent': xp_progress_percent,
-        'language_stats': language_stats,
-        'pending_languages': pending_languages,
-        'current_language_profile': current_language_profile,
-        'current_language_metadata': current_language_metadata,
-        'current_language_name': preferred_language,
-        'overall_xp_row': overall_xp_row,
-    }
-    return render(request, 'dashboard.html', context)
+    return language_stats, pending_languages
 
 
 def progress_view(request):
@@ -1032,36 +1237,8 @@ def progress_view(request):
             xp_to_next = 0
             progress_percent = 0
 
-        language_profiles = UserLanguageProfile.objects.filter(user=request.user)
-        language_profile_map = {lp.language: lp for lp in language_profiles}
-        supported_languages = get_supported_languages(include_flags=True)
-
-        language_stats = []
-        pending_languages = []
-
-        for entry in supported_languages:
-            profile = language_profile_map.get(entry['name'])
-            if profile and (
-                profile.has_completed_onboarding or
-                profile.total_minutes_studied > 0 or
-                profile.total_lessons_completed > 0 or
-                profile.total_xp > 0
-            ):
-                language_stats.append({
-                    'name': entry['name'],
-                    'native_name': entry['native_name'],
-                    'flag': entry['flag'],
-                    'slug': entry['slug'],
-                    'minutes': profile.total_minutes_studied,
-                    'lessons': profile.total_lessons_completed,
-                    'xp': profile.total_xp,
-                    'quizzes': profile.total_quizzes_taken,
-                    'proficiency': profile.get_proficiency_level_display() if profile.proficiency_level else 'Not assessed',
-                    'has_completed_onboarding': profile.has_completed_onboarding,
-                    'level': profile.current_level,
-                })
-            else:
-                pending_languages.append(entry)
+        # Get language statistics (SOFA: Extracted helper)
+        language_stats, pending_languages = _get_language_statistics(request.user)
 
         weekly_challenge = DailyQuestService.get_weekly_stats(request.user)
         lifetime_challenge = DailyQuestService.get_lifetime_stats(request.user)
@@ -1331,7 +1508,6 @@ def forgot_password_view(request):
             )
 
             # Render simulated email (for college project - no real SMTP)
-            from django.template.loader import render_to_string
             email_content = render_to_string('emails/password_reset_email.txt', {
                 'user': user,
                 'reset_url': reset_url,
@@ -1449,7 +1625,6 @@ def forgot_username_view(request):
             login_url = request.build_absolute_uri('/login/')
 
             # Render simulated email (for college project - no real SMTP)
-            from django.template.loader import render_to_string
             email_content = render_to_string('emails/username_reminder_email.txt', {
                 'user': user,
                 'site_name': 'Language Learning Platform',
@@ -1567,12 +1742,130 @@ def onboarding_quiz(request):
     return render(request, 'onboarding/quiz.html', context)
 
 
+def _process_onboarding_answers(answers, attempt):
+    """
+    Process onboarding answers and calculate score.
+
+    SOFA: Function Extraction - Reduces R0914/R0915 warnings by isolating answer processing.
+
+    Args:
+        answers: List of answer dicts from request
+        attempt: OnboardingAttempt object
+
+    Returns:
+        tuple: (answers_data, total_score, total_possible) or (None, None, None) if error
+
+    Raises:
+        OnboardingQuestion.DoesNotExist: If question ID is invalid
+    """
+    answers_data = []
+    total_score = 0
+    total_possible = 0
+
+    for answer_item in answers:
+        question_id = answer_item.get('question_id')
+        user_answer = answer_item.get('answer', '').strip().upper()
+        time_taken = answer_item.get('time_taken', 0)
+
+        # Get question (let exception propagate for error handling)
+        question = OnboardingQuestion.objects.get(id=question_id)
+
+        # Check if answer is correct
+        is_correct = user_answer == question.correct_answer.upper()
+
+        # Save answer
+        OnboardingAnswer.objects.create(
+            attempt=attempt,
+            question=question,
+            user_answer=user_answer,
+            is_correct=is_correct,
+            time_taken_seconds=time_taken
+        )
+
+        # Track for level calculation
+        answers_data.append({
+            'difficulty_level': question.difficulty_level,
+            'is_correct': is_correct,
+            'difficulty_points': question.difficulty_points,
+            'question_number': question.question_number
+        })
+
+        # Calculate score
+        total_possible += question.difficulty_points
+        if is_correct:
+            total_score += question.difficulty_points
+
+    return answers_data, total_score, total_possible
+
+
+def _update_onboarding_user_profile(request, attempt, *, calculated_level, total_score, total_possible, answers):
+    """
+    Update user profile and stats after onboarding completion.
+
+    SOFA: Function Extraction - Reduces R0914/R0915 warnings by isolating profile updates.
+    Uses keyword-only arguments to reduce R0917 warning.
+
+    Args:
+        request: Django request object
+        attempt: OnboardingAttempt object
+        calculated_level: (keyword-only) Calculated proficiency level
+        total_score: (keyword-only) Total score achieved
+        total_possible: (keyword-only) Total possible score
+        answers: (keyword-only) List of answer dicts (for time calculation)
+    """
+    user_profile, _created = UserProfile.objects.get_or_create(user=request.user)
+    normalized_language = normalize_language_name(attempt.language)
+    user_profile.proficiency_level = calculated_level
+    user_profile.has_completed_onboarding = True
+    user_profile.onboarding_completed_at = timezone.now()
+    user_profile.target_language = normalized_language
+    user_profile.save()
+
+    _upsert_language_onboarding(
+        request.user,
+        normalized_language,
+        calculated_level,
+        attempt.completed_at
+    )
+
+    # Create QuizResult for stats tracking
+    QuizResult.objects.create(
+        user=request.user,
+        quiz_id=f'onboarding_{attempt.language}',
+        quiz_title=f'{attempt.language} Placement Assessment',
+        language=normalized_language,
+        score=total_score,
+        total_questions=total_possible
+    )
+
+    # Calculate total time from all answers
+    total_time_minutes = sum(
+        answer_item.get('time_taken', 0) for answer_item in answers
+    ) // 60  # Convert seconds to minutes
+
+    # Update UserProgress
+    user_progress, _ = UserProgress.objects.get_or_create(user=request.user)
+    user_progress.total_minutes_studied += total_time_minutes
+    user_progress.total_quizzes_taken += 1
+    user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
+    user_progress.save()
+
+    _increment_language_study_stats(
+        request.user,
+        normalized_language,
+        minutes=total_time_minutes,
+        quizzes=1
+    )
+
+    logger.info('Onboarding completed for user %s: %s (%s/%s)', request.user.username, calculated_level, total_score, total_possible)
+
+
 def submit_onboarding(request):
     """
     Process onboarding quiz submission (AJAX endpoint).
-    
+
     POST: Accept answers, calculate level, update profile
-    
+
     Expects JSON:
     {
         "attempt_id": 123,
@@ -1581,7 +1874,7 @@ def submit_onboarding(request):
             ...
         ]
     }
-    
+
     Returns JSON:
     {
         "success": true,
@@ -1594,135 +1887,63 @@ def submit_onboarding(request):
     """
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
-    
+
     try:
         data = json.loads(request.body)
         attempt_id = data.get('attempt_id')
         answers = data.get('answers', [])
-        
-        # Validate input
+
+        # Validate input (SOFA: Early returns for guard clauses)
         if not attempt_id or not answers:
             return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
-        
+
         if len(answers) != 10:
             return JsonResponse({'success': False, 'error': 'Must answer all 10 questions'}, status=400)
-        
+
         # Get attempt
         try:
             attempt = OnboardingAttempt.objects.get(id=attempt_id)
         except OnboardingAttempt.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Invalid attempt ID'}, status=404)
-        
+
         # Check if already completed
         if attempt.completed_at:
             return JsonResponse({'success': False, 'error': 'Assessment already submitted'}, status=400)
-        
-        # Process answers and calculate score
-        answers_data = []
-        total_score = 0
-        total_possible = 0
-        
-        for answer_item in answers:
-            question_id = answer_item.get('question_id')
-            user_answer = answer_item.get('answer', '').strip().upper()
-            time_taken = answer_item.get('time_taken', 0)
-            
-            try:
-                question = OnboardingQuestion.objects.get(id=question_id)
-            except OnboardingQuestion.DoesNotExist:
-                return JsonResponse({'success': False, 'error': f'Invalid question ID: {question_id}'}, status=400)
-            
-            # Check if answer is correct
-            is_correct = user_answer == question.correct_answer.upper()
-            
-            # Save answer
-            OnboardingAnswer.objects.create(
-                attempt=attempt,
-                question=question,
-                user_answer=user_answer,
-                is_correct=is_correct,
-                time_taken_seconds=time_taken
-            )
-            
-            # Track for level calculation
-            answers_data.append({
-                'difficulty_level': question.difficulty_level,
-                'is_correct': is_correct,
-                'difficulty_points': question.difficulty_points,
-                'question_number': question.question_number
-            })
-            
-            # Calculate score
-            total_possible += question.difficulty_points
-            if is_correct:
-                total_score += question.difficulty_points
-        
+
+        # Process answers and calculate score (SOFA: Extracted helper)
+        try:
+            answers_data, total_score, total_possible = _process_onboarding_answers(answers, attempt)
+        except OnboardingQuestion.DoesNotExist:
+            # Security: Don't expose exception details to external users
+            return JsonResponse({'success': False, 'error': 'Invalid question ID'}, status=400)
+
         # Calculate proficiency level
-        service = OnboardingService()
-        calculated_level = service.calculate_proficiency_level(answers_data)
-        
+        calculated_level = OnboardingService().calculate_proficiency_level(answers_data)
+
         # Update attempt
         attempt.calculated_level = calculated_level
         attempt.total_score = total_score
         attempt.total_possible = total_possible
         attempt.completed_at = timezone.now()
         attempt.save()
-        
-        # For authenticated users, update profile AND stats
+
+        # For authenticated users, update profile AND stats (SOFA: Extracted helper)
         if request.user.is_authenticated:
-            user_profile, _created = UserProfile.objects.get_or_create(user=request.user)
-            normalized_language = normalize_language_name(attempt.language)
-            user_profile.proficiency_level = calculated_level
-            user_profile.has_completed_onboarding = True
-            user_profile.onboarding_completed_at = timezone.now()
-            user_profile.target_language = normalized_language
-            user_profile.save()
-
-            _upsert_language_onboarding(
-                request.user,
-                normalized_language,
-                calculated_level,
-                attempt.completed_at
+            _update_onboarding_user_profile(
+                request, attempt,
+                calculated_level=calculated_level,
+                total_score=total_score,
+                total_possible=total_possible,
+                answers=answers
             )
-            
-            # Create QuizResult for stats tracking
-            QuizResult.objects.create(
-                user=request.user,
-                quiz_id=f'onboarding_{attempt.language}',
-                quiz_title=f'{attempt.language} Placement Assessment',
-                language=normalized_language,
-                score=total_score,
-                total_questions=total_possible
-            )
-            
-            # Calculate total time from all answers
-            total_time_minutes = sum(
-                answer_item.get('time_taken', 0) for answer_item in answers
-            ) // 60  # Convert seconds to minutes
-            
-            # Update UserProgress
-            user_progress, _ = UserProgress.objects.get_or_create(user=request.user)
-            user_progress.total_minutes_studied += total_time_minutes
-            user_progress.total_quizzes_taken += 1
-            user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
-            user_progress.save()
-
-            _increment_language_study_stats(
-                request.user,
-                normalized_language,
-                minutes=total_time_minutes,
-                quizzes=1
-            )
-            
-            logger.info('Onboarding completed for user %s: %s (%s/%s)', request.user.username, calculated_level, total_score, total_possible)
         else:
             # For guests, store attempt_id in session
             request.session['onboarding_attempt_id'] = attempt.id
             logger.info('Onboarding completed for guest session %s: %s (%s/%s)', attempt.session_key, calculated_level, total_score, total_possible)
-        
+
         # Calculate percentage
         percentage = round((total_score / total_possible * 100), 1) if total_possible > 0 else 0
-        
+
         return JsonResponse({
             'success': True,
             'level': calculated_level,
@@ -1731,7 +1952,7 @@ def submit_onboarding(request):
             'percentage': percentage,
             'redirect_url': f'/onboarding/results/?attempt={attempt.id}'
         })
-        
+
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
     except (KeyError, ValueError, AttributeError, TypeError) as e:
@@ -1907,12 +2128,84 @@ def _build_lesson_icon_entries(lessons):
     return result
 
 
+def _get_user_language_context(request):
+    """
+    Get user profile and language context for lessons view.
+
+    SOFA: Function Extraction - Reduces R0914 warning by isolating profile logic.
+
+    Args:
+        request: Django request object
+
+    Returns:
+        tuple: (language_profile_map, current_language_profile, current_language, user_profile)
+    """
+    language_profile_map = {}
+    current_language_profile = None
+    current_language = DEFAULT_LANGUAGE
+    user_profile = None
+
+    if not request.user.is_authenticated:
+        return language_profile_map, current_language_profile, current_language, user_profile
+
+    # Get user profile and target language
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+        if user_profile.target_language:
+            current_language = normalize_language_name(user_profile.target_language)
+    except UserProfile.DoesNotExist:
+        pass
+
+    # Build language profile map
+    user_language_profiles = list(UserLanguageProfile.objects.filter(user=request.user))
+    language_profile_map = {lp.language: lp for lp in user_language_profiles}
+    current_language_profile = language_profile_map.get(current_language)
+
+    # Prefer first completed onboarding language as default if target not ready
+    completed_languages = [lp.language for lp in user_language_profiles if lp.has_completed_onboarding]
+    if completed_languages and (not current_language_profile or not current_language_profile.has_completed_onboarding):
+        current_language = completed_languages[0]
+        current_language_profile = language_profile_map.get(current_language)
+
+    return language_profile_map, current_language_profile, current_language, user_profile
+
+
+def _build_language_dropdown(grouped_lessons, language_profile_map, selected_language, lessons_base_url, is_authenticated):
+    """
+    Build language dropdown menu for lessons view.
+
+    SOFA: Function Extraction - Reduces R0914 warning by isolating dropdown logic.
+
+    Args:
+        grouped_lessons: Dict mapping language names to lesson lists
+        language_profile_map: Dict mapping language names to UserLanguageProfile objects
+        selected_language: Currently selected language name
+        lessons_base_url: Base URL for lessons list
+        is_authenticated: Whether user is authenticated
+
+    Returns:
+        list: List of dicts with language dropdown data
+    """
+    language_dropdown = []
+    for language_name, _lessons in grouped_lessons.items():
+        metadata = get_language_metadata(language_name)
+        profile = language_profile_map.get(language_name)
+        locked = not (is_authenticated and profile and profile.has_completed_onboarding)
+        language_dropdown.append({
+            'name': language_name,
+            'native_name': metadata.get('native_name', language_name),
+            'flag': metadata.get('flag', '🌐'),
+            'url': f"{lessons_base_url}?language={language_name}",
+            'locked': locked,
+            'is_active': language_name == selected_language,
+        })
+    return language_dropdown
+
+
 def lessons_list(request):
     """
     Display lessons for the user's selected language with inline navigation.
     """
-    from collections import defaultdict
-
     # Get all published lessons grouped by language for dropdown + rendering
     all_lessons = Lesson.objects.filter(is_published=True).order_by('language', 'order', 'id')
     grouped_lessons = defaultdict(list)
@@ -1924,29 +2217,8 @@ def lessons_list(request):
         for language, lessons in grouped_lessons.items()
     ]
 
-    # Build profile maps for onboarding status
-    language_profile_map = {}
-    current_language_profile = None
-    current_language = DEFAULT_LANGUAGE
-
-    if request.user.is_authenticated:
-        try:
-            user_profile = UserProfile.objects.get(user=request.user)
-            if user_profile.target_language:
-                current_language = normalize_language_name(user_profile.target_language)
-        except UserProfile.DoesNotExist:
-            user_profile = None
-        user_language_profiles = list(UserLanguageProfile.objects.filter(user=request.user))
-        language_profile_map = {lp.language: lp for lp in user_language_profiles}
-        current_language_profile = language_profile_map.get(current_language)
-
-        # Prefer first completed onboarding language as default if target not ready
-        completed_languages = [lp.language for lp in user_language_profiles if lp.has_completed_onboarding]
-        if completed_languages and (not current_language_profile or not current_language_profile.has_completed_onboarding):
-            current_language = completed_languages[0]
-            current_language_profile = language_profile_map.get(current_language)
-    else:
-        user_profile = None
+    # Get user language context (SOFA: Extracted helper)
+    language_profile_map, current_language_profile, current_language, _ = _get_user_language_context(request)
 
     # Determine which language to display (query param overrides default)
     requested_language = request.GET.get('language')
@@ -1959,39 +2231,31 @@ def lessons_list(request):
     if selected_language not in grouped_lessons and grouped_lessons:
         selected_language = next(iter(grouped_lessons.keys()))
 
-    selected_language_metadata = get_language_metadata(selected_language)
+    # Get selected language profile for context
     selected_language_profile = language_profile_map.get(selected_language)
-    selected_language_completed = bool(
-        request.user.is_authenticated and selected_language_profile and selected_language_profile.has_completed_onboarding
+
+    # Build language dropdown (SOFA: Extracted helper, inline base URL to reduce R0914)
+    language_dropdown = _build_language_dropdown(
+        grouped_lessons,
+        language_profile_map,
+        selected_language,
+        reverse('lessons_list'),
+        request.user.is_authenticated
     )
 
-    selected_language_lessons = grouped_lessons.get(selected_language, [])
-    selected_language_lessons_with_icons = _build_lesson_icon_entries(selected_language_lessons)
-
-    lessons_base_url = reverse('lessons_list')
-    language_dropdown = []
-    for language_name, lessons in grouped_lessons.items():
-        metadata = get_language_metadata(language_name)
-        profile = language_profile_map.get(language_name)
-        locked = not (request.user.is_authenticated and profile and profile.has_completed_onboarding)
-        language_dropdown.append({
-            'name': language_name,
-            'native_name': metadata.get('native_name', language_name),
-            'flag': metadata.get('flag', '🌐'),
-            'url': f"{lessons_base_url}?language={language_name}",
-            'locked': locked,
-            'is_active': language_name == selected_language,
-        })
-
+    # SOFA: Inline single-use variables to reduce R0914 (19→15 locals)
+    selected_language_lessons_list = grouped_lessons.get(selected_language, [])
     context = {
         'languages_with_lessons': languages_with_lessons,
         'language_dropdown': language_dropdown,
         'selected_language': selected_language,
-        'selected_language_metadata': selected_language_metadata,
+        'selected_language_metadata': get_language_metadata(selected_language),
         'selected_language_profile': selected_language_profile,
-        'selected_language_lessons': selected_language_lessons_with_icons,
-        'selected_language_completed': selected_language_completed,
-        'selected_language_has_lessons': bool(selected_language_lessons),
+        'selected_language_lessons': _build_lesson_icon_entries(selected_language_lessons_list),
+        'selected_language_completed': bool(
+            request.user.is_authenticated and selected_language_profile and selected_language_profile.has_completed_onboarding
+        ),
+        'selected_language_has_lessons': bool(selected_language_lessons_list),
         'current_language_name': current_language,
         'current_language_profile': current_language_profile,
         'current_language_metadata': get_language_metadata(current_language),
@@ -2091,36 +2355,38 @@ def lessons_by_language(request, language):
 def _get_lesson_icon(lesson):
     """
     Helper function to determine lesson icon based on topic.
-    Follows DRY principle - single source of truth for icon mapping.
-    Uses early returns for clarity (Pylint prefers if over elif after return).
+
+    SOFA Principles Applied:
+    - Open/Closed: Dictionary mapping allows extension without modification
+    - Avoid Repetition: Single loop replaces 12 if statements
+    - Single Responsibility: Only determines icon, nothing else
+
+    Returns icon emoji based on lesson topic keywords.
     """
+    # SOFA: Open/Closed - Dictionary mapping (extensible without modification)
+    lesson_icon_map = {
+        'color': '🎨',
+        'shape': '🔷',
+        'number': '🔢',
+        'animal': '🐾',
+        'food': '🍎',
+        'family': '👨‍👩‍👧‍👦',
+        'greeting': '👋',
+        'verb': '⚡',
+        'adjective': '✨',
+        'time': '🕐',
+        'weather': '🌤️',
+        'clothing': '👕',
+    }
+
     slug = (lesson.slug or '').lower()
     title = lesson.title.lower()
 
-    if 'color' in slug or 'color' in title:
-        return '🎨'
-    if 'shape' in slug or 'shape' in title:
-        return '🔷'
-    if 'number' in slug or 'number' in title:
-        return '🔢'
-    if 'animal' in slug or 'animal' in title:
-        return '🐾'
-    if 'food' in slug or 'food' in title:
-        return '🍎'
-    if 'family' in slug or 'family' in title:
-        return '👨‍👩‍👧‍👦'
-    if 'greeting' in slug or 'greeting' in title:
-        return '👋'
-    if 'verb' in slug or 'verb' in title:
-        return '⚡'
-    if 'adjective' in slug or 'adjective' in title:
-        return '✨'
-    if 'time' in slug or 'time' in title:
-        return '🕐'
-    if 'weather' in slug or 'weather' in title:
-        return '🌤️'
-    if 'clothing' in slug or 'clothing' in title:
-        return '👕'
+    # SOFA: DRY - Single loop replaces 12 duplicate if statements
+    for keyword, icon in lesson_icon_map.items():
+        if keyword in slug or keyword in title:
+            return icon
+
     return '📚'  # Default icon
 
 
@@ -2180,6 +2446,191 @@ def lesson_quiz(request, lesson_id):
     return render(request, template_name, context)
 
 
+def _evaluate_lesson_quiz_answers(answers, lesson):
+    """
+    Evaluate lesson quiz answers and calculate score.
+
+    SOFA: Function Extraction - Reduces R0914/R0915/R0912 warnings by isolating answer evaluation.
+
+    Args:
+        answers: List of answer dicts from request
+        lesson: Lesson object
+
+    Returns:
+        tuple: (score, total) - number correct and total questions answered
+    """
+    # Fetch all quiz questions for this lesson in one query (performance optimization)
+    # Create a dictionary for O(1) lookup by question ID
+    questions = {q.id: q for q in LessonQuizQuestion.objects.filter(lesson=lesson)}
+
+    # Evaluate answers
+    score = 0
+    total = 0
+    for a in answers:
+        # Skip non-dict elements (security: handle malformed payloads gracefully)
+        if not isinstance(a, dict):
+            continue
+
+        qid = a.get('question_id') or a.get('id')
+        sel = a.get('selected_index') if 'selected_index' in a else a.get('selected')
+
+        # Skip if missing required fields
+        if qid is None or sel is None:
+            continue
+
+        # Lookup question from pre-fetched dictionary (O(1) instead of database query)
+        q = questions.get(qid)
+        if not q:
+            # Question ID not found or doesn't belong to this lesson
+            continue
+
+        total += 1
+        if int(sel) == int(q.correct_index):
+            score += 1
+
+    return score, total
+
+
+def _update_lesson_quiz_user_stats(request, lesson, score, total):
+    """
+    Update user stats and award XP after lesson quiz completion.
+
+    SOFA: Function Extraction - Reduces R0914/R0915/R0912 warnings by isolating stats updates.
+
+    Args:
+        request: Django request object
+        lesson: Lesson object
+        score: Quiz score
+        total: Total questions
+
+    Returns:
+        tuple: (xp_result, language_xp_result) - XP award results or (None, None)
+    """
+    # Create QuizResult for stats tracking
+    QuizResult.objects.create(
+        user=request.user,
+        quiz_id=f'lesson_{lesson.id}',
+        quiz_title=lesson.title,
+        language=lesson.language,
+        score=score,
+        total_questions=total
+    )
+
+    # Create LessonCompletion record
+    LessonCompletion.objects.create(
+        user=request.user,
+        lesson_id=str(lesson.id),
+        lesson_title=lesson.title,
+        language=lesson.language,
+        duration_minutes=5  # Estimated time per lesson quiz
+    )
+
+    # Award XP for lesson completion (Sprint 3 - Issue #17)
+    base_xp = 50  # Base XP per lesson
+    bonus_xp = 10 if total > 0 and score == total else 0  # Bonus for perfect score
+    total_xp_awarded = base_xp + bonus_xp
+
+    # Safely get or create profile (defensive programming)
+    normalized_language = normalize_language_name(lesson.language)
+    try:
+        profile = request.user.profile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=request.user)
+        logger.warning('UserProfile was missing for user %s, created new profile', request.user.username)
+
+    # Award XP with error handling
+    xp_result = None
+    try:
+        xp_result = profile.award_xp(total_xp_awarded)
+        logger.info(
+            'XP awarded: %s earned %s XP (Level %s -> %s)',
+            request.user.username,
+            xp_result["xp_awarded"],
+            xp_result["old_level"],
+            xp_result["new_level"] or xp_result["old_level"]
+        )
+    except (ValueError, TypeError) as e:
+        # XP awarding failed, log but don't block lesson completion
+        logger.error('Failed to award XP for user %s: %s', request.user.username, str(e))
+
+    language_xp_result = _award_language_xp(request.user, lesson.language, total_xp_awarded)
+
+    if profile.target_language != normalized_language:
+        profile.target_language = normalized_language
+        profile.save(update_fields=['target_language'])
+
+    # Update UserProgress
+    user_progress, _ = UserProgress.objects.get_or_create(user=request.user)
+    user_progress.total_quizzes_taken += 1
+    user_progress.total_lessons_completed += 1
+    user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
+    user_progress.update_streak()  # Update streak when lesson completed
+    user_progress.save()
+
+    _increment_language_study_stats(
+        request.user,
+        lesson.language,
+        minutes=5,
+        lessons=1,
+        quizzes=1
+    )
+
+    logger.info('Lesson quiz completed: %s - %s: %s/%s', request.user.username, lesson.title, score, total)
+
+    return xp_result, language_xp_result
+
+
+def _build_lesson_quiz_response(request, lesson, attempt, *, score, total, xp_result, language_xp_result):
+    """
+    Build JSON or redirect response for lesson quiz submission.
+
+    SOFA: Function Extraction - Reduces R0914/R0912 warnings by isolating response building.
+    Uses keyword-only arguments to reduce R0917 warning.
+
+    Args:
+        request: Django request object
+        lesson: Lesson object
+        attempt: LessonAttempt object
+        score: (keyword-only) Quiz score
+        total: (keyword-only) Total questions
+        xp_result: (keyword-only) XP award result dict or None
+        language_xp_result: (keyword-only) Language XP award result dict or None
+
+    Returns:
+        HttpResponse: JsonResponse or redirect
+    """
+    # If request from JS expect JSON
+    if request.content_type == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        response_data = {
+            'success': True,
+            'score': score,
+            'total': total,
+            'attempt_id': attempt.id,
+            'redirect_url': reverse('lesson_results', args=[lesson.id, attempt.id])
+        }
+
+        # Add XP info for authenticated users (Sprint 3 - Issue #17)
+        if request.user.is_authenticated and xp_result is not None:
+            response_data['xp'] = {
+                'awarded': xp_result['xp_awarded'],
+                'total': xp_result['total_xp'],
+                'leveled_up': xp_result['leveled_up'],
+                'new_level': xp_result['new_level'],
+                'old_level': xp_result['old_level']
+            }
+            if language_xp_result:
+                response_data['language_xp'] = {
+                    'language': lesson.language,
+                    'awarded': language_xp_result['xp_awarded'],
+                    'total': language_xp_result['total_xp'],
+                    'leveled_up': language_xp_result['leveled_up'],
+                    'new_level': language_xp_result['new_level'],
+                }
+
+        return JsonResponse(response_data)
+    return redirect('lesson_results', lesson_id=lesson.id, attempt_id=attempt.id)
+
+
 @require_http_methods(["POST"])
 def submit_lesson_quiz(request, lesson_id):
     """Process lesson quiz submission."""
@@ -2212,35 +2663,10 @@ def submit_lesson_quiz(request, lesson_id):
     if not answers or not isinstance(answers, list):
         return JsonResponse({'error': 'No answers provided or invalid format'}, status=400)
 
-    # Fetch all quiz questions for this lesson in one query (performance optimization)
-    # Create a dictionary for O(1) lookup by question ID
-    questions = {q.id: q for q in LessonQuizQuestion.objects.filter(lesson=lesson)}
+    # Evaluate answers (SOFA: Extracted helper)
+    score, total = _evaluate_lesson_quiz_answers(answers, lesson)
 
-    # Evaluate answers
-    score = 0
-    total = 0
-    for a in answers:
-        # Skip non-dict elements (security: handle malformed payloads gracefully)
-        if not isinstance(a, dict):
-            continue
-
-        qid = a.get('question_id') or a.get('id')
-        sel = a.get('selected_index') if 'selected_index' in a else a.get('selected')
-
-        # Skip if missing required fields
-        if qid is None or sel is None:
-            continue
-
-        # Lookup question from pre-fetched dictionary (O(1) instead of database query)
-        q = questions.get(qid)
-        if not q:
-            # Question ID not found or doesn't belong to this lesson
-            continue
-
-        total += 1
-        if int(sel) == int(q.correct_index):
-            score += 1
-
+    # Create attempt record
     attempt = LessonAttempt.objects.create(
         lesson=lesson,
         user=request.user if request.user.is_authenticated else None,
@@ -2248,112 +2674,20 @@ def submit_lesson_quiz(request, lesson_id):
         total=total
     )
 
-    # Initialize variables for later use
+    # Track stats for authenticated users (SOFA: Extracted helper)
     xp_result = None
-
-    # Track stats for authenticated users
+    language_xp_result = None
     if request.user.is_authenticated:
-        # Create QuizResult for stats tracking
-        QuizResult.objects.create(
-            user=request.user,
-            quiz_id=f'lesson_{lesson.id}',
-            quiz_title=lesson.title,
-            language=lesson.language,
-            score=score,
-            total_questions=total
-        )
-        
-        # Create LessonCompletion record
-        LessonCompletion.objects.create(
-            user=request.user,
-            lesson_id=str(lesson.id),
-            lesson_title=lesson.title,
-            language=lesson.language,
-            duration_minutes=5  # Estimated time per lesson quiz
-        )
+        xp_result, language_xp_result = _update_lesson_quiz_user_stats(request, lesson, score, total)
 
-        # Award XP for lesson completion (Sprint 3 - Issue #17)
-        base_xp = 50  # Base XP per lesson
-        bonus_xp = 10 if total > 0 and score == total else 0  # Bonus for perfect score
-        total_xp_awarded = base_xp + bonus_xp
-
-        # Safely get or create profile (defensive programming)
-        normalized_language = normalize_language_name(lesson.language)
-        try:
-            profile = request.user.profile
-        except UserProfile.DoesNotExist:
-            profile = UserProfile.objects.create(user=request.user)
-            logger.warning('UserProfile was missing for user %s, created new profile', request.user.username)
-
-        # Award XP with error handling
-        try:
-            xp_result = profile.award_xp(total_xp_awarded)
-            logger.info(
-                'XP awarded: %s earned %s XP (Level %s -> %s)',
-                request.user.username,
-                xp_result["xp_awarded"],
-                xp_result["old_level"],
-                xp_result["new_level"] or xp_result["old_level"]
-            )
-        except (ValueError, TypeError) as e:
-            # XP awarding failed, log but don't block lesson completion
-            logger.error('Failed to award XP for user %s: %s', request.user.username, str(e))
-            xp_result = None
-
-        language_xp_result = _award_language_xp(request.user, lesson.language, total_xp_awarded)
-
-        if profile.target_language != normalized_language:
-            profile.target_language = normalized_language
-            profile.save(update_fields=['target_language'])
-
-        # Update UserProgress
-        user_progress, _ = UserProgress.objects.get_or_create(user=request.user)
-        user_progress.total_quizzes_taken += 1
-        user_progress.total_lessons_completed += 1
-        user_progress.overall_quiz_accuracy = user_progress.calculate_quiz_accuracy()
-        user_progress.update_streak()  # Update streak when lesson completed
-        user_progress.save()
-
-        _increment_language_study_stats(
-            request.user,
-            lesson.language,
-            minutes=5,
-            lessons=1,
-            quizzes=1
-        )
-
-        logger.info('Lesson quiz completed: %s - %s: %s/%s', request.user.username, lesson.title, score, total)
-
-    # If request from JS expect JSON
-    if request.content_type == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        response_data = {
-            'success': True,
-            'score': score,
-            'total': total,
-            'attempt_id': attempt.id,
-            'redirect_url': reverse('lesson_results', args=[lesson.id, attempt.id])
-        }
-
-        # Add XP info for authenticated users (Sprint 3 - Issue #17)
-        if request.user.is_authenticated and xp_result is not None:
-            response_data['xp'] = {
-                'awarded': xp_result['xp_awarded'],
-                'total': xp_result['total_xp'],
-                'leveled_up': xp_result['leveled_up'],
-                'new_level': xp_result['new_level'],
-                'old_level': xp_result['old_level']
-            }
-            if language_xp_result:
-                response_data['language_xp'] = {
-                    'language': lesson.language,
-                    'awarded': language_xp_result['xp_awarded'],
-                    'total': language_xp_result['total_xp'],
-                    'leveled_up': language_xp_result['leveled_up'],
-                    'new_level': language_xp_result['new_level'],
-                }
-        
-        return JsonResponse(response_data)
-    return redirect('lesson_results', lesson_id=lesson.id, attempt_id=attempt.id)
+    # Build response (SOFA: Extracted helper)
+    return _build_lesson_quiz_response(
+        request, lesson, attempt,
+        score=score,
+        total=total,
+        xp_result=xp_result,
+        language_xp_result=language_xp_result
+    )
 
 
 def lesson_results(request, lesson_id, attempt_id):
@@ -2450,58 +2784,199 @@ def quest_history(request):
 
 @require_http_methods(["POST"])
 def generate_onboarding_speech(request):
-    """Generate speech using ElevenLabs TTS (better for Spanish)"""
+    """Generate speech using OpenAI TTS (primary) with ElevenLabs fallback"""
     try:
-        # Get API key from settings
-        elevenlabs_key = os.environ.get('ELEVENLABS_API_KEY')
-        if not elevenlabs_key:
-            return HttpResponse("TTS not available", status=503)
-        
         data = json.loads(request.body)
         text = data.get('text', '')
         lang = data.get('lang', 'es-ES')
-        
+
         if not text:
             return HttpResponse("No text provided", status=400)
-        
-        # Clean text - remove parentheses (safer regex)
-        # Remove content in parentheses without nested parentheses
+
+        # Clean text - remove parentheses
         while '(' in text:
             start = text.find('(')
             end = text.find(')', start)
             if end == -1:
                 break
             text = text[:start] + ' ' + text[end+1:]
-        
-        # Clean up extra whitespace
         text = ' '.join(text.split()).strip()
-        
-        from elevenlabs.client import ElevenLabs
-        
-        client = ElevenLabs(api_key=elevenlabs_key)
-        
-        # Choose voice based on language
-        if 'es' in lang.lower():
-            voice_id = "pFZP5JQG7iQjIQuC4Bku"  # Lily - female Spanish
-        else:
-            voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel - English female
-        
-        # Generate audio using text_to_speech
-        audio = client.text_to_speech.convert(
-            voice_id=voice_id,
-            text=text,
-            model_id="eleven_multilingual_v2"
-        )
-        
-        # Convert generator to bytes
-        audio_bytes = b''.join(audio)
-        
-        return HttpResponse(audio_bytes, content_type='audio/mpeg')
-        
-    except Exception as e:
+
+        # Add buffer at beginning to prevent browser audio cutoff
+        # The browser often cuts off first 100-200ms, so we add disposable content
+        text = 'Okay. ' + text
+
+        # Try OpenAI TTS first (primary)
+        openai_key = settings.OPENAI_API_KEY
+        if openai_key:
+            try:
+                from openai import OpenAI
+                client = OpenAI(api_key=openai_key)
+
+                # Choose voice and speed based on language
+                # For Spanish: use "alloy" (neutral, clearer) and slower speed
+                # For English: use "alloy" at normal speed
+                if 'es' in lang.lower():
+                    voice = "alloy"
+                    speed = 0.85  # Slower for Spanish pronunciation
+                else:
+                    voice = "alloy"
+                    speed = 1.0  # Normal speed for English
+
+                # Log the text being sent for debugging
+                logger.info("OpenAI TTS: lang=%s, voice=%s, speed=%s, text='%s'", lang, voice, speed, text)
+
+                response = client.audio.speech.create(
+                    model="tts-1",
+                    voice=voice,
+                    input=text,
+                    speed=speed
+                )
+
+                audio_bytes = response.content
+                return HttpResponse(audio_bytes, content_type='audio/mpeg')
+
+            except (RuntimeError, ValueError, ConnectionError, OSError) as e:
+                logger.warning("OpenAI TTS failed, trying ElevenLabs fallback: %s", str(e))
+
+        # Fallback to ElevenLabs
+        elevenlabs_key = settings.ELEVENLABS_API_KEY
+        if elevenlabs_key:
+            try:
+                from elevenlabs.client import ElevenLabs
+                client = ElevenLabs(api_key=elevenlabs_key)
+
+                # Choose voice based on language
+                if 'es' in lang.lower():
+                    voice_id = "pFZP5JQG7iQjIQuC4Bku"  # Lily - female Spanish
+                else:
+                    voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel - English female
+
+                audio = client.text_to_speech.convert(
+                    voice_id=voice_id,
+                    text=text,
+                    model_id="eleven_multilingual_v2"
+                )
+
+                audio_bytes = b''.join(audio)
+                return HttpResponse(audio_bytes, content_type='audio/mpeg')
+
+            except (RuntimeError, ValueError, ConnectionError, OSError) as e:
+                logger.error("ElevenLabs TTS also failed: %s", str(e))
+
+        # Both TTS services unavailable
+        return HttpResponse("TTS not available", status=503)
+
+    except (RuntimeError, ValueError, TypeError, ConnectionError, OSError) as e:
         # Log the detailed error for debugging (SOFA: DRY - logging already imported at module level)
         # Use lazy % formatting for performance (STYLE_GUIDE.md)
         logger.error("TTS Error: %s", str(e))
 
         # Return generic error to user (don't expose internal details)
         return HttpResponse("Text-to-speech generation failed", status=500)
+
+
+# ============================================
+# HELP/WIKI SYSTEM VIEWS
+# ============================================
+
+def help_page(request):
+    """
+    Display help/wiki documentation page.
+
+    Accessible to all users (guest, logged-in, admin).
+    - Regular users: See User Guide only
+    - Admin users: See both User Guide + Admin Guide tabs
+
+    SOFA Principles:
+    - Single Responsibility: Render help page with appropriate documentation
+    - Function Extraction: Documentation loading delegated to HelpService
+    - DRY: Reusable service for both User and Admin guides
+
+    Args:
+        request: HTTP request object
+
+    Returns:
+        HttpResponse: Rendered help page template
+    """
+    # Determine if user is admin (access control)
+    is_admin = request.user.is_authenticated and request.user.is_staff
+
+    # Load User Guide (available to all users)
+    user_guide = HelpService.load_user_guide()
+
+    # Load Admin Guide only for admin users (access control)
+    admin_guide = HelpService.load_admin_guide() if is_admin else None
+
+    context = {
+        'is_admin': is_admin,
+        'user_guide': user_guide,
+        'admin_guide': admin_guide,
+    }
+
+    return render(request, 'home/help.html', context)
+
+
+@require_POST
+def chatbot_query(request):
+    """
+    API endpoint for chatbot queries.
+
+    Accepts POST requests with JSON body containing:
+    - query: User's question (required)
+    - chat_history: Previous conversation messages (optional)
+
+    Returns JSON response with:
+    - response: AI-generated answer
+    - sources: Relevant documentation sections
+
+    SOFA Principles:
+    - Single Responsibility: Handle API request/response, delegate to service
+    - Function Extraction: AI logic in ChatbotService
+    - DRY: Reusable service for chatbot interactions
+
+    Access: Available to all users (guest, logged-in, admin)
+    Method: POST only
+    Content-Type: application/json
+    """
+    try:
+        # Parse JSON request body
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {'error': 'Invalid JSON in request body'},
+                status=400
+            )
+
+        # Validate required parameters
+        query = data.get('query', '').strip()
+        if not query:
+            return JsonResponse(
+                {'error': 'Query parameter is required'},
+                status=400
+            )
+
+        # Get optional chat history
+        chat_history = data.get('chat_history', [])
+
+        # Determine user role for documentation access
+        user_role = 'admin' if (request.user.is_authenticated and request.user.is_staff) else 'user'
+
+        # Get AI response from ChatbotService
+        result = ChatbotService.get_ai_response(
+            query=query,
+            user_role=user_role,
+            chat_history=chat_history
+        )
+
+        return JsonResponse(result, status=200)
+
+    except (RuntimeError, ValueError, TypeError, KeyError, ConnectionError) as e:
+        # Log error in production
+        print(f"Chatbot API error: {e}")
+
+        return JsonResponse(
+            {'error': 'An error occurred while processing your request'},
+            status=500
+        )

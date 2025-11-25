@@ -22,7 +22,11 @@ urlpatterns = [
     path("forgot-password/", views.forgot_password_view, name="forgot_password"),
     path("reset-password/<uidb64>/<token>/", views.reset_password_view, name="reset_password"),
     path("forgot-username/", views.forgot_username_view, name="forgot_username"),
-    
+
+    # Help/Wiki system
+    path("help/", views.help_page, name="help"),
+    path("chatbot/query/", views.chatbot_query, name="chatbot_query"),
+
     # Onboarding assessment paths
     path("onboarding/", views.onboarding_welcome, name="onboarding_welcome"),
     path("onboarding/quiz/", views.onboarding_quiz, name="onboarding_quiz"),
