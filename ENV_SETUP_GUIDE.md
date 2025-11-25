@@ -20,20 +20,20 @@ This guide explains how to configure environment variables for local development
 
 3. **Required for AI Chatbot & TTS:**
    ```env
-   OPEN_AI_API_KEY=sk-proj-XXXXXXXXXXXXXXXX
+   OPENAI_API_KEY=sk-proj-XXXXXXXXXXXXXXXX
    ```
 
 ### Environment Variables Naming
 
-**Important:** Use `OPEN_AI_API_KEY` (with underscores) to maintain consistency across all environments:
+**Standard name:** Use `OPENAI_API_KEY` across all environments:
 
 | Environment | Variable Name | Location |
 |-------------|---------------|----------|
-| **Local Development** | `OPEN_AI_API_KEY` | `.env` file |
-| **GitHub Secrets** | `OPEN_AI_API_KEY` | Repository Settings → Secrets |
-| **Render Production** | `OPEN_AI_API_KEY` | Environment Variables |
+| **Local Development** | `OPENAI_API_KEY` | `.env` file |
+| **GitHub Secrets** | `OPENAI_API_KEY` | Repository Settings → Secrets |
+| **Render Production** | `OPENAI_API_KEY` | Environment Variables |
 
-**Why underscores?** Our code supports both `OPENAI_API_KEY` and `OPEN_AI_API_KEY`, but using underscores matches the Render configuration shown in your screenshot.
+**Note:** Our code also supports `OPEN_AI_API_KEY` for backward compatibility, but `OPENAI_API_KEY` is the preferred standard name.
 
 ## 📋 Complete Environment Variables List
 
@@ -41,7 +41,7 @@ This guide explains how to configure environment variables for local development
 
 | Variable | Description | Where to Get It | Required For |
 |----------|-------------|-----------------|--------------|
-| `OPEN_AI_API_KEY` | OpenAI API key | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | AI Chatbot, TTS |
+| `OPENAI_API_KEY` | OpenAI API key | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | AI Chatbot, TTS |
 | `DEBUG` | Enable debug mode | Set to `True` for local dev | Development |
 
 ### Optional - Enhanced Features
@@ -140,7 +140,7 @@ This guide explains how to configure environment variables for local development
 Based on your screenshot, Render is configured with:
 
 ```
-OPEN_AI_API_KEY=sk-proj-XXXXXXXXXXXXXXXX
+OPENAI_API_KEY=sk-proj-XXXXXXXXXXXXXXXX
 CLOUDINARY_API_KEY=***********
 CLOUDINARY_API_SECRET=***********
 CLOUDINARY_CLOUD_NAME=***********
@@ -168,11 +168,11 @@ SECRET_KEY=***********
 2. Click "Settings" → "Secrets and variables" → "Actions"
 3. Click "New repository secret"
 4. Add secret:
-   - Name: `OPEN_AI_API_KEY`
+   - Name: `OPENAI_API_KEY`
    - Value: `sk-proj-XXXXXXXXXXXXXXXX`
 
 **Currently configured GitHub Secrets:**
-- `OPEN_AI_API_KEY` - For AI chatbot tests in CI/CD
+- `OPENAI_API_KEY` - For AI chatbot tests in CI/CD
 
 ## 🐛 Troubleshooting
 
@@ -180,7 +180,7 @@ SECRET_KEY=***********
 
 **Solution:**
 1. Check `.env` file exists in project root
-2. Verify `OPEN_AI_API_KEY` is set (with underscores)
+2. Verify `OPENAI_API_KEY` is set
 3. Verify API key is valid: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
 4. Restart Django server: `Ctrl+C` then `python manage.py runserver`
 
@@ -195,7 +195,7 @@ pip install python-dotenv
 
 **Solution:**
 1. Check Render environment variables dashboard
-2. Ensure variable name is `OPEN_AI_API_KEY` (exact match)
+2. Ensure variable name is `OPENAI_API_KEY`
 3. Click "Save Changes" in Render to redeploy
 4. Check Render logs for errors: Dashboard → Logs tab
 
@@ -204,13 +204,13 @@ pip install python-dotenv
 **Solution for local testing:**
 ```bash
 # Set temporarily for tests
-export OPEN_AI_API_KEY=sk-proj-XXXXXXXXXXXXXXXX  # Linux/Mac
-set OPEN_AI_API_KEY=sk-proj-XXXXXXXXXXXXXXXX    # Windows
+export OPENAI_API_KEY=sk-proj-XXXXXXXXXXXXXXXX  # Linux/Mac
+set OPENAI_API_KEY=sk-proj-XXXXXXXXXXXXXXXX    # Windows
 pytest
 ```
 
 **Solution for CI/CD:**
-- Add `OPEN_AI_API_KEY` to GitHub Secrets (see above)
+- Add `OPENAI_API_KEY` to GitHub Secrets (see above)
 
 ## 📚 Additional Resources
 

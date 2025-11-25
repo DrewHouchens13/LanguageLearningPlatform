@@ -9,6 +9,8 @@ import os
 import re
 from typing import Dict, List, Optional
 
+from django.conf import settings
+
 
 class HelpService:
     """
@@ -17,9 +19,9 @@ class HelpService:
     Single Responsibility: Load and parse help documentation files.
     """
 
-    # File paths for documentation
-    USER_GUIDE_PATH = os.path.join('USER_GUIDE.md')
-    ADMIN_GUIDE_PATH = os.path.join('ADMIN_GUIDE.md')
+    # File paths for documentation (use absolute paths based on BASE_DIR)
+    USER_GUIDE_PATH = os.path.join(settings.BASE_DIR, 'USER_GUIDE.md')
+    ADMIN_GUIDE_PATH = os.path.join(settings.BASE_DIR, 'ADMIN_GUIDE.md')
 
     @staticmethod
     def load_user_guide() -> Dict[str, any]:
