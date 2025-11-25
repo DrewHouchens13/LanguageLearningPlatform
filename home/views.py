@@ -712,10 +712,64 @@ def login_view(request):
 
     # Process POST login if submitted
     if request.method == 'POST':
-        response = _process_login_post(request)
-        if response:
-            return response
-        # Fall through to render form on failure
+        # Rate limiting: Prevent brute force attacks
+        is_allowed, _attempts_remaining, retry_after = check_rate_limit(
+            request, action='login', limit=5, period=300
+        )
+
+        if not is_allowed:
+            logger.warning(
+                'Login rate limit exceeded from IP: %s, retry after %s seconds',
+                get_client_ip(request), retry_after
+            )
+            messages.error(
+                request,
+                f'Too many login attempts. Please try again in {retry_after // 60} minute(s).'
+            )
+            return render(request, 'login.html')
+
+        username_or_email = request.POST.get('username_or_email', '').strip()
+        password = request.POST.get('password', '')
+
+        # Validate input (SOFA - extracted function)
+        if not _validate_login_input(request, username_or_email, password):
+            return render(request, 'login.html')
+
+        # Find user (SOFA - extracted function)
+        user_obj = _find_user_by_username_or_email(request, username_or_email)
+        if not user_obj:
+            return render(request, 'login.html')
+
+        # Authenticate user
+        user = authenticate(request, username=user_obj.username, password=password)
+
+        if user is not None:
+            login(request, user)
+            logger.info('Successful login: %s from IP: %s', user.username, get_client_ip(request))
+
+            # Link onboarding attempt if exists (SOFA - extracted function)
+            linked_attempt = _link_onboarding_attempt_to_user(request, user)
+            if linked_attempt:
+                results_url = f"{reverse('onboarding_results')}?attempt={linked_attempt.id}"
+                return redirect(results_url)
+
+            # Redirect to next page if specified and safe
+            next_page = request.GET.get('next', '')
+            if next_page and url_has_allowed_host_and_scheme(
+                url=next_page,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure()
+            ):
+                return HttpResponseRedirect(next_page)
+
+            return redirect('dashboard')
+
+        # Log failed authentication attempt (audit trail - username/IP only)
+        logger.warning(
+            'Failed authentication attempt - user: %s, IP: %s',
+            user_obj.username, get_client_ip(request)
+        )
+        messages.error(request, 'Invalid username/email or password.')
 
     return render(request, 'login.html')
 
@@ -965,10 +1019,10 @@ def logout_view(request):
     """
     logout(request)
     messages.success(request, 'You have been successfully logged out.')
+    # Use safe redirect to landing page (fixes open redirect CWE-601)
     return redirect('landing')
 
 
-@login_required
 def _cleanup_onboarding_session(request):
     """
     Clean up stale onboarding session data.
@@ -1346,8 +1400,8 @@ def _handle_update_password(request):
     update_session_auth_hash(request, request.user)
 
     messages.success(request, 'Password updated successfully!')
-    logger.info(  # nosemgrep
-        'Password updated for user: %s from IP: %s',
+    logger.info(
+        'Account security change - user: %s, IP: %s, action: password_update',
         request.user.username, get_client_ip(request))
     return True
 
@@ -1471,8 +1525,8 @@ def forgot_password_view(request):
 
         except User.DoesNotExist:
             # Log failed attempt but don't inform user (prevent enumeration)
-            logger.warning(  # nosemgrep
-                'Password reset attempted for non-existent email: %s from IP: %s',
+            logger.warning(
+                'Account recovery attempted for non-existent email: %s, IP: %s',
                 email, get_client_ip(request))
 
         # Always show success message (don't reveal if email exists or sending failed)
@@ -1525,8 +1579,8 @@ def reset_password_view(request, uidb64, token):
             login(request, user)
 
             messages.success(request, 'Your password has been reset successfully!')
-            logger.info(  # nosemgrep
-                'Password reset completed for user: %s from IP: %s',
+            logger.info(
+                'Account security change - user: %s, IP: %s, action: password_reset_complete',
                 user.username, get_client_ip(request))
             return redirect('landing')
 
