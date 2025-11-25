@@ -11,6 +11,7 @@ Pillow==11.0.0             # Image processing for user avatars
 cloudinary==1.44.1         # Cloudinary SDK for cloud media storage
 django-cloudinary-storage==0.3.0  # Django storage backend for Cloudinary
 django-redis==5.4.0        # Redis cache backend for Django (production caching)
+Markdown==3.7              # Markdown to HTML conversion for help documentation
 
 # Testing dependencies
 pytest==8.3.4              # Testing framework
