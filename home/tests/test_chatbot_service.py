@@ -7,7 +7,6 @@ Tests should initially fail (Red), then pass after implementation (Green).
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from django.conf import settings
 from django.test import TestCase
 
@@ -42,13 +41,13 @@ class ChatbotServiceTests(TestCase):
         self.assertIn('response', result)
         self.assertIn('sources', result)
 
-    @pytest.mark.skip(reason="Integration test - requires OpenAI mocking refinement")
+    @patch('home.services.chatbot_service.settings')
     @patch('home.services.chatbot_service.ChatbotService._call_openai_api')
-    @patch('home.services.chatbot_service.settings.OPENAI_API_KEY', 'test-key')
-    def test_get_ai_response_searches_documentation(self, mock_key, mock_openai):
+    def test_get_ai_response_searches_documentation(self, mock_openai, mock_settings):
         """get_ai_response should search help documentation for context"""
         from home.services.chatbot_service import ChatbotService
 
+        mock_settings.OPENAI_API_KEY = 'test-key'
         mock_openai.return_value = "Daily quests help you maintain your streak."
 
         result = ChatbotService.get_ai_response(
@@ -138,16 +137,19 @@ class ChatbotServiceOpenAIIntegrationTests(TestCase):
         from home.services.chatbot_service import ChatbotService
         self.assertTrue(hasattr(ChatbotService, '_call_openai_api'))
 
-    @pytest.mark.skip(reason="Integration test - requires OpenAI library mocking refinement")
-    @patch('openai.OpenAI')
-    @patch('home.services.chatbot_service.settings.OPENAI_API_KEY', 'test-key')
-    def test_call_openai_api_makes_request(self, mock_key, mock_openai_class):
+    @patch('home.services.chatbot_service.settings')
+    @patch.dict('sys.modules', {'openai': MagicMock()})
+    def test_call_openai_api_makes_request(self, mock_settings):
         """_call_openai_api should make OpenAI API request"""
+        import sys
         from home.services.chatbot_service import ChatbotService
 
+        mock_settings.OPENAI_API_KEY = 'test-key'
+
         # Mock OpenAI client and response
+        mock_openai_module = sys.modules['openai']
         mock_client = MagicMock()
-        mock_openai_class.return_value = mock_client
+        mock_openai_module.OpenAI.return_value = mock_client
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content="Test response"))]
@@ -161,16 +163,19 @@ class ChatbotServiceOpenAIIntegrationTests(TestCase):
         self.assertIsInstance(result, str)
         mock_client.chat.completions.create.assert_called_once()
 
-    @pytest.mark.skip(reason="Integration test - requires OpenAI library mocking refinement")
-    @patch('openai.OpenAI')
-    @patch('home.services.chatbot_service.settings.OPENAI_API_KEY', 'test-key')
-    def test_call_openai_api_includes_system_prompt(self, mock_key, mock_openai_class):
+    @patch('home.services.chatbot_service.settings')
+    @patch.dict('sys.modules', {'openai': MagicMock()})
+    def test_call_openai_api_includes_system_prompt(self, mock_settings):
         """_call_openai_api should include system prompt with role instructions"""
+        import sys
         from home.services.chatbot_service import ChatbotService
 
+        mock_settings.OPENAI_API_KEY = 'test-key'
+
         # Mock OpenAI client and response
+        mock_openai_module = sys.modules['openai']
         mock_client = MagicMock()
-        mock_openai_class.return_value = mock_client
+        mock_openai_module.OpenAI.return_value = mock_client
 
         mock_response = MagicMock()
         mock_response.choices = [MagicMock(message=MagicMock(content="Test"))]
@@ -189,17 +194,20 @@ class ChatbotServiceOpenAIIntegrationTests(TestCase):
         system_messages = [m for m in messages if m['role'] == 'system']
         self.assertGreater(len(system_messages), 0)
 
-    @pytest.mark.skip(reason="Integration test - requires OpenAI library mocking refinement")
-    @patch('openai.OpenAI')
-    @patch('home.services.chatbot_service.settings.OPENAI_API_KEY', 'test-key')
-    def test_call_openai_api_handles_errors_gracefully(self, mock_key, mock_openai_class):
+    @patch('home.services.chatbot_service.settings')
+    @patch.dict('sys.modules', {'openai': MagicMock()})
+    def test_call_openai_api_handles_errors_gracefully(self, mock_settings):
         """_call_openai_api should handle API errors gracefully"""
+        import sys
         from home.services.chatbot_service import ChatbotService
 
+        mock_settings.OPENAI_API_KEY = 'test-key'
+
         # Mock OpenAI client and API error
+        mock_openai_module = sys.modules['openai']
         mock_client = MagicMock()
-        mock_openai_class.return_value = mock_client
-        mock_client.chat.completions.create.side_effect = Exception("API Error")
+        mock_openai_module.OpenAI.return_value = mock_client
+        mock_client.chat.completions.create.side_effect = RuntimeError("API Error")
 
         result = ChatbotService._call_openai_api(
             query="Test query",
