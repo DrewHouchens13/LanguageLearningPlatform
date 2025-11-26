@@ -42,7 +42,7 @@ This document defines the coding standards for all Python and Django code in thi
 6. **Separation of Concerns**: Each component should have a single responsibility
 
 ### Code Quality Standards
-- **Pylint Score**: Maintain ≥9.0/10 (current: 9.91/10)
+- **Pylint Score**: Maintain 10/10 (Sprint 4 requirement)
 - **Test Coverage**: Maintain ≥90% (current: 93%)
 - **All Tests Must Pass**: No commits with failing tests
 - **No Warnings in Production**: Address all linter warnings before merging
@@ -1323,7 +1323,7 @@ def get_popular_articles():
 
 ### Before Submitting PR
 - [ ] All tests pass locally
-- [ ] Pylint score ≥9.0
+- [ ] Pylint score 10/10
 - [ ] Test coverage maintained or improved
 - [ ] No commented-out code
 - [ ] No debug print statements
@@ -1347,8 +1347,8 @@ def get_popular_articles():
 
 ## Enforcement
 
-### Automated Checks (Sprint 3+)
-- **Pylint**: Runs on all PRs, must score ≥9.0
+### Automated Checks (Sprint 4+)
+- **Pylint**: Runs on all PRs, must score 10/10
 - **Tests**: All tests must pass before merge
 - **Coverage**: Must maintain ≥90% coverage
 

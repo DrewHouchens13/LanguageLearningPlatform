@@ -3,26 +3,26 @@ Django==5.2.8  # Updated from 5.1.13 to fix CVEs: GHSA-qw25-v68c-qjf3, GHSA-frmv
 sqlparse==0.5.3
 
 # Production dependencies
-gunicorn==22.0.0           # WSGI HTTP server for production (fixes CVE-2024-6827, CVE-2024-1135)
+gunicorn==23.0.0           # WSGI HTTP server for production (updated per dependabot PR #79)
 whitenoise==6.11.0          # Serve static files in production
 psycopg2-binary==2.9.11     # PostgreSQL adapter
-dj-database-url==2.1.0     # Parse database URL from environment
-Pillow==11.0.0             # Image processing for user avatars
+dj-database-url==3.0.1     # Parse database URL from environment (updated per dependabot PR #71)
+Pillow==12.0.0             # Image processing for user avatars (updated per dependabot PR #72)
 cloudinary==1.44.1         # Cloudinary SDK for cloud media storage
 django-cloudinary-storage==0.3.0  # Django storage backend for Cloudinary
-django-redis==5.4.0        # Redis cache backend for Django (production caching)
+django-redis==6.0.0        # Redis cache backend for Django (updated per dependabot PR #76)
 Markdown==3.7              # Markdown to HTML conversion for help documentation
 bleach==6.2.0              # HTML sanitization for markdown output (security)
 openai==1.57.0             # OpenAI API client for AI chatbot assistant
 
 # Testing dependencies
-pytest==8.3.4              # Testing framework
+pytest==9.0.1              # Testing framework (updated per dependabot PR #78)
 pytest-django==4.11.1       # Django integration for pytest
-pytest-cov==6.0.0          # Coverage plugin for pytest
+pytest-cov==7.0.0          # Coverage plugin for pytest (updated per dependabot PR #77)
 pytest-xdist==3.8.0        # Parallel test execution (use -n auto flag)
 
-# Code Quality & Linting (Sprint 3)
-pylint==3.3.9              # Python linter for code quality
+# Code Quality & Linting (Sprint 4)
+pylint==3.3.9              # Python linter - kept at 3.x (pylint-django 2.6.1 requires pylint<4)
 pylint-django==2.6.1       # Django plugin for pylint
 isort==6.1.0               # Import sorting (dependency of pylint)
 
@@ -36,5 +36,5 @@ semgrep==1.144.0           # Advanced static analysis (optional)
 hypothesis==6.148.2        # Property-based testing (fuzz testing)
 freezegun==1.5.5          # Time mocking for deterministic tests
 pytest-mock==3.15.1        # Mock fixtures for pytest
-mutmut==2.4.5              # Mutation testing
+mutmut==3.4.0              # Mutation testing (updated per dependabot PR #75)
 pytest-random-order==1.2.0 # Test independence verification
