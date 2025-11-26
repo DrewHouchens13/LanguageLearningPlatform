@@ -104,7 +104,7 @@ LIVE_TESTING_REPORT.md
 cookies.txt
 csrf_token.txt
 test_*.html
-test_*.py
+/test_*.py
 
 # other files to not push (assignment specs and reports are local only)
 manchesterjm_workflow/
