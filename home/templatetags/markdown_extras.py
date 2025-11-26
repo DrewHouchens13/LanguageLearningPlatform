@@ -68,4 +68,5 @@ def markdown_filter(text):
         strip=True
     )
 
+    # nosec B703, B308 - HTML is sanitized by bleach.clean() above with strict allowlists
     return mark_safe(clean_html)
