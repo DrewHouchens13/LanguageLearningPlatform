@@ -21,9 +21,9 @@ pytest-cov==7.0.0          # Coverage plugin for pytest (updated per dependabot 
 pytest-xdist==3.8.0        # Parallel test execution (use -n auto flag)
 
 # Code Quality & Linting (Sprint 4)
-pylint==4.0.3              # Python linter for code quality (updated per dependabot PR #74)
+pylint==3.3.9              # Python linter - kept at 3.x (pylint-django 2.6.1 requires pylint<4)
 pylint-django==2.6.1       # Django plugin for pylint
-isort==7.0.0               # Import sorting (updated per dependabot PR #73)
+isort==6.1.0               # Import sorting (dependency of pylint)
 
 # Security Scanning Tools (Sprint 3)
 bandit==1.9.2             # Security linter for Python
