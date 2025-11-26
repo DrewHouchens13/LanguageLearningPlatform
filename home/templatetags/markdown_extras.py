@@ -43,5 +43,4 @@ def markdown_filter(text):
     # Security note: mark_safe is safe here because content comes from trusted
     # help documentation files, not user input. The markdown files are part of
     # the application codebase and controlled by developers.
-    # nosemgrep: python.django.security.audit.avoid-mark-safe.avoid-mark-safe
-    return mark_safe(html)  # nosec B703, B308
+    return mark_safe(html)  # nosemgrep: python.django.security.audit.avoid-mark-safe.avoid-mark-safe  # nosec B703, B308

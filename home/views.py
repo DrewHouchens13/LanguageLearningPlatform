@@ -690,7 +690,8 @@ def _process_login_post(request):
 
     if user is None:
         # Log failed login attempt (incorrect password)
-        logger.warning(  # nosemgrep
+        # nosemgrep: python.lang.security.audit.logging.logger-credential-leak.python-logger-credential-disclosure
+        logger.warning(
             'Failed login attempt - incorrect password for: %s from IP: %s',
             user_obj.username, get_client_ip(request)
         )
@@ -2973,8 +2974,8 @@ def chatbot_query(request):
         return JsonResponse(result, status=200)
 
     except (RuntimeError, ValueError, TypeError, KeyError, ConnectionError) as e:
-        # Log error in production
-        print(f"Chatbot API error: {e}")
+        # Log error securely - don't expose exception details to users
+        logger.error('Chatbot API error: %s', type(e).__name__)
 
         return JsonResponse(
             {'error': 'An error occurred while processing your request'},
