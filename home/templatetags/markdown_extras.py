@@ -9,14 +9,33 @@ SOFA Principles:
 from django import template
 from django.utils.safestring import mark_safe
 import markdown as md
+import bleach
 
 register = template.Library()
+
+# Allowed HTML tags and attributes for sanitization
+ALLOWED_TAGS = [
+    'a', 'abbr', 'acronym', 'b', 'blockquote', 'br', 'code', 'dd', 'del',
+    'div', 'dl', 'dt', 'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr',
+    'i', 'img', 'ins', 'li', 'ol', 'p', 'pre', 'q', 's', 'span', 'strong',
+    'sub', 'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'tr', 'u', 'ul'
+]
+
+ALLOWED_ATTRIBUTES = {
+    '*': ['class', 'id'],
+    'a': ['href', 'title', 'rel'],
+    'abbr': ['title'],
+    'acronym': ['title'],
+    'img': ['src', 'alt', 'title', 'width', 'height'],
+    'td': ['colspan', 'rowspan'],
+    'th': ['colspan', 'rowspan', 'scope'],
+}
 
 
 @register.filter(name='markdown')
 def markdown_filter(text):
     """
-    Convert markdown text to HTML.
+    Convert markdown text to sanitized HTML.
 
     Usage in templates:
         {{ content|markdown }}
@@ -25,7 +44,7 @@ def markdown_filter(text):
         text: Markdown-formatted text
 
     Returns:
-        SafeString containing HTML
+        SafeString containing sanitized HTML
     """
     if not text:
         return ""
@@ -40,7 +59,13 @@ def markdown_filter(text):
         ]
     )
 
-    # Security note: mark_safe is safe here because content comes from trusted
-    # help documentation files, not user input. The markdown files are part of
-    # the application codebase and controlled by developers.
-    return mark_safe(html)  # nosemgrep: python.django.security.audit.avoid-mark-safe.avoid-mark-safe  # nosec B703, B308
+    # Sanitize HTML to prevent XSS attacks
+    # This allows only safe HTML tags and attributes
+    clean_html = bleach.clean(
+        html,
+        tags=ALLOWED_TAGS,
+        attributes=ALLOWED_ATTRIBUTES,
+        strip=True
+    )
+
+    return mark_safe(clean_html)

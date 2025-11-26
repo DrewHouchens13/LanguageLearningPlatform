@@ -2844,7 +2844,7 @@ def generate_onboarding_speech(request):
         elevenlabs_key = settings.ELEVENLABS_API_KEY
         if elevenlabs_key:
             try:
-                from elevenlabs.client import ElevenLabs
+                from elevenlabs.client import ElevenLabs  # pylint: disable=import-error,import-outside-toplevel
                 client = ElevenLabs(api_key=elevenlabs_key)
 
                 # Choose voice based on language
