@@ -265,7 +265,7 @@ pylint home/ --disable=C0111,C0103
 pylint home/ --output-format=text > pylint_report.txt
 ```
 
-**Note**: Pylint is integrated into the development workflow. Target score: 9.5+/10.
+**Note**: Pylint is integrated into the development workflow. Target score: 10/10 (Sprint 4 requirement).
 
 ## Working with Tests
 
