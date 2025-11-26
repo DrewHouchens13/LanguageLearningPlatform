@@ -1,11 +1,9 @@
-from django.test import TestCase
 from django.contrib.auth.models import User
-from django.utils import timezone
 from django.db import IntegrityError
-from home.models import (
-    OnboardingQuestion, OnboardingAttempt, OnboardingAnswer
-)
+from django.test import TestCase
+from django.utils import timezone
 
+from home.models import OnboardingAnswer, OnboardingAttempt, OnboardingQuestion
 
 # NOTE: TestUserProfileModel tests have been removed from this file
 # as they are duplicates of tests in test_models.py. The tests in test_models.py

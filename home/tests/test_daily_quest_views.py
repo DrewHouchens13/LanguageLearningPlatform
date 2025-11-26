@@ -13,14 +13,12 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from home.models import DailyQuest, Lesson, LessonQuizQuestion, UserDailyQuestAttempt
-
+from home.models import (DailyQuest, Lesson, LessonQuizQuestion,
+                         UserDailyQuestAttempt)
 # SOFA: DRY - Import reusable test helpers
-from home.tests.test_helpers import (
-    create_test_user,
-    create_test_daily_quest,
-    create_test_daily_quest_attempt
-)
+from home.tests.test_helpers import (create_test_daily_quest,
+                                     create_test_daily_quest_attempt,
+                                     create_test_user)
 
 
 class DailyChallengeViewTests(TestCase):

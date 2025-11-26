@@ -1,17 +1,11 @@
-from django.test import TestCase, Client
 from django.contrib.auth.models import User
-from django.urls import reverse, resolve
+from django.test import Client, TestCase
+from django.urls import resolve, reverse
 
-from home.models import (
-    UserProgress,
-    LessonCompletion,
-    UserLanguageProfile,
-    OnboardingQuestion,
-    UserProfile,
-)
-
-from home.views import landing, login_view, signup_view, logout_view, dashboard, progress_view
-
+from home.models import (LessonCompletion, OnboardingQuestion,
+                         UserLanguageProfile, UserProfile, UserProgress)
+from home.views import (dashboard, landing, login_view, logout_view,
+                        progress_view, signup_view)
 
 # ============================================================================
 # AUTHENTICATION TESTS (Integration Tests)
@@ -172,6 +166,7 @@ class TestSignupView(TestCase):
         and ensure no partial user data is created.
         """
         from unittest.mock import patch
+
         from django.db import DatabaseError
 
         # Mock User.objects.create_user to raise a database error

@@ -10,11 +10,12 @@ For production deployments, static files MUST be served by a dedicated web serve
 (e.g., Nginx, Apache) or CDN. Django's static file serving is inefficient and insecure
 for production use.
 """
-from django.contrib import admin
-from django.urls import path, include, re_path
 from django.conf import settings
+from django.contrib import admin
 from django.contrib.staticfiles.views import serve
+from django.urls import include, path, re_path
 from django.views.static import serve as media_serve
+
 from home.views import logout_view
 
 urlpatterns = [

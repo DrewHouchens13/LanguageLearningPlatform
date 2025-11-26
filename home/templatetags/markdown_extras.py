@@ -6,9 +6,9 @@ SOFA Principles:
 - Function Extraction: Dedicated filter for markdown processing
 """
 
+import markdown as md
 from django import template
 from django.utils.safestring import mark_safe
-import markdown as md
 
 register = template.Library()
 

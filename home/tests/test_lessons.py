@@ -2,16 +2,14 @@
 Comprehensive tests for Lesson system (models, views, security).
 Tests for Lesson, Flashcard, LessonQuizQuestion, LessonAttempt models and all lesson views.
 """
-from django.test import TestCase, Client
-from django.contrib.auth.models import User
-from django.urls import reverse
 import json
 
-from home.models import (
-    Lesson, Flashcard, LessonQuizQuestion, LessonAttempt,
-    QuizResult, LessonCompletion, UserProgress
-)
+from django.contrib.auth.models import User
+from django.test import Client, TestCase
+from django.urls import reverse
 
+from home.models import (Flashcard, Lesson, LessonAttempt, LessonCompletion,
+                         LessonQuizQuestion, QuizResult, UserProgress)
 
 # ============================================================================
 # LESSON MODEL TESTS

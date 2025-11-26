@@ -16,19 +16,10 @@ from django.db import IntegrityError, transaction
 from django.db.models import Count, Sum
 from django.utils import timezone
 
-from home.language_registry import (
-    DEFAULT_LANGUAGE,
-    get_language_metadata,
-    normalize_language_name,
-)
-from home.models import (
-    DailyQuest,
-    DailyQuestQuestion,
-    Lesson,
-    LessonAttempt,
-    UserDailyQuestAttempt,
-    UserProfile,
-)
+from home.language_registry import (DEFAULT_LANGUAGE, get_language_metadata,
+                                    normalize_language_name)
+from home.models import (DailyQuest, DailyQuestQuestion, Lesson, LessonAttempt,
+                         UserDailyQuestAttempt, UserProfile)
 
 logger = logging.getLogger(__name__)
 _random = secrets.SystemRandom()

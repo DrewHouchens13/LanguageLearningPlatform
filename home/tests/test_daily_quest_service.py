@@ -11,21 +11,13 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
 
-from home.models import (
-    DailyQuest,
-    DailyQuestQuestion,
-    Lesson,
-    LessonQuizQuestion,
-    UserDailyQuestAttempt,
-)
+from home.models import (DailyQuest, DailyQuestQuestion, Lesson,
+                         LessonQuizQuestion, UserDailyQuestAttempt)
 from home.services.daily_quest_service import DailyQuestService
-
 # SOFA: DRY - Import reusable test helpers
-from home.tests.test_helpers import (
-    create_test_user,
-    create_test_daily_quest,
-    create_test_daily_quest_attempt
-)
+from home.tests.test_helpers import (create_test_daily_quest,
+                                     create_test_daily_quest_attempt,
+                                     create_test_user)
 
 
 class DailyQuestServiceTests(TestCase):

@@ -9,6 +9,7 @@ Defines URL patterns for:
 - Daily Quest system
 """
 from django.urls import path
+
 from . import views
 
 urlpatterns = [

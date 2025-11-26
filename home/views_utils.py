@@ -8,10 +8,11 @@ used across different view modules.
 import logging
 from functools import wraps
 
-# Django imports
-
 # Local application imports
 from .models import OnboardingAttempt
+
+# Django imports
+
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -71,6 +72,7 @@ def get_client_ip(request):
     - In production, X-Forwarded-For is only trusted from known proxies (Render, DevEDU)
     """
     import ipaddress
+
     from django.conf import settings
 
     # Get REMOTE_ADDR first (this is always the direct connection IP)
@@ -246,13 +248,14 @@ def send_template_email(
             log_prefix='Password reset email'
         )
     """
-    from django.core.mail import send_mail, BadHeaderError
-    from django.template.loader import render_to_string
-    from django.core.exceptions import ImproperlyConfigured, ValidationError
-    from django.core.validators import validate_email
-    from django.conf import settings
-    from smtplib import SMTPException
     import time
+    from smtplib import SMTPException
+
+    from django.conf import settings
+    from django.core.exceptions import ImproperlyConfigured, ValidationError
+    from django.core.mail import BadHeaderError, send_mail
+    from django.core.validators import validate_email
+    from django.template.loader import render_to_string
 
     # Validate email configuration before attempting to send
     if not hasattr(settings, 'DEFAULT_FROM_EMAIL') or not settings.DEFAULT_FROM_EMAIL:

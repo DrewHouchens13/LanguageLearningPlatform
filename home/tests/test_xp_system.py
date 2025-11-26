@@ -11,7 +11,8 @@ Tests cover:
 
 from django.contrib.auth.models import User
 from django.test import TestCase
-from home.models import UserProfile, Lesson
+
+from home.models import Lesson, UserProfile
 
 
 class TestXPCalculations(TestCase):

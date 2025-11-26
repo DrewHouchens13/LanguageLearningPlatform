@@ -11,8 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
-import dj_database_url
 from pathlib import Path
+
+import dj_database_url
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -44,6 +45,7 @@ ELEVENLABS_API_KEY = os.environ.get('ELEVENLABS_API_KEY')
 # All other values (including unset) default to False
 # Strips whitespace to handle ' true ', ' 1 ', etc.
 import sys
+
 IS_DEVEDU = os.environ.get('IS_DEVEDU', '').strip().lower() in ('true', '1', 'yes')
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -263,6 +265,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # WhiteNoise configuration for efficient static file serving
 # Use simpler storage for tests (avoids manifest file requirement)
 import sys
+
 if 'pytest' in sys.modules or 'test' in sys.argv:
     # Tests: Use filesystem storage for simplicity
     STORAGES = {

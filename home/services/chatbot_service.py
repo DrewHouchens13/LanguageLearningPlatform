@@ -8,7 +8,9 @@ Follows SOFA principles: Single Responsibility, Function Extraction, DRY.
 """
 
 from typing import Dict, List, Optional
+
 from django.conf import settings
+
 from home.services.help_service import HelpService
 
 

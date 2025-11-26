@@ -2,8 +2,8 @@
 Shared test utilities and helpers.
 Used across all test modules for consistency.
 """
-from django.test import TestCase, Client
 from django.contrib.auth.models import User
+from django.test import Client, TestCase
 
 
 def create_test_user(**kwargs):

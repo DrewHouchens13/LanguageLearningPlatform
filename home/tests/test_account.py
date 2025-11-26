@@ -1,9 +1,9 @@
-from django.test import TestCase, Client
-from django.urls import reverse
 from enum import Enum
 
-from .test_utils import create_test_user
+from django.test import Client, TestCase
+from django.urls import reverse
 
+from .test_utils import create_test_user
 
 # ============================================================================
 # ACCOUNT MANAGEMENT TESTS

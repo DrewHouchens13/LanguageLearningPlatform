@@ -8,29 +8,19 @@ Registers all models with customized admin interfaces including:
 - Lesson and quiz management
 - XP and leveling system
 """
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.models import User
-from django.contrib.auth import password_validation
-from django.contrib import messages
-from django.utils.html import format_html
-from .models import (
-    UserProgress,
-    LessonCompletion,
-    QuizResult,
-    UserProfile,
-    OnboardingQuestion,
-    OnboardingAttempt,
-    OnboardingAnswer,
-    Lesson,
-    Flashcard,
-    LessonQuizQuestion,
-    LessonAttempt
-)
-
+import logging
 import secrets
 import string
-import logging
+
+from django.contrib import admin, messages
+from django.contrib.auth import password_validation
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
+from django.utils.html import format_html
+
+from .models import (Flashcard, Lesson, LessonAttempt, LessonCompletion,
+                     LessonQuizQuestion, OnboardingAnswer, OnboardingAttempt,
+                     OnboardingQuestion, QuizResult, UserProfile, UserProgress)
 
 # Configure logger for admin actions (audit trail)
 logger = logging.getLogger(__name__)

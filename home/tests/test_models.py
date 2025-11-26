@@ -3,18 +3,16 @@ Model tests - copied from original tests.py with onboarding models added.
 Tests for UserProgress, LessonCompletion, QuizResult, UserProfile, 
 OnboardingQuestion, OnboardingAttempt, OnboardingAnswer.
 """
-from django.test import TestCase
-from django.contrib.auth.models import User
-from django.utils import timezone
-from django.db import IntegrityError
 from datetime import timedelta
 
-from home.models import (
-    UserProgress, LessonCompletion, QuizResult,
-    UserProfile, OnboardingQuestion, OnboardingAttempt, OnboardingAnswer,
-    UserLanguageProfile,
-)
+from django.contrib.auth.models import User
+from django.db import IntegrityError
+from django.test import TestCase
+from django.utils import timezone
 
+from home.models import (LessonCompletion, OnboardingAnswer, OnboardingAttempt,
+                         OnboardingQuestion, QuizResult, UserLanguageProfile,
+                         UserProfile, UserProgress)
 
 # ============================================================================
 # CORE MODEL TESTS (from original tests.py)

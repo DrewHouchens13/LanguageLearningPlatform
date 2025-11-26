@@ -5,10 +5,11 @@ Following TDD: Tests written before implementation.
 Tests should initially fail (Red), then pass after implementation (Green).
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from django.test import TestCase
 from django.conf import settings
+from django.test import TestCase
 
 
 class ChatbotServiceTests(TestCase):
