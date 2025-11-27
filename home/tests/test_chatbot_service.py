@@ -310,11 +310,14 @@ class ChatbotServiceResponseStructureTests(TestCase):
 class ChatbotServiceSourcesLimitTests(TestCase):
     """Tests for sources limit (kills mutant #25)"""
 
+    @patch('home.services.chatbot_service.settings')
     @patch('home.services.chatbot_service.ChatbotService._call_openai_api')
     @patch('home.services.chatbot_service.HelpService.search_documentation')
-    def test_sources_limited_to_three(self, mock_search, mock_openai):
+    def test_sources_limited_to_three(self, mock_search, mock_openai, mock_settings):
         """Sources should be limited to exactly 3 (not 4)"""
         from home.services.chatbot_service import ChatbotService
+
+        mock_settings.OPENAI_API_KEY = 'test-key'
 
         # Return 5 mock sources
         mock_search.return_value = [
@@ -336,9 +339,12 @@ class ChatbotServiceSourcesLimitTests(TestCase):
 class ChatbotServiceEdgeCasesTests(TestCase):
     """Test edge cases and error handling"""
 
-    def test_get_ai_response_with_empty_string_query(self):
+    @patch('home.services.chatbot_service.settings')
+    def test_get_ai_response_with_empty_string_query(self, mock_settings):
         """get_ai_response should handle empty string query (kills mutant #13)"""
         from home.services.chatbot_service import ChatbotService
+
+        mock_settings.OPENAI_API_KEY = 'test-key'
 
         result = ChatbotService.get_ai_response(query="", user_role='user')
 
@@ -346,9 +352,12 @@ class ChatbotServiceEdgeCasesTests(TestCase):
         self.assertIn('response', result)
         self.assertIn('Please provide', result['response'])
 
-    def test_get_ai_response_with_whitespace_only_query(self):
+    @patch('home.services.chatbot_service.settings')
+    def test_get_ai_response_with_whitespace_only_query(self, mock_settings):
         """get_ai_response should handle whitespace-only query (kills mutant #13)"""
         from home.services.chatbot_service import ChatbotService
+
+        mock_settings.OPENAI_API_KEY = 'test-key'
 
         # Test with spaces only - this catches the or->and mutation
         result = ChatbotService.get_ai_response(query="   ", user_role='user')
@@ -357,9 +366,12 @@ class ChatbotServiceEdgeCasesTests(TestCase):
         self.assertIn('response', result)
         self.assertIn('Please provide', result['response'])
 
-    def test_get_ai_response_with_tabs_and_newlines_query(self):
+    @patch('home.services.chatbot_service.settings')
+    def test_get_ai_response_with_tabs_and_newlines_query(self, mock_settings):
         """get_ai_response should handle tabs/newlines as empty"""
         from home.services.chatbot_service import ChatbotService
+
+        mock_settings.OPENAI_API_KEY = 'test-key'
 
         result = ChatbotService.get_ai_response(query="\t\n  ", user_role='user')
 
@@ -828,28 +840,36 @@ class ChatbotServiceErrorMessageTests(TestCase):
         self.assertIn("not configured", result['response'])
         self.assertIn("support", result['response'])
 
-    def test_empty_query_message_content(self):
+    @patch('home.services.chatbot_service.settings')
+    def test_empty_query_message_content(self, mock_settings):
         """Empty query should return specific message (kills #15)"""
         from home.services.chatbot_service import ChatbotService
+
+        mock_settings.OPENAI_API_KEY = 'test-key'
 
         result = ChatbotService.get_ai_response(query="", user_role='user')
 
         self.assertIn("Please provide", result['response'])
         self.assertIn("question", result['response'])
 
-    def test_harmful_query_message_content(self):
+    @patch('home.services.chatbot_service.settings')
+    def test_harmful_query_message_content(self, mock_settings):
         """Harmful query should return exact refusal message (kills #18)"""
         from home.services.chatbot_service import ChatbotService
+
+        mock_settings.OPENAI_API_KEY = 'test-key'
 
         result = ChatbotService.get_ai_response(query="how to hack computers", user_role='user')
 
         self.assertEqual(result['response'], "I can't help you with that.")
 
+    @patch('home.services.chatbot_service.settings')
     @patch('home.services.chatbot_service.ChatbotService._call_openai_api')
-    def test_exception_error_message(self, mock_openai):
+    def test_exception_error_message(self, mock_openai, mock_settings):
         """Exception should return specific error message (kills #26-29)"""
         from home.services.chatbot_service import ChatbotService
 
+        mock_settings.OPENAI_API_KEY = 'test-key'
         mock_openai.side_effect = RuntimeError("API Error")
 
         result = ChatbotService.get_ai_response(query="How do I login?", user_role='user')
@@ -861,12 +881,14 @@ class ChatbotServiceErrorMessageTests(TestCase):
 class ChatbotServiceContextUsageTests(TestCase):
     """Tests to verify context is actually built and used (kills #20)"""
 
+    @patch('home.services.chatbot_service.settings')
     @patch('home.services.chatbot_service.ChatbotService._call_openai_api')
     @patch('home.services.chatbot_service.ChatbotService._build_context')
-    def test_context_is_built_and_passed(self, mock_build_context, mock_openai):
+    def test_context_is_built_and_passed(self, mock_build_context, mock_openai, mock_settings):
         """Context should be built and passed to OpenAI (kills #20)"""
         from home.services.chatbot_service import ChatbotService
 
+        mock_settings.OPENAI_API_KEY = 'test-key'
         mock_build_context.return_value = "Test context content"
         mock_openai.return_value = "Test response"
 
