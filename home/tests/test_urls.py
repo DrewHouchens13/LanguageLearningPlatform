@@ -1,8 +1,8 @@
 from django.test import TestCase
-from django.urls import reverse, resolve
+from django.urls import resolve, reverse
 
-from home.views import account_view, forgot_password_view, reset_password_view, forgot_username_view
-
+from home.views import (account_view, forgot_password_view,
+                        forgot_username_view, reset_password_view)
 
 # ============================================================================
 # URL ROUTING TESTS FOR NEW VIEWS

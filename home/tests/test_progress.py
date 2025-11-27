@@ -6,20 +6,19 @@ SOFA Refactoring (Sprint 4):
 - Single Responsibility: Each test focuses on one aspect
 """
 
-from django.test import TestCase, Client
+import json
+from datetime import timedelta
+
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
-from datetime import timedelta
-from home.models import UserProgress, QuizResult, LessonCompletion
-import json
 
+from home.models import LessonCompletion, QuizResult, UserProgress
 # SOFA: DRY - Import reusable test helpers
-from home.tests.test_helpers import (
-    create_test_user,
-    create_test_onboarding_questions,
-    create_test_onboarding_attempt,
-    submit_onboarding_answers
-)
+from home.tests.test_helpers import (create_test_onboarding_attempt,
+                                     create_test_onboarding_questions,
+                                     create_test_user,
+                                     submit_onboarding_answers)
 
 
 class TestOnboardingStatsPopulation(TestCase):

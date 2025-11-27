@@ -5,8 +5,8 @@ This test module verifies that settings.py behaves correctly under different
 environment configurations (development, production, DevEDU, etc.).
 """
 
-from django.test import TestCase, override_settings
 from django.conf import settings
+from django.test import TestCase, override_settings
 
 
 class TestDevEnvironmentDetection(TestCase):

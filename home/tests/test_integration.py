@@ -3,11 +3,12 @@ Integration tests for complete user flows.
 Tests end-to-end scenarios that span multiple views and components.
 """
 import json
-from django.test import TestCase, Client
+
 from django.contrib.auth.models import User
+from django.test import Client, TestCase
 from django.urls import reverse
 
-from home.models import OnboardingQuestion, OnboardingAttempt, UserProfile
+from home.models import OnboardingAttempt, OnboardingQuestion, UserProfile
 
 
 def create_test_questions():
@@ -216,6 +217,7 @@ class ProgressTrackingFlowTest(TestCase):
 
         # Create onboarding data
         from django.utils import timezone
+
         # Use auto-created profile and update it
         profile = user.profile
         profile.proficiency_level = 'A2'

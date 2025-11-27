@@ -1,12 +1,8 @@
 from django.core.management.base import BaseCommand, CommandError
 
 from home.language_registry import normalize_language_name
-from home.models import (
-    Flashcard,
-    Lesson,
-    LessonQuizQuestion,
-    OnboardingQuestion,
-)
+from home.models import (Flashcard, Lesson, LessonQuizQuestion,
+                         OnboardingQuestion)
 from home.seed_content import ONBOARDING_QUESTION_SETS, build_lesson_blueprints
 
 

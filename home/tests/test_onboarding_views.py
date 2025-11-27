@@ -6,19 +6,18 @@ SOFA Refactoring (Sprint 4):
 - Single Responsibility: Each test focuses on one aspect
 """
 
-from django.test import TestCase, Client
-from django.contrib.auth.models import User
-from django.urls import reverse
-from home.models import OnboardingQuestion, OnboardingAttempt, UserProfile
 import json
 
+from django.contrib.auth.models import User
+from django.test import Client, TestCase
+from django.urls import reverse
+
+from home.models import OnboardingAttempt, OnboardingQuestion, UserProfile
 # SOFA: DRY - Import reusable test helpers
-from home.tests.test_helpers import (
-    create_test_user,
-    create_test_onboarding_questions,
-    create_test_onboarding_attempt,
-    submit_onboarding_answers
-)
+from home.tests.test_helpers import (create_test_onboarding_attempt,
+                                     create_test_onboarding_questions,
+                                     create_test_user,
+                                     submit_onboarding_answers)
 
 
 class TestOnboardingWelcomeView(TestCase):
@@ -362,7 +361,7 @@ class TestOnboardingRetakeBlocking(TestCase):
     def test_guest_with_session_done_can_retake(self):
         """Guests can restart even if prior attempt in same session was completed."""
         from django.utils import timezone
-        
+
         # Create a completed guest attempt
         attempt = OnboardingAttempt.objects.create(
             user=None,

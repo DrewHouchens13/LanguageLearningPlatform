@@ -1,15 +1,13 @@
-from django.test import TestCase, Client
 from django.contrib.auth.models import User
-from django.http import HttpRequest
-from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.messages import get_messages
+from django.contrib.messages.storage.fallback import FallbackStorage
+from django.http import HttpRequest
+from django.test import Client, TestCase
 
-from home.models import UserProgress, LessonCompletion, QuizResult
-from home.admin import (
-    delete_user_avatars, delete_user_avatars_from_users
-)
-from .test_utils import create_test_user, create_test_superuser, AdminTestCase
+from home.admin import delete_user_avatars, delete_user_avatars_from_users
+from home.models import LessonCompletion, QuizResult, UserProgress
 
+from .test_utils import AdminTestCase, create_test_superuser, create_test_user
 
 # ============================================================================
 # ADMIN TESTS
@@ -38,9 +36,10 @@ class TestAdminCustomActions(TestCase):
 
     def test_reset_password_to_default_action(self):
         """Test admin action to reset user password to secure random password"""
-        from home.admin import reset_password_to_default
         from django.contrib.admin.sites import AdminSite
         from django.contrib.auth.admin import UserAdmin
+
+        from home.admin import reset_password_to_default
 
         # Store old password
         old_password = self.test_user.password
@@ -68,9 +67,10 @@ class TestAdminCustomActions(TestCase):
 
     def test_make_staff_admin_action(self):
         """Test admin action to make user an administrator"""
-        from home.admin import make_staff_admin
         from django.contrib.admin.sites import AdminSite
         from django.contrib.auth.admin import UserAdmin
+
+        from home.admin import make_staff_admin
 
         # Verify user is not admin initially
         self.assertFalse(self.test_user.is_staff)
@@ -92,9 +92,10 @@ class TestAdminCustomActions(TestCase):
 
     def test_remove_admin_privileges_action(self):
         """Test admin action to remove admin privileges"""
-        from home.admin import remove_admin_privileges
         from django.contrib.admin.sites import AdminSite
         from django.contrib.auth.admin import UserAdmin
+
+        from home.admin import remove_admin_privileges
 
         # Make user admin first
         self.test_user.is_staff = True
@@ -117,9 +118,10 @@ class TestAdminCustomActions(TestCase):
 
     def test_reset_user_progress_action(self):
         """Test admin action to reset user progress"""
-        from home.admin import reset_user_progress
         from django.contrib.admin.sites import AdminSite
         from django.contrib.auth.admin import UserAdmin
+
+        from home.admin import reset_user_progress
 
         # Create progress data for user
         progress = UserProgress.objects.create(
@@ -163,9 +165,9 @@ class TestAdminCustomActions(TestCase):
 
     def test_reset_progress_stats_action(self):
         """Test admin action to reset UserProgress statistics"""
-        from home.admin import reset_progress_stats
         from django.contrib.admin.sites import AdminSite
-        from home.admin import UserProgressAdmin
+
+        from home.admin import UserProgressAdmin, reset_progress_stats
 
         # Create progress data
         progress = UserProgress.objects.create(
@@ -207,8 +209,9 @@ class TestAdminCustomActions(TestCase):
 
     def test_admin_user_list_display(self):
         """Test custom user admin list display"""
-        from home.admin import CustomUserAdmin
         from django.contrib.admin.sites import AdminSite
+
+        from home.admin import CustomUserAdmin
 
         admin = CustomUserAdmin(User, AdminSite())
 
@@ -217,8 +220,9 @@ class TestAdminCustomActions(TestCase):
 
     def test_get_progress_info_with_progress(self):
         """Test get_progress_info displays user progress data"""
-        from home.admin import CustomUserAdmin
         from django.contrib.admin.sites import AdminSite
+
+        from home.admin import CustomUserAdmin
 
         # Create user with progress
         _progress = UserProgress.objects.create(
@@ -255,8 +259,9 @@ class TestAdminCustomActions(TestCase):
 
     def test_get_progress_info_without_progress(self):
         """Test get_progress_info when user has no progress"""
-        from home.admin import CustomUserAdmin
         from django.contrib.admin.sites import AdminSite
+
+        from home.admin import CustomUserAdmin
 
         admin = CustomUserAdmin(User, AdminSite())
         progress_info = admin.get_progress_info(self.test_user)
@@ -271,8 +276,9 @@ class TestAdminCustomActions(TestCase):
         Verifies that the bulk delete action removes lesson completions
         and displays a success message to the admin user.
         """
-        from home.admin import delete_selected_lessons, LessonCompletionAdmin
         from django.contrib.admin.sites import AdminSite
+
+        from home.admin import LessonCompletionAdmin, delete_selected_lessons
 
         # Create lesson completions
         _lesson1 = LessonCompletion.objects.create(
@@ -315,8 +321,9 @@ class TestAdminCustomActions(TestCase):
         Verifies that the bulk delete action removes quiz results
         and displays a success message to the admin user.
         """
-        from home.admin import delete_selected_quizzes, QuizResultAdmin
         from django.contrib.admin.sites import AdminSite
+
+        from home.admin import QuizResultAdmin, delete_selected_quizzes
 
         # Create quiz results
         _quiz1 = QuizResult.objects.create(
@@ -355,6 +362,7 @@ class TestAdminCustomActions(TestCase):
     def test_delete_user_avatars_action(self):
         """Test delete_user_avatars admin action for content moderation"""
         from django.core.files.base import ContentFile
+
         from home.models import UserProfile
 
         # Set avatar directly without image processing
@@ -389,6 +397,7 @@ class TestAdminCustomActions(TestCase):
     def test_delete_user_avatars_from_users_action(self):
         """Test delete_user_avatars_from_users admin action (User admin wrapper)"""
         from django.core.files.base import ContentFile
+
         from home.models import UserProfile
 
         # Set avatar directly without image processing
@@ -428,7 +437,6 @@ class TestAdminCustomActions(TestCase):
         from home.models import UserProfile
 
         # Both users use Gravatar (no custom avatars)
-
         # Create request and add message storage
         request = HttpRequest()
         request.user = self.admin_user
@@ -666,8 +674,9 @@ class TestAdminSearchAndFilters(AdminTestCase):
 
     def test_admin_list_filters_present(self):
         """Test that admin list filters are configured"""
-        from home.admin import CustomUserAdmin
         from django.contrib.admin.sites import AdminSite
+
+        from home.admin import CustomUserAdmin
 
         admin = CustomUserAdmin(User, AdminSite())
 

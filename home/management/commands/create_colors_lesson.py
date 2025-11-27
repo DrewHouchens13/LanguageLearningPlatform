@@ -2,7 +2,8 @@
 Django management command to create the Colors lesson with flashcards and quiz questions.
 """
 from django.core.management.base import BaseCommand
-from home.models import Lesson, Flashcard, LessonQuizQuestion
+
+from home.models import Flashcard, Lesson, LessonQuizQuestion
 
 
 class Command(BaseCommand):

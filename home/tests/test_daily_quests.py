@@ -3,9 +3,12 @@ Unit tests for Daily Quest models and functionality.
 Following TDD - write tests first, then implement models.
 """
 from datetime import date, timedelta
-from django.test import TestCase
+
 from django.contrib.auth.models import User
-from home.models import Lesson, DailyQuest, DailyQuestQuestion, UserDailyQuestAttempt
+from django.test import TestCase
+
+from home.models import (DailyQuest, DailyQuestQuestion, Lesson,
+                         UserDailyQuestAttempt)
 
 
 class TestDailyQuestModel(TestCase):

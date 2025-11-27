@@ -22,17 +22,12 @@ Sprint 4: 100% Pylint compliance requirement (20pts)
 """
 
 import json
+
 from django.contrib.auth.models import User
 from django.urls import reverse
 
-from home.models import (
-    OnboardingQuestion,
-    OnboardingAttempt,
-    DailyQuest,
-    UserDailyQuestAttempt,
-    Lesson,
-)
-
+from home.models import (DailyQuest, Lesson, OnboardingAttempt,
+                         OnboardingQuestion, UserDailyQuestAttempt)
 
 # ============================================================================
 # USER HELPERS (SOFA: Single Responsibility)

@@ -3,6 +3,7 @@ Service layer tests - primarily for onboarding level calculation algorithm.
 Tests the critical cascading algorithm that determines user proficiency level.
 """
 from django.test import TestCase
+
 from home.models import OnboardingQuestion
 from home.services.onboarding_service import OnboardingService
 

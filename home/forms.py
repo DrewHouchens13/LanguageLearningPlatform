@@ -2,9 +2,11 @@
 Forms for the home app, including user profile avatar upload.
 """
 import os
+
 from django import forms
 from django.core.exceptions import ValidationError
 from PIL import Image
+
 from .models import UserProfile
 
 

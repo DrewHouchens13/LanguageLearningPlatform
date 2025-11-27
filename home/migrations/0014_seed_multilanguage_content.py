@@ -1,6 +1,5 @@
 from django.db import migrations
 
-
 LANGUAGES_TO_SEED = ['French', 'German', 'Korean']
 
 
@@ -10,7 +9,8 @@ def seed_multilanguage_content(apps, schema_editor):
     LessonQuizQuestion = apps.get_model('home', 'LessonQuizQuestion')
     OnboardingQuestion = apps.get_model('home', 'OnboardingQuestion')
 
-    from home.seed_content import ONBOARDING_QUESTION_SETS, build_lesson_blueprints
+    from home.seed_content import (ONBOARDING_QUESTION_SETS,
+                                   build_lesson_blueprints)
 
     for language in LANGUAGES_TO_SEED:
         question_set = ONBOARDING_QUESTION_SETS.get(language, [])

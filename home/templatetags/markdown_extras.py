@@ -13,9 +13,9 @@ Security:
 
 import logging
 
-from django import template
-import markdown as md
 import bleach
+import markdown as md
+from django import template
 
 logger = logging.getLogger(__name__)
 register = template.Library()

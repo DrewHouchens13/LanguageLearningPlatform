@@ -1,11 +1,12 @@
 """
 Tests for Colors lesson management command and integration.
 """
-from django.test import TestCase, Client
-from django.core.management import call_command
-from django.urls import reverse
-from django.contrib.auth.models import User
 import json
+
+from django.contrib.auth.models import User
+from django.core.management import call_command
+from django.test import Client, TestCase
+from django.urls import reverse
 
 from home.models import Lesson, LessonAttempt
 

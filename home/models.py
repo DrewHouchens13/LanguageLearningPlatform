@@ -1,17 +1,18 @@
-from django.db import models, IntegrityError, DatabaseError, transaction
-from django.db.models import Sum, Count
+import hashlib
+import logging
+import os
+from io import BytesIO
+
 from django.contrib.auth.models import User
-from django.utils import timezone
-from django.utils.text import slugify
+from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
+from django.db import DatabaseError, IntegrityError, models, transaction
+from django.db.models import Count, Sum
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.core.files.base import ContentFile
-from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.utils.text import slugify
 from PIL import Image, UnidentifiedImageError
-from io import BytesIO
-import hashlib
-import os
-import logging
 
 from .language_registry import DEFAULT_LANGUAGE
 

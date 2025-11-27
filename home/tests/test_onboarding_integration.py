@@ -6,22 +6,20 @@ SOFA Refactoring (Sprint 4):
 - Single Responsibility: Each test focuses on one complete flow
 """
 
-from django.test import TestCase, Client
-from django.contrib.auth.models import User
-from django.urls import reverse
-from home.models import (
-    OnboardingQuestion, OnboardingAttempt, UserProfile,
-    QuizResult, UserProgress
-)
 import json
 
+from django.contrib.auth.models import User
+from django.test import Client, TestCase
+from django.urls import reverse
+
+from home.models import (OnboardingAttempt, OnboardingQuestion, QuizResult,
+                         UserProfile, UserProgress)
 # SOFA: DRY - Use centralized test helpers instead of local duplicates
-from home.tests.test_helpers import (
-    create_test_user,
-    create_test_onboarding_questions as create_test_questions,  # Alias for compatibility
-    create_test_onboarding_attempt,
-    submit_onboarding_answers
-)
+from home.tests.test_helpers import create_test_onboarding_attempt
+from home.tests.test_helpers import \
+    create_test_onboarding_questions as \
+    create_test_questions  # Alias for compatibility
+from home.tests.test_helpers import create_test_user, submit_onboarding_answers
 
 
 class TestCompleteGuestOnboardingFlow(TestCase):
