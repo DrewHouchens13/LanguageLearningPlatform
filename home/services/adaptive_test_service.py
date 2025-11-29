@@ -25,7 +25,7 @@ import logging
 import os
 import random
 from datetime import timedelta
-from typing import Optional
+from typing import Optional, Dict, List
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -219,11 +219,11 @@ class AdaptiveTestService:
             progress.completed_at = timezone.now()
         else:
             # Calculate retry time
-            retry_time = timezone.now() + timedelta(hours=self.RETRY_COOLDOWN_HOURS)
+            retry_time = timezone.now() + timedelta(minutes=self.RETRY_COOLDOWN_MINUTES)
             result['can_retry_at'] = retry_time
             result['feedback'].append(
                 f"You scored {score:.0f}%. You need {self.PASSING_SCORE}% to advance. "
-                f"Review the lessons and try again in {self.RETRY_COOLDOWN_HOURS} hours."
+                f"Review the lessons and try again in {self.RETRY_COOLDOWN_MINUTES} minutes."
             )
         
         progress.save()
@@ -435,6 +435,192 @@ class AdaptiveTestService:
         
         return questions
     
+    def _load_level_fixture(self, language: str, level: int) -> Optional[Dict]:
+        """
+        Load the level fixture data for a specific language and level.
+        
+        Args:
+            language: Target language
+            level: Proficiency level
+            
+        Returns:
+            dict: Fixture data or None if not found
+        """
+        try:
+            language_dir = language.strip().lower()
+            fixture_path = os.path.join(
+                settings.BASE_DIR,
+                'home',
+                'fixtures',
+                'curriculum',
+                language_dir,
+                f'level_{level:02d}.json'
+            )
+            
+            if not os.path.exists(fixture_path):
+                logger.warning('Fixture not found: %s', fixture_path)
+                return None
+            
+            with open(fixture_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+                
+        except Exception as e:
+            logger.error('Failed to load fixture for %s level %d: %s', language, level, str(e))
+            return None
+    
+    def _extract_lesson_content(self, fixture: Dict, skill: str) -> Dict:
+        """
+        Extract relevant lesson content for a specific skill from fixture data.
+        
+        Args:
+            fixture: Complete fixture data
+            skill: Skill category to extract
+            
+        Returns:
+            dict: Extracted content for the skill
+        """
+        if not fixture or 'lessons' not in fixture:
+            return {}
+        
+        # Find the lesson for this skill
+        lesson = None
+        for l in fixture.get('lessons', []):
+            if l.get('skill', '').lower() == skill.lower():
+                lesson = l
+                break
+        
+        if not lesson:
+            return {}
+        
+        # Extract relevant content based on skill type
+        content = {
+            'title': lesson.get('title', ''),
+            'description': lesson.get('description', ''),
+            'flashcards': lesson.get('flashcards', []),
+            'quiz_questions': lesson.get('quiz_questions', []),
+        }
+        
+        # For vocabulary: extract all vocabulary words
+        if skill.lower() == 'vocabulary':
+            vocab_words = []
+            for card in content.get('flashcards', []):
+                vocab_words.append({
+                    'english': card.get('front', ''),
+                    'target_language': card.get('back', '')
+                })
+            content['vocabulary_words'] = vocab_words
+        
+        # For grammar: extract grammar concepts from flashcards
+        elif skill.lower() == 'grammar':
+            grammar_concepts = []
+            for card in content.get('flashcards', []):
+                grammar_concepts.append({
+                    'concept': card.get('front', ''),
+                    'example': card.get('back', '')
+                })
+            content['grammar_concepts'] = grammar_concepts
+        
+        # For conversation: extract phrases and scenarios
+        elif skill.lower() == 'conversation':
+            phrases = []
+            for card in content.get('flashcards', []):
+                phrases.append({
+                    'english': card.get('front', ''),
+                    'target_language': card.get('back', '')
+                })
+            content['phrases'] = phrases
+        
+        return content
+    
+    def _build_lesson_context_prompt(self, lesson_content: Dict, skill: str) -> str:
+        """
+        Build a detailed context prompt section from lesson content.
+        
+        Args:
+            lesson_content: Extracted lesson content
+            skill: Skill category
+            
+        Returns:
+            str: Formatted context section for the prompt
+        """
+        if not lesson_content:
+            return ""
+        
+        context_parts = []
+        
+        # Add lesson title and description
+        if lesson_content.get('title'):
+            context_parts.append(f"Lesson Title: {lesson_content['title']}")
+        if lesson_content.get('description'):
+            context_parts.append(f"Lesson Description: {lesson_content['description']}")
+        
+        context_parts.append("")  # Blank line
+        
+        # Add skill-specific content
+        if skill.lower() == 'vocabulary':
+            vocab_words = lesson_content.get('vocabulary_words', [])
+            if vocab_words:
+                context_parts.append("VOCABULARY WORDS TAUGHT IN THIS LESSON:")
+                for word in vocab_words[:20]:  # Limit to avoid token overflow
+                    context_parts.append(f"  - {word['english']} = {word['target_language']}")
+                context_parts.append("")
+                context_parts.append("IMPORTANT: Generate questions that test understanding of these specific words:")
+                context_parts.append("- Word meanings and translations")
+                context_parts.append("- Usage in context and sentences")
+                context_parts.append("- Appropriate situations for each word")
+                context_parts.append("- Distinguishing between similar words")
+        
+        elif skill.lower() == 'grammar':
+            grammar_concepts = lesson_content.get('grammar_concepts', [])
+            if grammar_concepts:
+                context_parts.append("GRAMMAR CONCEPTS TAUGHT IN THIS LESSON:")
+                for concept in grammar_concepts[:15]:  # Limit to avoid token overflow
+                    context_parts.append(f"  - {concept['concept']} → {concept['example']}")
+                context_parts.append("")
+                context_parts.append("IMPORTANT: Generate questions that test understanding of these specific grammar rules:")
+                context_parts.append("- Correct application of these rules")
+                context_parts.append("- Identifying correct vs incorrect usage")
+                context_parts.append("- Sentence construction using these concepts")
+        
+        elif skill.lower() == 'conversation':
+            phrases = lesson_content.get('phrases', [])
+            if phrases:
+                context_parts.append("CONVERSATION PHRASES TAUGHT IN THIS LESSON:")
+                for phrase in phrases[:15]:  # Limit to avoid token overflow
+                    context_parts.append(f"  - {phrase['english']} = {phrase['target_language']}")
+                context_parts.append("")
+                context_parts.append("IMPORTANT: Generate questions that test understanding of these phrases:")
+                context_parts.append("- When to use each phrase")
+                context_parts.append("- Appropriate responses in conversations")
+                context_parts.append("- Social context and formality levels")
+        
+        elif skill.lower() == 'reading':
+            # Use flashcards and quiz questions as context
+            flashcards = lesson_content.get('flashcards', [])
+            if flashcards:
+                context_parts.append("READING CONTENT FROM THIS LESSON:")
+                for card in flashcards[:10]:
+                    context_parts.append(f"  - {card.get('front', '')} / {card.get('back', '')}")
+                context_parts.append("")
+                context_parts.append("IMPORTANT: Generate questions that test reading comprehension:")
+                context_parts.append("- Understanding of simple texts and sentences")
+                context_parts.append("- Identifying key information")
+                context_parts.append("- Interpreting meaning from context")
+        
+        elif skill.lower() == 'listening':
+            flashcards = lesson_content.get('flashcards', [])
+            if flashcards:
+                context_parts.append("LISTENING CONTENT FROM THIS LESSON:")
+                for card in flashcards[:10]:
+                    context_parts.append(f"  - {card.get('front', '')} / {card.get('back', '')}")
+                context_parts.append("")
+                context_parts.append("IMPORTANT: Generate questions that test listening comprehension:")
+                context_parts.append("- Recognizing pronunciation and sounds")
+                context_parts.append("- Understanding spoken words and phrases")
+                context_parts.append("- Distinguishing between similar sounds")
+        
+        return "\n".join(context_parts)
+    
     def _generate_ai_questions(
         self,
         language: str,
@@ -443,7 +629,7 @@ class AdaptiveTestService:
         count: int
     ) -> list:
         """
-        Generate questions using OpenAI.
+        Generate questions using OpenAI with lesson-specific context.
         
         Args:
             language: Target language
@@ -460,52 +646,93 @@ class AdaptiveTestService:
             client = OpenAI(api_key=self.api_key)
             theme = self.LEVEL_THEMES.get(level, self.LEVEL_THEMES[1])
             
-            prompt = f"""Generate {count} multiple-choice questions for a {language} language test.
-
-Level: {level}/10 ({theme['name']})
-Skill Focus: {skill}
-Topics: {', '.join(theme['topics'])}
-
-CRITICAL REQUIREMENTS:
-- Questions should test {skill} knowledge at level {level}
-- Each question must have exactly 4 options
-- Only one correct answer per question (correct_index: 0-3)
-- Include a brief explanation for the correct answer
-- Questions should be appropriate for this proficiency level
-- All fields are required: question, options, correct_index, explanation, skill
-- NO DUPLICATE QUESTIONS: Each question must be unique and test different concepts
-- VARIETY: If generating multiple questions, ensure they cover different aspects of {skill}
-- NOT ALL VOCABULARY: If skill is vocabulary, include questions about word usage, context, and meaning - not just word definitions
-
-Question Diversity Guidelines:
-- For vocabulary: Mix word meanings, usage in context, synonyms/antonyms, and collocations
-- For grammar: Cover different grammar rules, sentence structures, and verb forms
-- For conversation: Include different conversation scenarios, common phrases, and social contexts
-- For reading: Test comprehension of different text types and reading strategies
-- For listening: Cover different listening contexts and comprehension skills
-
-Return as JSON object with "questions" key containing an array:
-{{
-  "questions": [
-    {{
-      "question": "Question text in English asking about {language}",
-      "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
-      "correct_index": 0,
-      "explanation": "Brief explanation of why this is correct",
-      "skill": "{skill}"
-    }}
-  ]
-}}
-"""
+            # Load fixture data for this level
+            fixture = self._load_level_fixture(language, level)
+            lesson_content = self._extract_lesson_content(fixture, skill) if fixture else {}
+            lesson_context = self._build_lesson_context_prompt(lesson_content, skill)
+            
+            # Build the enhanced prompt
+            prompt_parts = [
+                f"Generate {count} multiple-choice questions for a {language} language test.",
+                "",
+                f"Level: {level}/10 ({theme['name']})",
+                f"Skill Focus: {skill}",
+                f"Theme Topics: {', '.join(theme['topics'])}",
+                ""
+            ]
+            
+            # Add lesson-specific context if available
+            if lesson_context:
+                prompt_parts.append("=" * 60)
+                prompt_parts.append("LESSON CONTENT - USE THIS AS THE BASIS FOR YOUR QUESTIONS:")
+                prompt_parts.append("=" * 60)
+                prompt_parts.append(lesson_context)
+                prompt_parts.append("")
+                prompt_parts.append("CRITICAL: Your questions MUST be based on the specific content listed above.")
+                prompt_parts.append("Do NOT generate generic questions. Test the actual material taught in this lesson.")
+                prompt_parts.append("")
+            else:
+                prompt_parts.append("NOTE: Lesson content not available. Generate appropriate questions for this level.")
+                prompt_parts.append("")
+            
+            prompt_parts.extend([
+                "=" * 60,
+                "QUESTION REQUIREMENTS:",
+                "=" * 60,
+                "",
+                "CRITICAL REQUIREMENTS:",
+                f"- Questions MUST test {skill} knowledge at level {level}",
+                "- Each question must have exactly 4 options",
+                "- Only one correct answer per question (correct_index: 0-3)",
+                "- Include a brief explanation for the correct answer",
+                "- Questions should be appropriate for this proficiency level",
+                "- All fields are required: question, options, correct_index, explanation, skill",
+                "",
+                "QUESTION DIVERSITY - AVOID REPETITION:",
+                f"- Generate {count} UNIQUE questions that test DIFFERENT aspects of {skill}",
+                "- Each question must test a different concept, word, rule, or scenario",
+                "- DO NOT create variations of the same question",
+                "- DO NOT ask the same thing in different words",
+                "- Cover the full breadth of content from the lesson",
+                "",
+                "Question Type Guidelines:",
+                "- For vocabulary: Mix word meanings, usage in context, synonyms/antonyms, collocations, and appropriate situations",
+                "- For grammar: Cover different grammar rules, sentence structures, verb forms, and correct vs incorrect usage",
+                "- For conversation: Include different conversation scenarios, common phrases, social contexts, and appropriate responses",
+                "- For reading: Test comprehension of different text types, reading strategies, and extracting key information",
+                "- For listening: Cover different listening contexts, pronunciation recognition, and comprehension skills",
+                "",
+                "Return as JSON object with \"questions\" key containing an array:",
+                "{",
+                "  \"questions\": [",
+                "    {",
+                f"      \"question\": \"Question text in English asking about {language}\",",
+                "      \"options\": [\"Option A text\", \"Option B text\", \"Option C text\", \"Option D text\"],",
+                "      \"correct_index\": 0,",
+                "      \"explanation\": \"Brief explanation of why this is correct\",",
+                f"      \"skill\": \"{skill}\"",
+                "    }",
+                "  ]",
+                "}"
+            ])
+            
+            prompt = "\n".join(prompt_parts)
+            
+            system_message = (
+                f"You are an expert {language} language teacher creating comprehensive test questions. "
+                "Your questions must be based on the specific lesson content provided. "
+                "Each question must test a DIFFERENT concept - avoid repetition and variations of the same question. "
+                "Always return valid JSON with exactly the structure requested."
+            )
             
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": f"You are a {language} language teacher creating test questions. Always return valid JSON with exactly the structure requested."},
+                    {"role": "system", "content": system_message},
                     {"role": "user", "content": prompt}
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.7,
+                temperature=0.8,  # Slightly higher for more variety
             )
             
             result = json.loads(response.choices[0].message.content)
