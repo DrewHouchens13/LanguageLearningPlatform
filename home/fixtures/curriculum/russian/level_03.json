@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Russian",
+    "level": 3,
+    "theme": "Getting Around",
+    "description": "Directions, transportation, places in the city, and asking for help in Russian."
+  },
+  "module": {
+    "name": "Getting Around",
+    "description": "Learn to navigate cities, use transportation, and ask for directions in Russian.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Transportation and Places",
+      "description": "Essential vocabulary for getting around town and using public transportation.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Street", "back": "Улица (Ulitsa)", "order": 1},
+        {"front": "Bus", "back": "Автобус (Avtobus)", "order": 2},
+        {"front": "Train", "back": "Поезд (Poyezd)", "order": 3},
+        {"front": "Airport", "back": "Аэропорт (Aeroport)", "order": 4},
+        {"front": "Left", "back": "Налево (Nalevo)", "order": 5},
+        {"front": "Right", "back": "Направо (Napravo)", "order": 6},
+        {"front": "Straight", "back": "Прямо (Pryamo)", "order": 7},
+        {"front": "Bank", "back": "Банк (Bank)", "order": 8},
+        {"front": "Hospital", "back": "Больница (Bol'nitsa)", "order": 9},
+        {"front": "Store/Shop", "back": "Магазин (Magazin)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'street' in Russian?",
+          "options": ["Площадь", "Улица", "Мост", "Переулок"],
+          "correct_index": 1,
+          "explanation": "'Улица' (ulitsa) means street.",
+          "order": 1
+        },
+        {
+          "question": "What does 'налево' mean?",
+          "options": ["Right", "Left", "Straight", "Back"],
+          "correct_index": 1,
+          "explanation": "'Налево' means to the left. 'Направо' is to the right.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'train' in Russian?",
+          "options": ["Автобус", "Самолёт", "Поезд", "Машина"],
+          "correct_index": 2,
+          "explanation": "'Поезд' (poyezd) means train.",
+          "order": 3
+        },
+        {
+          "question": "What is 'аэропорт' in English?",
+          "options": ["Bus station", "Train station", "Airport", "Port"],
+          "correct_index": 2,
+          "explanation": "'Аэропорт' means airport.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'straight ahead'?",
+          "options": ["Налево", "Направо", "Прямо", "Назад"],
+          "correct_index": 2,
+          "explanation": "'Прямо' (pryamo) means straight ahead.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Giving Directions and Prepositional Case",
+      "description": "Learn direction phrases and the prepositional case for locations.",
+      "order": 2,
+      "flashcards": [
+        {"front": "Turn (command)", "back": "Поверните (Povernite)", "order": 1},
+        {"front": "Go (command)", "back": "Идите (Idite)", "order": 2},
+        {"front": "next to", "back": "рядом с (ryadom s) + instr.", "order": 3},
+        {"front": "in front of", "back": "перед (pered) + instr.", "order": 4},
+        {"front": "behind", "back": "за (za) + instr.", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Turn left' (formal command)?",
+          "options": ["Поверни налево", "Поверните налево", "Налево повернуть", "Повернуть налево"],
+          "correct_index": 1,
+          "explanation": "'Поверните' is the formal imperative of 'повернуть'.",
+          "order": 1
+        },
+        {
+          "question": "What does 'рядом с' mean?",
+          "options": ["In front of", "Behind", "Next to", "Far from"],
+          "correct_index": 2,
+          "explanation": "'Рядом с' (+ instrumental) means 'next to'.",
+          "order": 2
+        },
+        {
+          "question": "Complete: 'Банк находится ___ больницей' (in front of)",
+          "options": ["за", "рядом с", "перед", "далеко от"],
+          "correct_index": 2,
+          "explanation": "'Перед' (+ instrumental) means 'in front of'.",
+          "order": 3
+        },
+        {
+          "question": "'Идите прямо' means:",
+          "options": ["Turn right", "Turn left", "Go straight", "Go back"],
+          "correct_index": 2,
+          "explanation": "'Идите прямо' = Go straight.",
+          "order": 4
+        },
+        {
+          "question": "The preposition 'между' means:",
+          "options": ["Behind", "In front of", "Between", "Under"],
+          "correct_index": 2,
+          "explanation": "'Между' (+ instrumental) means between.",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'by metro'?",
+          "options": ["Метро", "На метро", "К метро", "От метро"],
+          "correct_index": 1,
+          "explanation": "'На метро' - на + transport for traveling by.",
+          "order": 6
+        },
+        {
+          "question": "'На следующем перекрёстке поверните направо' means:",
+          "options": ["Go left at the corner", "Go straight", "Turn right at the next intersection", "Turn around"],
+          "correct_index": 2,
+          "explanation": "'На следующем перекрёстке' = at the next intersection.",
+          "order": 7
+        },
+        {
+          "question": "Which word means 'near'?",
+          "options": ["Далеко", "Близко / Рядом", "Внутри", "Снаружи"],
+          "correct_index": 1,
+          "explanation": "'Близко' or 'Рядом' means near. 'Далеко' is far.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Asking for Directions",
+      "description": "Practice asking for and understanding directions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Where is the...?", "back": "Где находится...? (Gde nakhoditsya...?)", "order": 1},
+        {"front": "How do I get to...?", "back": "Как добраться до...? (Kak dobrat'sya do...?)", "order": 2},
+        {"front": "Is it far?", "back": "Это далеко? (Eto daleko?)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Where is the bank?'",
+          "options": ["Что такое банк?", "Где находится банк?", "Когда банк?", "Какой банк?"],
+          "correct_index": 1,
+          "explanation": "'Где находится...?' asks for location.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Как добраться до вокзала?' mean?",
+          "options": ["Where is the station?", "How do I get to the station?", "When does the station open?", "What is the station?"],
+          "correct_index": 1,
+          "explanation": "'Как добраться до...?' = How do I get to...?",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'It's about 5 minutes'?",
+          "options": ["Примерно пять минут", "Есть пять минут", "Пять минут это", "На пять минут"],
+          "correct_index": 0,
+          "explanation": "'Примерно пять минут' = It's about 5 minutes.",
+          "order": 3
+        },
+        {
+          "question": "What does 'Есть ли поблизости аптека?' mean?",
+          "options": ["Where is the pharmacy?", "Is there a pharmacy nearby?", "How is the pharmacy?", "What pharmacy?"],
+          "correct_index": 1,
+          "explanation": "'Есть ли...поблизости?' = Is there a...nearby?",
+          "order": 4
+        },
+        {
+          "question": "How would you respond to 'Это далеко?' if it's close?",
+          "options": ["Да, очень далеко", "Нет, совсем близко", "Не знаю", "Может быть"],
+          "correct_index": 1,
+          "explanation": "'Нет, совсем близко' = No, it's very close.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Signs and Maps",
+      "description": "Understand common signs, directions, and transit information.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Entrance", "back": "Вход (Vkhod)", "order": 1},
+        {"front": "Exit", "back": "Выход (Vykhod)", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'Чтобы дойти до музея, идите прямо, потом поверните налево.' What direction do you turn?",
+          "options": ["Right", "Left", "Go back", "Don't turn"],
+          "correct_index": 1,
+          "explanation": "'Поверните налево' = turn left.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'До метро пять минут пешком.' How do you get there?",
+          "options": ["By car", "By bus", "Walking", "By taxi"],
+          "correct_index": 2,
+          "explanation": "'Пешком' (peshkom) means on foot/walking.",
+          "order": 2
+        },
+        {
+          "question": "Read sign: 'СТОЯНКА ЗАПРЕЩЕНА'. What is prohibited?",
+          "options": ["Entry", "Exit", "Parking", "Smoking"],
+          "correct_index": 2,
+          "explanation": "'Стоянка' means parking.",
+          "order": 3
+        },
+        {
+          "question": "Read: 'Автобусная остановка находится перед банком.' Where is the bus stop?",
+          "options": ["Behind the bank", "Inside the bank", "In front of the bank", "Far from the bank"],
+          "correct_index": 2,
+          "explanation": "'Перед' = in front of.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'Поезд отправляется в девять часов утра.' When does the train leave?",
+          "options": ["9 PM", "9 AM", "At night", "Noon"],
+          "correct_index": 1,
+          "explanation": "'В девять часов утра' = at 9 in the morning.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Understanding Transit Announcements",
+      "description": "Train your ear to understand transportation announcements.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Next stop", "back": "Следующая остановка (Sleduyushchaya ostanovka)", "order": 1},
+        {"front": "Platform", "back": "Платформа (Platforma) / Путь (Put')", "order": 2},
+        {"front": "Departure", "back": "Отправление (Otpravleniye)", "order": 3},
+        {"front": "Arrival", "back": "Прибытие (Pribytiye)", "order": 4},
+        {"front": "Ticket", "back": "Билет (Bilet)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "You hear 'Следующая остановка: Красная площадь'. What are you being told?",
+          "options": ["Final stop", "Next stop is Red Square", "Transfer point", "End of service"],
+          "correct_index": 1,
+          "explanation": "'Следующая остановка' announces the next stop.",
+          "order": 1
+        },
+        {
+          "question": "What does 'третий путь' mean?",
+          "options": ["Bus number 3", "Platform/Track 3", "Route 3", "Gate 3"],
+          "correct_index": 1,
+          "explanation": "'Путь' means track/platform.",
+          "order": 2
+        },
+        {
+          "question": "You hear 'Поезд до Москвы'. Where is the train going?",
+          "options": ["From Moscow", "To Moscow", "Near Moscow", "Around Moscow"],
+          "correct_index": 1,
+          "explanation": "'До' (+ genitive) indicates destination = to Moscow.",
+          "order": 3
+        },
+        {
+          "question": "'Отправление' and 'Прибытие' are:",
+          "options": ["Departure and Arrival", "Entry and Exit", "Start and End", "Open and Closed"],
+          "correct_index": 0,
+          "explanation": "'Отправление' = departure, 'Прибытие' = arrival.",
+          "order": 4
+        },
+        {
+          "question": "You hear 'Пожалуйста, приготовьте билеты'. What should you do?",
+          "options": ["Wait for the train", "Please have your tickets ready", "Find your seat", "Show your ID"],
+          "correct_index": 1,
+          "explanation": "'Приготовьте билеты' = Have your tickets ready.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

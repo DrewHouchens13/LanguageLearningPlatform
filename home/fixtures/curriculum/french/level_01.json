@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "French",
+    "level": 1,
+    "theme": "Basics",
+    "description": "Essential greetings, numbers 1-10, colors, and basic phrases to start your French journey."
+  },
+  "module": {
+    "name": "Basics",
+    "description": "Learn essential greetings, numbers, colors, and basic phrases to start your French journey.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Essential French Words",
+      "description": "Build your foundation with the most important French words including greetings, numbers, and colors.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Hello", "back": "Bonjour", "order": 1},
+        {"front": "Goodbye", "back": "Au revoir", "order": 2},
+        {"front": "Please", "back": "S'il vous plaît", "order": 3},
+        {"front": "Thank you", "back": "Merci", "order": 4},
+        {"front": "Yes", "back": "Oui", "order": 5},
+        {"front": "No", "back": "Non", "order": 6},
+        {"front": "Good morning", "back": "Bonjour", "order": 7},
+        {"front": "Good evening", "back": "Bonsoir", "order": 8},
+        {"front": "Excuse me", "back": "Excusez-moi", "order": 9},
+        {"front": "I'm sorry", "back": "Je suis désolé(e)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Hello' in French?",
+          "options": ["Au revoir", "Bonjour", "Merci", "S'il vous plaît"],
+          "correct_index": 1,
+          "explanation": "'Bonjour' is the most common way to say hello in French, used until evening.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Merci' mean?",
+          "options": ["Please", "Goodbye", "Thank you", "Hello"],
+          "correct_index": 2,
+          "explanation": "'Merci' means 'Thank you' in French.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'Goodbye' in French?",
+          "options": ["Bonjour", "Bonsoir", "Au revoir", "Merci"],
+          "correct_index": 2,
+          "explanation": "'Au revoir' literally means 'until we see again'.",
+          "order": 3
+        },
+        {
+          "question": "What is 'Please' in French?",
+          "options": ["Merci", "Pardon", "S'il vous plaît", "Excusez-moi"],
+          "correct_index": 2,
+          "explanation": "'S'il vous plaît' (formal) or 's'il te plaît' (informal) means 'please'.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'Good evening' in French?",
+          "options": ["Bonne nuit", "Bonjour", "Bonsoir", "Salut"],
+          "correct_index": 2,
+          "explanation": "'Bonsoir' is used from late afternoon onwards.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Basic French Grammar",
+      "description": "Learn fundamental grammar concepts: articles, gender, and simple sentence structure.",
+      "order": 2,
+      "flashcards": [
+        {"front": "the (masculine singular)", "back": "le", "order": 1},
+        {"front": "the (feminine singular)", "back": "la", "order": 2},
+        {"front": "the (plural)", "back": "les", "order": 3},
+        {"front": "a/an (masculine)", "back": "un", "order": 4},
+        {"front": "a/an (feminine)", "back": "une", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which article is used with masculine singular nouns?",
+          "options": ["la", "le", "les", "l'"],
+          "correct_index": 1,
+          "explanation": "'Le' is the definite article for masculine singular nouns.",
+          "order": 1
+        },
+        {
+          "question": "Which is the correct article for 'maison' (house, feminine)?",
+          "options": ["le maison", "la maison", "les maison", "un maison"],
+          "correct_index": 1,
+          "explanation": "'Maison' is feminine, so we use 'la' - la maison.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'the boys' in French?",
+          "options": ["le garçons", "la garçons", "les garçons", "un garçons"],
+          "correct_index": 2,
+          "explanation": "'Garçons' is plural, so we use 'les'.",
+          "order": 3
+        },
+        {
+          "question": "What is the indefinite article for feminine nouns?",
+          "options": ["un", "une", "le", "la"],
+          "correct_index": 1,
+          "explanation": "'Une' is used with feminine singular nouns (a/an).",
+          "order": 4
+        },
+        {
+          "question": "Which sentence is grammatically correct?",
+          "options": ["Le table est grande", "La table est grande", "Les table est grande", "Table la est grande"],
+          "correct_index": 1,
+          "explanation": "'Table' is feminine, so 'la table' is correct.",
+          "order": 5
+        },
+        {
+          "question": "In French, adjectives usually come:",
+          "options": ["Before the noun", "After the noun", "Both positions are common", "Never used"],
+          "correct_index": 1,
+          "explanation": "Most French adjectives come after the noun, though some common ones come before.",
+          "order": 6
+        },
+        {
+          "question": "Which is correct: 'un livre' or 'une livre'?",
+          "options": ["un livre", "une livre", "le livre", "Both are correct"],
+          "correct_index": 0,
+          "explanation": "'Livre' (book) is masculine, so we use 'un livre'.",
+          "order": 7
+        },
+        {
+          "question": "How do you make 'chat' (cat) plural?",
+          "options": ["chats", "chates", "chatx", "chat"],
+          "correct_index": 0,
+          "explanation": "Most French nouns add '-s' to form the plural: chat → chats.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "First Conversations",
+      "description": "Practice essential phrases for introducing yourself and basic social interactions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "My name is...", "back": "Je m'appelle...", "order": 1},
+        {"front": "What is your name?", "back": "Comment vous appelez-vous?", "order": 2},
+        {"front": "Nice to meet you", "back": "Enchanté(e)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'My name is Marie' in French?",
+          "options": ["Mon nom Marie", "Je m'appelle Marie", "Je suis nom Marie", "Appelle me Marie"],
+          "correct_index": 1,
+          "explanation": "'Je m'appelle' is the standard way to introduce yourself.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Comment vous appelez-vous?' mean?",
+          "options": ["How are you?", "What is your name?", "Where are you from?", "How old are you?"],
+          "correct_index": 1,
+          "explanation": "'Comment vous appelez-vous?' is the formal way to ask someone's name.",
+          "order": 2
+        },
+        {
+          "question": "How would you respond to 'Comment allez-vous?'?",
+          "options": ["Je m'appelle Jean", "Je vais bien, merci", "Enchanté", "De rien"],
+          "correct_index": 1,
+          "explanation": "'Je vais bien, merci' means 'I'm fine, thank you.'",
+          "order": 3
+        },
+        {
+          "question": "What does 'Enchanté' mean?",
+          "options": ["Enchanted", "Nice to meet you", "Very good", "Thank you"],
+          "correct_index": 1,
+          "explanation": "'Enchanté(e)' is used when meeting someone for the first time.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'Where are you from?' in French?",
+          "options": ["Comment allez-vous?", "Quelle heure est-il?", "D'où venez-vous?", "Quel âge avez-vous?"],
+          "correct_index": 2,
+          "explanation": "'D'où venez-vous?' asks about someone's origin.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Simple French",
+      "description": "Practice reading comprehension with simple French texts and signs.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Open", "back": "Ouvert", "order": 1},
+        {"front": "Closed", "back": "Fermé", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'Le chien est grand.' What is big?",
+          "options": ["The cat", "The dog", "The house", "The car"],
+          "correct_index": 1,
+          "explanation": "'Le chien' means 'the dog'. The sentence says the dog is big.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'Marie a un chat noir.' What color is Marie's cat?",
+          "options": ["White", "Brown", "Black", "Gray"],
+          "correct_index": 2,
+          "explanation": "'Noir' means 'black'. Marie has a black cat.",
+          "order": 2
+        },
+        {
+          "question": "Read: 'La maison est petite mais jolie.' Is the house big or small?",
+          "options": ["Big", "Small", "Medium", "Very big"],
+          "correct_index": 1,
+          "explanation": "'Petite' means 'small'. The house is small but pretty.",
+          "order": 3
+        },
+        {
+          "question": "Read the sign: 'SORTIE'. What does it indicate?",
+          "options": ["Entrance", "Exit", "Bathroom", "Danger"],
+          "correct_index": 1,
+          "explanation": "'Sortie' means 'exit'. You'll see this on exit signs.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'Je mange une pomme.' What is the person eating?",
+          "options": ["An orange", "A banana", "An apple", "A pear"],
+          "correct_index": 2,
+          "explanation": "'Pomme' means 'apple'. 'Je mange' means 'I eat'.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Hearing French Sounds",
+      "description": "Train your ear to recognize French pronunciation and understand spoken words.",
+      "order": 5,
+      "flashcards": [
+        {"front": "One", "back": "Un", "order": 1},
+        {"front": "Two", "back": "Deux", "order": 2},
+        {"front": "Three", "back": "Trois", "order": 3},
+        {"front": "Four", "back": "Quatre", "order": 4},
+        {"front": "Five", "back": "Cinq", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Listen: Which number sounds like 'UH' (nasal)?",
+          "options": ["Deux", "Un", "Trois", "Zéro"],
+          "correct_index": 1,
+          "explanation": "'Un' (one) has a nasal 'un' sound unique to French.",
+          "order": 1
+        },
+        {
+          "question": "How is the French 'R' typically pronounced?",
+          "options": ["Like English R", "In the throat (uvular)", "Silent", "Like L"],
+          "correct_index": 1,
+          "explanation": "The French 'R' is pronounced in the back of the throat.",
+          "order": 2
+        },
+        {
+          "question": "How is the French 'u' (as in 'tu') pronounced?",
+          "options": ["Like 'oo' in 'food'", "Rounded lips, tongue forward", "Like 'uh'", "Silent"],
+          "correct_index": 1,
+          "explanation": "The French 'u' requires rounded lips with the tongue positioned forward.",
+          "order": 3
+        },
+        {
+          "question": "In French, final consonants are usually:",
+          "options": ["Always pronounced", "Usually silent", "Always stressed", "Doubled"],
+          "correct_index": 1,
+          "explanation": "Most final consonants in French are silent (except C, R, F, L).",
+          "order": 4
+        },
+        {
+          "question": "Which number sounds like 'SANK'?",
+          "options": ["Quatre", "Six", "Cinq", "Sept"],
+          "correct_index": 2,
+          "explanation": "'Cinq' (five) is pronounced like 'sank'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Japanese",
+    "level": 3,
+    "theme": "Getting Around",
+    "description": "Directions, transportation, places in the city, and asking for help in Japanese."
+  },
+  "module": {
+    "name": "Getting Around",
+    "description": "Learn to navigate cities, use transportation, and ask for directions in Japanese.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Transportation and Places",
+      "description": "Essential vocabulary for getting around town and using public transportation.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Street/Road", "back": "道 (みち / Michi)", "order": 1},
+        {"front": "Bus", "back": "バス (Basu)", "order": 2},
+        {"front": "Train", "back": "電車 (でんしゃ / Densha)", "order": 3},
+        {"front": "Airport", "back": "空港 (くうこう / Kūkō)", "order": 4},
+        {"front": "Left", "back": "左 (ひだり / Hidari)", "order": 5},
+        {"front": "Right", "back": "右 (みぎ / Migi)", "order": 6},
+        {"front": "Straight", "back": "まっすぐ (Massugu)", "order": 7},
+        {"front": "Bank", "back": "銀行 (ぎんこう / Ginkō)", "order": 8},
+        {"front": "Hospital", "back": "病院 (びょういん / Byōin)", "order": 9},
+        {"front": "Store/Shop", "back": "店 (みせ / Mise)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'street' in Japanese?",
+          "options": ["駅", "道", "橋", "広場"],
+          "correct_index": 1,
+          "explanation": "'道' (michi) means street/road.",
+          "order": 1
+        },
+        {
+          "question": "What does '左' (hidari) mean?",
+          "options": ["Right", "Left", "Straight", "Back"],
+          "correct_index": 1,
+          "explanation": "'左' means left. '右' (migi) is right.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'train' in Japanese?",
+          "options": ["バス", "飛行機", "電車", "車"],
+          "correct_index": 2,
+          "explanation": "'電車' (densha) means train.",
+          "order": 3
+        },
+        {
+          "question": "What is '空港' in English?",
+          "options": ["Bus station", "Train station", "Airport", "Port"],
+          "correct_index": 2,
+          "explanation": "'空港' (kūkō) means airport (air harbor).",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'straight ahead'?",
+          "options": ["左に", "右に", "まっすぐ", "後ろに"],
+          "correct_index": 2,
+          "explanation": "'まっすぐ' (massugu) means straight ahead.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Giving Directions",
+      "description": "Learn direction phrases and location expressions.",
+      "order": 2,
+      "flashcards": [
+        {"front": "Turn (please turn)", "back": "曲がってください (Magatte kudasai)", "order": 1},
+        {"front": "Go (please go)", "back": "行ってください (Itte kudasai)", "order": 2},
+        {"front": "next to", "back": "の隣に (no tonari ni)", "order": 3},
+        {"front": "in front of", "back": "の前に (no mae ni)", "order": 4},
+        {"front": "behind", "back": "の後ろに (no ushiro ni)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Please turn left'?",
+          "options": ["左曲がって", "左に曲がってください", "曲がる左", "ください左曲がって"],
+          "correct_index": 1,
+          "explanation": "'左に曲がってください' - direction + に + verb + ください.",
+          "order": 1
+        },
+        {
+          "question": "What does 'の隣に' mean?",
+          "options": ["In front of", "Behind", "Next to", "Far from"],
+          "correct_index": 2,
+          "explanation": "'の隣に' (no tonari ni) means 'next to'.",
+          "order": 2
+        },
+        {
+          "question": "Complete: '銀行は病院___あります' (in front of)",
+          "options": ["の後ろに", "の隣に", "の前に", "から遠くに"],
+          "correct_index": 2,
+          "explanation": "'の前に' (no mae ni) means 'in front of'.",
+          "order": 3
+        },
+        {
+          "question": "'まっすぐ行ってください' means:",
+          "options": ["Turn right", "Turn left", "Please go straight", "Please go back"],
+          "correct_index": 2,
+          "explanation": "'まっすぐ行ってください' = Please go straight.",
+          "order": 4
+        },
+        {
+          "question": "The particle 'で' indicates:",
+          "options": ["Direction to", "Means/location of action", "Possession", "Time"],
+          "correct_index": 1,
+          "explanation": "'で' indicates means of transport or location where action occurs.",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'by train'?",
+          "options": ["電車に", "電車で", "電車を", "電車の"],
+          "correct_index": 1,
+          "explanation": "'電車で' - で indicates means of transportation.",
+          "order": 6
+        },
+        {
+          "question": "'次の角を右に曲がってください' means:",
+          "options": ["Go left at the corner", "Go straight", "Turn right at the next corner", "Turn around"],
+          "correct_index": 2,
+          "explanation": "'次の角' = next corner, '右に曲がって' = turn right.",
+          "order": 7
+        },
+        {
+          "question": "Which phrase means 'near'?",
+          "options": ["遠い", "近く", "中に", "外に"],
+          "correct_index": 1,
+          "explanation": "'近く' (chikaku) means nearby. '遠い' (tōi) is far.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Asking for Directions",
+      "description": "Practice asking for and understanding directions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Where is the...?", "back": "...はどこですか (... wa doko desu ka)", "order": 1},
+        {"front": "How do I get to...?", "back": "...へはどう行きますか (... e wa dō ikimasu ka)", "order": 2},
+        {"front": "Is it far?", "back": "遠いですか (Tōi desu ka)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Where is the bank?'",
+          "options": ["銀行は何ですか", "銀行はどこですか", "銀行はいつですか", "銀行はどうですか"],
+          "correct_index": 1,
+          "explanation": "'...はどこですか' asks for location.",
+          "order": 1
+        },
+        {
+          "question": "What does '駅へはどう行きますか' mean?",
+          "options": ["Where is the station?", "How do I get to the station?", "When does the station open?", "What is the station?"],
+          "correct_index": 1,
+          "explanation": "'...へはどう行きますか' = How do I get to...?",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'It's about 5 minutes'?",
+          "options": ["五分ぐらいです", "五分があります", "五分をです", "五分にいます"],
+          "correct_index": 0,
+          "explanation": "'五分ぐらいです' = It's about 5 minutes.",
+          "order": 3
+        },
+        {
+          "question": "What does 'この近くに薬局はありますか' mean?",
+          "options": ["Where is the pharmacy?", "Is there a pharmacy nearby?", "How is the pharmacy?", "What pharmacy?"],
+          "correct_index": 1,
+          "explanation": "'この近くに...はありますか' = Is there a...nearby?",
+          "order": 4
+        },
+        {
+          "question": "How would you respond to '遠いですか?' if it's close?",
+          "options": ["はい、とても遠いです", "いいえ、すぐ近くです", "分かりません", "多分"],
+          "correct_index": 1,
+          "explanation": "'いいえ、すぐ近くです' = No, it's very close.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Signs and Maps",
+      "description": "Understand common signs, directions, and transit information.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Entrance", "back": "入口 (いりぐち / Iriguchi)", "order": 1},
+        {"front": "Exit", "back": "出口 (でぐち / Deguchi)", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: '美術館に行くには、まっすぐ行って左に曲がってください。' What direction do you turn?",
+          "options": ["Right", "Left", "Go back", "Don't turn"],
+          "correct_index": 1,
+          "explanation": "'左に曲がって' = turn left.",
+          "order": 1
+        },
+        {
+          "question": "Read: '地下鉄は歩いて五分です。' How do you get there?",
+          "options": ["By car", "By bus", "Walking", "By taxi"],
+          "correct_index": 2,
+          "explanation": "'歩いて' (aruite) means on foot/walking.",
+          "order": 2
+        },
+        {
+          "question": "Read sign: '駐車禁止'. What is prohibited?",
+          "options": ["Entry", "Exit", "Parking", "Smoking"],
+          "correct_index": 2,
+          "explanation": "'駐車' means parking.",
+          "order": 3
+        },
+        {
+          "question": "Read: 'バス停は銀行の前にあります。' Where is the bus stop?",
+          "options": ["Behind the bank", "Inside the bank", "In front of the bank", "Far from the bank"],
+          "correct_index": 2,
+          "explanation": "'の前に' = in front of.",
+          "order": 4
+        },
+        {
+          "question": "Read: '電車は午前九時に出発します。' When does the train leave?",
+          "options": ["9 PM", "9 AM", "At night", "Noon"],
+          "correct_index": 1,
+          "explanation": "'午前九時' = 9 AM (午前 = AM).",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Understanding Transit Announcements",
+      "description": "Train your ear to understand transportation announcements.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Next stop", "back": "次は (つぎは / Tsugi wa)", "order": 1},
+        {"front": "Platform", "back": "ホーム / 番線 (Hōmu / Bansen)", "order": 2},
+        {"front": "Departure", "back": "出発 (しゅっぱつ / Shuppatsu)", "order": 3},
+        {"front": "Arrival", "back": "到着 (とうちゃく / Tōchaku)", "order": 4},
+        {"front": "Ticket", "back": "切符 (きっぷ / Kippu)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "You hear '次は渋谷です'. What are you being told?",
+          "options": ["Final stop", "Next stop is Shibuya", "Transfer point", "End of service"],
+          "correct_index": 1,
+          "explanation": "'次は' announces the next stop.",
+          "order": 1
+        },
+        {
+          "question": "What does '三番線' mean?",
+          "options": ["Bus number 3", "Platform/Track 3", "Route 3", "Gate 3"],
+          "correct_index": 1,
+          "explanation": "'番線' (bansen) means platform/track number.",
+          "order": 2
+        },
+        {
+          "question": "You hear '東京行き'. Where is the train going?",
+          "options": ["From Tokyo", "To Tokyo", "Near Tokyo", "Around Tokyo"],
+          "correct_index": 1,
+          "explanation": "'行き' (iki/yuki) indicates destination = bound for.",
+          "order": 3
+        },
+        {
+          "question": "'出発' and '到着' are:",
+          "options": ["Departure and Arrival", "Entry and Exit", "Start and End", "Open and Closed"],
+          "correct_index": 0,
+          "explanation": "'出発' = departure, '到着' = arrival.",
+          "order": 4
+        },
+        {
+          "question": "You hear '切符をお持ちください'. What should you do?",
+          "options": ["Wait for the train", "Please have your ticket ready", "Find your seat", "Show your ID"],
+          "correct_index": 1,
+          "explanation": "'切符をお持ちください' = Please have your ticket.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

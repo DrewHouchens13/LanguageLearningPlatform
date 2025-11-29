@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "German",
+    "level": 2,
+    "theme": "Daily Life",
+    "description": "Family members, common foods, everyday objects, and telling time in German."
+  },
+  "module": {
+    "name": "Daily Life",
+    "description": "Learn vocabulary for family, food, everyday objects, and time expressions.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Family and Daily Words",
+      "description": "Learn essential vocabulary for family members, common foods, and household items.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Mother", "back": "Mutter / Mama", "order": 1},
+        {"front": "Father", "back": "Vater / Papa", "order": 2},
+        {"front": "Brother", "back": "Bruder", "order": 3},
+        {"front": "Sister", "back": "Schwester", "order": 4},
+        {"front": "Water", "back": "Wasser (n)", "order": 5},
+        {"front": "Bread", "back": "Brot (n)", "order": 6},
+        {"front": "Milk", "back": "Milch (f)", "order": 7},
+        {"front": "House", "back": "Haus (n)", "order": 8},
+        {"front": "Table", "back": "Tisch (m)", "order": 9},
+        {"front": "Chair", "back": "Stuhl (m)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'mother' in German?",
+          "options": ["Schwester", "Mutter", "Großmutter", "Tante"],
+          "correct_index": 1,
+          "explanation": "'Mutter' is mother. 'Mama' is mom (informal).",
+          "order": 1
+        },
+        {
+          "question": "What does 'Bruder' mean?",
+          "options": ["Sister", "Brother", "Father", "Uncle"],
+          "correct_index": 1,
+          "explanation": "'Bruder' means brother. 'Schwester' is sister.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'water' in German?",
+          "options": ["Milch", "Brot", "Wasser", "Wein"],
+          "correct_index": 2,
+          "explanation": "'Wasser' means water. It's neuter: das Wasser.",
+          "order": 3
+        },
+        {
+          "question": "What is 'Brot' in English?",
+          "options": ["Water", "Bread", "Milk", "Meat"],
+          "correct_index": 1,
+          "explanation": "'Brot' means bread in German.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'table' in German?",
+          "options": ["Stuhl", "Haus", "Tisch", "Bett"],
+          "correct_index": 2,
+          "explanation": "'Tisch' means table. It's masculine: der Tisch.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Possessives and Haben/Sein",
+      "description": "Learn possessive adjectives and master haben (to have) and sein (to be).",
+      "order": 2,
+      "flashcards": [
+        {"front": "my", "back": "mein/meine", "order": 1},
+        {"front": "your (informal)", "back": "dein/deine", "order": 2},
+        {"front": "his", "back": "sein/seine", "order": 3},
+        {"front": "to have", "back": "haben", "order": 4},
+        {"front": "to be", "back": "sein", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'my mother' in German?",
+          "options": ["Mein Mutter", "Meine Mutter", "Meiner Mutter", "Deine Mutter"],
+          "correct_index": 1,
+          "explanation": "'Meine' is used for feminine nouns: meine Mutter.",
+          "order": 1
+        },
+        {
+          "question": "'Ich habe zwei Brüder' means:",
+          "options": ["I am two brothers", "I have two brothers", "I see two brothers", "I want two brothers"],
+          "correct_index": 1,
+          "explanation": "'Ich habe' = I have. 'Zwei Brüder' = two brothers (note the umlaut).",
+          "order": 2
+        },
+        {
+          "question": "Which is correct for 'my house'?",
+          "options": ["Mein Haus", "Meine Haus", "Meiner Haus", "Meines Haus"],
+          "correct_index": 0,
+          "explanation": "'Mein Haus' - neuter nouns use 'mein' in nominative.",
+          "order": 3
+        },
+        {
+          "question": "Complete: 'Wir ___ Deutsche' (We are German)",
+          "options": ["haben", "sind", "seid", "ist"],
+          "correct_index": 1,
+          "explanation": "'Sind' is the wir form of sein (to be).",
+          "order": 4
+        },
+        {
+          "question": "Complete: 'Sie ___ Hunger' (They have hunger = They are hungry)",
+          "options": ["sind", "haben", "seid", "habt"],
+          "correct_index": 1,
+          "explanation": "In German, you 'have' hunger: 'Hunger haben'. Sie haben Hunger.",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'our house'?",
+          "options": ["Mein Haus", "Dein Haus", "Unser Haus", "Ihr Haus"],
+          "correct_index": 2,
+          "explanation": "'Unser' means 'our'. Neuter nominative: unser Haus.",
+          "order": 6
+        },
+        {
+          "question": "'Er ist Arzt' means:",
+          "options": ["He has a doctor", "He is a doctor", "He sees a doctor", "He wants a doctor"],
+          "correct_index": 1,
+          "explanation": "'Ist' (sein) + profession. No article needed in German.",
+          "order": 7
+        },
+        {
+          "question": "Possessive adjectives in German must agree with:",
+          "options": ["Only gender", "Only number", "Gender, number, and case", "Nothing"],
+          "correct_index": 2,
+          "explanation": "German possessives change based on gender, number, and case of the noun.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Family Conversations",
+      "description": "Practice talking about your family and daily routines.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Do you have siblings?", "back": "Hast du Geschwister?", "order": 1},
+        {"front": "I have two brothers", "back": "Ich habe zwei Brüder", "order": 2},
+        {"front": "What time is it?", "back": "Wie spät ist es?", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Do you have siblings?' in German?",
+          "options": ["Wie hast du Geschwister?", "Hast du Geschwister?", "Wo hast du Geschwister?", "Warum hast du Geschwister?"],
+          "correct_index": 1,
+          "explanation": "'Hast du Geschwister?' uses 'haben' (to have).",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'I live with my family'?",
+          "options": ["Ich wohne mit meiner Familie", "Ich habe meine Familie", "Ich bin meine Familie", "Ich bleibe meine Familie"],
+          "correct_index": 0,
+          "explanation": "'Ich wohne mit meiner Familie' - 'wohnen' means to live/reside.",
+          "order": 2
+        },
+        {
+          "question": "What does 'Wie spät ist es?' mean?",
+          "options": ["What day is it?", "What time is it?", "How are you?", "Where is it?"],
+          "correct_index": 1,
+          "explanation": "'Wie spät ist es?' literally 'How late is it?' = What time is it?",
+          "order": 3
+        },
+        {
+          "question": "How do you say 'It's 3 o'clock'?",
+          "options": ["Es ist drei", "Es ist drei Uhr", "Es sind drei Uhr", "Drei Uhr es ist"],
+          "correct_index": 1,
+          "explanation": "'Es ist drei Uhr' - 'Uhr' means clock/o'clock.",
+          "order": 4
+        },
+        {
+          "question": "How do you respond to 'Wie viele Geschwister hast du?'",
+          "options": ["Ja, ich habe", "Ich habe drei Geschwister", "Geschwister ich habe", "Sehr gut"],
+          "correct_index": 1,
+          "explanation": "'Ich habe drei Geschwister' answers how many siblings.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading About Daily Life",
+      "description": "Read and understand texts about family and daily routines.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Every day", "back": "Jeden Tag", "order": 1},
+        {"front": "In the morning", "back": "Am Morgen / Morgens", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'Meine Familie ist groß. Ich habe drei Brüder.' How many brothers?",
+          "options": ["One", "Two", "Three", "Four"],
+          "correct_index": 2,
+          "explanation": "'Drei Brüder' means three brothers.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'Ich frühstücke um acht Uhr.' When does the person eat breakfast?",
+          "options": ["6 AM", "7 AM", "8 AM", "9 AM"],
+          "correct_index": 2,
+          "explanation": "'Um acht Uhr' means at eight o'clock.",
+          "order": 2
+        },
+        {
+          "question": "Read: 'Meine Mutter kocht jeden Tag.' What does the mother do?",
+          "options": ["Works", "Cooks", "Cleans", "Sleeps"],
+          "correct_index": 1,
+          "explanation": "'Kocht' means 'she cooks'. 'Kochen' = to cook.",
+          "order": 3
+        },
+        {
+          "question": "Read: 'Wir wohnen in einem kleinen Haus, aber es ist gemütlich.' The house is:",
+          "options": ["Big and old", "Small but cozy", "New and large", "Old but nice"],
+          "correct_index": 1,
+          "explanation": "'Klein aber gemütlich' = small but cozy.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'Sonntags essen wir mit den Großeltern zu Mittag.' When do they lunch with grandparents?",
+          "options": ["Saturdays", "Sundays", "Mondays", "Every day"],
+          "correct_index": 1,
+          "explanation": "'Sonntags' means on Sundays.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Days and Time Expressions",
+      "description": "Learn to understand days of the week and time expressions.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Monday", "back": "Montag", "order": 1},
+        {"front": "Tuesday", "back": "Dienstag", "order": 2},
+        {"front": "Wednesday", "back": "Mittwoch", "order": 3},
+        {"front": "Thursday", "back": "Donnerstag", "order": 4},
+        {"front": "Friday", "back": "Freitag", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which day sounds like 'MOHN-tahk'?",
+          "options": ["Dienstag", "Montag", "Donnerstag", "Freitag"],
+          "correct_index": 1,
+          "explanation": "'Montag' (Monday) is pronounced 'MOHN-tahk'.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'Saturday' in German?",
+          "options": ["Freitag", "Samstag", "Sonntag", "Montag"],
+          "correct_index": 1,
+          "explanation": "'Samstag' is Saturday. 'Sonntag' is Sunday.",
+          "order": 2
+        },
+        {
+          "question": "German days of the week are:",
+          "options": ["Lowercase", "Capitalized", "Sometimes capitalized", "Always in plural"],
+          "correct_index": 1,
+          "explanation": "German days are capitalized because all nouns in German are capitalized.",
+          "order": 3
+        },
+        {
+          "question": "What does 'das Wochenende' mean?",
+          "options": ["The end of the month", "The weekend", "The holiday", "The vacation"],
+          "correct_index": 1,
+          "explanation": "'Das Wochenende' literally means 'the week-end' = weekend.",
+          "order": 4
+        },
+        {
+          "question": "Which day sounds like 'MIT-vokh'?",
+          "options": ["Dienstag", "Mittwoch", "Donnerstag", "Montag"],
+          "correct_index": 1,
+          "explanation": "'Mittwoch' (Wednesday) means 'mid-week'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

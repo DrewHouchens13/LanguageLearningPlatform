@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Chinese",
+    "level": 3,
+    "theme": "Getting Around",
+    "description": "Directions, transportation, places in the city, and asking for help in Chinese."
+  },
+  "module": {
+    "name": "Getting Around",
+    "description": "Learn to navigate cities, use transportation, and ask for directions in Chinese.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Transportation and Places",
+      "description": "Essential vocabulary for getting around town and using public transportation.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Street/Road", "back": "路 (Lù) / 街 (Jiē)", "order": 1},
+        {"front": "Bus", "back": "公共汽车 (Gōnggòng qìchē) / 公交车", "order": 2},
+        {"front": "Train", "back": "火车 (Huǒchē)", "order": 3},
+        {"front": "Airport", "back": "机场 (Jīchǎng)", "order": 4},
+        {"front": "Left", "back": "左边 (Zuǒbiān)", "order": 5},
+        {"front": "Right", "back": "右边 (Yòubiān)", "order": 6},
+        {"front": "Straight", "back": "直走 (Zhí zǒu)", "order": 7},
+        {"front": "Bank", "back": "银行 (Yínháng)", "order": 8},
+        {"front": "Hospital", "back": "医院 (Yīyuàn)", "order": 9},
+        {"front": "Store/Shop", "back": "商店 (Shāngdiàn)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'street' in Chinese?",
+          "options": ["站", "路", "桥", "广场"],
+          "correct_index": 1,
+          "explanation": "'路' (lù) means road/street.",
+          "order": 1
+        },
+        {
+          "question": "What does '左边' mean?",
+          "options": ["Right", "Left", "Straight", "Back"],
+          "correct_index": 1,
+          "explanation": "'左边' means left side. '右边' is right side.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'train' in Chinese?",
+          "options": ["公共汽车", "飞机", "火车", "出租车"],
+          "correct_index": 2,
+          "explanation": "'火车' (huǒchē) means train (fire vehicle).",
+          "order": 3
+        },
+        {
+          "question": "What is '机场' in English?",
+          "options": ["Bus station", "Train station", "Airport", "Port"],
+          "correct_index": 2,
+          "explanation": "'机场' (jīchǎng) means airport.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'go straight'?",
+          "options": ["往左", "往右", "直走", "往后"],
+          "correct_index": 2,
+          "explanation": "'直走' (zhí zǒu) means go straight.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Giving Directions",
+      "description": "Learn direction phrases and location expressions.",
+      "order": 2,
+      "flashcards": [
+        {"front": "Turn", "back": "转 (Zhuǎn)", "order": 1},
+        {"front": "Go/Walk", "back": "走 (Zǒu)", "order": 2},
+        {"front": "next to", "back": "旁边 (Pángbiān)", "order": 3},
+        {"front": "in front of", "back": "前面 (Qiánmiàn)", "order": 4},
+        {"front": "behind", "back": "后面 (Hòumiàn)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Turn left'?",
+          "options": ["左边转", "往左转", "转左边", "左转往"],
+          "correct_index": 1,
+          "explanation": "'往左转' - 往 + direction + verb.",
+          "order": 1
+        },
+        {
+          "question": "What does '旁边' mean?",
+          "options": ["In front of", "Behind", "Next to/beside", "Far from"],
+          "correct_index": 2,
+          "explanation": "'旁边' (pángbiān) means 'next to' or 'beside'.",
+          "order": 2
+        },
+        {
+          "question": "Complete: '银行在医院___' (in front of)",
+          "options": ["后面", "旁边", "前面", "对面"],
+          "correct_index": 2,
+          "explanation": "'前面' (qiánmiàn) means 'in front of'.",
+          "order": 3
+        },
+        {
+          "question": "'一直走' means:",
+          "options": ["Turn right", "Turn left", "Keep going straight", "Go back"],
+          "correct_index": 2,
+          "explanation": "'一直走' = Keep going straight.",
+          "order": 4
+        },
+        {
+          "question": "The word '对面' means:",
+          "options": ["Behind", "Opposite/across from", "Between", "Under"],
+          "correct_index": 1,
+          "explanation": "'对面' (duìmiàn) means opposite/across from.",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'by subway'?",
+          "options": ["地铁的", "坐地铁", "地铁了", "在地铁"],
+          "correct_index": 1,
+          "explanation": "'坐地铁' - 坐 (sit/take) + transportation.",
+          "order": 6
+        },
+        {
+          "question": "'在下一个路口右转' means:",
+          "options": ["Go left at the corner", "Go straight", "Turn right at the next intersection", "Turn around"],
+          "correct_index": 2,
+          "explanation": "'下一个路口' = next intersection, '右转' = turn right.",
+          "order": 7
+        },
+        {
+          "question": "Which word means 'near'?",
+          "options": ["远", "近 / 附近", "里面", "外面"],
+          "correct_index": 1,
+          "explanation": "'近' or '附近' means near. '远' is far.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Asking for Directions",
+      "description": "Practice asking for and understanding directions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Where is the...?", "back": "...在哪里? (... zài nǎlǐ?)", "order": 1},
+        {"front": "How do I get to...?", "back": "怎么去...? (Zěnme qù...?)", "order": 2},
+        {"front": "Is it far?", "back": "远吗? (Yuǎn ma?)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Where is the bank?'",
+          "options": ["银行是什么?", "银行在哪里?", "银行什么时候?", "银行怎么样?"],
+          "correct_index": 1,
+          "explanation": "'...在哪里?' asks for location.",
+          "order": 1
+        },
+        {
+          "question": "What does '怎么去火车站?' mean?",
+          "options": ["Where is the station?", "How do I get to the station?", "When does the station open?", "What is the station?"],
+          "correct_index": 1,
+          "explanation": "'怎么去...?' = How do I get to...?",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'It's about 5 minutes'?",
+          "options": ["大概五分钟", "有五分钟", "五分钟是", "在五分钟"],
+          "correct_index": 0,
+          "explanation": "'大概五分钟' = It's about 5 minutes.",
+          "order": 3
+        },
+        {
+          "question": "What does '附近有药店吗?' mean?",
+          "options": ["Where is the pharmacy?", "Is there a pharmacy nearby?", "How is the pharmacy?", "What pharmacy?"],
+          "correct_index": 1,
+          "explanation": "'附近有...吗?' = Is there a...nearby?",
+          "order": 4
+        },
+        {
+          "question": "How would you respond to '远吗?' if it's close?",
+          "options": ["是，很远", "不远，很近", "不知道", "可能"],
+          "correct_index": 1,
+          "explanation": "'不远，很近' = Not far, it's close.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Signs and Maps",
+      "description": "Understand common signs, directions, and transit information.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Entrance", "back": "入口 (Rùkǒu)", "order": 1},
+        {"front": "Exit", "back": "出口 (Chūkǒu)", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: '去博物馆，直走然后往左转。' What direction do you turn?",
+          "options": ["Right", "Left", "Go back", "Don't turn"],
+          "correct_index": 1,
+          "explanation": "'往左转' = turn left.",
+          "order": 1
+        },
+        {
+          "question": "Read: '地铁站走路五分钟。' How do you get there?",
+          "options": ["By car", "By bus", "Walking", "By taxi"],
+          "correct_index": 2,
+          "explanation": "'走路' (zǒulù) means walking.",
+          "order": 2
+        },
+        {
+          "question": "Read sign: '禁止停车'. What is prohibited?",
+          "options": ["Entry", "Exit", "Parking", "Smoking"],
+          "correct_index": 2,
+          "explanation": "'停车' means parking.",
+          "order": 3
+        },
+        {
+          "question": "Read: '公交车站在银行前面。' Where is the bus stop?",
+          "options": ["Behind the bank", "Inside the bank", "In front of the bank", "Far from the bank"],
+          "correct_index": 2,
+          "explanation": "'前面' = in front of.",
+          "order": 4
+        },
+        {
+          "question": "Read: '火车早上九点出发。' When does the train leave?",
+          "options": ["9 PM", "9 AM", "At night", "Noon"],
+          "correct_index": 1,
+          "explanation": "'早上九点' = 9 AM.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Understanding Transit Announcements",
+      "description": "Train your ear to understand transportation announcements.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Next stop", "back": "下一站 (Xià yī zhàn)", "order": 1},
+        {"front": "Platform", "back": "站台 (Zhàntái)", "order": 2},
+        {"front": "Departure", "back": "出发 (Chūfā)", "order": 3},
+        {"front": "Arrival", "back": "到达 (Dàodá)", "order": 4},
+        {"front": "Ticket", "back": "票 (Piào)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "You hear '下一站是北京站'. What are you being told?",
+          "options": ["Final stop", "Next stop is Beijing Station", "Transfer point", "End of service"],
+          "correct_index": 1,
+          "explanation": "'下一站是' announces the next stop.",
+          "order": 1
+        },
+        {
+          "question": "What does '三号站台' mean?",
+          "options": ["Bus number 3", "Platform 3", "Route 3", "Gate 3"],
+          "correct_index": 1,
+          "explanation": "'站台' means platform.",
+          "order": 2
+        },
+        {
+          "question": "You hear '开往上海的列车'. Where is the train going?",
+          "options": ["From Shanghai", "To Shanghai", "Near Shanghai", "Around Shanghai"],
+          "correct_index": 1,
+          "explanation": "'开往' indicates destination = bound for.",
+          "order": 3
+        },
+        {
+          "question": "'出发' and '到达' are:",
+          "options": ["Departure and Arrival", "Entry and Exit", "Start and End", "Open and Closed"],
+          "correct_index": 0,
+          "explanation": "'出发' = departure, '到达' = arrival.",
+          "order": 4
+        },
+        {
+          "question": "You hear '请准备好您的车票'. What should you do?",
+          "options": ["Wait for the train", "Please have your ticket ready", "Find your seat", "Show your ID"],
+          "correct_index": 1,
+          "explanation": "'请准备好您的车票' = Please have your ticket ready.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

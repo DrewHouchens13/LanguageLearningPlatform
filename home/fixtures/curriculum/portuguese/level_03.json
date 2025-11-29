@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Portuguese",
+    "level": 3,
+    "theme": "Getting Around",
+    "description": "Directions, transportation, places in the city, and asking for help in Portuguese."
+  },
+  "module": {
+    "name": "Getting Around",
+    "description": "Learn to navigate cities, use transportation, and ask for directions in Portuguese.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Transportation and Places",
+      "description": "Essential vocabulary for getting around town and using public transportation.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Street", "back": "Rua", "order": 1},
+        {"front": "Bus", "back": "Ônibus (BR) / Autocarro (PT)", "order": 2},
+        {"front": "Train", "back": "Trem (BR) / Comboio (PT)", "order": 3},
+        {"front": "Airport", "back": "Aeroporto", "order": 4},
+        {"front": "Left", "back": "Esquerda", "order": 5},
+        {"front": "Right", "back": "Direita", "order": 6},
+        {"front": "Straight", "back": "Reto / Em frente", "order": 7},
+        {"front": "Bank", "back": "Banco", "order": 8},
+        {"front": "Hospital", "back": "Hospital", "order": 9},
+        {"front": "Store/Shop", "back": "Loja", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'street' in Portuguese?",
+          "options": ["Avenida", "Rua", "Estrada", "Praça"],
+          "correct_index": 1,
+          "explanation": "'Rua' means street.",
+          "order": 1
+        },
+        {
+          "question": "What does 'esquerda' mean?",
+          "options": ["Right", "Left", "Straight", "Back"],
+          "correct_index": 1,
+          "explanation": "'Esquerda' means left. 'Direita' is right.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'train' in Brazilian Portuguese?",
+          "options": ["Ônibus", "Avião", "Trem", "Carro"],
+          "correct_index": 2,
+          "explanation": "'Trem' means train in Brazilian Portuguese.",
+          "order": 3
+        },
+        {
+          "question": "What is 'aeroporto' in English?",
+          "options": ["Bus station", "Train station", "Airport", "Port"],
+          "correct_index": 2,
+          "explanation": "'Aeroporto' means airport.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'straight ahead'?",
+          "options": ["À esquerda", "À direita", "Em frente / Reto", "Para trás"],
+          "correct_index": 2,
+          "explanation": "'Em frente' or 'Reto' means straight ahead.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Giving Directions and Commands",
+      "description": "Learn imperative forms and prepositions for directions.",
+      "order": 2,
+      "flashcards": [
+        {"front": "Turn (command)", "back": "Vire", "order": 1},
+        {"front": "Go (command)", "back": "Vá", "order": 2},
+        {"front": "Continue (command)", "back": "Continue / Siga", "order": 3},
+        {"front": "next to", "back": "ao lado de", "order": 4},
+        {"front": "in front of", "back": "em frente a / na frente de", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Turn left' (command)?",
+          "options": ["Virar à esquerda", "Vire à esquerda", "Esquerda vire", "Virando esquerda"],
+          "correct_index": 1,
+          "explanation": "'Vire' is the imperative of 'virar'.",
+          "order": 1
+        },
+        {
+          "question": "What does 'ao lado de' mean?",
+          "options": ["In front of", "Behind", "Next to", "Far from"],
+          "correct_index": 2,
+          "explanation": "'Ao lado de' means 'next to' or 'beside'.",
+          "order": 2
+        },
+        {
+          "question": "Complete: 'O banco fica ___ o hospital' (in front of)",
+          "options": ["atrás de", "ao lado de", "em frente ao", "longe de"],
+          "correct_index": 2,
+          "explanation": "'Em frente a' means 'in front of'.",
+          "order": 3
+        },
+        {
+          "question": "'Siga em frente' means:",
+          "options": ["Turn right", "Turn left", "Go straight", "Go back"],
+          "correct_index": 2,
+          "explanation": "'Siga em frente' = Continue straight ahead.",
+          "order": 4
+        },
+        {
+          "question": "The preposition 'entre' means:",
+          "options": ["Behind", "In front of", "Between", "Under"],
+          "correct_index": 2,
+          "explanation": "'Entre' means between.",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'behind'?",
+          "options": ["Na frente de", "Atrás de", "Em cima de", "Embaixo de"],
+          "correct_index": 1,
+          "explanation": "'Atrás de' means behind.",
+          "order": 6
+        },
+        {
+          "question": "'Pegue a primeira rua à direita' means:",
+          "options": ["Go left", "Go straight", "Take the first street on the right", "Turn around"],
+          "correct_index": 2,
+          "explanation": "'Pegue a primeira rua' = take the first street.",
+          "order": 7
+        },
+        {
+          "question": "Which preposition means 'near'?",
+          "options": ["Longe de", "Perto de", "Dentro de", "Fora de"],
+          "correct_index": 1,
+          "explanation": "'Perto de' means near. 'Longe de' is far from.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Asking for Directions",
+      "description": "Practice asking for and understanding directions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Where is the...?", "back": "Onde fica o/a...?", "order": 1},
+        {"front": "How do I get to...?", "back": "Como eu chego em...?", "order": 2},
+        {"front": "Is it far?", "back": "É longe? / Fica longe?", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Where is the bank?'",
+          "options": ["O que é o banco?", "Onde fica o banco?", "Quando é o banco?", "Como é o banco?"],
+          "correct_index": 1,
+          "explanation": "'Onde fica...?' asks for location.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Como eu chego na estação?' mean?",
+          "options": ["Where is the station?", "How do I get to the station?", "When does the station open?", "What is the station?"],
+          "correct_index": 1,
+          "explanation": "'Como eu chego em...?' = How do I get to...?",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'It's five minutes away'?",
+          "options": ["Fica a cinco minutos", "São cinco minutos", "Cinco minutos ficam", "Ter cinco minutos"],
+          "correct_index": 0,
+          "explanation": "'Fica a cinco minutos' = It's five minutes away.",
+          "order": 3
+        },
+        {
+          "question": "What does 'Tem uma farmácia aqui perto?' mean?",
+          "options": ["Where is the pharmacy?", "Is there a pharmacy nearby?", "How is the pharmacy?", "What pharmacy?"],
+          "correct_index": 1,
+          "explanation": "'Tem...aqui perto?' = Is there...nearby?",
+          "order": 4
+        },
+        {
+          "question": "How would you respond to 'É longe?' if it's close?",
+          "options": ["Sim, muito longe", "Não, é bem pertinho", "Não sei", "Talvez"],
+          "correct_index": 1,
+          "explanation": "'Não, é bem pertinho' = No, it's very close.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Signs and Maps",
+      "description": "Understand common signs, directions, and transit information.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Entrance", "back": "Entrada", "order": 1},
+        {"front": "Exit", "back": "Saída", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'Para chegar ao museu, siga em frente e vire à esquerda.' What direction do you turn?",
+          "options": ["Right", "Left", "Go back", "Don't turn"],
+          "correct_index": 1,
+          "explanation": "'Vire à esquerda' = turn left.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'O metrô fica a cinco minutos a pé.' How do you get there?",
+          "options": ["By car", "By bus", "Walking", "By taxi"],
+          "correct_index": 2,
+          "explanation": "'A pé' means on foot/walking.",
+          "order": 2
+        },
+        {
+          "question": "Read sign: 'PROIBIDO ESTACIONAR'. What is prohibited?",
+          "options": ["Entry", "Exit", "Parking", "Smoking"],
+          "correct_index": 2,
+          "explanation": "'Estacionar' means to park.",
+          "order": 3
+        },
+        {
+          "question": "Read: 'O ponto de ônibus fica em frente ao banco.' Where is the bus stop?",
+          "options": ["Behind the bank", "Inside the bank", "In front of the bank", "Far from the bank"],
+          "correct_index": 2,
+          "explanation": "'Em frente ao' = in front of.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'O trem sai às nove da manhã.' When does the train leave?",
+          "options": ["9 PM", "9 AM", "At night", "Noon"],
+          "correct_index": 1,
+          "explanation": "'Às nove da manhã' = at 9 in the morning.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Understanding Transit Announcements",
+      "description": "Train your ear to understand transportation announcements.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Next stop", "back": "Próxima parada", "order": 1},
+        {"front": "Platform", "back": "Plataforma", "order": 2},
+        {"front": "Departure", "back": "Partida / Saída", "order": 3},
+        {"front": "Arrival", "back": "Chegada", "order": 4},
+        {"front": "Ticket", "back": "Passagem / Bilhete", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "You hear 'Próxima parada: Sé'. What are you being told?",
+          "options": ["Final stop", "Next stop is Sé", "Transfer point", "End of service"],
+          "correct_index": 1,
+          "explanation": "'Próxima parada' announces the next stop.",
+          "order": 1
+        },
+        {
+          "question": "What does 'plataforma três' mean?",
+          "options": ["Bus number 3", "Platform 3", "Route 3", "Gate 3"],
+          "correct_index": 1,
+          "explanation": "'Plataforma' means platform.",
+          "order": 2
+        },
+        {
+          "question": "You hear 'O trem com destino a São Paulo'. Where is the train going?",
+          "options": ["From São Paulo", "To São Paulo", "Near São Paulo", "Around São Paulo"],
+          "correct_index": 1,
+          "explanation": "'Com destino a' = headed to/bound for.",
+          "order": 3
+        },
+        {
+          "question": "'Partida' and 'Chegada' are:",
+          "options": ["Departure and Arrival", "Entry and Exit", "Start and End", "Open and Closed"],
+          "correct_index": 0,
+          "explanation": "'Partida' = departure, 'Chegada' = arrival.",
+          "order": 4
+        },
+        {
+          "question": "You hear 'Por favor, compre sua passagem antes de embarcar'. What should you do?",
+          "options": ["Wait for the train", "Buy your ticket before boarding", "Find your seat", "Show your ID"],
+          "correct_index": 1,
+          "explanation": "'Compre sua passagem antes de embarcar' = buy ticket before boarding.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

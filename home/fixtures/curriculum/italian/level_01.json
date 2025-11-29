@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Italian",
+    "level": 1,
+    "theme": "Basics",
+    "description": "Essential greetings, numbers 1-10, colors, and basic phrases to start your Italian journey."
+  },
+  "module": {
+    "name": "Basics",
+    "description": "Learn essential greetings, numbers, colors, and basic phrases to start your Italian journey.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Essential Italian Words",
+      "description": "Build your foundation with the most important Italian words including greetings, numbers, and colors.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Hello", "back": "Ciao", "order": 1},
+        {"front": "Goodbye", "back": "Arrivederci", "order": 2},
+        {"front": "Please", "back": "Per favore", "order": 3},
+        {"front": "Thank you", "back": "Grazie", "order": 4},
+        {"front": "Yes", "back": "Sì", "order": 5},
+        {"front": "No", "back": "No", "order": 6},
+        {"front": "Good morning", "back": "Buongiorno", "order": 7},
+        {"front": "Good evening", "back": "Buonasera", "order": 8},
+        {"front": "Excuse me", "back": "Scusi / Permesso", "order": 9},
+        {"front": "I'm sorry", "back": "Mi dispiace", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Hello' in Italian?",
+          "options": ["Arrivederci", "Ciao", "Grazie", "Per favore"],
+          "correct_index": 1,
+          "explanation": "'Ciao' is the most common informal greeting in Italian.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Grazie' mean?",
+          "options": ["Please", "Goodbye", "Thank you", "Hello"],
+          "correct_index": 2,
+          "explanation": "'Grazie' means 'Thank you' in Italian.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'Goodbye' formally in Italian?",
+          "options": ["Ciao", "Buongiorno", "Arrivederci", "Grazie"],
+          "correct_index": 2,
+          "explanation": "'Arrivederci' is the formal way to say goodbye.",
+          "order": 3
+        },
+        {
+          "question": "What is 'Please' in Italian?",
+          "options": ["Grazie", "Prego", "Per favore", "Scusi"],
+          "correct_index": 2,
+          "explanation": "'Per favore' means 'please' in Italian.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'Good morning' in Italian?",
+          "options": ["Buonanotte", "Buongiorno", "Buonasera", "Ciao"],
+          "correct_index": 1,
+          "explanation": "'Buongiorno' is used from morning until afternoon.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Basic Italian Grammar",
+      "description": "Learn fundamental grammar concepts: articles, gender, and simple sentence structure.",
+      "order": 2,
+      "flashcards": [
+        {"front": "the (masculine singular)", "back": "il / lo", "order": 1},
+        {"front": "the (feminine singular)", "back": "la", "order": 2},
+        {"front": "the (masculine plural)", "back": "i / gli", "order": 3},
+        {"front": "the (feminine plural)", "back": "le", "order": 4},
+        {"front": "a/an (masculine)", "back": "un / uno", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which article is used with most masculine singular nouns?",
+          "options": ["la", "il", "i", "lo"],
+          "correct_index": 1,
+          "explanation": "'Il' is the most common definite article for masculine singular nouns.",
+          "order": 1
+        },
+        {
+          "question": "Which is the correct article for 'casa' (house, feminine)?",
+          "options": ["il casa", "la casa", "le casa", "un casa"],
+          "correct_index": 1,
+          "explanation": "'Casa' is feminine, so we use 'la' - la casa.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'the boys' in Italian?",
+          "options": ["il ragazzi", "la ragazzi", "i ragazzi", "le ragazzi"],
+          "correct_index": 2,
+          "explanation": "'Ragazzi' is masculine plural, so we use 'i'.",
+          "order": 3
+        },
+        {
+          "question": "What is the plural article for feminine nouns?",
+          "options": ["il", "la", "i", "le"],
+          "correct_index": 3,
+          "explanation": "'Le' is used with feminine plural nouns.",
+          "order": 4
+        },
+        {
+          "question": "Which sentence is grammatically correct?",
+          "options": ["Il tavola è grande", "La tavola è grande", "I tavola è grande", "Tavola la è grande"],
+          "correct_index": 1,
+          "explanation": "'Tavola' (table) is feminine, so 'la tavola' is correct.",
+          "order": 5
+        },
+        {
+          "question": "In Italian, adjectives usually agree with:",
+          "options": ["Nothing", "The noun in gender and number", "Only gender", "Only number"],
+          "correct_index": 1,
+          "explanation": "Italian adjectives must match the noun in both gender and number.",
+          "order": 6
+        },
+        {
+          "question": "Which is correct: 'un libro' or 'una libro'?",
+          "options": ["un libro", "una libro", "il libro", "Both are correct"],
+          "correct_index": 0,
+          "explanation": "'Libro' (book) is masculine, so we use 'un libro'.",
+          "order": 7
+        },
+        {
+          "question": "How do you make 'gatto' (cat) plural?",
+          "options": ["gatti", "gattos", "gattoe", "gatto"],
+          "correct_index": 0,
+          "explanation": "Masculine nouns ending in -o change to -i: gatto → gatti.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "First Conversations",
+      "description": "Practice essential phrases for introducing yourself and basic social interactions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "My name is...", "back": "Mi chiamo...", "order": 1},
+        {"front": "What is your name?", "back": "Come ti chiami?", "order": 2},
+        {"front": "Nice to meet you", "back": "Piacere", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'My name is Marco' in Italian?",
+          "options": ["Mio nome Marco", "Mi chiamo Marco", "Sono nome Marco", "Chiamo mi Marco"],
+          "correct_index": 1,
+          "explanation": "'Mi chiamo' is the standard way to introduce yourself.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Come ti chiami?' mean?",
+          "options": ["How are you?", "What is your name?", "Where are you from?", "How old are you?"],
+          "correct_index": 1,
+          "explanation": "'Come ti chiami?' is the informal way to ask someone's name.",
+          "order": 2
+        },
+        {
+          "question": "How would you respond to 'Come stai?'?",
+          "options": ["Mi chiamo Anna", "Sto bene, grazie", "Piacere", "Prego"],
+          "correct_index": 1,
+          "explanation": "'Sto bene, grazie' means 'I'm fine, thank you.'",
+          "order": 3
+        },
+        {
+          "question": "What does 'Piacere' mean?",
+          "options": ["Pleasure/Nice to meet you", "Please", "Very good", "Thank you"],
+          "correct_index": 0,
+          "explanation": "'Piacere' means 'pleasure' and is used when meeting someone.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'Where are you from?' in Italian?",
+          "options": ["Come stai?", "Che ore sono?", "Di dove sei?", "Quanti anni hai?"],
+          "correct_index": 2,
+          "explanation": "'Di dove sei?' asks about someone's origin (informal).",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Simple Italian",
+      "description": "Practice reading comprehension with simple Italian texts and signs.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Open", "back": "Aperto", "order": 1},
+        {"front": "Closed", "back": "Chiuso", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'Il cane è grande.' What is big?",
+          "options": ["The cat", "The dog", "The house", "The car"],
+          "correct_index": 1,
+          "explanation": "'Il cane' means 'the dog'. The sentence says the dog is big.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'Maria ha un gatto nero.' What color is Maria's cat?",
+          "options": ["White", "Brown", "Black", "Gray"],
+          "correct_index": 2,
+          "explanation": "'Nero' means 'black'. Maria has a black cat.",
+          "order": 2
+        },
+        {
+          "question": "Read: 'La casa è piccola ma bella.' Is the house big or small?",
+          "options": ["Big", "Small", "Medium", "Very big"],
+          "correct_index": 1,
+          "explanation": "'Piccola' means 'small'. The house is small but beautiful.",
+          "order": 3
+        },
+        {
+          "question": "Read the sign: 'USCITA'. What does it indicate?",
+          "options": ["Entrance", "Exit", "Bathroom", "Danger"],
+          "correct_index": 1,
+          "explanation": "'Uscita' means 'exit'. You'll see this on exit signs.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'Io mangio una mela.' What is the person eating?",
+          "options": ["An orange", "A banana", "An apple", "A pear"],
+          "correct_index": 2,
+          "explanation": "'Mela' means 'apple'. 'Io mangio' means 'I eat'.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Hearing Italian Sounds",
+      "description": "Train your ear to recognize Italian pronunciation and understand spoken words.",
+      "order": 5,
+      "flashcards": [
+        {"front": "One", "back": "Uno", "order": 1},
+        {"front": "Two", "back": "Due", "order": 2},
+        {"front": "Three", "back": "Tre", "order": 3},
+        {"front": "Four", "back": "Quattro", "order": 4},
+        {"front": "Five", "back": "Cinque", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Listen: Which number sounds like 'OO-no'?",
+          "options": ["Due", "Uno", "Tre", "Zero"],
+          "correct_index": 1,
+          "explanation": "'Uno' (one) is pronounced 'OO-no'.",
+          "order": 1
+        },
+        {
+          "question": "How is double 'zz' pronounced in Italian?",
+          "options": ["Like 'z'", "Like 'ts' or 'dz'", "Silent", "Like 's'"],
+          "correct_index": 1,
+          "explanation": "Double 'zz' is pronounced as 'ts' (pizza = 'peet-sa').",
+          "order": 2
+        },
+        {
+          "question": "How is 'gn' (as in 'gnocchi') pronounced?",
+          "options": ["Like 'gn' in 'sign'", "Like 'ny' in 'canyon'", "Like 'n'", "Silent g"],
+          "correct_index": 1,
+          "explanation": "'Gn' sounds like 'ny' in English 'canyon'.",
+          "order": 3
+        },
+        {
+          "question": "In Italian, double consonants are:",
+          "options": ["Pronounced the same as single", "Held longer/emphasized", "Silent", "Softened"],
+          "correct_index": 1,
+          "explanation": "Double consonants in Italian are pronounced longer and stronger.",
+          "order": 4
+        },
+        {
+          "question": "Which number sounds like 'CHEEN-kweh'?",
+          "options": ["Quattro", "Sei", "Cinque", "Sette"],
+          "correct_index": 2,
+          "explanation": "'Cinque' (five) is pronounced 'CHEEN-kweh'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

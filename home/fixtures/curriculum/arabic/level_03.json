@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Arabic",
+    "level": 3,
+    "theme": "Getting Around",
+    "description": "Directions, transportation, places in the city, and asking for help in Arabic."
+  },
+  "module": {
+    "name": "Getting Around",
+    "description": "Learn to navigate cities, use transportation, and ask for directions in Arabic.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Transportation and Places",
+      "description": "Essential vocabulary for getting around town and using public transportation.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Street", "back": "شارع (Shāri')", "order": 1},
+        {"front": "Bus", "back": "حافلة (Ḥāfila) / باص (Bāṣ)", "order": 2},
+        {"front": "Train", "back": "قطار (Qiṭār)", "order": 3},
+        {"front": "Airport", "back": "مطار (Maṭār)", "order": 4},
+        {"front": "Left", "back": "يسار (Yasār)", "order": 5},
+        {"front": "Right", "back": "يمين (Yamīn)", "order": 6},
+        {"front": "Straight", "back": "على طول (ʿAlā ṭūl)", "order": 7},
+        {"front": "Bank", "back": "بنك (Bank) / مصرف (Maṣraf)", "order": 8},
+        {"front": "Hospital", "back": "مستشفى (Mustashfā)", "order": 9},
+        {"front": "Store/Shop", "back": "متجر (Matjar) / دكان (Dukkān)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'street' in Arabic?",
+          "options": ["ميدان", "شارع", "جسر", "ساحة"],
+          "correct_index": 1,
+          "explanation": "'شارع' (shāri') means street.",
+          "order": 1
+        },
+        {
+          "question": "What does 'يسار' mean?",
+          "options": ["Right", "Left", "Straight", "Back"],
+          "correct_index": 1,
+          "explanation": "'يسار' means left. 'يمين' is right.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'train' in Arabic?",
+          "options": ["حافلة", "طائرة", "قطار", "سيارة"],
+          "correct_index": 2,
+          "explanation": "'قطار' (qiṭār) means train.",
+          "order": 3
+        },
+        {
+          "question": "What is 'مطار' in English?",
+          "options": ["Bus station", "Train station", "Airport", "Port"],
+          "correct_index": 2,
+          "explanation": "'مطار' (maṭār) means airport.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'straight ahead'?",
+          "options": ["إلى اليسار", "إلى اليمين", "على طول", "إلى الخلف"],
+          "correct_index": 2,
+          "explanation": "'على طول' (ʿalā ṭūl) means straight ahead.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Giving Directions",
+      "description": "Learn direction phrases and location expressions.",
+      "order": 2,
+      "flashcards": [
+        {"front": "Turn", "back": "دُر (Dur) / لِف (Liff)", "order": 1},
+        {"front": "Go", "back": "اذهب (Idh'hab) / روح (Rūḥ)", "order": 2},
+        {"front": "next to", "back": "بجانب (Bijānib)", "order": 3},
+        {"front": "in front of", "back": "أمام (Amām)", "order": 4},
+        {"front": "behind", "back": "خلف (Khalf) / وراء (Warā')", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Turn left'?",
+          "options": ["يسار دُر", "دُر يساراً", "دُر إلى اليسار", "اليسار إلى دُر"],
+          "correct_index": 2,
+          "explanation": "'دُر إلى اليسار' or 'لِف يساراً' - verb + direction.",
+          "order": 1
+        },
+        {
+          "question": "What does 'بجانب' mean?",
+          "options": ["In front of", "Behind", "Next to", "Far from"],
+          "correct_index": 2,
+          "explanation": "'بجانب' (bijānib) means 'next to'.",
+          "order": 2
+        },
+        {
+          "question": "Complete: 'البنك ___ المستشفى' (in front of)",
+          "options": ["خلف", "بجانب", "أمام", "بعيد عن"],
+          "correct_index": 2,
+          "explanation": "'أمام' (amām) means 'in front of'.",
+          "order": 3
+        },
+        {
+          "question": "'امشِ على طول' means:",
+          "options": ["Turn right", "Turn left", "Walk straight", "Go back"],
+          "correct_index": 2,
+          "explanation": "'امشِ على طول' = Walk straight ahead.",
+          "order": 4
+        },
+        {
+          "question": "The word 'مقابل' means:",
+          "options": ["Behind", "Opposite/across from", "Between", "Under"],
+          "correct_index": 1,
+          "explanation": "'مقابل' (muqābil) means opposite/across from.",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'by bus'?",
+          "options": ["حافلة", "بالحافلة", "للحافلة", "من حافلة"],
+          "correct_index": 1,
+          "explanation": "'بالحافلة' - بـ (by/with) + vehicle.",
+          "order": 6
+        },
+        {
+          "question": "'عند التقاطع القادم، دُر يميناً' means:",
+          "options": ["Go left at the corner", "Go straight", "Turn right at the next intersection", "Turn around"],
+          "correct_index": 2,
+          "explanation": "'التقاطع القادم' = next intersection, 'دُر يميناً' = turn right.",
+          "order": 7
+        },
+        {
+          "question": "Which word means 'near'?",
+          "options": ["بعيد", "قريب", "داخل", "خارج"],
+          "correct_index": 1,
+          "explanation": "'قريب' (qarīb) means near. 'بعيد' is far.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Asking for Directions",
+      "description": "Practice asking for and understanding directions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Where is the...?", "back": "أين ...؟ (Ayna ...?)", "order": 1},
+        {"front": "How do I get to...?", "back": "كيف أصل إلى ...؟ (Kayfa aṣil ilā ...?)", "order": 2},
+        {"front": "Is it far?", "back": "هل هو بعيد؟ (Hal huwa baʿīd?)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Where is the bank?'",
+          "options": ["ما هو البنك؟", "أين البنك؟", "متى البنك؟", "كيف البنك؟"],
+          "correct_index": 1,
+          "explanation": "'أين...؟' asks for location.",
+          "order": 1
+        },
+        {
+          "question": "What does 'كيف أصل إلى المحطة؟' mean?",
+          "options": ["Where is the station?", "How do I get to the station?", "When does the station open?", "What is the station?"],
+          "correct_index": 1,
+          "explanation": "'كيف أصل إلى...؟' = How do I get to...?",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'It's about 5 minutes'?",
+          "options": ["حوالي خمس دقائق", "خمس دقائق يوجد", "دقائق خمس هي", "في خمس دقائق"],
+          "correct_index": 0,
+          "explanation": "'حوالي خمس دقائق' = It's about 5 minutes.",
+          "order": 3
+        },
+        {
+          "question": "What does 'هل يوجد صيدلية قريبة؟' mean?",
+          "options": ["Where is the pharmacy?", "Is there a pharmacy nearby?", "How is the pharmacy?", "What pharmacy?"],
+          "correct_index": 1,
+          "explanation": "'هل يوجد...قريبة؟' = Is there a...nearby?",
+          "order": 4
+        },
+        {
+          "question": "How would you respond to 'هل هو بعيد؟' if it's close?",
+          "options": ["نعم، بعيد جداً", "لا، قريب جداً", "لا أعرف", "ربما"],
+          "correct_index": 1,
+          "explanation": "'لا، قريب جداً' = No, it's very close.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Signs and Maps",
+      "description": "Understand common signs, directions, and transit information.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Entrance", "back": "مدخل (Madkhal)", "order": 1},
+        {"front": "Exit", "back": "مخرج (Makhraj)", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'للوصول إلى المتحف، امشِ على طول ثم لِف يساراً.' What direction do you turn?",
+          "options": ["Right", "Left", "Go back", "Don't turn"],
+          "correct_index": 1,
+          "explanation": "'لِف يساراً' = turn left.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'محطة المترو على بُعد خمس دقائق مشياً.' How do you get there?",
+          "options": ["By car", "By bus", "Walking", "By taxi"],
+          "correct_index": 2,
+          "explanation": "'مشياً' (mashyan) means walking.",
+          "order": 2
+        },
+        {
+          "question": "Read sign: 'ممنوع الوقوف'. What is prohibited?",
+          "options": ["Entry", "Exit", "Parking/Stopping", "Smoking"],
+          "correct_index": 2,
+          "explanation": "'الوقوف' means stopping/parking.",
+          "order": 3
+        },
+        {
+          "question": "Read: 'موقف الحافلات أمام البنك.' Where is the bus stop?",
+          "options": ["Behind the bank", "Inside the bank", "In front of the bank", "Far from the bank"],
+          "correct_index": 2,
+          "explanation": "'أمام' = in front of.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'يغادر القطار في الساعة التاسعة صباحاً.' When does the train leave?",
+          "options": ["9 PM", "9 AM", "At night", "Noon"],
+          "correct_index": 1,
+          "explanation": "'الساعة التاسعة صباحاً' = 9 AM.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Understanding Transit Announcements",
+      "description": "Train your ear to understand transportation announcements.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Next stop", "back": "المحطة القادمة (Al-maḥaṭṭa al-qādima)", "order": 1},
+        {"front": "Platform", "back": "رصيف (Raṣīf)", "order": 2},
+        {"front": "Departure", "back": "مغادرة (Mughādara)", "order": 3},
+        {"front": "Arrival", "back": "وصول (Wuṣūl)", "order": 4},
+        {"front": "Ticket", "back": "تذكرة (Tadhkira)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "You hear 'المحطة القادمة: محطة مصر'. What are you being told?",
+          "options": ["Final stop", "Next stop is Misr Station", "Transfer point", "End of service"],
+          "correct_index": 1,
+          "explanation": "'المحطة القادمة' announces the next stop.",
+          "order": 1
+        },
+        {
+          "question": "What does 'الرصيف الثالث' mean?",
+          "options": ["Bus number 3", "Platform 3", "Route 3", "Gate 3"],
+          "correct_index": 1,
+          "explanation": "'رصيف' means platform.",
+          "order": 2
+        },
+        {
+          "question": "You hear 'القطار المتجه إلى القاهرة'. Where is the train going?",
+          "options": ["From Cairo", "To Cairo", "Near Cairo", "Around Cairo"],
+          "correct_index": 1,
+          "explanation": "'المتجه إلى' = headed to/bound for.",
+          "order": 3
+        },
+        {
+          "question": "'مغادرة' and 'وصول' are:",
+          "options": ["Departure and Arrival", "Entry and Exit", "Start and End", "Open and Closed"],
+          "correct_index": 0,
+          "explanation": "'مغادرة' = departure, 'وصول' = arrival.",
+          "order": 4
+        },
+        {
+          "question": "You hear 'يرجى إعداد تذاكركم'. What should you do?",
+          "options": ["Wait for the train", "Please have your tickets ready", "Find your seat", "Show your ID"],
+          "correct_index": 1,
+          "explanation": "'يرجى إعداد تذاكركم' = Please have your tickets ready.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

@@ -19,8 +19,9 @@ from django.contrib.auth.models import User
 from django.utils.html import format_html
 
 from .models import (Flashcard, Lesson, LessonAttempt, LessonCompletion,
-                     LessonQuizQuestion, OnboardingAnswer, OnboardingAttempt,
-                     OnboardingQuestion, QuizResult, UserProfile, UserProgress)
+                     LessonQuizQuestion, LearningModule, OnboardingAnswer, OnboardingAttempt,
+                     OnboardingQuestion, QuizResult, SkillCategory, UserModuleProgress,
+                     UserProfile, UserProgress, UserQuestionAttempt, UserSkillMastery)
 
 # Configure logger for admin actions (audit trail)
 logger = logging.getLogger(__name__)
@@ -605,3 +606,118 @@ class LessonAttemptAdmin(admin.ModelAdmin):
     list_filter = ['lesson', 'completed_at']
     search_fields = ['user__username', 'lesson__title']
     readonly_fields = ['completed_at']
+
+
+# =============================================================================
+# ADAPTIVE CURRICULUM SYSTEM ADMIN
+# =============================================================================
+
+@admin.register(SkillCategory)
+class SkillCategoryAdmin(admin.ModelAdmin):
+    """Admin interface for SkillCategory management."""
+    list_display = ['icon', 'name', 'order', 'description_preview']
+    list_editable = ['order']
+    ordering = ['order']
+    
+    def description_preview(self, obj):
+        """Display truncated description."""
+        return obj.description[:50] + '...' if len(obj.description) > 50 else obj.description
+    description_preview.short_description = 'Description'
+
+
+@admin.register(LearningModule)
+class LearningModuleAdmin(admin.ModelAdmin):
+    """Admin interface for LearningModule management."""
+    list_display = ['language', 'proficiency_level', 'name', 'passing_score', 'lesson_count', 'created_at']
+    list_filter = ['language', 'proficiency_level']
+    search_fields = ['name', 'description', 'language']
+    ordering = ['language', 'proficiency_level']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Module Identity', {
+            'fields': ('language', 'proficiency_level', 'name')
+        }),
+        ('Content', {
+            'fields': ('description', 'passing_score')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def lesson_count(self, obj):
+        """Count lessons in this module."""
+        return obj.get_lessons().count()
+    lesson_count.short_description = 'Lessons'
+
+
+@admin.register(UserModuleProgress)
+class UserModuleProgressAdmin(admin.ModelAdmin):
+    """Admin interface for tracking user module progress."""
+    list_display = ['user', 'module', 'lessons_completed_count', 'best_test_score', 'test_attempts', 'is_module_complete']
+    list_filter = ['is_module_complete', 'module__language', 'module__proficiency_level']
+    search_fields = ['user__username', 'module__name', 'module__language']
+    readonly_fields = ['created_at', 'updated_at', 'completed_at']
+    raw_id_fields = ['user', 'module']
+    
+    fieldsets = (
+        ('User & Module', {
+            'fields': ('user', 'module')
+        }),
+        ('Progress', {
+            'fields': ('lessons_completed', 'is_module_complete', 'completed_at')
+        }),
+        ('Test Results', {
+            'fields': ('test_attempts', 'best_test_score', 'last_test_date')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def lessons_completed_count(self, obj):
+        """Display number of completed lessons."""
+        return f"{len(obj.lessons_completed)}/5"
+    lessons_completed_count.short_description = 'Lessons'
+
+
+@admin.register(UserSkillMastery)
+class UserSkillMasteryAdmin(admin.ModelAdmin):
+    """Admin interface for tracking user skill mastery."""
+    list_display = ['user', 'language', 'skill_category', 'mastery_percentage', 'total_attempts', 'last_practiced']
+    list_filter = ['language', 'skill_category']
+    search_fields = ['user__username', 'language']
+    readonly_fields = ['created_at', 'updated_at']
+    raw_id_fields = ['user', 'skill_category']
+    
+    fieldsets = (
+        ('User & Skill', {
+            'fields': ('user', 'skill_category', 'language')
+        }),
+        ('Mastery Statistics', {
+            'fields': ('mastery_percentage', 'total_attempts', 'correct_attempts', 'last_practiced')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(UserQuestionAttempt)
+class UserQuestionAttemptAdmin(admin.ModelAdmin):
+    """Admin interface for tracking individual question attempts."""
+    list_display = ['user', 'question_preview', 'skill_category', 'is_correct', 'time_taken_seconds', 'answered_at']
+    list_filter = ['is_correct', 'skill_category', 'answered_at']
+    search_fields = ['user__username', 'question__question']
+    readonly_fields = ['answered_at']
+    raw_id_fields = ['user', 'question', 'skill_category']
+    date_hierarchy = 'answered_at'
+    
+    def question_preview(self, obj):
+        """Display truncated question text."""
+        return obj.question.question[:40] + '...' if len(obj.question.question) > 40 else obj.question.question
+    question_preview.short_description = 'Question'

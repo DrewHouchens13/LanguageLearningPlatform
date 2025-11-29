@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "French",
+    "level": 2,
+    "theme": "Daily Life",
+    "description": "Family members, common foods, everyday objects, and telling time in French."
+  },
+  "module": {
+    "name": "Daily Life",
+    "description": "Learn vocabulary for family, food, everyday objects, and time expressions.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Family and Daily Words",
+      "description": "Learn essential vocabulary for family members, common foods, and household items.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Mother", "back": "Mère / Maman", "order": 1},
+        {"front": "Father", "back": "Père / Papa", "order": 2},
+        {"front": "Brother", "back": "Frère", "order": 3},
+        {"front": "Sister", "back": "Sœur", "order": 4},
+        {"front": "Water", "back": "Eau (f)", "order": 5},
+        {"front": "Bread", "back": "Pain (m)", "order": 6},
+        {"front": "Milk", "back": "Lait (m)", "order": 7},
+        {"front": "House", "back": "Maison (f)", "order": 8},
+        {"front": "Table", "back": "Table (f)", "order": 9},
+        {"front": "Chair", "back": "Chaise (f)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'mother' in French?",
+          "options": ["Sœur", "Mère", "Grand-mère", "Tante"],
+          "correct_index": 1,
+          "explanation": "'Mère' is mother. 'Maman' is mom (informal).",
+          "order": 1
+        },
+        {
+          "question": "What does 'frère' mean?",
+          "options": ["Sister", "Brother", "Father", "Uncle"],
+          "correct_index": 1,
+          "explanation": "'Frère' means brother. 'Sœur' is sister.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'water' in French?",
+          "options": ["Lait", "Pain", "Eau", "Vin"],
+          "correct_index": 2,
+          "explanation": "'Eau' means water. It's feminine: l'eau.",
+          "order": 3
+        },
+        {
+          "question": "What is 'pain' in English?",
+          "options": ["Water", "Bread", "Milk", "Meat"],
+          "correct_index": 1,
+          "explanation": "'Pain' means bread in French.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'table' in French?",
+          "options": ["Chaise", "Maison", "Table", "Lit"],
+          "correct_index": 2,
+          "explanation": "'Table' is the same in French! It's feminine: la table.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Possessives and Avoir/Être",
+      "description": "Learn possessive adjectives and master avoir (to have) and être (to be).",
+      "order": 2,
+      "flashcards": [
+        {"front": "my (masc.)", "back": "mon", "order": 1},
+        {"front": "my (fem.)", "back": "ma", "order": 2},
+        {"front": "your (informal)", "back": "ton/ta", "order": 3},
+        {"front": "to have", "back": "avoir", "order": 4},
+        {"front": "to be", "back": "être", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'my mother' in French?",
+          "options": ["Mon mère", "Ma mère", "Mes mère", "Ta mère"],
+          "correct_index": 1,
+          "explanation": "'Ma' is used for feminine nouns: ma mère.",
+          "order": 1
+        },
+        {
+          "question": "'J'ai deux frères' means:",
+          "options": ["I am two brothers", "I have two brothers", "I see two brothers", "I want two brothers"],
+          "correct_index": 1,
+          "explanation": "'J'ai' = I have (avoir). 'Deux frères' = two brothers.",
+          "order": 2
+        },
+        {
+          "question": "Which is correct for 'my friend' (female)?",
+          "options": ["Ma amie", "Mon amie", "Mes amie", "Ta amie"],
+          "correct_index": 1,
+          "explanation": "'Mon amie' - use 'mon' before feminine nouns starting with a vowel.",
+          "order": 3
+        },
+        {
+          "question": "Complete: 'Nous ___ français' (We are French)",
+          "options": ["avons", "sommes", "êtes", "sont"],
+          "correct_index": 1,
+          "explanation": "'Sommes' is the nous form of être (to be).",
+          "order": 4
+        },
+        {
+          "question": "Complete: 'Ils ___ faim' (They are hungry)",
+          "options": ["sont", "ont", "êtes", "avez"],
+          "correct_index": 1,
+          "explanation": "In French, you 'have' hunger: 'avoir faim'. Ils ont faim.",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'our house'?",
+          "options": ["Mon maison", "Ta maison", "Notre maison", "Leur maison"],
+          "correct_index": 2,
+          "explanation": "'Notre' means 'our' for both masculine and feminine singular nouns.",
+          "order": 6
+        },
+        {
+          "question": "'Elle est médecin' means:",
+          "options": ["She has a doctor", "She is a doctor", "She sees a doctor", "She wants a doctor"],
+          "correct_index": 1,
+          "explanation": "'Est' (être) + profession in French (no article needed).",
+          "order": 7
+        },
+        {
+          "question": "Which expression uses 'avoir' (to have)?",
+          "options": ["I am happy", "I am hungry", "I am tall", "I am French"],
+          "correct_index": 1,
+          "explanation": "'J'ai faim' (I have hunger) - French uses 'avoir' for hunger, thirst, age.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Family Conversations",
+      "description": "Practice talking about your family and daily routines.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Do you have siblings?", "back": "Tu as des frères et sœurs?", "order": 1},
+        {"front": "I have two brothers", "back": "J'ai deux frères", "order": 2},
+        {"front": "What time is it?", "back": "Quelle heure est-il?", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Do you have siblings?' informally?",
+          "options": ["Comment as-tu des frères?", "Tu as des frères et sœurs?", "Où as-tu des frères?", "Pourquoi as-tu des frères?"],
+          "correct_index": 1,
+          "explanation": "'Tu as des frères et sœurs?' uses 'avoir' (to have).",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'I live with my family'?",
+          "options": ["J'habite avec ma famille", "J'ai ma famille", "Je suis ma famille", "Je reste ma famille"],
+          "correct_index": 0,
+          "explanation": "'J'habite avec ma famille' - 'habiter' means to live.",
+          "order": 2
+        },
+        {
+          "question": "What does 'Quelle heure est-il?' mean?",
+          "options": ["What day is it?", "What time is it?", "How are you?", "Where is it?"],
+          "correct_index": 1,
+          "explanation": "'Quelle heure est-il?' asks for the time.",
+          "order": 3
+        },
+        {
+          "question": "How do you say 'It's 3 o'clock'?",
+          "options": ["Il est trois", "Il est trois heures", "C'est trois", "Sont trois heures"],
+          "correct_index": 1,
+          "explanation": "'Il est trois heures' - always include 'heures' (hours).",
+          "order": 4
+        },
+        {
+          "question": "How do you respond to 'Combien de frères as-tu?'",
+          "options": ["Oui, j'ai", "J'ai trois frères", "Frères j'ai", "Très bien"],
+          "correct_index": 1,
+          "explanation": "'J'ai trois frères' answers how many brothers you have.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading About Daily Life",
+      "description": "Read and understand texts about family and daily routines.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Every day", "back": "Tous les jours", "order": 1},
+        {"front": "In the morning", "back": "Le matin", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'Ma famille est grande. J'ai trois frères.' How many brothers?",
+          "options": ["One", "Two", "Three", "Four"],
+          "correct_index": 2,
+          "explanation": "'Trois frères' means three brothers.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'Je prends le petit-déjeuner à huit heures.' When does the person eat breakfast?",
+          "options": ["6 AM", "7 AM", "8 AM", "9 AM"],
+          "correct_index": 2,
+          "explanation": "'À huit heures' means at eight o'clock.",
+          "order": 2
+        },
+        {
+          "question": "Read: 'Ma mère cuisine tous les jours.' What does the mother do?",
+          "options": ["Works", "Cooks", "Cleans", "Sleeps"],
+          "correct_index": 1,
+          "explanation": "'Cuisine' means 'she cooks'. 'Cuisiner' = to cook.",
+          "order": 3
+        },
+        {
+          "question": "Read: 'Nous habitons dans une petite maison mais elle est confortable.' The house is:",
+          "options": ["Big and old", "Small but comfortable", "New and large", "Old but nice"],
+          "correct_index": 1,
+          "explanation": "'Petite mais confortable' = small but comfortable.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'Le dimanche, nous déjeunons avec les grands-parents.' When do they lunch with grandparents?",
+          "options": ["Saturdays", "Sundays", "Mondays", "Every day"],
+          "correct_index": 1,
+          "explanation": "'Le dimanche' means on Sunday/Sundays.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Days and Time Expressions",
+      "description": "Learn to understand days of the week and time expressions.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Monday", "back": "Lundi", "order": 1},
+        {"front": "Tuesday", "back": "Mardi", "order": 2},
+        {"front": "Wednesday", "back": "Mercredi", "order": 3},
+        {"front": "Thursday", "back": "Jeudi", "order": 4},
+        {"front": "Friday", "back": "Vendredi", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which day sounds like 'luhn-DEE'?",
+          "options": ["Mardi", "Lundi", "Jeudi", "Vendredi"],
+          "correct_index": 1,
+          "explanation": "'Lundi' (Monday) is pronounced 'luhn-DEE'.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'Saturday' in French?",
+          "options": ["Vendredi", "Samedi", "Dimanche", "Lundi"],
+          "correct_index": 1,
+          "explanation": "'Samedi' is Saturday. 'Dimanche' is Sunday.",
+          "order": 2
+        },
+        {
+          "question": "French days of the week are:",
+          "options": ["Capitalized", "Not capitalized", "Sometimes capitalized", "Always in plural"],
+          "correct_index": 1,
+          "explanation": "Unlike English, French days are not capitalized.",
+          "order": 3
+        },
+        {
+          "question": "What does 'le week-end' mean?",
+          "options": ["The end of the month", "The weekend", "The holiday", "The vacation"],
+          "correct_index": 1,
+          "explanation": "'Le week-end' is borrowed from English and means the weekend.",
+          "order": 4
+        },
+        {
+          "question": "Which day sounds like 'mehr-kruh-DEE'?",
+          "options": ["Mardi", "Mercredi", "Jeudi", "Lundi"],
+          "correct_index": 1,
+          "explanation": "'Mercredi' (Wednesday) is pronounced 'mehr-kruh-DEE'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

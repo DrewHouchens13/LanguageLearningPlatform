@@ -1,0 +1,453 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Level {{ level }} Test - {{ language }} - Language Learning Platform</title>
+  {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
+  <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+  <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+  <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
+  <style>
+    .test-header {
+      text-align: center;
+      padding: var(--space-2xl) var(--space-xl);
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fbbf24 100%);
+      border-radius: var(--radius-xl);
+      margin-bottom: var(--space-2xl);
+    }
+    .test-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      background: rgba(255,255,255,0.9);
+      padding: var(--space-sm) var(--space-lg);
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      margin-bottom: var(--space-md);
+    }
+    .test-title {
+      font-size: var(--text-3xl);
+      margin-bottom: var(--space-sm);
+    }
+    .test-info {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-xl);
+      margin-top: var(--space-lg);
+    }
+    .test-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .test-stat-value {
+      font-size: var(--text-2xl);
+      font-weight: 700;
+    }
+    .test-stat-label {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+    .timer {
+      position: fixed;
+      top: 100px;
+      right: var(--space-xl);
+      background: var(--surface);
+      padding: var(--space-md) var(--space-lg);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    .timer.warning {
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+    }
+    .timer.danger {
+      background: #fee2e2;
+      border: 2px solid #ef4444;
+      animation: pulse 1s infinite;
+    }
+    .timer-icon {
+      font-size: 1.5rem;
+    }
+    .timer-text {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .questions-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .question-card {
+      background: var(--surface);
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-xl);
+      padding: var(--space-xl);
+      margin-bottom: var(--space-xl);
+      transition: border-color 0.2s;
+    }
+    .question-card.answered {
+      border-color: var(--primary);
+    }
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-lg);
+    }
+    .question-number {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--primary);
+      background: rgba(20, 184, 166, 0.1);
+      padding: var(--space-xs) var(--space-md);
+      border-radius: var(--radius-full);
+    }
+    .question-skill {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+    .question-text {
+      font-size: var(--text-xl);
+      font-weight: 600;
+      margin-bottom: var(--space-lg);
+    }
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-md);
+    }
+    @media (max-width: 640px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+      .timer {
+        top: auto;
+        bottom: var(--space-xl);
+        right: var(--space-md);
+        left: var(--space-md);
+        justify-content: center;
+      }
+    }
+    .option-card {
+      padding: var(--space-lg);
+      border: 2px solid var(--gray-300);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .option-card:hover {
+      border-color: var(--primary);
+      background: rgba(20, 184, 166, 0.05);
+    }
+    .option-card.selected {
+      border-color: var(--primary);
+      background: rgba(20, 184, 166, 0.1);
+    }
+    .option-letter {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .option-card.selected .option-letter {
+      background: var(--primary);
+      color: white;
+    }
+    .progress-bar-container {
+      position: fixed;
+      top: 70px;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--gray-200);
+      z-index: 99;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #14b8a6);
+      transition: width 0.3s;
+    }
+    .submit-section {
+      text-align: center;
+      padding: var(--space-2xl);
+      background: var(--gray-50);
+      border-radius: var(--radius-xl);
+      margin-top: var(--space-2xl);
+    }
+    .submit-section h3 {
+      margin-bottom: var(--space-md);
+    }
+    .submit-progress {
+      font-size: var(--text-lg);
+      color: var(--text-secondary);
+      margin-bottom: var(--space-lg);
+    }
+    #submitTest:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: var(--space-lg);
+      z-index: 1000;
+    }
+    .loading-overlay.show {
+      display: flex;
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid var(--gray-200);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  {% include '_nav.html' %}
+  
+  <div class="progress-bar-container">
+    <div class="progress-bar-fill" id="progressBar" style="width: 0%;"></div>
+  </div>
+  
+  <div class="timer" id="timer">
+    <span class="timer-icon">⏱️</span>
+    <span class="timer-text" id="timerText">{{ time_limit }}:00</span>
+  </div>
+  
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <p>Submitting your answers...</p>
+  </div>
+  
+  <main class="container" style="padding-top: var(--space-3xl); padding-bottom: 120px;">
+    <div class="test-header fade-in">
+      <div class="test-badge">
+        <span>🎯</span>
+        <span>{{ language }} · Level {{ level }} Test</span>
+      </div>
+      <h1 class="test-title">{{ module.name }} Assessment</h1>
+      <p style="color: var(--text-secondary);">Score {{ module.passing_score }}% or higher to advance to Level {{ level|add:1 }}</p>
+      
+      <div class="test-info">
+        <div class="test-stat">
+          <span class="test-stat-value">{{ test.total_questions }}</span>
+          <span class="test-stat-label">Questions</span>
+        </div>
+        <div class="test-stat">
+          <span class="test-stat-value">{{ time_limit }}</span>
+          <span class="test-stat-label">Minutes</span>
+        </div>
+        <div class="test-stat">
+          <span class="test-stat-value">{{ module.passing_score }}%</span>
+          <span class="test-stat-label">To Pass</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="questions-container">
+      {% for question in questions %}
+        <div class="question-card fade-in-up" data-question-id="{{ question.id }}" style="animation-delay: {{ forloop.counter0 }}50ms;">
+          <div class="question-header">
+            <span class="question-number">Question {{ forloop.counter }}</span>
+            <span class="question-skill">{{ question.skill|title }}</span>
+          </div>
+          <div class="question-text">{{ question.question }}</div>
+          <div class="options-grid">
+            {% for option in question.options %}
+              <div class="option-card" data-index="{{ forloop.counter0 }}">
+                <span class="option-letter">{% if forloop.counter0 == 0 %}A{% elif forloop.counter0 == 1 %}B{% elif forloop.counter0 == 2 %}C{% elif forloop.counter0 == 3 %}D{% else %}{{ forloop.counter }}{% endif %}</span>
+                <span>{{ option }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    
+    <div class="submit-section">
+      <h3>Ready to Submit?</h3>
+      <div class="submit-progress">
+        <span id="answeredCount">0</span> / {{ test.total_questions }} questions answered
+      </div>
+      <button id="submitTest" class="btn btn-primary btn-lg" disabled>
+        Submit Test
+      </button>
+    </div>
+  </main>
+  
+  <script>
+    const questions = document.querySelectorAll('.question-card');
+    const progressBar = document.getElementById('progressBar');
+    const answeredCount = document.getElementById('answeredCount');
+    const submitBtn = document.getElementById('submitTest');
+    const totalQuestions = {{ test.total_questions }};
+    const answers = {};
+    
+    // Handle option selection
+    questions.forEach(question => {
+      const questionId = question.dataset.questionId;
+      const options = question.querySelectorAll('.option-card');
+      
+      options.forEach(option => {
+        option.addEventListener('click', () => {
+          options.forEach(opt => opt.classList.remove('selected'));
+          option.classList.add('selected');
+          question.classList.add('answered');
+          
+          answers[questionId] = {
+            question_id: parseInt(questionId),
+            answer_index: parseInt(option.dataset.index)
+          };
+          
+          updateProgress();
+        });
+      });
+    });
+    
+    function updateProgress() {
+      const answered = Object.keys(answers).length;
+      const percentage = (answered / totalQuestions) * 100;
+      
+      progressBar.style.width = percentage + '%';
+      answeredCount.textContent = answered;
+      
+      submitBtn.disabled = answered < totalQuestions;
+    }
+    
+    // Timer
+    let timeRemaining = {{ time_limit }} * 60;
+    const timer = document.getElementById('timer');
+    const timerText = document.getElementById('timerText');
+    
+    function updateTimer() {
+      const minutes = Math.floor(timeRemaining / 60);
+      const seconds = timeRemaining % 60;
+      timerText.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      
+      if (timeRemaining <= 60) {
+        timer.classList.add('danger');
+        timer.classList.remove('warning');
+      } else if (timeRemaining <= 180) {
+        timer.classList.add('warning');
+      }
+      
+      if (timeRemaining <= 0) {
+        submitTest();
+      } else {
+        timeRemaining--;
+        setTimeout(updateTimer, 1000);
+      }
+    }
+    updateTimer();
+    
+    // Submit test
+    submitBtn.addEventListener('click', submitTest);
+    
+    async function submitTest() {
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      loadingOverlay.classList.add('show');
+      submitBtn.disabled = true;
+      
+      // Fill in unanswered questions with -1
+      questions.forEach(q => {
+        const qId = q.dataset.questionId;
+        if (!answers[qId]) {
+          answers[qId] = { question_id: parseInt(qId), answer_index: -1 };
+        }
+      });
+      
+      try {
+        const response = await fetch('{% url "submit_module_test" language=language level=level %}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify({ answers: Object.values(answers) })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Show results
+          showResults(data);
+        } else {
+          alert(data.error || 'An error occurred');
+          loadingOverlay.classList.remove('show');
+          submitBtn.disabled = false;
+        }
+      } catch (error) {
+        alert('Network error. Please try again.');
+        loadingOverlay.classList.remove('show');
+        submitBtn.disabled = false;
+      }
+    }
+    
+    function showResults(data) {
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      loadingOverlay.innerHTML = `
+        <div style="text-align: center; max-width: 400px; padding: var(--space-xl);">
+          <div style="font-size: 4rem; margin-bottom: var(--space-lg);">
+            ${data.passed ? '🎉' : '😔'}
+          </div>
+          <h2 style="margin-bottom: var(--space-md);">
+            ${data.passed ? 'Congratulations!' : 'Keep Practicing!'}
+          </h2>
+          <div style="font-size: var(--text-4xl); font-weight: 700; color: ${data.passed ? 'var(--success)' : 'var(--danger)'}; margin-bottom: var(--space-lg);">
+            ${data.score}%
+          </div>
+          <p style="color: var(--text-secondary); margin-bottom: var(--space-lg);">
+            You got ${data.correct} out of ${data.total} questions correct.
+          </p>
+          ${data.feedback.map(f => `<p style="margin-bottom: var(--space-sm);">${f}</p>`).join('')}
+          <a href="{% url 'module_detail' language=language level=level %}" class="btn btn-primary btn-lg" style="margin-top: var(--space-xl);">
+            ${data.passed ? 'Continue' : 'Back to Level'}
+          </a>
+        </div>
+      `;
+    }
+    
+    // Nav toggle
+    const navToggle = document.querySelector('.nav-toggle');
+    const navCenter = document.querySelector('.nav-center');
+    if (navToggle && navCenter) {
+      navToggle.addEventListener('click', () => {
+        navCenter.classList.toggle('active');
+        navToggle.classList.toggle('active');
+      });
+    }
+  </script>
+</body>
+</html>
+

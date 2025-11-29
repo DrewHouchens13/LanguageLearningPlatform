@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Spanish",
+    "level": 2,
+    "theme": "Daily Life",
+    "description": "Family members, common foods, everyday objects, and telling time in Spanish."
+  },
+  "module": {
+    "name": "Daily Life",
+    "description": "Learn vocabulary for family, food, everyday objects, and time expressions.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Family and Daily Words",
+      "description": "Learn essential vocabulary for family members, common foods, and household items.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Mother", "back": "Madre / Mamá", "order": 1},
+        {"front": "Father", "back": "Padre / Papá", "order": 2},
+        {"front": "Brother", "back": "Hermano", "order": 3},
+        {"front": "Sister", "back": "Hermana", "order": 4},
+        {"front": "Water", "back": "Agua", "order": 5},
+        {"front": "Bread", "back": "Pan", "order": 6},
+        {"front": "Milk", "back": "Leche", "order": 7},
+        {"front": "House", "back": "Casa", "order": 8},
+        {"front": "Table", "back": "Mesa", "order": 9},
+        {"front": "Chair", "back": "Silla", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'mother' in Spanish?",
+          "options": ["Hermana", "Madre", "Abuela", "Tía"],
+          "correct_index": 1,
+          "explanation": "'Madre' is mother. 'Mamá' is the informal version.",
+          "order": 1
+        },
+        {
+          "question": "What does 'hermano' mean?",
+          "options": ["Sister", "Brother", "Father", "Uncle"],
+          "correct_index": 1,
+          "explanation": "'Hermano' means brother. 'Hermana' is sister.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'water' in Spanish?",
+          "options": ["Leche", "Pan", "Agua", "Vino"],
+          "correct_index": 2,
+          "explanation": "'Agua' means water. Note: it uses 'el' despite being feminine.",
+          "order": 3
+        },
+        {
+          "question": "What is 'pan' in English?",
+          "options": ["Water", "Bread", "Milk", "Meat"],
+          "correct_index": 1,
+          "explanation": "'Pan' means bread in Spanish.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'table' in Spanish?",
+          "options": ["Silla", "Casa", "Mesa", "Cama"],
+          "correct_index": 2,
+          "explanation": "'Mesa' means table. 'Silla' is chair.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Possessives and Ser vs Estar",
+      "description": "Learn possessive adjectives and the difference between ser and estar.",
+      "order": 2,
+      "flashcards": [
+        {"front": "my (singular)", "back": "mi", "order": 1},
+        {"front": "your (informal, singular)", "back": "tu", "order": 2},
+        {"front": "his/her/your (formal)", "back": "su", "order": 3},
+        {"front": "to be (permanent)", "back": "ser", "order": 4},
+        {"front": "to be (temporary/location)", "back": "estar", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'my mother' in Spanish?",
+          "options": ["Tu madre", "Mi madre", "Su madre", "Nuestra madre"],
+          "correct_index": 1,
+          "explanation": "'Mi' means 'my' for singular nouns.",
+          "order": 1
+        },
+        {
+          "question": "Which verb is used for permanent characteristics?",
+          "options": ["Estar", "Ser", "Tener", "Haber"],
+          "correct_index": 1,
+          "explanation": "'Ser' is used for permanent states (nationality, profession, etc.).",
+          "order": 2
+        },
+        {
+          "question": "'Estoy cansado' uses estar because being tired is:",
+          "options": ["Permanent", "Temporary", "A location", "A profession"],
+          "correct_index": 1,
+          "explanation": "Temporary states and emotions use 'estar'.",
+          "order": 3
+        },
+        {
+          "question": "Complete: 'La casa ___ grande' (permanent quality)",
+          "options": ["está", "es", "son", "están"],
+          "correct_index": 1,
+          "explanation": "'Es' (ser) for permanent characteristics of the house.",
+          "order": 4
+        },
+        {
+          "question": "Complete: 'Mi padre ___ en la cocina' (location)",
+          "options": ["es", "está", "ser", "son"],
+          "correct_index": 1,
+          "explanation": "'Está' (estar) is used for location.",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'our house'?",
+          "options": ["Mi casa", "Tu casa", "Nuestra casa", "Su casa"],
+          "correct_index": 2,
+          "explanation": "'Nuestra' means 'our' for feminine nouns.",
+          "order": 6
+        },
+        {
+          "question": "'Soy estudiante' means:",
+          "options": ["I am studying", "I am a student", "I have a student", "I was a student"],
+          "correct_index": 1,
+          "explanation": "'Soy' (ser) + profession = I am a student (permanent role).",
+          "order": 7
+        },
+        {
+          "question": "Which is correct: 'La leche es/está fría'?",
+          "options": ["es fría", "está fría", "Both can be correct", "Neither"],
+          "correct_index": 2,
+          "explanation": "Both work: 'es fría' (milk is cold by nature) vs 'está fría' (currently cold).",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Family Conversations",
+      "description": "Practice talking about your family and daily routines.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Do you have siblings?", "back": "¿Tienes hermanos?", "order": 1},
+        {"front": "I have two brothers", "back": "Tengo dos hermanos", "order": 2},
+        {"front": "What time is it?", "back": "¿Qué hora es?", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Do you have siblings?' in Spanish?",
+          "options": ["¿Cómo tienes hermanos?", "¿Tienes hermanos?", "¿Dónde tienes hermanos?", "¿Por qué tienes hermanos?"],
+          "correct_index": 1,
+          "explanation": "'¿Tienes hermanos?' uses 'tener' (to have) for family.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'I live with my family'?",
+          "options": ["Vivo con mi familia", "Tengo mi familia", "Soy mi familia", "Estoy mi familia"],
+          "correct_index": 0,
+          "explanation": "'Vivo con mi familia' - 'vivir' means to live.",
+          "order": 2
+        },
+        {
+          "question": "What does '¿Qué hora es?' mean?",
+          "options": ["What day is it?", "What time is it?", "How are you?", "Where is it?"],
+          "correct_index": 1,
+          "explanation": "'¿Qué hora es?' asks for the time.",
+          "order": 3
+        },
+        {
+          "question": "How do you say 'It's 3 o'clock'?",
+          "options": ["Es tres", "Son las tres", "Está tres", "Tiene tres"],
+          "correct_index": 1,
+          "explanation": "'Son las tres' - use 'son' for all hours except 1:00 (es la una).",
+          "order": 4
+        },
+        {
+          "question": "How do you respond to '¿Cuántos hermanos tienes?'",
+          "options": ["Sí, tengo", "Tengo tres hermanos", "Hermanos tengo", "Muy bien"],
+          "correct_index": 1,
+          "explanation": "'Tengo tres hermanos' answers how many siblings you have.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading About Daily Life",
+      "description": "Read and understand texts about family and daily routines.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Everyday", "back": "Todos los días", "order": 1},
+        {"front": "In the morning", "back": "Por la mañana", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'Mi familia es grande. Tengo tres hermanos.' How many siblings?",
+          "options": ["One", "Two", "Three", "Four"],
+          "correct_index": 2,
+          "explanation": "'Tres hermanos' means three siblings.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'Desayuno a las ocho de la mañana.' When does the person eat breakfast?",
+          "options": ["6 AM", "7 AM", "8 AM", "9 AM"],
+          "correct_index": 2,
+          "explanation": "'A las ocho' means at eight o'clock.",
+          "order": 2
+        },
+        {
+          "question": "Read: 'Mi madre cocina todos los días.' What does the mother do?",
+          "options": ["Works", "Cooks", "Cleans", "Sleeps"],
+          "correct_index": 1,
+          "explanation": "'Cocina' means 'she cooks'. 'Cocinar' = to cook.",
+          "order": 3
+        },
+        {
+          "question": "Read: 'Vivimos en una casa pequeña pero cómoda.' The house is:",
+          "options": ["Big and old", "Small but comfortable", "New and large", "Old but nice"],
+          "correct_index": 1,
+          "explanation": "'Pequeña pero cómoda' = small but comfortable.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'Los domingos, almorzamos con los abuelos.' When do they lunch with grandparents?",
+          "options": ["Saturdays", "Sundays", "Mondays", "Every day"],
+          "correct_index": 1,
+          "explanation": "'Los domingos' means on Sundays.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Days and Time Expressions",
+      "description": "Learn to understand days of the week and time expressions.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Monday", "back": "Lunes", "order": 1},
+        {"front": "Tuesday", "back": "Martes", "order": 2},
+        {"front": "Wednesday", "back": "Miércoles", "order": 3},
+        {"front": "Thursday", "back": "Jueves", "order": 4},
+        {"front": "Friday", "back": "Viernes", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which day sounds like 'LOO-nes'?",
+          "options": ["Martes", "Lunes", "Jueves", "Viernes"],
+          "correct_index": 1,
+          "explanation": "'Lunes' (Monday) is pronounced 'LOO-nes'.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'Saturday' in Spanish?",
+          "options": ["Viernes", "Sábado", "Domingo", "Lunes"],
+          "correct_index": 1,
+          "explanation": "'Sábado' is Saturday. 'Domingo' is Sunday.",
+          "order": 2
+        },
+        {
+          "question": "Spanish days of the week are:",
+          "options": ["Capitalized", "Not capitalized", "Sometimes capitalized", "Always in plural"],
+          "correct_index": 1,
+          "explanation": "Unlike English, Spanish days are not capitalized.",
+          "order": 3
+        },
+        {
+          "question": "What does 'el fin de semana' mean?",
+          "options": ["The end of the month", "The weekend", "The holiday", "The vacation"],
+          "correct_index": 1,
+          "explanation": "'El fin de semana' literally means 'the end of the week' = weekend.",
+          "order": 4
+        },
+        {
+          "question": "Which day sounds like 'MYER-ko-les'?",
+          "options": ["Martes", "Miércoles", "Jueves", "Lunes"],
+          "correct_index": 1,
+          "explanation": "'Miércoles' (Wednesday) is pronounced 'MYER-ko-les'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

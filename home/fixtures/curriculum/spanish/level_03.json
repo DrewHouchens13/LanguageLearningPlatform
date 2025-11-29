@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Spanish",
+    "level": 3,
+    "theme": "Getting Around",
+    "description": "Directions, transportation, places in the city, and asking for help in Spanish."
+  },
+  "module": {
+    "name": "Getting Around",
+    "description": "Learn to navigate cities, use transportation, and ask for directions in Spanish.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Transportation and Places",
+      "description": "Essential vocabulary for getting around town and using public transportation.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Street", "back": "Calle", "order": 1},
+        {"front": "Bus", "back": "Autobús", "order": 2},
+        {"front": "Train", "back": "Tren", "order": 3},
+        {"front": "Airport", "back": "Aeropuerto", "order": 4},
+        {"front": "Left", "back": "Izquierda", "order": 5},
+        {"front": "Right", "back": "Derecha", "order": 6},
+        {"front": "Straight", "back": "Recto / Derecho", "order": 7},
+        {"front": "Bank", "back": "Banco", "order": 8},
+        {"front": "Hospital", "back": "Hospital", "order": 9},
+        {"front": "Store/Shop", "back": "Tienda", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'street' in Spanish?",
+          "options": ["Avenida", "Calle", "Camino", "Plaza"],
+          "correct_index": 1,
+          "explanation": "'Calle' means street. 'Avenida' is avenue.",
+          "order": 1
+        },
+        {
+          "question": "What does 'izquierda' mean?",
+          "options": ["Right", "Left", "Straight", "Back"],
+          "correct_index": 1,
+          "explanation": "'Izquierda' means left. 'Derecha' is right.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'train' in Spanish?",
+          "options": ["Autobús", "Avión", "Tren", "Coche"],
+          "correct_index": 2,
+          "explanation": "'Tren' means train.",
+          "order": 3
+        },
+        {
+          "question": "What is 'aeropuerto' in English?",
+          "options": ["Bus station", "Train station", "Airport", "Port"],
+          "correct_index": 2,
+          "explanation": "'Aeropuerto' means airport.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'straight' (direction)?",
+          "options": ["Izquierda", "Derecha", "Recto", "Atrás"],
+          "correct_index": 2,
+          "explanation": "'Recto' or 'derecho' means straight ahead.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Giving Directions and Commands",
+      "description": "Learn imperative forms and prepositions for directions.",
+      "order": 2,
+      "flashcards": [
+        {"front": "Turn (command, formal)", "back": "Gire", "order": 1},
+        {"front": "Go (command, formal)", "back": "Vaya", "order": 2},
+        {"front": "Continue (command)", "back": "Siga", "order": 3},
+        {"front": "next to", "back": "al lado de", "order": 4},
+        {"front": "in front of", "back": "enfrente de", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Turn left' (formal command)?",
+          "options": ["Gira a la izquierda", "Gire a la izquierda", "Girar izquierda", "Izquierda gire"],
+          "correct_index": 1,
+          "explanation": "'Gire' is the formal imperative of 'girar'.",
+          "order": 1
+        },
+        {
+          "question": "What does 'al lado de' mean?",
+          "options": ["In front of", "Behind", "Next to", "Far from"],
+          "correct_index": 2,
+          "explanation": "'Al lado de' means 'next to' or 'beside'.",
+          "order": 2
+        },
+        {
+          "question": "Complete: 'El banco está ___ el hospital' (in front of)",
+          "options": ["detrás de", "al lado de", "enfrente de", "lejos de"],
+          "correct_index": 2,
+          "explanation": "'Enfrente de' means 'in front of' or 'across from'.",
+          "order": 3
+        },
+        {
+          "question": "'Siga recto' means:",
+          "options": ["Turn right", "Turn left", "Go straight", "Go back"],
+          "correct_index": 2,
+          "explanation": "'Siga recto' = Continue straight.",
+          "order": 4
+        },
+        {
+          "question": "The preposition 'entre' means:",
+          "options": ["Behind", "In front of", "Between", "Under"],
+          "correct_index": 2,
+          "explanation": "'Entre' means between. 'La tienda está entre el banco y el hotel.'",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'behind'?",
+          "options": ["Delante de", "Detrás de", "Encima de", "Debajo de"],
+          "correct_index": 1,
+          "explanation": "'Detrás de' means behind.",
+          "order": 6
+        },
+        {
+          "question": "'Doble a la derecha' means:",
+          "options": ["Go left", "Go straight", "Turn right", "Turn around"],
+          "correct_index": 2,
+          "explanation": "'Doble' (turn/bend) + 'a la derecha' (to the right).",
+          "order": 7
+        },
+        {
+          "question": "Which preposition means 'near'?",
+          "options": ["Lejos de", "Cerca de", "Dentro de", "Fuera de"],
+          "correct_index": 1,
+          "explanation": "'Cerca de' means near. 'Lejos de' is far from.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Asking for Directions",
+      "description": "Practice asking for and understanding directions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Where is the...?", "back": "¿Dónde está el/la...?", "order": 1},
+        {"front": "How do I get to...?", "back": "¿Cómo llego a...?", "order": 2},
+        {"front": "Is it far?", "back": "¿Está lejos?", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Where is the bank?'",
+          "options": ["¿Qué es el banco?", "¿Dónde está el banco?", "¿Cuándo está el banco?", "¿Cómo está el banco?"],
+          "correct_index": 1,
+          "explanation": "'¿Dónde está...?' asks for location.",
+          "order": 1
+        },
+        {
+          "question": "What does '¿Cómo llego a la estación?' mean?",
+          "options": ["Where is the station?", "How do I get to the station?", "When does the station open?", "What is the station?"],
+          "correct_index": 1,
+          "explanation": "'¿Cómo llego a...?' = How do I get to...?",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'It's two blocks away'?",
+          "options": ["Está a dos cuadras", "Son dos calles", "Hay dos bloques", "Tiene dos cuadras"],
+          "correct_index": 0,
+          "explanation": "'Está a dos cuadras' - 'cuadra' is block (city block).",
+          "order": 3
+        },
+        {
+          "question": "What does '¿Hay una farmacia cerca?' mean?",
+          "options": ["Where is the pharmacy?", "Is there a pharmacy nearby?", "How is the pharmacy?", "What pharmacy?"],
+          "correct_index": 1,
+          "explanation": "'¿Hay...cerca?' = Is there...nearby?",
+          "order": 4
+        },
+        {
+          "question": "How would you respond to '¿Está lejos?' if it's close?",
+          "options": ["Sí, muy lejos", "No, está cerca", "No sé", "Tal vez"],
+          "correct_index": 1,
+          "explanation": "'No, está cerca' = No, it's close/nearby.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Signs and Maps",
+      "description": "Understand common signs, directions, and transit information.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Entrance", "back": "Entrada", "order": 1},
+        {"front": "Exit", "back": "Salida", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'Para llegar al museo, siga recto y gire a la izquierda.' What direction do you turn?",
+          "options": ["Right", "Left", "Go back", "Don't turn"],
+          "correct_index": 1,
+          "explanation": "'Gire a la izquierda' = turn left.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'El metro está a cinco minutos a pie.' How do you get there?",
+          "options": ["By car", "By bus", "Walking", "By taxi"],
+          "correct_index": 2,
+          "explanation": "'A pie' means on foot/walking.",
+          "order": 2
+        },
+        {
+          "question": "Read sign: 'PROHIBIDO ESTACIONAR'. What is prohibited?",
+          "options": ["Entry", "Exit", "Parking", "Smoking"],
+          "correct_index": 2,
+          "explanation": "'Estacionar' means to park.",
+          "order": 3
+        },
+        {
+          "question": "Read: 'La parada de autobús está enfrente del banco.' Where is the bus stop?",
+          "options": ["Behind the bank", "Inside the bank", "In front of the bank", "Far from the bank"],
+          "correct_index": 2,
+          "explanation": "'Enfrente del' = in front of/across from.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'El tren sale a las nueve de la mañana.' When does the train leave?",
+          "options": ["9 PM", "9 AM", "At night", "Noon"],
+          "correct_index": 1,
+          "explanation": "'A las nueve de la mañana' = at 9 in the morning.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Understanding Transit Announcements",
+      "description": "Train your ear to understand transportation announcements.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Next stop", "back": "Próxima parada", "order": 1},
+        {"front": "Platform", "back": "Andén", "order": 2},
+        {"front": "Departure", "back": "Salida", "order": 3},
+        {"front": "Arrival", "back": "Llegada", "order": 4},
+        {"front": "Ticket", "back": "Boleto / Billete", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "You hear 'Próxima parada: Plaza Mayor'. What are you being told?",
+          "options": ["Final stop", "Next stop is Plaza Mayor", "Transfer point", "End of service"],
+          "correct_index": 1,
+          "explanation": "'Próxima parada' announces the next stop.",
+          "order": 1
+        },
+        {
+          "question": "What does 'anden número tres' mean?",
+          "options": ["Bus number 3", "Platform number 3", "Route 3", "Gate 3"],
+          "correct_index": 1,
+          "explanation": "'Andén' means platform (for trains).",
+          "order": 2
+        },
+        {
+          "question": "You hear 'El tren con destino a Madrid'. Where is the train going?",
+          "options": ["From Madrid", "To Madrid", "Near Madrid", "Around Madrid"],
+          "correct_index": 1,
+          "explanation": "'Con destino a' = headed to/bound for.",
+          "order": 3
+        },
+        {
+          "question": "'Salida' and 'Llegada' are:",
+          "options": ["Departure and Arrival", "Entry and Exit", "Start and End", "Open and Closed"],
+          "correct_index": 0,
+          "explanation": "'Salida' = departure, 'Llegada' = arrival.",
+          "order": 4
+        },
+        {
+          "question": "You hear 'Por favor, compre su boleto antes de abordar'. What should you do?",
+          "options": ["Wait for the train", "Buy your ticket before boarding", "Find your seat", "Show your ID"],
+          "correct_index": 1,
+          "explanation": "'Compre su boleto antes de abordar' = buy ticket before boarding.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

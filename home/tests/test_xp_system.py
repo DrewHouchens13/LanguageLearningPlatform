@@ -261,7 +261,7 @@ class TestXPIntegrationWithLessons(TestCase):
             slug='test-lesson',
             description='Test lesson for XP',
             language='Spanish',
-            difficulty_level='A1'
+            difficulty_level=1
         )
 
     def test_lesson_completion_awards_xp(self):

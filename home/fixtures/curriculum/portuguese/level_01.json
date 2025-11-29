@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Portuguese",
+    "level": 1,
+    "theme": "Basics",
+    "description": "Essential greetings, numbers 1-10, colors, and basic phrases to start your Portuguese journey."
+  },
+  "module": {
+    "name": "Basics",
+    "description": "Learn essential greetings, numbers, colors, and basic phrases to start your Portuguese journey.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Essential Portuguese Words",
+      "description": "Build your foundation with the most important Portuguese words including greetings, numbers, and colors.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Hello", "back": "Olá", "order": 1},
+        {"front": "Goodbye", "back": "Tchau / Adeus", "order": 2},
+        {"front": "Please", "back": "Por favor", "order": 3},
+        {"front": "Thank you", "back": "Obrigado/a", "order": 4},
+        {"front": "Yes", "back": "Sim", "order": 5},
+        {"front": "No", "back": "Não", "order": 6},
+        {"front": "Good morning", "back": "Bom dia", "order": 7},
+        {"front": "Good evening", "back": "Boa noite", "order": 8},
+        {"front": "Excuse me", "back": "Com licença", "order": 9},
+        {"front": "I'm sorry", "back": "Desculpe", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Hello' in Portuguese?",
+          "options": ["Tchau", "Olá", "Obrigado", "Por favor"],
+          "correct_index": 1,
+          "explanation": "'Olá' is the most common way to say hello in Portuguese.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Obrigado' mean?",
+          "options": ["Please", "Goodbye", "Thank you", "Hello"],
+          "correct_index": 2,
+          "explanation": "'Obrigado' (masc.) or 'Obrigada' (fem.) means 'Thank you'.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'Goodbye' informally in Portuguese?",
+          "options": ["Olá", "Bom dia", "Tchau", "Obrigado"],
+          "correct_index": 2,
+          "explanation": "'Tchau' is the informal way to say goodbye (from Italian 'ciao').",
+          "order": 3
+        },
+        {
+          "question": "What is 'Please' in Portuguese?",
+          "options": ["Obrigado", "Desculpe", "Por favor", "Com licença"],
+          "correct_index": 2,
+          "explanation": "'Por favor' means 'please' in Portuguese.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'Good morning' in Portuguese?",
+          "options": ["Boa noite", "Bom dia", "Boa tarde", "Olá"],
+          "correct_index": 1,
+          "explanation": "'Bom dia' is used in the morning until about noon.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Basic Portuguese Grammar",
+      "description": "Learn fundamental grammar concepts: articles, gender, and simple sentence structure.",
+      "order": 2,
+      "flashcards": [
+        {"front": "the (masculine singular)", "back": "o", "order": 1},
+        {"front": "the (feminine singular)", "back": "a", "order": 2},
+        {"front": "the (masculine plural)", "back": "os", "order": 3},
+        {"front": "the (feminine plural)", "back": "as", "order": 4},
+        {"front": "a/an (masculine)", "back": "um", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which article is used with masculine singular nouns?",
+          "options": ["a", "o", "os", "as"],
+          "correct_index": 1,
+          "explanation": "'O' is the definite article for masculine singular nouns.",
+          "order": 1
+        },
+        {
+          "question": "Which is the correct article for 'casa' (house, feminine)?",
+          "options": ["o casa", "a casa", "os casa", "um casa"],
+          "correct_index": 1,
+          "explanation": "'Casa' is feminine, so we use 'a' - a casa.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'the boys' in Portuguese?",
+          "options": ["o meninos", "a meninos", "os meninos", "as meninos"],
+          "correct_index": 2,
+          "explanation": "'Meninos' is masculine plural, so we use 'os'.",
+          "order": 3
+        },
+        {
+          "question": "What is the plural article for feminine nouns?",
+          "options": ["o", "a", "os", "as"],
+          "correct_index": 3,
+          "explanation": "'As' is used with feminine plural nouns.",
+          "order": 4
+        },
+        {
+          "question": "Which sentence is grammatically correct?",
+          "options": ["O mesa é grande", "A mesa é grande", "Os mesa é grande", "Mesa a é grande"],
+          "correct_index": 1,
+          "explanation": "'Mesa' (table) is feminine, so 'a mesa' is correct.",
+          "order": 5
+        },
+        {
+          "question": "In Portuguese, adjectives usually come:",
+          "options": ["Before the noun", "After the noun", "At the start of sentence", "Never used"],
+          "correct_index": 1,
+          "explanation": "Most Portuguese adjectives come after the noun.",
+          "order": 6
+        },
+        {
+          "question": "Which is correct: 'um livro' or 'uma livro'?",
+          "options": ["um livro", "uma livro", "o livro", "Both are correct"],
+          "correct_index": 0,
+          "explanation": "'Livro' (book) is masculine, so we use 'um livro'.",
+          "order": 7
+        },
+        {
+          "question": "How do you make 'gato' (cat) plural?",
+          "options": ["gatos", "gatoes", "gatões", "gato"],
+          "correct_index": 0,
+          "explanation": "Most Portuguese nouns add '-s' to form the plural: gato → gatos.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "First Conversations",
+      "description": "Practice essential phrases for introducing yourself and basic social interactions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "My name is...", "back": "Meu nome é... / Me chamo...", "order": 1},
+        {"front": "What is your name?", "back": "Como você se chama?", "order": 2},
+        {"front": "Nice to meet you", "back": "Prazer em conhecê-lo/a", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'My name is João' in Portuguese?",
+          "options": ["Meu nome João", "Me chamo João", "Sou nome João", "Chamo me João"],
+          "correct_index": 1,
+          "explanation": "'Me chamo' or 'Meu nome é' are standard ways to introduce yourself.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Como você se chama?' mean?",
+          "options": ["How are you?", "What is your name?", "Where are you from?", "How old are you?"],
+          "correct_index": 1,
+          "explanation": "'Como você se chama?' asks someone's name in Brazilian Portuguese.",
+          "order": 2
+        },
+        {
+          "question": "How would you respond to 'Como vai você?'?",
+          "options": ["Me chamo Maria", "Vou bem, obrigado/a", "Prazer", "De nada"],
+          "correct_index": 1,
+          "explanation": "'Vou bem, obrigado/a' means 'I'm fine, thank you.'",
+          "order": 3
+        },
+        {
+          "question": "What does 'Prazer' mean in introductions?",
+          "options": ["Pleasure/Nice to meet you", "Please", "Very good", "Thank you"],
+          "correct_index": 0,
+          "explanation": "'Prazer' (pleasure) is used when meeting someone.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'Where are you from?' in Portuguese?",
+          "options": ["Como vai você?", "Que horas são?", "De onde você é?", "Quantos anos você tem?"],
+          "correct_index": 2,
+          "explanation": "'De onde você é?' asks about someone's origin.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Simple Portuguese",
+      "description": "Practice reading comprehension with simple Portuguese texts and signs.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Open", "back": "Aberto", "order": 1},
+        {"front": "Closed", "back": "Fechado", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'O cachorro é grande.' What is big?",
+          "options": ["The cat", "The dog", "The house", "The car"],
+          "correct_index": 1,
+          "explanation": "'O cachorro' means 'the dog'. The sentence says the dog is big.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'Maria tem um gato preto.' What color is Maria's cat?",
+          "options": ["White", "Brown", "Black", "Gray"],
+          "correct_index": 2,
+          "explanation": "'Preto' means 'black'. Maria has a black cat.",
+          "order": 2
+        },
+        {
+          "question": "Read: 'A casa é pequena mas bonita.' Is the house big or small?",
+          "options": ["Big", "Small", "Medium", "Very big"],
+          "correct_index": 1,
+          "explanation": "'Pequena' means 'small'. The house is small but beautiful.",
+          "order": 3
+        },
+        {
+          "question": "Read the sign: 'SAÍDA'. What does it indicate?",
+          "options": ["Entrance", "Exit", "Bathroom", "Danger"],
+          "correct_index": 1,
+          "explanation": "'Saída' means 'exit'. You'll see this on exit signs.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'Eu como uma maçã.' What is the person eating?",
+          "options": ["An orange", "A banana", "An apple", "A pear"],
+          "correct_index": 2,
+          "explanation": "'Maçã' means 'apple'. 'Eu como' means 'I eat'.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Hearing Portuguese Sounds",
+      "description": "Train your ear to recognize Portuguese pronunciation and understand spoken words.",
+      "order": 5,
+      "flashcards": [
+        {"front": "One", "back": "Um", "order": 1},
+        {"front": "Two", "back": "Dois", "order": 2},
+        {"front": "Three", "back": "Três", "order": 3},
+        {"front": "Four", "back": "Quatro", "order": 4},
+        {"front": "Five", "back": "Cinco", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Listen: Which number sounds like 'DOYSH'?",
+          "options": ["Um", "Dois", "Três", "Zero"],
+          "correct_index": 1,
+          "explanation": "'Dois' (two) is pronounced 'doysh' in Brazilian Portuguese.",
+          "order": 1
+        },
+        {
+          "question": "How is the Portuguese 'ã' (a with tilde) pronounced?",
+          "options": ["Like 'ah'", "Nasal 'uh' sound", "Like 'an'", "Silent"],
+          "correct_index": 1,
+          "explanation": "The 'ã' is a nasal vowel, similar to 'ung' without the 'ng'.",
+          "order": 2
+        },
+        {
+          "question": "How is 'nh' pronounced in Portuguese?",
+          "options": ["Like 'n'", "Like 'ny' in canyon", "Like 'gn'", "Silent"],
+          "correct_index": 1,
+          "explanation": "'Nh' sounds like 'ny' in 'canyon' or Spanish 'ñ'.",
+          "order": 3
+        },
+        {
+          "question": "In Brazilian Portuguese, 'r' at the start of a word sounds like:",
+          "options": ["English 'r'", "Like 'h' in 'hello'", "Rolled 'r'", "Silent"],
+          "correct_index": 1,
+          "explanation": "Initial 'r' in Brazilian Portuguese sounds like English 'h'.",
+          "order": 4
+        },
+        {
+          "question": "Which number sounds like 'SEEN-koo'?",
+          "options": ["Quatro", "Seis", "Cinco", "Sete"],
+          "correct_index": 2,
+          "explanation": "'Cinco' (five) is pronounced 'SEEN-koo'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

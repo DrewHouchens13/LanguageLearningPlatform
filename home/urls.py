@@ -63,6 +63,21 @@ urlpatterns = [
     path("quests/daily/", views.daily_quest_view, name="daily_quest"),
     path("quests/daily/submit/", views.daily_quest_submit, name="daily_quest_submit"),
     path("quests/history/", views.quest_history, name="quest_history"),
+
+    # Curriculum System paths
+    # 🤖 AI ASSISTANT WARNING - URL PATTERN ORDERING IS CRITICAL!
+    # More specific patterns (test, complete) must come BEFORE general skill pattern
+    # Otherwise /test/ gets matched by /<str:skill>/ pattern!
+    path("curriculum/<str:language>/level/<int:level>/", views.module_detail, name="module_detail"),
+    path("curriculum/<str:language>/level/<int:level>/test/submit/", views.submit_module_test, name="submit_module_test"),
+    path("curriculum/<str:language>/level/<int:level>/test/generate/", views.module_test_generate, name="module_test_generate"),
+    path("curriculum/<str:language>/level/<int:level>/test/", views.module_test, name="module_test"),
+    path("curriculum/<str:language>/level/<int:level>/results/", views.test_results, name="test_results"),
+    path("curriculum/<str:language>/level/<int:level>/<str:skill>/complete/", views.complete_curriculum_lesson, name="complete_curriculum_lesson"),
+    path("curriculum/<str:language>/level/<int:level>/<str:skill>/", views.lesson_by_skill, name="lesson_by_skill"),
+    
+    # TTS API endpoint
+    path("api/tts/generate/", views.generate_tts, name="generate_tts"),
 ]
 
 

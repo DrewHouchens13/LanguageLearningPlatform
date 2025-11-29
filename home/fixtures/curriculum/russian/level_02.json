@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Russian",
+    "level": 2,
+    "theme": "Daily Life",
+    "description": "Family members, common foods, everyday objects, and telling time in Russian."
+  },
+  "module": {
+    "name": "Daily Life",
+    "description": "Learn vocabulary for family, food, everyday objects, and time expressions.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Family and Daily Words",
+      "description": "Learn essential vocabulary for family members, common foods, and household items.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Mother", "back": "Мать / Мама (Mat' / Mama)", "order": 1},
+        {"front": "Father", "back": "Отец / Папа (Otets / Papa)", "order": 2},
+        {"front": "Brother", "back": "Брат (Brat)", "order": 3},
+        {"front": "Sister", "back": "Сестра (Sestra)", "order": 4},
+        {"front": "Water", "back": "Вода (Voda)", "order": 5},
+        {"front": "Bread", "back": "Хлеб (Khleb)", "order": 6},
+        {"front": "Milk", "back": "Молоко (Moloko)", "order": 7},
+        {"front": "House", "back": "Дом (Dom)", "order": 8},
+        {"front": "Table", "back": "Стол (Stol)", "order": 9},
+        {"front": "Chair", "back": "Стул (Stul)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'mother' informally in Russian?",
+          "options": ["Сестра", "Мама", "Бабушка", "Тётя"],
+          "correct_index": 1,
+          "explanation": "'Мама' is informal. 'Мать' is formal/literary.",
+          "order": 1
+        },
+        {
+          "question": "What does 'брат' (brat) mean?",
+          "options": ["Sister", "Brother", "Father", "Uncle"],
+          "correct_index": 1,
+          "explanation": "'Брат' means brother. 'Сестра' is sister.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'water' in Russian?",
+          "options": ["Молоко", "Хлеб", "Вода", "Чай"],
+          "correct_index": 2,
+          "explanation": "'Вода' (voda) means water.",
+          "order": 3
+        },
+        {
+          "question": "What is 'хлеб' in English?",
+          "options": ["Water", "Bread", "Milk", "Rice"],
+          "correct_index": 1,
+          "explanation": "'Хлеб' (khleb) means bread.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'house' in Russian?",
+          "options": ["Стул", "Стол", "Дом", "Дверь"],
+          "correct_index": 2,
+          "explanation": "'Дом' (dom) means house/home.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Possessives and Cases",
+      "description": "Learn possessive pronouns and introduction to the case system.",
+      "order": 2,
+      "flashcards": [
+        {"front": "my (masc.)", "back": "мой (moy)", "order": 1},
+        {"front": "my (fem.)", "back": "моя (moya)", "order": 2},
+        {"front": "my (neut.)", "back": "моё (moyó)", "order": 3},
+        {"front": "to have (using 'у')", "back": "У меня есть (U menya yest')", "order": 4},
+        {"front": "your (informal)", "back": "твой/твоя/твоё", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'my mother' in Russian?",
+          "options": ["Мой мама", "Моя мама", "Моё мама", "Твоя мама"],
+          "correct_index": 1,
+          "explanation": "'Моя мама' - 'мама' is feminine, so use 'моя'.",
+          "order": 1
+        },
+        {
+          "question": "'У меня есть два брата' means:",
+          "options": ["I am two brothers", "I have two brothers", "I see two brothers", "I want two brothers"],
+          "correct_index": 1,
+          "explanation": "'У меня есть' = 'at me there is' = I have. 'Два брата' = two brothers.",
+          "order": 2
+        },
+        {
+          "question": "Which possessive matches neuter nouns?",
+          "options": ["мой", "моя", "моё", "мои"],
+          "correct_index": 2,
+          "explanation": "'Моё' is used with neuter nouns.",
+          "order": 3
+        },
+        {
+          "question": "Complete: '___дом большой' (My house is big)",
+          "options": ["Моя", "Мой", "Моё", "Мои"],
+          "correct_index": 1,
+          "explanation": "'Мой дом' - 'дом' is masculine, so use 'мой'.",
+          "order": 4
+        },
+        {
+          "question": "How does Russian express 'to have'?",
+          "options": ["With a verb like English", "Using 'у + genitive + есть'", "With 'быть' only", "No way to express it"],
+          "correct_index": 1,
+          "explanation": "Russian uses 'У меня есть...' (at me there is...) for possession.",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'our house'?",
+          "options": ["Мой дом", "Твой дом", "Наш дом", "Их дом"],
+          "correct_index": 2,
+          "explanation": "'Наш дом' - 'наш' means 'our' for masculine nouns.",
+          "order": 6
+        },
+        {
+          "question": "'Это мой дом' means:",
+          "options": ["This is my house", "That is your house", "My house is here", "Where is my house"],
+          "correct_index": 0,
+          "explanation": "'Это' (this is) + 'мой дом' (my house).",
+          "order": 7
+        },
+        {
+          "question": "Possessive pronouns in Russian agree with:",
+          "options": ["Only gender", "Only number", "Gender, number, and case", "Nothing"],
+          "correct_index": 2,
+          "explanation": "Russian possessives change based on gender, number, and case.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Family Conversations",
+      "description": "Practice talking about your family and daily routines.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Do you have siblings?", "back": "У тебя есть братья или сёстры? (U tebya yest' brat'ya ili syostry?)", "order": 1},
+        {"front": "I have two brothers", "back": "У меня два брата (U menya dva brata)", "order": 2},
+        {"front": "What time is it?", "back": "Который час? (Kotoryy chas?)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Do you have siblings?' in Russian?",
+          "options": ["Как у тебя братья?", "У тебя есть братья или сёстры?", "Где у тебя братья?", "Почему у тебя братья?"],
+          "correct_index": 1,
+          "explanation": "'У тебя есть...?' is the pattern for asking if someone has something.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'I live with my family'?",
+          "options": ["Я живу с семьёй", "У меня семья", "Я семья", "Семья живёт"],
+          "correct_index": 0,
+          "explanation": "'Я живу с семьёй' - жить = to live, с = with, семья = family (instrumental).",
+          "order": 2
+        },
+        {
+          "question": "What does 'Который час?' mean?",
+          "options": ["What day is it?", "What time is it?", "How are you?", "Where is it?"],
+          "correct_index": 1,
+          "explanation": "'Который час?' (Which hour?) asks for the time.",
+          "order": 3
+        },
+        {
+          "question": "How do you say 'It's 3 o'clock'?",
+          "options": ["Три", "Три часа", "Три часов", "Час три"],
+          "correct_index": 1,
+          "explanation": "'Три часа' - use 'часа' (genitive singular) with 2, 3, 4.",
+          "order": 4
+        },
+        {
+          "question": "How do you respond to 'Сколько у тебя братьев?'",
+          "options": ["Да, есть", "У меня три брата", "Братья у меня", "Очень хорошо"],
+          "correct_index": 1,
+          "explanation": "'У меня три брата' - I have three brothers.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading About Daily Life",
+      "description": "Read and understand texts about family and daily routines.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Every day", "back": "Каждый день (Kazhdyy den')", "order": 1},
+        {"front": "In the morning", "back": "Утром (Utrom)", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'Моя семья большая. У меня три брата.' How many brothers?",
+          "options": ["One", "Two", "Three", "Four"],
+          "correct_index": 2,
+          "explanation": "'Три брата' means three brothers.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'Я завтракаю в восемь часов.' When does the person eat breakfast?",
+          "options": ["6 AM", "7 AM", "8 AM", "9 AM"],
+          "correct_index": 2,
+          "explanation": "'В восемь часов' means at 8 o'clock.",
+          "order": 2
+        },
+        {
+          "question": "Read: 'Мама готовит каждый день.' What does the mother do?",
+          "options": ["Works", "Cooks", "Cleans", "Sleeps"],
+          "correct_index": 1,
+          "explanation": "'Готовит' means 'she cooks'. Готовить = to cook/prepare.",
+          "order": 3
+        },
+        {
+          "question": "Read: 'Мы живём в маленьком доме, но он уютный.' The house is:",
+          "options": ["Big and old", "Small but cozy", "New and large", "Old but nice"],
+          "correct_index": 1,
+          "explanation": "'Маленький но уютный' = small but cozy.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'В воскресенье мы обедаем с бабушкой и дедушкой.' When do they lunch with grandparents?",
+          "options": ["Saturdays", "Sundays", "Mondays", "Every day"],
+          "correct_index": 1,
+          "explanation": "'В воскресенье' means on Sunday.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Days and Time Expressions",
+      "description": "Learn to understand days of the week and time expressions.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Monday", "back": "Понедельник (Ponedel'nik)", "order": 1},
+        {"front": "Tuesday", "back": "Вторник (Vtornik)", "order": 2},
+        {"front": "Wednesday", "back": "Среда (Sreda)", "order": 3},
+        {"front": "Thursday", "back": "Четверг (Chetverg)", "order": 4},
+        {"front": "Friday", "back": "Пятница (Pyatnitsa)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which day sounds like 'pa-ne-DYEL-nik'?",
+          "options": ["Вторник", "Понедельник", "Четверг", "Пятница"],
+          "correct_index": 1,
+          "explanation": "'Понедельник' (Monday) = 'after the week'.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'Saturday' in Russian?",
+          "options": ["Пятница", "Суббота", "Воскресенье", "Понедельник"],
+          "correct_index": 1,
+          "explanation": "'Суббота' (Subbota) = Saturday. 'Воскресенье' = Sunday.",
+          "order": 2
+        },
+        {
+          "question": "Russian days derive from:",
+          "options": ["Numbers and religious origins", "Planet names", "God names", "Random origins"],
+          "correct_index": 0,
+          "explanation": "Вторник=second, среда=middle, четверг=fourth, пятница=fifth.",
+          "order": 3
+        },
+        {
+          "question": "What does 'выходные' mean?",
+          "options": ["The end of the month", "The weekend", "The holiday", "The vacation"],
+          "correct_index": 1,
+          "explanation": "'Выходные' (exit days) = weekend (days off).",
+          "order": 4
+        },
+        {
+          "question": "Which day sounds like 'sre-DA'?",
+          "options": ["Вторник", "Среда", "Четверг", "Понедельник"],
+          "correct_index": 1,
+          "explanation": "'Среда' (Wednesday) = 'middle' of the week.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

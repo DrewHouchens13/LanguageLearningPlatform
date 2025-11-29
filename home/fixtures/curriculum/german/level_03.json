@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "German",
+    "level": 3,
+    "theme": "Getting Around",
+    "description": "Directions, transportation, places in the city, and asking for help in German."
+  },
+  "module": {
+    "name": "Getting Around",
+    "description": "Learn to navigate cities, use transportation, and ask for directions in German.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Transportation and Places",
+      "description": "Essential vocabulary for getting around town and using public transportation.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Street", "back": "Straße", "order": 1},
+        {"front": "Bus", "back": "Bus", "order": 2},
+        {"front": "Train", "back": "Zug", "order": 3},
+        {"front": "Airport", "back": "Flughafen", "order": 4},
+        {"front": "Left", "back": "Links", "order": 5},
+        {"front": "Right", "back": "Rechts", "order": 6},
+        {"front": "Straight", "back": "Geradeaus", "order": 7},
+        {"front": "Bank", "back": "Bank", "order": 8},
+        {"front": "Hospital", "back": "Krankenhaus", "order": 9},
+        {"front": "Store/Shop", "back": "Geschäft / Laden", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'street' in German?",
+          "options": ["Weg", "Straße", "Platz", "Gasse"],
+          "correct_index": 1,
+          "explanation": "'Straße' means street.",
+          "order": 1
+        },
+        {
+          "question": "What does 'links' mean?",
+          "options": ["Right", "Left", "Straight", "Back"],
+          "correct_index": 1,
+          "explanation": "'Links' means left. 'Rechts' is right.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'train' in German?",
+          "options": ["Bus", "Flugzeug", "Zug", "Auto"],
+          "correct_index": 2,
+          "explanation": "'Zug' means train.",
+          "order": 3
+        },
+        {
+          "question": "What is 'Flughafen' in English?",
+          "options": ["Bus station", "Train station", "Airport", "Port"],
+          "correct_index": 2,
+          "explanation": "'Flughafen' means airport (flight harbor).",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'straight ahead'?",
+          "options": ["Links", "Rechts", "Geradeaus", "Zurück"],
+          "correct_index": 2,
+          "explanation": "'Geradeaus' means straight ahead.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Giving Directions and Commands",
+      "description": "Learn imperative forms and prepositions for directions.",
+      "order": 2,
+      "flashcards": [
+        {"front": "Turn (command, formal)", "back": "Biegen Sie ab", "order": 1},
+        {"front": "Go (command, formal)", "back": "Gehen Sie", "order": 2},
+        {"front": "Continue (command)", "back": "Gehen Sie weiter", "order": 3},
+        {"front": "next to", "back": "neben", "order": 4},
+        {"front": "in front of", "back": "vor", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Turn left' (formal command)?",
+          "options": ["Bieg links ab", "Biegen Sie links ab", "Abbiegen links", "Links biegen Sie"],
+          "correct_index": 1,
+          "explanation": "'Biegen Sie... ab' is the formal imperative for turning.",
+          "order": 1
+        },
+        {
+          "question": "What does 'neben' mean?",
+          "options": ["In front of", "Behind", "Next to", "Far from"],
+          "correct_index": 2,
+          "explanation": "'Neben' means 'next to' or 'beside'.",
+          "order": 2
+        },
+        {
+          "question": "Complete: 'Die Bank ist ___ dem Krankenhaus' (in front of)",
+          "options": ["hinter", "neben", "vor", "weit von"],
+          "correct_index": 2,
+          "explanation": "'Vor' means 'in front of' (takes dative when indicating location).",
+          "order": 3
+        },
+        {
+          "question": "'Gehen Sie geradeaus' means:",
+          "options": ["Turn right", "Turn left", "Go straight", "Go back"],
+          "correct_index": 2,
+          "explanation": "'Gehen Sie geradeaus' = Go straight ahead.",
+          "order": 4
+        },
+        {
+          "question": "The preposition 'zwischen' means:",
+          "options": ["Behind", "In front of", "Between", "Under"],
+          "correct_index": 2,
+          "explanation": "'Zwischen' means between.",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'behind'?",
+          "options": ["Vor", "Hinter", "Über", "Unter"],
+          "correct_index": 1,
+          "explanation": "'Hinter' means behind.",
+          "order": 6
+        },
+        {
+          "question": "'Nehmen Sie die erste Straße rechts' means:",
+          "options": ["Go left", "Go straight", "Take the first street on the right", "Turn around"],
+          "correct_index": 2,
+          "explanation": "'Nehmen Sie die erste Straße' = take the first street.",
+          "order": 7
+        },
+        {
+          "question": "Which preposition means 'near'?",
+          "options": ["Weit von", "In der Nähe von", "In", "Aus"],
+          "correct_index": 1,
+          "explanation": "'In der Nähe von' means near. 'Weit von' is far from.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Asking for Directions",
+      "description": "Practice asking for and understanding directions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Where is the...?", "back": "Wo ist der/die/das...?", "order": 1},
+        {"front": "How do I get to...?", "back": "Wie komme ich zu/zum/zur...?", "order": 2},
+        {"front": "Is it far?", "back": "Ist es weit?", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Where is the bank?'",
+          "options": ["Was ist die Bank?", "Wo ist die Bank?", "Wann ist die Bank?", "Wie ist die Bank?"],
+          "correct_index": 1,
+          "explanation": "'Wo ist...?' asks for location.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Wie komme ich zum Bahnhof?' mean?",
+          "options": ["Where is the station?", "How do I get to the station?", "When does the station open?", "What is the station?"],
+          "correct_index": 1,
+          "explanation": "'Wie komme ich zu...?' = How do I get to...?",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'It's five minutes away'?",
+          "options": ["Es ist fünf Minuten entfernt", "Es gibt fünf Minuten", "Fünf Minuten sind", "Haben fünf Minuten"],
+          "correct_index": 0,
+          "explanation": "'Es ist fünf Minuten entfernt' = It's five minutes away.",
+          "order": 3
+        },
+        {
+          "question": "What does 'Gibt es eine Apotheke in der Nähe?' mean?",
+          "options": ["Where is the pharmacy?", "Is there a pharmacy nearby?", "How is the pharmacy?", "What pharmacy?"],
+          "correct_index": 1,
+          "explanation": "'Gibt es...in der Nähe?' = Is there...nearby?",
+          "order": 4
+        },
+        {
+          "question": "How would you respond to 'Ist es weit?' if it's close?",
+          "options": ["Ja, sehr weit", "Nein, es ist ganz in der Nähe", "Ich weiß nicht", "Vielleicht"],
+          "correct_index": 1,
+          "explanation": "'Nein, es ist ganz in der Nähe' = No, it's very close.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Signs and Maps",
+      "description": "Understand common signs, directions, and transit information.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Entrance", "back": "Eingang", "order": 1},
+        {"front": "Exit", "back": "Ausgang", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'Um zum Museum zu kommen, gehen Sie geradeaus und biegen Sie links ab.' What direction do you turn?",
+          "options": ["Right", "Left", "Go back", "Don't turn"],
+          "correct_index": 1,
+          "explanation": "'Biegen Sie links ab' = turn left.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'Die U-Bahn ist fünf Minuten zu Fuß.' How do you get there?",
+          "options": ["By car", "By bus", "Walking", "By taxi"],
+          "correct_index": 2,
+          "explanation": "'Zu Fuß' means on foot/walking.",
+          "order": 2
+        },
+        {
+          "question": "Read sign: 'PARKEN VERBOTEN'. What is prohibited?",
+          "options": ["Entry", "Exit", "Parking", "Smoking"],
+          "correct_index": 2,
+          "explanation": "'Parken' means parking.",
+          "order": 3
+        },
+        {
+          "question": "Read: 'Die Bushaltestelle ist vor der Bank.' Where is the bus stop?",
+          "options": ["Behind the bank", "Inside the bank", "In front of the bank", "Far from the bank"],
+          "correct_index": 2,
+          "explanation": "'Vor' = in front of.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'Der Zug fährt um neun Uhr morgens ab.' When does the train leave?",
+          "options": ["9 PM", "9 AM", "At night", "Noon"],
+          "correct_index": 1,
+          "explanation": "'Um neun Uhr morgens' = at 9 in the morning.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Understanding Transit Announcements",
+      "description": "Train your ear to understand transportation announcements.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Next stop", "back": "Nächster Halt / Nächste Haltestelle", "order": 1},
+        {"front": "Platform", "back": "Gleis / Bahnsteig", "order": 2},
+        {"front": "Departure", "back": "Abfahrt", "order": 3},
+        {"front": "Arrival", "back": "Ankunft", "order": 4},
+        {"front": "Ticket", "back": "Fahrkarte / Ticket", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "You hear 'Nächste Haltestelle: Marienplatz'. What are you being told?",
+          "options": ["Final stop", "Next stop is Marienplatz", "Transfer point", "End of service"],
+          "correct_index": 1,
+          "explanation": "'Nächste Haltestelle' announces the next stop.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Gleis drei' mean?",
+          "options": ["Bus number 3", "Platform/Track 3", "Route 3", "Gate 3"],
+          "correct_index": 1,
+          "explanation": "'Gleis' means platform/track (for trains).",
+          "order": 2
+        },
+        {
+          "question": "You hear 'Der Zug nach München'. Where is the train going?",
+          "options": ["From Munich", "To Munich", "Near Munich", "Around Munich"],
+          "correct_index": 1,
+          "explanation": "'Nach' indicates destination = to Munich.",
+          "order": 3
+        },
+        {
+          "question": "'Abfahrt' and 'Ankunft' are:",
+          "options": ["Departure and Arrival", "Entry and Exit", "Start and End", "Open and Closed"],
+          "correct_index": 0,
+          "explanation": "'Abfahrt' = departure, 'Ankunft' = arrival.",
+          "order": 4
+        },
+        {
+          "question": "You hear 'Bitte entwerten Sie Ihre Fahrkarte'. What should you do?",
+          "options": ["Wait for the train", "Validate your ticket", "Find your seat", "Show your ID"],
+          "correct_index": 1,
+          "explanation": "'Entwerten' = to validate (stamp) your ticket.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

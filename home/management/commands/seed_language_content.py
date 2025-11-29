@@ -70,6 +70,9 @@ class Command(BaseCommand):
         lesson_map = {}
 
         for blueprint in blueprints:
+            # Shapes and colors should always be level 1
+            difficulty_level = 1 if blueprint['slug'] in ['shapes', 'colors'] else 1
+            
             lesson, _ = Lesson.objects.update_or_create(
                 slug=blueprint['slug'],
                 defaults={
@@ -80,6 +83,7 @@ class Command(BaseCommand):
                     'category': blueprint['category'],
                     'lesson_type': blueprint['lesson_type'],
                     'xp_value': blueprint['xp_value'],
+                    'difficulty_level': difficulty_level,
                     'is_published': True,
                 }
             )

@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Japanese",
+    "level": 1,
+    "theme": "Basics",
+    "description": "Essential greetings, numbers 1-10, colors, and basic phrases to start your Japanese journey."
+  },
+  "module": {
+    "name": "Basics",
+    "description": "Learn essential greetings, numbers, colors, and basic phrases to start your Japanese journey.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Essential Japanese Words",
+      "description": "Build your foundation with the most important Japanese words including greetings, numbers, and colors.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Hello", "back": "こんにちは (Konnichiwa)", "order": 1},
+        {"front": "Goodbye", "back": "さようなら (Sayōnara)", "order": 2},
+        {"front": "Please", "back": "お願いします (Onegaishimasu)", "order": 3},
+        {"front": "Thank you", "back": "ありがとう (Arigatō)", "order": 4},
+        {"front": "Yes", "back": "はい (Hai)", "order": 5},
+        {"front": "No", "back": "いいえ (Iie)", "order": 6},
+        {"front": "Good morning", "back": "おはようございます (Ohayō gozaimasu)", "order": 7},
+        {"front": "Good evening", "back": "こんばんは (Konbanwa)", "order": 8},
+        {"front": "Excuse me", "back": "すみません (Sumimasen)", "order": 9},
+        {"front": "I'm sorry", "back": "ごめんなさい (Gomen nasai)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Hello' (afternoon greeting) in Japanese?",
+          "options": ["さようなら", "こんにちは", "ありがとう", "お願いします"],
+          "correct_index": 1,
+          "explanation": "'こんにちは' (Konnichiwa) is used as a daytime greeting.",
+          "order": 1
+        },
+        {
+          "question": "What does 'ありがとう' (Arigatō) mean?",
+          "options": ["Please", "Goodbye", "Thank you", "Hello"],
+          "correct_index": 2,
+          "explanation": "'ありがとう' means 'Thank you' in Japanese.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'Goodbye' in Japanese?",
+          "options": ["こんにちは", "おはよう", "さようなら", "ありがとう"],
+          "correct_index": 2,
+          "explanation": "'さようなら' (Sayōnara) means goodbye.",
+          "order": 3
+        },
+        {
+          "question": "What is 'Please' in Japanese?",
+          "options": ["ありがとう", "すみません", "お願いします", "はい"],
+          "correct_index": 2,
+          "explanation": "'お願いします' (Onegaishimasu) means 'please'.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'Good morning' in Japanese?",
+          "options": ["こんばんは", "おはようございます", "こんにちは", "さようなら"],
+          "correct_index": 1,
+          "explanation": "'おはようございます' (Ohayō gozaimasu) is the polite morning greeting.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Basic Japanese Grammar",
+      "description": "Learn fundamental grammar concepts: particles, sentence structure, and basic patterns.",
+      "order": 2,
+      "flashcards": [
+        {"front": "Topic marker particle", "back": "は (wa)", "order": 1},
+        {"front": "Subject marker particle", "back": "が (ga)", "order": 2},
+        {"front": "Object marker particle", "back": "を (wo/o)", "order": 3},
+        {"front": "Direction/goal particle", "back": "に (ni)", "order": 4},
+        {"front": "am/is/are (polite)", "back": "です (desu)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which particle marks the topic of a sentence?",
+          "options": ["が", "は", "を", "に"],
+          "correct_index": 1,
+          "explanation": "'は' (wa) is the topic marker particle in Japanese.",
+          "order": 1
+        },
+        {
+          "question": "What is the correct word order in Japanese?",
+          "options": ["Subject-Verb-Object", "Subject-Object-Verb", "Verb-Subject-Object", "Object-Subject-Verb"],
+          "correct_index": 1,
+          "explanation": "Japanese uses Subject-Object-Verb (SOV) word order.",
+          "order": 2
+        },
+        {
+          "question": "Which particle marks the direct object?",
+          "options": ["は", "が", "を", "の"],
+          "correct_index": 2,
+          "explanation": "'を' (wo/o) marks the direct object of a verb.",
+          "order": 3
+        },
+        {
+          "question": "How do you say 'I am a student' in Japanese?",
+          "options": ["私学生です", "私は学生です", "学生は私です", "です私学生"],
+          "correct_index": 1,
+          "explanation": "'私は学生です' (Watashi wa gakusei desu) - topic + noun + desu.",
+          "order": 4
+        },
+        {
+          "question": "'です' (desu) is used at:",
+          "options": ["The beginning of a sentence", "The end of a sentence", "Before nouns only", "Never used"],
+          "correct_index": 1,
+          "explanation": "'です' comes at the end as the polite copula (am/is/are).",
+          "order": 5
+        },
+        {
+          "question": "Japanese sentences typically end with:",
+          "options": ["A subject", "A noun", "A verb or copula", "A particle"],
+          "correct_index": 2,
+          "explanation": "Japanese sentences end with a verb or copula like です/ます.",
+          "order": 6
+        },
+        {
+          "question": "Which sentence is grammatically correct?",
+          "options": ["水を飲みます", "を水飲みます", "飲みます水を", "水飲みますを"],
+          "correct_index": 0,
+          "explanation": "'水を飲みます' (Mizu wo nomimasu) - 'I drink water' with proper particle use.",
+          "order": 7
+        },
+        {
+          "question": "The particle 'の' (no) is used to:",
+          "options": ["Mark objects", "Show possession", "Mark topics", "Ask questions"],
+          "correct_index": 1,
+          "explanation": "'の' shows possession, like English \"'s\" (my, your, etc.).",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "First Conversations",
+      "description": "Practice essential phrases for introducing yourself and basic social interactions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "My name is...", "back": "私の名前は...です (Watashi no namae wa...desu)", "order": 1},
+        {"front": "What is your name?", "back": "お名前は何ですか (Onamae wa nan desu ka)", "order": 2},
+        {"front": "Nice to meet you", "back": "はじめまして (Hajimemashite)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'My name is Yuki' in Japanese?",
+          "options": ["名前ゆきです", "私の名前はゆきです", "ゆき名前私です", "です私ゆき"],
+          "correct_index": 1,
+          "explanation": "'私の名前は〇〇です' is the standard self-introduction pattern.",
+          "order": 1
+        },
+        {
+          "question": "What does 'はじめまして' (Hajimemashite) mean?",
+          "options": ["How are you?", "Nice to meet you", "Where are you from?", "Thank you"],
+          "correct_index": 1,
+          "explanation": "'はじめまして' means 'Nice to meet you' (first meeting).",
+          "order": 2
+        },
+        {
+          "question": "How would you respond to 'お元気ですか' (Ogenki desu ka)?",
+          "options": ["私はゆきです", "はい、元気です", "はじめまして", "どういたしまして"],
+          "correct_index": 1,
+          "explanation": "'はい、元気です' means 'Yes, I'm fine.'",
+          "order": 3
+        },
+        {
+          "question": "What does 'どうぞよろしくお願いします' mean?",
+          "options": ["Please take care of me/Nice to meet you", "Thank you very much", "I'm sorry", "Goodbye"],
+          "correct_index": 0,
+          "explanation": "This phrase is used when meeting someone, meaning 'please be kind to me'.",
+          "order": 4
+        },
+        {
+          "question": "How do you ask 'Where are you from?' in Japanese?",
+          "options": ["お元気ですか", "何時ですか", "どちらからですか", "何歳ですか"],
+          "correct_index": 2,
+          "explanation": "'どちらからですか' (Dochira kara desu ka) asks about origin.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Simple Japanese",
+      "description": "Practice reading comprehension with simple Japanese texts using hiragana.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Open", "back": "開 (あいている - Aite iru)", "order": 1},
+        {"front": "Closed", "back": "閉 (しまっている - Shimatte iru)", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'いぬは大きいです。' What is big?",
+          "options": ["The cat", "The dog", "The house", "The car"],
+          "correct_index": 1,
+          "explanation": "'いぬ' (inu) means 'dog'. The sentence says the dog is big.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'マリアさんは黒いねこがいます。' What color is the cat?",
+          "options": ["White", "Brown", "Black", "Gray"],
+          "correct_index": 2,
+          "explanation": "'黒い' (kuroi) means 'black'. Maria has a black cat.",
+          "order": 2
+        },
+        {
+          "question": "Read: 'この家は小さいですが、きれいです。' Is the house big or small?",
+          "options": ["Big", "Small", "Medium", "Very big"],
+          "correct_index": 1,
+          "explanation": "'小さい' (chiisai) means 'small'. The house is small but pretty.",
+          "order": 3
+        },
+        {
+          "question": "Read the sign: '出口'. What does it indicate?",
+          "options": ["Entrance", "Exit", "Bathroom", "Danger"],
+          "correct_index": 1,
+          "explanation": "'出口' (deguchi) means 'exit'.",
+          "order": 4
+        },
+        {
+          "question": "Read: '私はりんごを食べます。' What is the person eating?",
+          "options": ["An orange", "A banana", "An apple", "A pear"],
+          "correct_index": 2,
+          "explanation": "'りんご' (ringo) means 'apple'. '食べます' means 'eat'.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Hearing Japanese Sounds",
+      "description": "Train your ear to recognize Japanese pronunciation and understand spoken words.",
+      "order": 5,
+      "flashcards": [
+        {"front": "One", "back": "一 いち (Ichi)", "order": 1},
+        {"front": "Two", "back": "二 に (Ni)", "order": 2},
+        {"front": "Three", "back": "三 さん (San)", "order": 3},
+        {"front": "Four", "back": "四 よん/し (Yon/Shi)", "order": 4},
+        {"front": "Five", "back": "五 ご (Go)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Listen: Which number sounds like 'EE-chee'?",
+          "options": ["に", "いち", "さん", "ゼロ"],
+          "correct_index": 1,
+          "explanation": "'いち' (ichi = one) is pronounced 'ee-chee'.",
+          "order": 1
+        },
+        {
+          "question": "How are Japanese vowels typically pronounced?",
+          "options": ["Like English vowels", "Short and pure (no diphthongs)", "Silently", "Nasalized"],
+          "correct_index": 1,
+          "explanation": "Japanese vowels are short, pure sounds without the glides of English.",
+          "order": 2
+        },
+        {
+          "question": "How is the Japanese 'r' sound produced?",
+          "options": ["Like English R", "A light tap (between L and R)", "Like French R", "Silent"],
+          "correct_index": 1,
+          "explanation": "Japanese 'r' is a light tap, somewhat between English L and R.",
+          "order": 3
+        },
+        {
+          "question": "In Japanese, pitch accent:",
+          "options": ["Doesn't exist", "Changes word meanings", "Is always the same", "Only affects questions"],
+          "correct_index": 1,
+          "explanation": "Pitch accent in Japanese can distinguish between words with same sounds.",
+          "order": 4
+        },
+        {
+          "question": "Which number sounds like 'GO'?",
+          "options": ["よん", "ろく", "ご", "なな"],
+          "correct_index": 2,
+          "explanation": "'ご' (go = five) sounds like the English word 'go'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

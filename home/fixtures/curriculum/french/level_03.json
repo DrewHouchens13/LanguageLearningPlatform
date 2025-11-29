@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "French",
+    "level": 3,
+    "theme": "Getting Around",
+    "description": "Directions, transportation, places in the city, and asking for help in French."
+  },
+  "module": {
+    "name": "Getting Around",
+    "description": "Learn to navigate cities, use transportation, and ask for directions in French.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Transportation and Places",
+      "description": "Essential vocabulary for getting around town and using public transportation.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Street", "back": "Rue", "order": 1},
+        {"front": "Bus", "back": "Bus / Autobus", "order": 2},
+        {"front": "Train", "back": "Train", "order": 3},
+        {"front": "Airport", "back": "Aéroport", "order": 4},
+        {"front": "Left", "back": "Gauche", "order": 5},
+        {"front": "Right", "back": "Droite", "order": 6},
+        {"front": "Straight", "back": "Tout droit", "order": 7},
+        {"front": "Bank", "back": "Banque", "order": 8},
+        {"front": "Hospital", "back": "Hôpital", "order": 9},
+        {"front": "Store/Shop", "back": "Magasin", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'street' in French?",
+          "options": ["Avenue", "Rue", "Chemin", "Place"],
+          "correct_index": 1,
+          "explanation": "'Rue' means street. 'Avenue' is avenue.",
+          "order": 1
+        },
+        {
+          "question": "What does 'gauche' mean?",
+          "options": ["Right", "Left", "Straight", "Back"],
+          "correct_index": 1,
+          "explanation": "'Gauche' means left. 'Droite' is right.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'train' in French?",
+          "options": ["Bus", "Avion", "Train", "Voiture"],
+          "correct_index": 2,
+          "explanation": "'Train' is the same in French!",
+          "order": 3
+        },
+        {
+          "question": "What is 'aéroport' in English?",
+          "options": ["Bus station", "Train station", "Airport", "Port"],
+          "correct_index": 2,
+          "explanation": "'Aéroport' means airport.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'straight ahead'?",
+          "options": ["À gauche", "À droite", "Tout droit", "En arrière"],
+          "correct_index": 2,
+          "explanation": "'Tout droit' means straight ahead.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Giving Directions and Commands",
+      "description": "Learn imperative forms and prepositions for directions.",
+      "order": 2,
+      "flashcards": [
+        {"front": "Turn (command, formal)", "back": "Tournez", "order": 1},
+        {"front": "Go (command, formal)", "back": "Allez", "order": 2},
+        {"front": "Continue (command)", "back": "Continuez", "order": 3},
+        {"front": "next to", "back": "à côté de", "order": 4},
+        {"front": "in front of", "back": "devant", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Turn left' (formal command)?",
+          "options": ["Tourne à gauche", "Tournez à gauche", "Tourner gauche", "Gauche tournez"],
+          "correct_index": 1,
+          "explanation": "'Tournez' is the formal imperative of 'tourner'.",
+          "order": 1
+        },
+        {
+          "question": "What does 'à côté de' mean?",
+          "options": ["In front of", "Behind", "Next to", "Far from"],
+          "correct_index": 2,
+          "explanation": "'À côté de' means 'next to' or 'beside'.",
+          "order": 2
+        },
+        {
+          "question": "Complete: 'La banque est ___ l'hôpital' (in front of)",
+          "options": ["derrière", "à côté de", "devant", "loin de"],
+          "correct_index": 2,
+          "explanation": "'Devant' means 'in front of'.",
+          "order": 3
+        },
+        {
+          "question": "'Continuez tout droit' means:",
+          "options": ["Turn right", "Turn left", "Go straight", "Go back"],
+          "correct_index": 2,
+          "explanation": "'Continuez tout droit' = Continue straight ahead.",
+          "order": 4
+        },
+        {
+          "question": "The preposition 'entre' means:",
+          "options": ["Behind", "In front of", "Between", "Under"],
+          "correct_index": 2,
+          "explanation": "'Entre' means between. 'Le magasin est entre la banque et l'hôtel.'",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'behind'?",
+          "options": ["Devant", "Derrière", "Sur", "Sous"],
+          "correct_index": 1,
+          "explanation": "'Derrière' means behind.",
+          "order": 6
+        },
+        {
+          "question": "'Prenez la première rue à droite' means:",
+          "options": ["Go left", "Go straight", "Take the first street on the right", "Turn around"],
+          "correct_index": 2,
+          "explanation": "'Prenez la première rue' = take the first street.",
+          "order": 7
+        },
+        {
+          "question": "Which preposition means 'near'?",
+          "options": ["Loin de", "Près de", "Dans", "Hors de"],
+          "correct_index": 1,
+          "explanation": "'Près de' means near. 'Loin de' is far from.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Asking for Directions",
+      "description": "Practice asking for and understanding directions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Where is the...?", "back": "Où est le/la...?", "order": 1},
+        {"front": "How do I get to...?", "back": "Comment aller à...?", "order": 2},
+        {"front": "Is it far?", "back": "C'est loin?", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Where is the bank?'",
+          "options": ["Qu'est-ce que la banque?", "Où est la banque?", "Quand est la banque?", "Comment est la banque?"],
+          "correct_index": 1,
+          "explanation": "'Où est...?' asks for location.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Comment aller à la gare?' mean?",
+          "options": ["Where is the station?", "How do I get to the station?", "When does the station open?", "What is the station?"],
+          "correct_index": 1,
+          "explanation": "'Comment aller à...?' = How do I get to...?",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'It's five minutes away'?",
+          "options": ["C'est à cinq minutes", "Il y a cinq minutes", "Cinq minutes sont", "Avoir cinq minutes"],
+          "correct_index": 0,
+          "explanation": "'C'est à cinq minutes' = It's five minutes away.",
+          "order": 3
+        },
+        {
+          "question": "What does 'Y a-t-il une pharmacie près d'ici?' mean?",
+          "options": ["Where is the pharmacy?", "Is there a pharmacy nearby?", "How is the pharmacy?", "What pharmacy?"],
+          "correct_index": 1,
+          "explanation": "'Y a-t-il...près d'ici?' = Is there...nearby?",
+          "order": 4
+        },
+        {
+          "question": "How would you respond to 'C'est loin?' if it's close?",
+          "options": ["Oui, très loin", "Non, c'est tout près", "Je ne sais pas", "Peut-être"],
+          "correct_index": 1,
+          "explanation": "'Non, c'est tout près' = No, it's very close.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Signs and Maps",
+      "description": "Understand common signs, directions, and transit information.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Entrance", "back": "Entrée", "order": 1},
+        {"front": "Exit", "back": "Sortie", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'Pour aller au musée, continuez tout droit et tournez à gauche.' What direction do you turn?",
+          "options": ["Right", "Left", "Go back", "Don't turn"],
+          "correct_index": 1,
+          "explanation": "'Tournez à gauche' = turn left.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'Le métro est à cinq minutes à pied.' How do you get there?",
+          "options": ["By car", "By bus", "Walking", "By taxi"],
+          "correct_index": 2,
+          "explanation": "'À pied' means on foot/walking.",
+          "order": 2
+        },
+        {
+          "question": "Read sign: 'STATIONNEMENT INTERDIT'. What is prohibited?",
+          "options": ["Entry", "Exit", "Parking", "Smoking"],
+          "correct_index": 2,
+          "explanation": "'Stationnement' means parking.",
+          "order": 3
+        },
+        {
+          "question": "Read: 'L'arrêt de bus est devant la banque.' Where is the bus stop?",
+          "options": ["Behind the bank", "Inside the bank", "In front of the bank", "Far from the bank"],
+          "correct_index": 2,
+          "explanation": "'Devant' = in front of.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'Le train part à neuf heures du matin.' When does the train leave?",
+          "options": ["9 PM", "9 AM", "At night", "Noon"],
+          "correct_index": 1,
+          "explanation": "'À neuf heures du matin' = at 9 in the morning.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Understanding Transit Announcements",
+      "description": "Train your ear to understand transportation announcements.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Next stop", "back": "Prochain arrêt", "order": 1},
+        {"front": "Platform", "back": "Quai", "order": 2},
+        {"front": "Departure", "back": "Départ", "order": 3},
+        {"front": "Arrival", "back": "Arrivée", "order": 4},
+        {"front": "Ticket", "back": "Billet", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "You hear 'Prochain arrêt: Châtelet'. What are you being told?",
+          "options": ["Final stop", "Next stop is Châtelet", "Transfer point", "End of service"],
+          "correct_index": 1,
+          "explanation": "'Prochain arrêt' announces the next stop.",
+          "order": 1
+        },
+        {
+          "question": "What does 'quai numéro trois' mean?",
+          "options": ["Bus number 3", "Platform number 3", "Route 3", "Gate 3"],
+          "correct_index": 1,
+          "explanation": "'Quai' means platform (for trains).",
+          "order": 2
+        },
+        {
+          "question": "You hear 'Le train à destination de Lyon'. Where is the train going?",
+          "options": ["From Lyon", "To Lyon", "Near Lyon", "Around Lyon"],
+          "correct_index": 1,
+          "explanation": "'À destination de' = headed to/bound for.",
+          "order": 3
+        },
+        {
+          "question": "'Départ' and 'Arrivée' are:",
+          "options": ["Departure and Arrival", "Entry and Exit", "Start and End", "Open and Closed"],
+          "correct_index": 0,
+          "explanation": "'Départ' = departure, 'Arrivée' = arrival.",
+          "order": 4
+        },
+        {
+          "question": "You hear 'Veuillez composter votre billet'. What should you do?",
+          "options": ["Wait for the train", "Validate your ticket", "Find your seat", "Show your ID"],
+          "correct_index": 1,
+          "explanation": "'Composter' = to validate (punch/stamp) your ticket.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

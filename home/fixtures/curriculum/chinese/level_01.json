@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Chinese",
+    "level": 1,
+    "theme": "Basics",
+    "description": "Essential greetings, numbers 1-10, colors, and basic phrases to start your Chinese (Mandarin) journey."
+  },
+  "module": {
+    "name": "Basics",
+    "description": "Learn essential greetings, numbers, colors, and basic phrases to start your Chinese journey.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Essential Chinese Words",
+      "description": "Build your foundation with the most important Chinese words including greetings, numbers, and colors.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Hello", "back": "你好 (Nǐ hǎo)", "order": 1},
+        {"front": "Goodbye", "back": "再见 (Zàijiàn)", "order": 2},
+        {"front": "Please", "back": "请 (Qǐng)", "order": 3},
+        {"front": "Thank you", "back": "谢谢 (Xièxiè)", "order": 4},
+        {"front": "Yes", "back": "是 (Shì) / 对 (Duì)", "order": 5},
+        {"front": "No", "back": "不 (Bù) / 没有 (Méiyǒu)", "order": 6},
+        {"front": "Good morning", "back": "早上好 (Zǎoshang hǎo)", "order": 7},
+        {"front": "Good evening", "back": "晚上好 (Wǎnshang hǎo)", "order": 8},
+        {"front": "Excuse me", "back": "不好意思 (Bù hǎo yìsi)", "order": 9},
+        {"front": "I'm sorry", "back": "对不起 (Duìbuqǐ)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Hello' in Chinese?",
+          "options": ["再见", "你好", "谢谢", "请"],
+          "correct_index": 1,
+          "explanation": "'你好' (Nǐ hǎo) literally means 'you good' and is the standard greeting.",
+          "order": 1
+        },
+        {
+          "question": "What does '谢谢' (Xièxiè) mean?",
+          "options": ["Please", "Goodbye", "Thank you", "Hello"],
+          "correct_index": 2,
+          "explanation": "'谢谢' means 'Thank you' in Chinese.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'Goodbye' in Chinese?",
+          "options": ["你好", "早上好", "再见", "谢谢"],
+          "correct_index": 2,
+          "explanation": "'再见' (Zàijiàn) literally means 'see again'.",
+          "order": 3
+        },
+        {
+          "question": "What is 'Please' in Chinese?",
+          "options": ["谢谢", "对不起", "请", "是"],
+          "correct_index": 2,
+          "explanation": "'请' (Qǐng) means 'please' and is used to make polite requests.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'Good morning' in Chinese?",
+          "options": ["晚上好", "早上好", "你好", "再见"],
+          "correct_index": 1,
+          "explanation": "'早上好' (Zǎoshang hǎo) is the morning greeting.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Basic Chinese Grammar",
+      "description": "Learn fundamental grammar concepts: word order, measure words, and basic sentence patterns.",
+      "order": 2,
+      "flashcards": [
+        {"front": "I/me", "back": "我 (Wǒ)", "order": 1},
+        {"front": "you (singular)", "back": "你 (Nǐ)", "order": 2},
+        {"front": "he/she/it", "back": "他/她/它 (Tā)", "order": 3},
+        {"front": "am/is/are", "back": "是 (Shì)", "order": 4},
+        {"front": "general measure word", "back": "个 (Gè)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "What is the basic word order in Chinese?",
+          "options": ["Subject-Object-Verb", "Subject-Verb-Object", "Verb-Subject-Object", "Object-Subject-Verb"],
+          "correct_index": 1,
+          "explanation": "Chinese uses Subject-Verb-Object (SVO) order, similar to English.",
+          "order": 1
+        },
+        {
+          "question": "Which word means 'am/is/are' (to be) in Chinese?",
+          "options": ["有", "是", "在", "会"],
+          "correct_index": 1,
+          "explanation": "'是' (Shì) is the verb 'to be' used with nouns.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'I am a student' in Chinese?",
+          "options": ["我学生是", "是我学生", "我是学生", "学生我是"],
+          "correct_index": 2,
+          "explanation": "'我是学生' (Wǒ shì xuéshēng) follows the SVO pattern.",
+          "order": 3
+        },
+        {
+          "question": "What is a measure word (量词) in Chinese?",
+          "options": ["A word showing tense", "A word used when counting nouns", "A verb ending", "A plural marker"],
+          "correct_index": 1,
+          "explanation": "Measure words (like 个, 本, 只) are required between numbers and nouns.",
+          "order": 4
+        },
+        {
+          "question": "Which is the correct way to say 'one person'?",
+          "options": ["一人", "一个人", "人一个", "个一人"],
+          "correct_index": 1,
+          "explanation": "'一个人' uses the measure word 个 between the number and noun.",
+          "order": 5
+        },
+        {
+          "question": "Chinese verbs:",
+          "options": ["Change for tense", "Change for person", "Don't conjugate", "Only change in questions"],
+          "correct_index": 2,
+          "explanation": "Chinese verbs don't conjugate - they stay the same form.",
+          "order": 6
+        },
+        {
+          "question": "How do you make a sentence negative with 是?",
+          "options": ["Add 没 before 是", "Add 不 before 是", "Add 无 after 是", "Change 是 to 不是"],
+          "correct_index": 1,
+          "explanation": "'不是' (bù shì) means 'am not/is not/are not'.",
+          "order": 7
+        },
+        {
+          "question": "To form a yes/no question in Chinese, you can:",
+          "options": ["Change word order", "Add 吗 at the end", "Use rising tone", "Remove the verb"],
+          "correct_index": 1,
+          "explanation": "Adding '吗' (ma) at the end makes a statement into a yes/no question.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "First Conversations",
+      "description": "Practice essential phrases for introducing yourself and basic social interactions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "My name is...", "back": "我叫... (Wǒ jiào...)", "order": 1},
+        {"front": "What is your name?", "back": "你叫什么名字? (Nǐ jiào shénme míngzi?)", "order": 2},
+        {"front": "Nice to meet you", "back": "很高兴认识你 (Hěn gāoxìng rènshi nǐ)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'My name is Li Wei' in Chinese?",
+          "options": ["我名字李伟", "我叫李伟", "叫我李伟", "李伟我是"],
+          "correct_index": 1,
+          "explanation": "'我叫〇〇' (Wǒ jiào...) is the standard way to say your name.",
+          "order": 1
+        },
+        {
+          "question": "What does '你叫什么名字?' mean?",
+          "options": ["How are you?", "What is your name?", "Where are you from?", "How old are you?"],
+          "correct_index": 1,
+          "explanation": "'你叫什么名字?' literally asks 'You are called what name?'",
+          "order": 2
+        },
+        {
+          "question": "How would you respond to '你好吗?' (How are you)?",
+          "options": ["我叫小明", "我很好，谢谢", "很高兴认识你", "不客气"],
+          "correct_index": 1,
+          "explanation": "'我很好，谢谢' means 'I'm very well, thank you.'",
+          "order": 3
+        },
+        {
+          "question": "What does '很高兴认识你' mean?",
+          "options": ["Nice to meet you", "Thank you very much", "I'm sorry", "Goodbye"],
+          "correct_index": 0,
+          "explanation": "'很高兴认识你' means 'Very happy to know you' = Nice to meet you.",
+          "order": 4
+        },
+        {
+          "question": "How do you ask 'Where are you from?' in Chinese?",
+          "options": ["你好吗?", "现在几点?", "你是哪里人?", "你几岁?"],
+          "correct_index": 2,
+          "explanation": "'你是哪里人?' asks 'You are where person?' = Where are you from?",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Simple Chinese",
+      "description": "Practice reading comprehension with simple Chinese texts and characters.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Open", "back": "开 (Kāi) / 营业 (Yíngyè)", "order": 1},
+        {"front": "Closed", "back": "关 (Guān) / 休息 (Xiūxi)", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: '狗很大。' What is big?",
+          "options": ["The cat", "The dog", "The house", "The car"],
+          "correct_index": 1,
+          "explanation": "'狗' (gǒu) means 'dog'. The sentence says the dog is big.",
+          "order": 1
+        },
+        {
+          "question": "Read: '玛丽有一只黑猫。' What color is the cat?",
+          "options": ["White", "Brown", "Black", "Gray"],
+          "correct_index": 2,
+          "explanation": "'黑' (hēi) means 'black'. Mary has a black cat.",
+          "order": 2
+        },
+        {
+          "question": "Read: '这个房子小，但是很漂亮。' Is the house big or small?",
+          "options": ["Big", "Small", "Medium", "Very big"],
+          "correct_index": 1,
+          "explanation": "'小' (xiǎo) means 'small'. The house is small but pretty.",
+          "order": 3
+        },
+        {
+          "question": "Read the sign: '出口'. What does it indicate?",
+          "options": ["Entrance", "Exit", "Bathroom", "Danger"],
+          "correct_index": 1,
+          "explanation": "'出口' (chūkǒu) means 'exit' (out-mouth).",
+          "order": 4
+        },
+        {
+          "question": "Read: '我吃苹果。' What is the person eating?",
+          "options": ["An orange", "A banana", "An apple", "A pear"],
+          "correct_index": 2,
+          "explanation": "'苹果' (píngguǒ) means 'apple'. '吃' means 'eat'.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Hearing Chinese Sounds",
+      "description": "Train your ear to recognize Chinese tones and pronunciation.",
+      "order": 5,
+      "flashcards": [
+        {"front": "One", "back": "一 (Yī)", "order": 1},
+        {"front": "Two", "back": "二 (Èr)", "order": 2},
+        {"front": "Three", "back": "三 (Sān)", "order": 3},
+        {"front": "Four", "back": "四 (Sì)", "order": 4},
+        {"front": "Five", "back": "五 (Wǔ)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Listen: Which number sounds like 'EE' with a flat high tone?",
+          "options": ["二", "一", "三", "零"],
+          "correct_index": 1,
+          "explanation": "'一' (yī = one) has the first tone (high flat).",
+          "order": 1
+        },
+        {
+          "question": "How many tones does Mandarin Chinese have?",
+          "options": ["Two", "Three", "Four (plus neutral)", "Six"],
+          "correct_index": 2,
+          "explanation": "Mandarin has four main tones plus a neutral (light) tone.",
+          "order": 2
+        },
+        {
+          "question": "The second tone (´) in Chinese sounds like:",
+          "options": ["Falling", "Rising (like asking a question)", "Dipping then rising", "Flat high"],
+          "correct_index": 1,
+          "explanation": "The second tone rises, like when you say 'Huh?' in English.",
+          "order": 3
+        },
+        {
+          "question": "Why are tones important in Chinese?",
+          "options": ["They're optional", "They change word meanings", "They only matter in formal speech", "They're just accent"],
+          "correct_index": 1,
+          "explanation": "Different tones create different words (e.g., mā=mom, má=hemp, mǎ=horse, mà=scold).",
+          "order": 4
+        },
+        {
+          "question": "Which number '四' has the fourth (falling) tone?",
+          "options": ["三", "五", "四", "七"],
+          "correct_index": 2,
+          "explanation": "'四' (sì = four) has the fourth tone, a sharp falling tone.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

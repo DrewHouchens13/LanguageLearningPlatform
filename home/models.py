@@ -55,17 +55,11 @@ class UserProfile(models.Model):
         help_text="Profile picture (max 5MB, PNG/JPG only)"
     )
 
-    # Proficiency tracking (capped at B1 for new users)
-    proficiency_level = models.CharField(
-        max_length=2,
-        choices=[
-            ('A1', 'Beginner (A1)'),
-            ('A2', 'Elementary (A2)'),
-            ('B1', 'Intermediate (B1)'),
-        ],
+    # Proficiency tracking (10-level system)
+    proficiency_level = models.IntegerField(
         null=True,
         blank=True,
-        help_text="CEFR proficiency level determined by onboarding assessment"
+        help_text="Proficiency level 1-10 (1=absolute beginner, 10=advanced)"
     )
 
     # Onboarding state
@@ -101,7 +95,7 @@ class UserProfile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        level_display = self.get_proficiency_level_display() if self.proficiency_level else 'Not assessed'
+        level_display = f"Level {self.proficiency_level}" if self.proficiency_level else 'Not assessed'
         return f"{self.user.username}'s Profile - {level_display}"
 
     class Meta:
@@ -151,7 +145,15 @@ class UserProfile(models.Model):
         Automatically resizes uploaded avatars to a maximum of 200x200 pixels
         while maintaining aspect ratio. Images are saved in their original format
         (PNG or JPEG) with high quality.
+        
+        Also handles conversion of CEFR proficiency levels (A1, A2, B1) to integers (1, 2, 3).
         """
+        # Convert CEFR level strings to integers if needed (defensive programming)
+        if self.proficiency_level is not None and isinstance(self.proficiency_level, str):
+            cefr_to_level = {'A1': 1, 'A2': 2, 'B1': 3}
+            self.proficiency_level = cefr_to_level.get(self.proficiency_level.upper(), 1)
+            logger.info('Converted CEFR proficiency level string to integer: %s', self.proficiency_level)
+        
         if self.avatar:
             try:
                 # Open and validate the uploaded image
@@ -374,12 +376,6 @@ class UserLanguageProfile(models.Model):
     for a given user.
     """
 
-    LEVEL_CHOICES = [
-        ('A1', 'Beginner (A1)'),
-        ('A2', 'Elementary (A2)'),
-        ('B1', 'Intermediate (B1)'),
-    ]
-
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -387,12 +383,11 @@ class UserLanguageProfile(models.Model):
     )
     language = models.CharField(max_length=50)
 
-    # Onboarding / proficiency tracking
-    proficiency_level = models.CharField(
-        max_length=2,
-        choices=LEVEL_CHOICES,
+    # Onboarding / proficiency tracking (10-level system)
+    proficiency_level = models.IntegerField(
         null=True,
-        blank=True
+        blank=True,
+        help_text="Proficiency level 1-10 (1=absolute beginner, 10=advanced)"
     )
     has_completed_onboarding = models.BooleanField(default=False)
     onboarding_completed_at = models.DateTimeField(null=True, blank=True)
@@ -422,6 +417,17 @@ class UserLanguageProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.language}"
+
+    def get_proficiency_level_display(self):
+        """
+        Get human-readable proficiency level display.
+        
+        Returns:
+            str: Formatted proficiency level (e.g., "Level 2", "Level 10")
+        """
+        if self.proficiency_level is None:
+            return 'Not assessed'
+        return f"Level {self.proficiency_level}"
 
     def save(self, *args, **kwargs):
         """Normalize language names for consistency."""
@@ -854,19 +860,38 @@ class OnboardingAnswer(models.Model):
 # =============================================================================
 
 class Lesson(models.Model):
-    """A language learning lesson"""
+    """
+    A language learning lesson.
+
+    🤖 AI ASSISTANT: Core content unit for the curriculum system.
+    - Each lesson belongs to one skill_category (vocabulary, grammar, etc.)
+    - difficulty_level is 1-10 (not A1/A2/B1) matching the 10-level system
+    - Lessons are grouped into LearningModules by language + difficulty_level
+
+    RELATED FILES:
+    - home/services/curriculum_generator.py - Creates lessons from templates
+    - home/management/commands/seed_curriculum.py - Seeds lessons from fixtures
+    """
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     language = models.CharField(max_length=50, default=DEFAULT_LANGUAGE)
-    difficulty_level = models.CharField(
-        max_length=2,
-        choices=[
-            ('A1', 'Beginner'),
-            ('A2', 'Elementary'),
-            ('B1', 'Intermediate')
-        ],
-        default='A1'
+
+    # Curriculum system: 10-level proficiency
+    difficulty_level = models.IntegerField(
+        default=1,
+        help_text="Proficiency level 1-10 (1=absolute beginner, 10=advanced)"
     )
+
+    # Curriculum system: skill category (vocabulary, grammar, etc.)
+    skill_category = models.ForeignKey(
+        'SkillCategory',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lessons',
+        help_text="Skill this lesson teaches (vocabulary, grammar, etc.)"
+    )
+
     slug = models.SlugField(max_length=200, unique=True, blank=True, null=True, help_text="URL-friendly identifier for template paths (e.g., 'shapes', 'colors')")
     order = models.IntegerField(default=0, help_text="Order in lesson sequence")
     is_published = models.BooleanField(default=True)
@@ -905,7 +930,7 @@ class Lesson(models.Model):
         verbose_name_plural = "Lessons"
 
     def __str__(self):
-        return f"{self.title} ({self.difficulty_level})"
+        return f"{self.title} (Level {self.difficulty_level})"
 
     def save(self, *args, **kwargs):
         """
@@ -1183,3 +1208,401 @@ class DailyChallengeLog(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.date} ({self.completed_via})"
+
+
+# =============================================================================
+# ADAPTIVE CURRICULUM SYSTEM MODELS
+# =============================================================================
+
+class SkillCategory(models.Model):
+    """
+    Five core language learning skill categories.
+
+    Each lesson focuses on ONE skill category. Skills are ordered 1-5 and
+    determine the sequence of lessons within a learning module.
+
+    🤖 AI ASSISTANT: This model supports the adaptive curriculum system.
+    - Skills are seeded via data migration (vocabulary, grammar, conversation, reading, listening)
+    - Each skill has an emoji icon for UI display
+    - Order field determines lesson sequence within a level
+
+    RELATED FILES:
+    - home/services/adaptive_test_service.py - Uses skills for test composition
+    - home/templates/curriculum/module_detail.html - Displays skill icons
+    """
+
+    SKILL_CHOICES = [
+        ('vocabulary', 'Vocabulary'),
+        ('grammar', 'Grammar'),
+        ('conversation', 'Conversation'),
+        ('reading', 'Reading'),
+        ('listening', 'Listening'),
+    ]
+
+    name = models.CharField(
+        max_length=50,
+        choices=SKILL_CHOICES,
+        unique=True,
+        help_text="Skill category identifier"
+    )
+    description = models.TextField(
+        help_text="Detailed description of what this skill covers"
+    )
+    icon = models.CharField(
+        max_length=10,
+        help_text="Emoji icon for UI display (e.g., 📚, 📝, 💬, 📖, 🎧)"
+    )
+    order = models.IntegerField(
+        help_text="Order in lesson sequence within a level (1-5)"
+    )
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = "Skill Category"
+        verbose_name_plural = "Skill Categories"
+
+    def __str__(self):
+        return f"{self.icon} {self.get_name_display()}"
+
+
+class LearningModule(models.Model):
+    """
+    Groups 5 lessons + 1 adaptive test for a proficiency level.
+
+    Each language has 10 learning modules (levels 1-10). Users must complete
+    all 5 lessons in a module before taking the adaptive test. Scoring 85%+
+    on the test advances the user to the next level.
+
+    🤖 AI ASSISTANT: Central organizing unit for curriculum.
+    - One module per language per level (100 total: 10 languages × 10 levels)
+    - passing_score determines advancement threshold (default 85%)
+    - get_lessons() returns ordered lessons by skill category
+
+    RELATED FILES:
+    - home/services/adaptive_test_service.py - Generates tests for modules
+    - home/management/commands/seed_curriculum.py - Creates modules from fixtures
+    """
+
+    language = models.CharField(
+        max_length=50,
+        db_index=True,
+        help_text="Target language for this module"
+    )
+    proficiency_level = models.IntegerField(
+        db_index=True,
+        help_text="Level 1-10 (1=absolute beginner, 10=advanced)"
+    )
+    name = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Human-readable module name (e.g., 'Basics', 'Daily Life')"
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Description of topics covered in this level"
+    )
+    passing_score = models.IntegerField(
+        default=85,
+        help_text="Minimum percentage score to advance to next level"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['language', 'proficiency_level']
+        ordering = ['language', 'proficiency_level']
+        verbose_name = "Learning Module"
+        verbose_name_plural = "Learning Modules"
+        indexes = [
+            models.Index(fields=['language', 'proficiency_level']),
+        ]
+
+    def __str__(self):
+        return f"{self.language} Level {self.proficiency_level}: {self.name or 'Unnamed'}"
+
+    def get_lessons(self):
+        """
+        Get 5 lessons for this module in skill order.
+
+        Returns:
+            QuerySet: Lessons ordered by skill_category__order
+        """
+        return Lesson.objects.filter(
+            language=self.language,
+            difficulty_level=self.proficiency_level,
+            is_published=True
+        ).select_related('skill_category').order_by('skill_category__order')
+
+
+class UserModuleProgress(models.Model):
+    """
+    Track user's progress through a learning module.
+
+    Records which lessons are completed, test attempts, and overall
+    module completion status. Users can only take the test after
+    completing all 5 lessons.
+
+    🤖 AI ASSISTANT: Core progress tracking for curriculum.
+    - lessons_completed is a JSON list of completed lesson IDs
+    - best_test_score tracks highest test performance
+    - last_test_date enables 24-hour retry cooldown for failed tests
+
+    RELATED FILES:
+    - home/views.py - curriculum views update this model
+    - home/services/adaptive_test_service.py - Updates on test completion
+    """
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='module_progress'
+    )
+    module = models.ForeignKey(
+        LearningModule,
+        on_delete=models.CASCADE,
+        related_name='user_progress'
+    )
+
+    # Lesson completion tracking
+    lessons_completed = models.JSONField(
+        default=list,
+        help_text="List of completed lesson IDs"
+    )
+
+    # Test tracking
+    test_attempts = models.IntegerField(
+        default=0,
+        help_text="Number of test attempts"
+    )
+    best_test_score = models.FloatField(
+        default=0.0,
+        help_text="Highest test score achieved (percentage)"
+    )
+    last_test_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp of last test attempt"
+    )
+
+    # State
+    is_module_complete = models.BooleanField(
+        default=False,
+        help_text="True when user passes test with 85%+"
+    )
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when module was completed"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['user', 'module']
+        ordering = ['module__language', 'module__proficiency_level']
+        verbose_name = "User Module Progress"
+        verbose_name_plural = "User Module Progress"
+        indexes = [
+            models.Index(fields=['user', 'is_module_complete']),
+        ]
+
+    def __str__(self):
+        status = "✓" if self.is_module_complete else f"{len(self.lessons_completed)}/5"
+        return f"{self.user.username} - {self.module} [{status}]"
+
+    def all_lessons_completed(self):
+        """Check if all 5 lessons in the module are completed."""
+        return len(self.lessons_completed) >= 5
+
+    def can_take_test(self):
+        """
+        Check if user can take the module test.
+
+        Returns:
+            bool: True if all lessons completed
+        """
+        return self.all_lessons_completed()
+
+    def can_retry_test(self):
+        """
+        Check if user can retry the test (10-minute cooldown after failure).
+
+        Returns:
+            bool: True if no previous attempt or 10+ minutes since last attempt
+        """
+        if self.last_test_date is None:
+            return True
+        time_since_last = timezone.now() - self.last_test_date
+        return time_since_last.total_seconds() >= 600  # 10 minutes
+
+    def mark_lesson_complete(self, lesson_id):
+        """
+        Mark a lesson as completed.
+
+        Args:
+            lesson_id: ID of the completed lesson
+        """
+        if lesson_id not in self.lessons_completed:
+            self.lessons_completed.append(lesson_id)
+            self.save(update_fields=['lessons_completed', 'updated_at'])
+
+
+class UserSkillMastery(models.Model):
+    """
+    Track user's mastery percentage per skill category.
+
+    Used by the adaptive test service to generate personalized tests.
+    Mastery is calculated from a rolling window of the last 50 question
+    attempts per skill.
+
+    🤖 AI ASSISTANT: Drives adaptive test composition.
+    - mastery_percentage determines if skill is "weak" (<60%) or "strong" (>=60%)
+    - Tests are 70% weak skills, 30% strong skills
+    - Updated after every quiz/test submission
+
+    RELATED FILES:
+    - home/services/adaptive_test_service.py - Queries mastery for test generation
+    """
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='skill_mastery'
+    )
+    skill_category = models.ForeignKey(
+        SkillCategory,
+        on_delete=models.CASCADE,
+        related_name='user_mastery'
+    )
+    language = models.CharField(
+        max_length=50,
+        db_index=True,
+        help_text="Language this mastery applies to"
+    )
+
+    # Rolling statistics (based on last 50 questions)
+    total_attempts = models.IntegerField(
+        default=0,
+        help_text="Total questions attempted for this skill"
+    )
+    correct_attempts = models.IntegerField(
+        default=0,
+        help_text="Total correct answers for this skill"
+    )
+    mastery_percentage = models.FloatField(
+        default=0.0,
+        help_text="Mastery level as percentage (0-100)"
+    )
+    last_practiced = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Last time user practiced this skill"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['user', 'skill_category', 'language']
+        ordering = ['language', 'skill_category__order']
+        verbose_name = "User Skill Mastery"
+        verbose_name_plural = "User Skill Mastery"
+        indexes = [
+            models.Index(fields=['user', 'language']),
+            models.Index(fields=['user', 'language', 'mastery_percentage']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.language} {self.skill_category.name}: {self.mastery_percentage:.1f}%"
+
+    def is_weak_skill(self):
+        """Return True if mastery is below 60% (weak skill)."""
+        return self.mastery_percentage < 60.0
+
+    def update_mastery(self, is_correct):
+        """
+        Update mastery after a question attempt.
+
+        Uses a rolling window approach: recent performance weighted more heavily.
+
+        Args:
+            is_correct: Boolean indicating if the answer was correct
+        """
+        self.total_attempts += 1
+        if is_correct:
+            self.correct_attempts += 1
+
+        # Calculate mastery percentage
+        if self.total_attempts > 0:
+            self.mastery_percentage = (self.correct_attempts / self.total_attempts) * 100
+
+        self.last_practiced = timezone.now()
+        self.save(update_fields=[
+            'total_attempts', 'correct_attempts',
+            'mastery_percentage', 'last_practiced', 'updated_at'
+        ])
+
+
+class UserQuestionAttempt(models.Model):
+    """
+    Track individual question responses for mastery calculation.
+
+    Records every question a user answers across lessons and tests.
+    Used for detailed analytics and skill mastery recalculation.
+
+    🤖 AI ASSISTANT: Granular tracking for analytics.
+    - Links to both the question and the skill category
+    - time_taken_seconds can identify struggling areas
+    - Used to recalculate UserSkillMastery when needed
+
+    RELATED FILES:
+    - home/views.py - Creates records on quiz submission
+    - home/services/adaptive_test_service.py - Creates records on test submission
+    """
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='question_attempts'
+    )
+    question = models.ForeignKey(
+        LessonQuizQuestion,
+        on_delete=models.CASCADE,
+        related_name='user_attempts'
+    )
+    skill_category = models.ForeignKey(
+        SkillCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='question_attempts',
+        help_text="Skill category of the question (for analytics)"
+    )
+
+    is_correct = models.BooleanField(
+        help_text="Whether the user answered correctly"
+    )
+    user_answer = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Index of the answer the user selected"
+    )
+    time_taken_seconds = models.IntegerField(
+        default=0,
+        help_text="Time spent on this question"
+    )
+    answered_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-answered_at']
+        verbose_name = "User Question Attempt"
+        verbose_name_plural = "User Question Attempts"
+        indexes = [
+            models.Index(fields=['user', '-answered_at']),
+            models.Index(fields=['user', 'skill_category']),
+        ]
+
+    def __str__(self):
+        status = "✓" if self.is_correct else "✗"
+        return f"{status} {self.user.username} - Q{self.question.id}"

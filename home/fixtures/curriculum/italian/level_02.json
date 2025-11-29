@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Italian",
+    "level": 2,
+    "theme": "Daily Life",
+    "description": "Family members, common foods, everyday objects, and telling time in Italian."
+  },
+  "module": {
+    "name": "Daily Life",
+    "description": "Learn vocabulary for family, food, everyday objects, and time expressions.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Family and Daily Words",
+      "description": "Learn essential vocabulary for family members, common foods, and household items.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Mother", "back": "Madre / Mamma", "order": 1},
+        {"front": "Father", "back": "Padre / Papà", "order": 2},
+        {"front": "Brother", "back": "Fratello", "order": 3},
+        {"front": "Sister", "back": "Sorella", "order": 4},
+        {"front": "Water", "back": "Acqua (f)", "order": 5},
+        {"front": "Bread", "back": "Pane (m)", "order": 6},
+        {"front": "Milk", "back": "Latte (m)", "order": 7},
+        {"front": "House", "back": "Casa (f)", "order": 8},
+        {"front": "Table", "back": "Tavolo (m)", "order": 9},
+        {"front": "Chair", "back": "Sedia (f)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'mother' in Italian?",
+          "options": ["Sorella", "Madre", "Nonna", "Zia"],
+          "correct_index": 1,
+          "explanation": "'Madre' is mother. 'Mamma' is mom (informal).",
+          "order": 1
+        },
+        {
+          "question": "What does 'fratello' mean?",
+          "options": ["Sister", "Brother", "Father", "Uncle"],
+          "correct_index": 1,
+          "explanation": "'Fratello' means brother. 'Sorella' is sister.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'water' in Italian?",
+          "options": ["Latte", "Pane", "Acqua", "Vino"],
+          "correct_index": 2,
+          "explanation": "'Acqua' means water. It's feminine: l'acqua.",
+          "order": 3
+        },
+        {
+          "question": "What is 'pane' in English?",
+          "options": ["Water", "Bread", "Milk", "Meat"],
+          "correct_index": 1,
+          "explanation": "'Pane' means bread in Italian.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'table' in Italian?",
+          "options": ["Sedia", "Casa", "Tavolo", "Letto"],
+          "correct_index": 2,
+          "explanation": "'Tavolo' means table. It's masculine: il tavolo.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Possessives and Avere/Essere",
+      "description": "Learn possessive adjectives and master avere (to have) and essere (to be).",
+      "order": 2,
+      "flashcards": [
+        {"front": "my (masc.)", "back": "mio", "order": 1},
+        {"front": "my (fem.)", "back": "mia", "order": 2},
+        {"front": "your (informal)", "back": "tuo/tua", "order": 3},
+        {"front": "to have", "back": "avere", "order": 4},
+        {"front": "to be", "back": "essere", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'my mother' in Italian?",
+          "options": ["Il mio madre", "La mia madre", "Mia madre", "Mio madre"],
+          "correct_index": 2,
+          "explanation": "Family members usually don't take the article: 'mia madre'.",
+          "order": 1
+        },
+        {
+          "question": "'Ho due fratelli' means:",
+          "options": ["I am two brothers", "I have two brothers", "I see two brothers", "I want two brothers"],
+          "correct_index": 1,
+          "explanation": "'Ho' = I have (avere). 'Due fratelli' = two brothers.",
+          "order": 2
+        },
+        {
+          "question": "Which is correct for 'my house'?",
+          "options": ["Mio casa", "Mia casa", "La mia casa", "Il mio casa"],
+          "correct_index": 2,
+          "explanation": "'La mia casa' - non-family nouns need the article.",
+          "order": 3
+        },
+        {
+          "question": "Complete: 'Noi ___ italiani' (We are Italian)",
+          "options": ["abbiamo", "siamo", "siete", "sono"],
+          "correct_index": 1,
+          "explanation": "'Siamo' is the noi form of essere (to be).",
+          "order": 4
+        },
+        {
+          "question": "Complete: 'Loro ___ fame' (They are hungry)",
+          "options": ["sono", "hanno", "siete", "avete"],
+          "correct_index": 1,
+          "explanation": "In Italian, you 'have' hunger: 'avere fame'. Loro hanno fame.",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'our house'?",
+          "options": ["Mia casa", "Tua casa", "La nostra casa", "La loro casa"],
+          "correct_index": 2,
+          "explanation": "'La nostra casa' - 'nostra' means 'our' for feminine nouns.",
+          "order": 6
+        },
+        {
+          "question": "'Lei è medico' means:",
+          "options": ["She has a doctor", "She is a doctor", "She sees a doctor", "She wants a doctor"],
+          "correct_index": 1,
+          "explanation": "'È' (essere) + profession. Articles often omitted with professions.",
+          "order": 7
+        },
+        {
+          "question": "Which expression uses 'avere' (to have)?",
+          "options": ["I am happy", "I am hungry", "I am tall", "I am Italian"],
+          "correct_index": 1,
+          "explanation": "'Ho fame' (I have hunger) - Italian uses 'avere' for hunger, thirst, age.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Family Conversations",
+      "description": "Practice talking about your family and daily routines.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Do you have siblings?", "back": "Hai fratelli o sorelle?", "order": 1},
+        {"front": "I have two brothers", "back": "Ho due fratelli", "order": 2},
+        {"front": "What time is it?", "back": "Che ora è? / Che ore sono?", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Do you have siblings?' informally?",
+          "options": ["Come hai fratelli?", "Hai fratelli o sorelle?", "Dove hai fratelli?", "Perché hai fratelli?"],
+          "correct_index": 1,
+          "explanation": "'Hai fratelli o sorelle?' uses 'avere' (to have).",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'I live with my family'?",
+          "options": ["Abito con la mia famiglia", "Ho la mia famiglia", "Sono la mia famiglia", "Resto la mia famiglia"],
+          "correct_index": 0,
+          "explanation": "'Abito con la mia famiglia' - 'abitare' means to live.",
+          "order": 2
+        },
+        {
+          "question": "What does 'Che ore sono?' mean?",
+          "options": ["What day is it?", "What time is it?", "How are you?", "Where is it?"],
+          "correct_index": 1,
+          "explanation": "'Che ore sono?' and 'Che ora è?' both ask for the time.",
+          "order": 3
+        },
+        {
+          "question": "How do you say 'It's 3 o'clock'?",
+          "options": ["È tre", "Sono le tre", "Sta tre", "Ha tre"],
+          "correct_index": 1,
+          "explanation": "'Sono le tre' - use 'sono' for 2+ o'clock, 'è' for 1 o'clock.",
+          "order": 4
+        },
+        {
+          "question": "How do you respond to 'Quanti fratelli hai?'",
+          "options": ["Sì, ho", "Ho tre fratelli", "Fratelli ho", "Molto bene"],
+          "correct_index": 1,
+          "explanation": "'Ho tre fratelli' answers how many brothers you have.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading About Daily Life",
+      "description": "Read and understand texts about family and daily routines.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Every day", "back": "Ogni giorno / Tutti i giorni", "order": 1},
+        {"front": "In the morning", "back": "La mattina / Di mattina", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'La mia famiglia è grande. Ho tre fratelli.' How many brothers?",
+          "options": ["One", "Two", "Three", "Four"],
+          "correct_index": 2,
+          "explanation": "'Tre fratelli' means three brothers.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'Faccio colazione alle otto.' When does the person eat breakfast?",
+          "options": ["6 AM", "7 AM", "8 AM", "9 AM"],
+          "correct_index": 2,
+          "explanation": "'Alle otto' means at eight o'clock.",
+          "order": 2
+        },
+        {
+          "question": "Read: 'Mia madre cucina tutti i giorni.' What does the mother do?",
+          "options": ["Works", "Cooks", "Cleans", "Sleeps"],
+          "correct_index": 1,
+          "explanation": "'Cucina' means 'she cooks'. 'Cucinare' = to cook.",
+          "order": 3
+        },
+        {
+          "question": "Read: 'Abitiamo in una casa piccola ma accogliente.' The house is:",
+          "options": ["Big and old", "Small but welcoming", "New and large", "Old but nice"],
+          "correct_index": 1,
+          "explanation": "'Piccola ma accogliente' = small but welcoming/cozy.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'La domenica pranziamo con i nonni.' When do they lunch with grandparents?",
+          "options": ["Saturdays", "Sundays", "Mondays", "Every day"],
+          "correct_index": 1,
+          "explanation": "'La domenica' means on Sunday/Sundays.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Days and Time Expressions",
+      "description": "Learn to understand days of the week and time expressions.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Monday", "back": "Lunedì", "order": 1},
+        {"front": "Tuesday", "back": "Martedì", "order": 2},
+        {"front": "Wednesday", "back": "Mercoledì", "order": 3},
+        {"front": "Thursday", "back": "Giovedì", "order": 4},
+        {"front": "Friday", "back": "Venerdì", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which day sounds like 'loo-neh-DEE'?",
+          "options": ["Martedì", "Lunedì", "Giovedì", "Venerdì"],
+          "correct_index": 1,
+          "explanation": "'Lunedì' (Monday) is pronounced 'loo-neh-DEE'.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'Saturday' in Italian?",
+          "options": ["Venerdì", "Sabato", "Domenica", "Lunedì"],
+          "correct_index": 1,
+          "explanation": "'Sabato' is Saturday. 'Domenica' is Sunday.",
+          "order": 2
+        },
+        {
+          "question": "Italian days of the week are:",
+          "options": ["Capitalized", "Not capitalized", "Sometimes capitalized", "Always in plural"],
+          "correct_index": 1,
+          "explanation": "Unlike English, Italian days are not capitalized.",
+          "order": 3
+        },
+        {
+          "question": "What does 'il fine settimana' mean?",
+          "options": ["The end of the month", "The weekend", "The holiday", "The vacation"],
+          "correct_index": 1,
+          "explanation": "'Il fine settimana' literally means 'the end of the week' = weekend.",
+          "order": 4
+        },
+        {
+          "question": "Which day sounds like 'mehr-ko-leh-DEE'?",
+          "options": ["Martedì", "Mercoledì", "Giovedì", "Lunedì"],
+          "correct_index": 1,
+          "explanation": "'Mercoledì' (Wednesday) is pronounced 'mehr-ko-leh-DEE'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

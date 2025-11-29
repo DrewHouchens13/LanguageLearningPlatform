@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Portuguese",
+    "level": 2,
+    "theme": "Daily Life",
+    "description": "Family members, common foods, everyday objects, and telling time in Portuguese."
+  },
+  "module": {
+    "name": "Daily Life",
+    "description": "Learn vocabulary for family, food, everyday objects, and time expressions.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Family and Daily Words",
+      "description": "Learn essential vocabulary for family members, common foods, and household items.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Mother", "back": "Mãe / Mamãe", "order": 1},
+        {"front": "Father", "back": "Pai / Papai", "order": 2},
+        {"front": "Brother", "back": "Irmão", "order": 3},
+        {"front": "Sister", "back": "Irmã", "order": 4},
+        {"front": "Water", "back": "Água (f)", "order": 5},
+        {"front": "Bread", "back": "Pão (m)", "order": 6},
+        {"front": "Milk", "back": "Leite (m)", "order": 7},
+        {"front": "House", "back": "Casa (f)", "order": 8},
+        {"front": "Table", "back": "Mesa (f)", "order": 9},
+        {"front": "Chair", "back": "Cadeira (f)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'mother' in Portuguese?",
+          "options": ["Irmã", "Mãe", "Avó", "Tia"],
+          "correct_index": 1,
+          "explanation": "'Mãe' is mother. 'Mamãe' is mom (Brazilian).",
+          "order": 1
+        },
+        {
+          "question": "What does 'irmão' mean?",
+          "options": ["Sister", "Brother", "Father", "Uncle"],
+          "correct_index": 1,
+          "explanation": "'Irmão' means brother. 'Irmã' is sister.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'water' in Portuguese?",
+          "options": ["Leite", "Pão", "Água", "Vinho"],
+          "correct_index": 2,
+          "explanation": "'Água' means water. It's feminine: a água.",
+          "order": 3
+        },
+        {
+          "question": "What is 'pão' in English?",
+          "options": ["Water", "Bread", "Milk", "Meat"],
+          "correct_index": 1,
+          "explanation": "'Pão' means bread in Portuguese.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'table' in Portuguese?",
+          "options": ["Cadeira", "Casa", "Mesa", "Cama"],
+          "correct_index": 2,
+          "explanation": "'Mesa' means table. It's feminine: a mesa.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Possessives and Ter/Ser/Estar",
+      "description": "Learn possessive adjectives and master ter (to have), ser and estar (to be).",
+      "order": 2,
+      "flashcards": [
+        {"front": "my (masc.)", "back": "meu", "order": 1},
+        {"front": "my (fem.)", "back": "minha", "order": 2},
+        {"front": "your (informal)", "back": "teu/tua (PT) seu/sua (BR)", "order": 3},
+        {"front": "to have", "back": "ter", "order": 4},
+        {"front": "to be (permanent)", "back": "ser", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'my mother' in Portuguese?",
+          "options": ["Meu mãe", "Minha mãe", "A minha mãe", "O minha mãe"],
+          "correct_index": 1,
+          "explanation": "'Minha mãe' - feminine possessive for mother.",
+          "order": 1
+        },
+        {
+          "question": "'Eu tenho dois irmãos' means:",
+          "options": ["I am two brothers", "I have two brothers", "I see two brothers", "I want two brothers"],
+          "correct_index": 1,
+          "explanation": "'Eu tenho' = I have (ter). 'Dois irmãos' = two brothers.",
+          "order": 2
+        },
+        {
+          "question": "Which is correct for 'my house'?",
+          "options": ["Meu casa", "Minha casa", "A meu casa", "O minha casa"],
+          "correct_index": 1,
+          "explanation": "'Minha casa' - 'casa' is feminine, so use 'minha'.",
+          "order": 3
+        },
+        {
+          "question": "Complete: 'Nós ___ brasileiros' (We are Brazilian)",
+          "options": ["temos", "somos", "estamos", "são"],
+          "correct_index": 1,
+          "explanation": "'Somos' is the nós form of ser (permanent characteristic).",
+          "order": 4
+        },
+        {
+          "question": "Complete: 'Eles ___ fome' (They are hungry)",
+          "options": ["são", "têm", "estão", "estamos"],
+          "correct_index": 2,
+          "explanation": "In Brazilian Portuguese, 'estar com fome' (to be with hunger) is common.",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'our house'?",
+          "options": ["Minha casa", "Tua casa", "Nossa casa", "A casa deles"],
+          "correct_index": 2,
+          "explanation": "'Nossa casa' - 'nossa' means 'our' for feminine nouns.",
+          "order": 6
+        },
+        {
+          "question": "'Ela é médica' means:",
+          "options": ["She has a doctor", "She is a doctor", "She sees a doctor", "She wants a doctor"],
+          "correct_index": 1,
+          "explanation": "'É' (ser) + profession. Female form: médica.",
+          "order": 7
+        },
+        {
+          "question": "Which expression uses 'estar' (to be)?",
+          "options": ["I am Brazilian", "I am tired", "I am a student", "I am tall"],
+          "correct_index": 1,
+          "explanation": "'Estou cansado' - 'estar' for temporary states.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Family Conversations",
+      "description": "Practice talking about your family and daily routines.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Do you have siblings?", "back": "Você tem irmãos?", "order": 1},
+        {"front": "I have two brothers", "back": "Eu tenho dois irmãos", "order": 2},
+        {"front": "What time is it?", "back": "Que horas são?", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Do you have siblings?' in Portuguese?",
+          "options": ["Como você tem irmãos?", "Você tem irmãos?", "Onde você tem irmãos?", "Por que você tem irmãos?"],
+          "correct_index": 1,
+          "explanation": "'Você tem irmãos?' uses 'ter' (to have).",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'I live with my family'?",
+          "options": ["Eu moro com minha família", "Eu tenho minha família", "Eu sou minha família", "Eu fico minha família"],
+          "correct_index": 0,
+          "explanation": "'Eu moro com minha família' - 'morar' means to live.",
+          "order": 2
+        },
+        {
+          "question": "What does 'Que horas são?' mean?",
+          "options": ["What day is it?", "What time is it?", "How are you?", "Where is it?"],
+          "correct_index": 1,
+          "explanation": "'Que horas são?' asks for the time.",
+          "order": 3
+        },
+        {
+          "question": "How do you say 'It's 3 o'clock'?",
+          "options": ["É três", "São três horas", "Está três", "Tem três"],
+          "correct_index": 1,
+          "explanation": "'São três horas' - use 'são' for 2+ o'clock, 'é' for 1 o'clock.",
+          "order": 4
+        },
+        {
+          "question": "How do you respond to 'Quantos irmãos você tem?'",
+          "options": ["Sim, eu tenho", "Eu tenho três irmãos", "Irmãos eu tenho", "Muito bem"],
+          "correct_index": 1,
+          "explanation": "'Eu tenho três irmãos' answers how many siblings you have.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading About Daily Life",
+      "description": "Read and understand texts about family and daily routines.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Every day", "back": "Todos os dias / Todo dia", "order": 1},
+        {"front": "In the morning", "back": "De manhã / Pela manhã", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'Minha família é grande. Eu tenho três irmãos.' How many siblings?",
+          "options": ["One", "Two", "Three", "Four"],
+          "correct_index": 2,
+          "explanation": "'Três irmãos' means three siblings.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'Eu tomo café da manhã às oito horas.' When does the person eat breakfast?",
+          "options": ["6 AM", "7 AM", "8 AM", "9 AM"],
+          "correct_index": 2,
+          "explanation": "'Às oito horas' means at eight o'clock.",
+          "order": 2
+        },
+        {
+          "question": "Read: 'Minha mãe cozinha todos os dias.' What does the mother do?",
+          "options": ["Works", "Cooks", "Cleans", "Sleeps"],
+          "correct_index": 1,
+          "explanation": "'Cozinha' means 'she cooks'. 'Cozinhar' = to cook.",
+          "order": 3
+        },
+        {
+          "question": "Read: 'Nós moramos numa casa pequena mas aconchegante.' The house is:",
+          "options": ["Big and old", "Small but cozy", "New and large", "Old but nice"],
+          "correct_index": 1,
+          "explanation": "'Pequena mas aconchegante' = small but cozy.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'Aos domingos, almoçamos com os avós.' When do they lunch with grandparents?",
+          "options": ["Saturdays", "Sundays", "Mondays", "Every day"],
+          "correct_index": 1,
+          "explanation": "'Aos domingos' means on Sundays.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Days and Time Expressions",
+      "description": "Learn to understand days of the week and time expressions.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Monday", "back": "Segunda-feira", "order": 1},
+        {"front": "Tuesday", "back": "Terça-feira", "order": 2},
+        {"front": "Wednesday", "back": "Quarta-feira", "order": 3},
+        {"front": "Thursday", "back": "Quinta-feira", "order": 4},
+        {"front": "Friday", "back": "Sexta-feira", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which day sounds like 'seh-GOON-da FAY-ra'?",
+          "options": ["Terça-feira", "Segunda-feira", "Quinta-feira", "Sexta-feira"],
+          "correct_index": 1,
+          "explanation": "'Segunda-feira' (Monday) literally means 'second fair/day'.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'Saturday' in Portuguese?",
+          "options": ["Sexta-feira", "Sábado", "Domingo", "Segunda-feira"],
+          "correct_index": 1,
+          "explanation": "'Sábado' is Saturday. 'Domingo' is Sunday.",
+          "order": 2
+        },
+        {
+          "question": "Portuguese weekdays (Mon-Fri) are named:",
+          "options": ["After planets", "Numbered (2nd to 6th)", "After gods", "After colors"],
+          "correct_index": 1,
+          "explanation": "Monday-Friday are segunda through sexta (2nd-6th feira).",
+          "order": 3
+        },
+        {
+          "question": "What does 'o fim de semana' mean?",
+          "options": ["The end of the month", "The weekend", "The holiday", "The vacation"],
+          "correct_index": 1,
+          "explanation": "'O fim de semana' = the end of the week = weekend.",
+          "order": 4
+        },
+        {
+          "question": "Which day sounds like 'KWAR-ta FAY-ra'?",
+          "options": ["Terça-feira", "Quarta-feira", "Quinta-feira", "Segunda-feira"],
+          "correct_index": 1,
+          "explanation": "'Quarta-feira' (Wednesday) = 'fourth day'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Chinese",
+    "level": 2,
+    "theme": "Daily Life",
+    "description": "Family members, common foods, everyday objects, and telling time in Chinese."
+  },
+  "module": {
+    "name": "Daily Life",
+    "description": "Learn vocabulary for family, food, everyday objects, and time expressions.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Family and Daily Words",
+      "description": "Learn essential vocabulary for family members, common foods, and household items.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Mother", "back": "妈妈 (Māma) / 母亲 (Mǔqīn)", "order": 1},
+        {"front": "Father", "back": "爸爸 (Bàba) / 父亲 (Fùqīn)", "order": 2},
+        {"front": "Older brother", "back": "哥哥 (Gēge)", "order": 3},
+        {"front": "Older sister", "back": "姐姐 (Jiějie)", "order": 4},
+        {"front": "Water", "back": "水 (Shuǐ)", "order": 5},
+        {"front": "Bread", "back": "面包 (Miànbāo)", "order": 6},
+        {"front": "Milk", "back": "牛奶 (Niúnǎi)", "order": 7},
+        {"front": "House", "back": "房子 (Fángzi) / 家 (Jiā)", "order": 8},
+        {"front": "Table", "back": "桌子 (Zhuōzi)", "order": 9},
+        {"front": "Chair", "back": "椅子 (Yǐzi)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'mother' casually in Chinese?",
+          "options": ["姐姐", "妈妈", "奶奶", "阿姨"],
+          "correct_index": 1,
+          "explanation": "'妈妈' (māma) is casual. '母亲' (mǔqīn) is formal.",
+          "order": 1
+        },
+        {
+          "question": "What does '哥哥' (gēge) mean?",
+          "options": ["Younger brother", "Older brother", "Father", "Uncle"],
+          "correct_index": 1,
+          "explanation": "'哥哥' means older brother. '弟弟' (dìdi) is younger brother.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'water' in Chinese?",
+          "options": ["牛奶", "面包", "水", "茶"],
+          "correct_index": 2,
+          "explanation": "'水' (shuǐ) means water.",
+          "order": 3
+        },
+        {
+          "question": "What is '面包' in English?",
+          "options": ["Water", "Bread", "Milk", "Rice"],
+          "correct_index": 1,
+          "explanation": "'面包' (miànbāo) means bread.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'house' in Chinese?",
+          "options": ["椅子", "桌子", "房子", "门"],
+          "correct_index": 2,
+          "explanation": "'房子' (fángzi) means house. '家' (jiā) means home/family.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Possession and Existence",
+      "description": "Learn possessive 的, 有 (to have/exist), and measure words.",
+      "order": 2,
+      "flashcards": [
+        {"front": "possessive particle", "back": "的 (de)", "order": 1},
+        {"front": "to have/exist", "back": "有 (yǒu)", "order": 2},
+        {"front": "to not have", "back": "没有 (méiyǒu)", "order": 3},
+        {"front": "measure word for people", "back": "个 (gè)", "order": 4},
+        {"front": "measure word (family members)", "back": "口 (kǒu)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'my mother' in Chinese?",
+          "options": ["妈妈我的", "我的妈妈", "的我妈妈", "妈妈的我"],
+          "correct_index": 1,
+          "explanation": "'我的妈妈' - possessor + 的 + possessed.",
+          "order": 1
+        },
+        {
+          "question": "'我有两个哥哥' means:",
+          "options": ["I am two brothers", "I have two older brothers", "I see two brothers", "I want two brothers"],
+          "correct_index": 1,
+          "explanation": "'有' means to have. '两个哥哥' = two older brothers.",
+          "order": 2
+        },
+        {
+          "question": "Which form is used for 'don't have'?",
+          "options": ["有", "没有", "不有", "无有"],
+          "correct_index": 1,
+          "explanation": "'没有' (méiyǒu) means 'don't have' or 'there is no'.",
+          "order": 3
+        },
+        {
+          "question": "Complete: '我__一个姐姐' (I have one older sister)",
+          "options": ["是", "有", "在", "的"],
+          "correct_index": 1,
+          "explanation": "'我有一个姐姐' - use 有 for possession.",
+          "order": 4
+        },
+        {
+          "question": "What is the measure word for family members (counting)?",
+          "options": ["个", "口", "位", "只"],
+          "correct_index": 1,
+          "explanation": "'口' (kǒu) is used for family members. '我家有四口人'.",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'There are 5 people in my family'?",
+          "options": ["我家五口人有", "我家有五口人", "有我家五口人", "五口人我家有"],
+          "correct_index": 1,
+          "explanation": "'我家有五口人' - place + 有 + number + measure word + noun.",
+          "order": 6
+        },
+        {
+          "question": "'这是我的家' means:",
+          "options": ["This is my house", "That is your house", "My house is here", "Where is my house"],
+          "correct_index": 0,
+          "explanation": "'这是' (this is) + '我的家' (my home).",
+          "order": 7
+        },
+        {
+          "question": "The particle '的' is used for:",
+          "options": ["Questions", "Possession/modification", "Negation", "Past tense"],
+          "correct_index": 1,
+          "explanation": "'的' shows possession and modifies nouns: 我的书 (my book).",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Family Conversations",
+      "description": "Practice talking about your family and daily routines.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Do you have siblings?", "back": "你有兄弟姐妹吗? (Nǐ yǒu xiōngdì jiěmèi ma?)", "order": 1},
+        {"front": "I have two brothers", "back": "我有两个哥哥 (Wǒ yǒu liǎng gè gēge)", "order": 2},
+        {"front": "What time is it?", "back": "现在几点? (Xiànzài jǐ diǎn?)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Do you have siblings?' in Chinese?",
+          "options": ["你的兄弟姐妹什么?", "你有兄弟姐妹吗?", "你在兄弟姐妹哪?", "你要兄弟姐妹吗?"],
+          "correct_index": 1,
+          "explanation": "'你有...吗?' is the pattern for asking if someone has something.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'I live with my family'?",
+          "options": ["我和家人住在一起", "我有家人", "我是家人", "我在家人"],
+          "correct_index": 0,
+          "explanation": "'我和家人住在一起' - 和 = with, 住 = live, 在一起 = together.",
+          "order": 2
+        },
+        {
+          "question": "What does '现在几点?' mean?",
+          "options": ["What day is it?", "What time is it now?", "How are you?", "Where is it?"],
+          "correct_index": 1,
+          "explanation": "'现在几点?' asks for the current time.",
+          "order": 3
+        },
+        {
+          "question": "How do you say 'It's 3 o'clock'?",
+          "options": ["三了", "三点", "三个钟", "是三"],
+          "correct_index": 1,
+          "explanation": "'三点' (sān diǎn) = 3 o'clock. '点' means o'clock/dot.",
+          "order": 4
+        },
+        {
+          "question": "How do you respond to '你家有几口人?'",
+          "options": ["是的,有", "五口人", "家人有", "很好"],
+          "correct_index": 1,
+          "explanation": "'五口人' - answer with number + measure word + people.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading About Daily Life",
+      "description": "Read and understand texts about family and daily routines.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Every day", "back": "每天 (Měitiān)", "order": 1},
+        {"front": "In the morning", "back": "早上 (Zǎoshang)", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: '我的家庭很大。我有三个哥哥。' How many older brothers?",
+          "options": ["One", "Two", "Three", "Four"],
+          "correct_index": 2,
+          "explanation": "'三个哥哥' means three older brothers.",
+          "order": 1
+        },
+        {
+          "question": "Read: '我早上八点吃早饭。' When does the person eat breakfast?",
+          "options": ["6 AM", "7 AM", "8 AM", "9 AM"],
+          "correct_index": 2,
+          "explanation": "'八点' means 8 o'clock.",
+          "order": 2
+        },
+        {
+          "question": "Read: '妈妈每天做饭。' What does the mother do?",
+          "options": ["Works", "Cooks", "Cleans", "Sleeps"],
+          "correct_index": 1,
+          "explanation": "'做饭' means 'to cook'. 做 = make, 饭 = rice/meal.",
+          "order": 3
+        },
+        {
+          "question": "Read: '我们的房子小，但是很舒服。' The house is:",
+          "options": ["Big and old", "Small but comfortable", "New and large", "Old but nice"],
+          "correct_index": 1,
+          "explanation": "'小但是舒服' = small but comfortable.",
+          "order": 4
+        },
+        {
+          "question": "Read: '星期天我们和爷爷奶奶吃午饭。' When do they eat lunch with grandparents?",
+          "options": ["Saturdays", "Sundays", "Mondays", "Every day"],
+          "correct_index": 1,
+          "explanation": "'星期天' means Sunday.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Days and Time Expressions",
+      "description": "Learn to understand days of the week and time expressions.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Monday", "back": "星期一 (Xīngqī yī)", "order": 1},
+        {"front": "Tuesday", "back": "星期二 (Xīngqī èr)", "order": 2},
+        {"front": "Wednesday", "back": "星期三 (Xīngqī sān)", "order": 3},
+        {"front": "Thursday", "back": "星期四 (Xīngqī sì)", "order": 4},
+        {"front": "Friday", "back": "星期五 (Xīngqī wǔ)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which day sounds like 'SHING-chee EE'?",
+          "options": ["星期二", "星期一", "星期四", "星期五"],
+          "correct_index": 1,
+          "explanation": "'星期一' (Xīngqī yī - Monday) = 'week one'.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'Saturday' in Chinese?",
+          "options": ["星期五", "星期六", "星期天", "星期一"],
+          "correct_index": 1,
+          "explanation": "'星期六' = Saturday. '星期天/日' = Sunday.",
+          "order": 2
+        },
+        {
+          "question": "Chinese days are:",
+          "options": ["Named after planets", "Numbered (1-6, then 天/日)", "Named after gods", "Random names"],
+          "correct_index": 1,
+          "explanation": "Chinese days are 星期 + numbers 1-6, Sunday is 星期天 or 星期日.",
+          "order": 3
+        },
+        {
+          "question": "What does '周末' mean?",
+          "options": ["The end of the month", "The weekend", "The holiday", "The vacation"],
+          "correct_index": 1,
+          "explanation": "'周末' (zhōumò) = week + end = weekend.",
+          "order": 4
+        },
+        {
+          "question": "Which day sounds like 'SHING-chee SAN'?",
+          "options": ["星期二", "星期三", "星期四", "星期一"],
+          "correct_index": 1,
+          "explanation": "'星期三' (Xīngqī sān - Wednesday) = 'week three'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

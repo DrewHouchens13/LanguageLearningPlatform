@@ -1,0 +1,501 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ lesson.title }} - {{ language }} Level {{ level }} - Language Learning Platform</title>
+  {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
+  <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+  <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+  <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
+  <style>
+    .lesson-header {
+      text-align: center;
+      padding: var(--space-2xl) var(--space-xl);
+      background: linear-gradient(135deg, #fce7f3 0%, #fdf2f8 50%, #fef3c7 100%);
+      border-radius: var(--radius-xl);
+      margin-bottom: var(--space-2xl);
+    }
+    .skill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      background: rgba(255,255,255,0.9);
+      padding: var(--space-sm) var(--space-lg);
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      margin-bottom: var(--space-md);
+    }
+    .lesson-title {
+      font-size: var(--text-3xl);
+      margin-bottom: var(--space-sm);
+    }
+    .lesson-description {
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .content-section {
+      max-width: 800px;
+      margin: 0 auto var(--space-3xl);
+    }
+    .section-title {
+      font-size: var(--text-2xl);
+      margin-bottom: var(--space-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+    /* Flashcard styles */
+    .flashcard-deck {
+      position: relative;
+      height: 300px;
+      perspective: 1000px;
+      margin-bottom: var(--space-xl);
+    }
+    .flashcard {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s, opacity 0.3s;
+      transform-style: preserve-3d;
+      cursor: pointer;
+    }
+    .flashcard.flipped {
+      transform: rotateY(180deg);
+    }
+    .flashcard-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-xl);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    .flashcard-front {
+      background: linear-gradient(135deg, #ffffff, #f0fdfa);
+      border: 3px solid #14b8a6;
+    }
+    .flashcard-back {
+      background: linear-gradient(135deg, #fff5f5, #ffe8e8);
+      border: 3px solid #ff6b6b;
+      transform: rotateY(180deg);
+    }
+    .flashcard-text {
+      font-size: var(--text-3xl);
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: var(--space-md);
+    }
+    .flashcard-hint {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+    .flashcard-nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: var(--space-lg);
+    }
+    .flashcard-counter {
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .flashcard-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--gray-300);
+      background: var(--surface);
+      font-size: var(--text-xl);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .flashcard-btn:hover:not(:disabled) {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: white;
+    }
+    .flashcard-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    /* Quiz styles */
+    .quiz-section {
+      background: var(--surface);
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-xl);
+      padding: var(--space-xl);
+    }
+    .quiz-question {
+      margin-bottom: var(--space-xl);
+      padding-bottom: var(--space-xl);
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .quiz-question:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .question-number {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: var(--space-sm);
+    }
+    .question-text {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      margin-bottom: var(--space-md);
+    }
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+    .option-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-md) var(--space-lg);
+      border: 2px solid var(--gray-300);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .option-btn:hover {
+      border-color: var(--primary);
+      background: rgba(20, 184, 166, 0.05);
+    }
+    .option-btn.selected {
+      border-color: var(--primary);
+      background: rgba(20, 184, 166, 0.1);
+    }
+    .option-btn.correct {
+      border-color: var(--success);
+      background: rgba(16, 185, 129, 0.1);
+    }
+    .option-btn.incorrect {
+      border-color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+    }
+    .option-letter {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: var(--text-sm);
+    }
+    .option-btn.selected .option-letter {
+      background: var(--primary);
+      color: white;
+    }
+    .explanation {
+      margin-top: var(--space-md);
+      padding: var(--space-md);
+      border-radius: var(--radius-md);
+      font-size: var(--text-sm);
+      display: none;
+    }
+    .explanation.show {
+      display: block;
+    }
+    .explanation.correct {
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+    }
+    .explanation.incorrect {
+      background: rgba(239, 68, 68, 0.1);
+      color: #dc2626;
+    }
+    .complete-btn-container {
+      text-align: center;
+      margin-top: var(--space-2xl);
+    }
+    .tts-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .tts-btn:hover {
+      transform: scale(1.2);
+    }
+    .tts-btn.playing {
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+  </style>
+</head>
+<body>
+  {% include '_nav.html' %}
+  
+  <main class="container" style="padding-top: var(--space-3xl);">
+    {% if messages %}
+      <div class="mt-xl">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    
+    <div class="lesson-header fade-in">
+      <div class="skill-badge">
+        <span>{{ lesson.skill_category.icon|default:"📚" }}</span>
+        <span>{{ language }} · Level {{ level }} · {{ lesson.skill_category.get_name_display|default:skill|title }}</span>
+      </div>
+      <h1 class="lesson-title">{{ lesson.title }}</h1>
+      <p class="lesson-description">{{ lesson.description }}</p>
+    </div>
+    
+    {% block lesson_content %}
+    <!-- Flashcards Section -->
+    {% if flashcards %}
+    <div class="content-section fade-in-up">
+      <h2 class="section-title">
+        <span>📚</span>
+        <span>Flashcards</span>
+      </h2>
+      
+      <div class="flashcard-deck" id="flashcardDeck">
+        {% for card in flashcards %}
+          <div class="flashcard" data-index="{{ forloop.counter0 }}" style="display: {% if forloop.first %}block{% else %}none{% endif %};">
+            <div class="flashcard-face flashcard-front">
+              <div class="flashcard-text">{{ card.front_text }}</div>
+              <div class="flashcard-hint">Click to flip</div>
+              <button class="tts-btn" onclick="event.stopPropagation(); speakText('{{ card.front_text|escapejs }}', 'en');" title="Listen">🔊</button>
+            </div>
+            <div class="flashcard-face flashcard-back">
+              <div class="flashcard-text">{{ card.back_text }}</div>
+              <div class="flashcard-hint">Click to flip back</div>
+              <button class="tts-btn" onclick="event.stopPropagation(); speakText('{{ card.back_text|escapejs }}', '{{ language|lower }}');" title="Listen">🔊</button>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      
+      <div class="flashcard-nav">
+        <button class="flashcard-btn" id="prevCard" disabled>←</button>
+        <span class="flashcard-counter">
+          <span id="currentCard">1</span> / {{ flashcards|length }}
+        </span>
+        <button class="flashcard-btn" id="nextCard">→</button>
+      </div>
+    </div>
+    {% endif %}
+    
+    <!-- Quiz Section -->
+    {% if quiz_questions %}
+    <div class="content-section fade-in-up" style="animation-delay: 200ms;">
+      <h2 class="section-title">
+        <span>✏️</span>
+        <span>Practice Quiz</span>
+      </h2>
+      
+      <div class="quiz-section">
+        {% for question in quiz_questions %}
+          <div class="quiz-question" data-question-id="{{ question.id }}" data-correct="{{ question.correct_index }}">
+            <div class="question-number">Question {{ forloop.counter }}</div>
+            <div class="question-text">{{ question.question }}</div>
+            <div class="options-list">
+              {% for option in question.options %}
+                <button class="option-btn" data-index="{{ forloop.counter0 }}">
+                  <span class="option-letter">{% if forloop.counter0 == 0 %}A{% elif forloop.counter0 == 1 %}B{% elif forloop.counter0 == 2 %}C{% elif forloop.counter0 == 3 %}D{% else %}{{ forloop.counter }}{% endif %}</span>
+                  <span>{{ option }}</span>
+                </button>
+              {% endfor %}
+            </div>
+            <div class="explanation" data-explanation="{{ question.explanation }}"></div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% endblock %}
+    
+    {% if not is_complete %}
+    <div class="complete-btn-container">
+      <button id="completeLesson" class="btn btn-primary btn-lg" {% if quiz_questions %}disabled{% endif %}>
+        ✓ Complete Lesson
+      </button>
+      <p class="text-secondary text-sm mt-sm" id="completeHint">
+        {% if quiz_questions %}Answer all questions to complete{% else %}Click to mark as complete{% endif %}
+      </p>
+    </div>
+    {% else %}
+    <div class="complete-btn-container">
+      <div class="alert alert-success" style="display: inline-block;">
+        ✅ Lesson Completed!
+      </div>
+    </div>
+    {% endif %}
+    
+    <div class="text-center mt-3xl">
+      <a href="{% url 'module_detail' language=language level=level %}" class="btn btn-outline">
+        ← Back to Level {{ level }}
+      </a>
+    </div>
+  </main>
+  
+  <footer>
+    <p>&copy; 2025 Language Learning Platform</p>
+  </footer>
+  
+  <script>
+    // Flashcard functionality
+    let currentCardIndex = 0;
+    const cards = document.querySelectorAll('.flashcard');
+    const prevBtn = document.getElementById('prevCard');
+    const nextBtn = document.getElementById('nextCard');
+    const counter = document.getElementById('currentCard');
+    
+    function showCard(index) {
+      cards.forEach((card, i) => {
+        card.style.display = i === index ? 'block' : 'none';
+        card.classList.remove('flipped');
+      });
+      currentCardIndex = index;
+      counter.textContent = index + 1;
+      prevBtn.disabled = index === 0;
+      nextBtn.disabled = index === cards.length - 1;
+    }
+    
+    cards.forEach(card => {
+      card.addEventListener('click', () => card.classList.toggle('flipped'));
+    });
+    
+    if (prevBtn) prevBtn.addEventListener('click', () => showCard(currentCardIndex - 1));
+    if (nextBtn) nextBtn.addEventListener('click', () => showCard(currentCardIndex + 1));
+    
+    // Quiz functionality
+    let answeredQuestions = new Set();
+    const questions = document.querySelectorAll('.quiz-question');
+    const completeBtn = document.getElementById('completeLesson');
+    const completeHint = document.getElementById('completeHint');
+    
+    questions.forEach(question => {
+      const correctIndex = parseInt(question.dataset.correct);
+      const options = question.querySelectorAll('.option-btn');
+      const explanation = question.querySelector('.explanation');
+      
+      options.forEach(option => {
+        option.addEventListener('click', () => {
+          if (answeredQuestions.has(question.dataset.questionId)) return;
+          
+          const selectedIndex = parseInt(option.dataset.index);
+          const isCorrect = selectedIndex === correctIndex;
+          
+          options.forEach(opt => opt.classList.remove('selected'));
+          option.classList.add('selected');
+          option.classList.add(isCorrect ? 'correct' : 'incorrect');
+          
+          if (!isCorrect) {
+            options[correctIndex].classList.add('correct');
+          }
+          
+          explanation.textContent = (isCorrect ? '✓ Correct! ' : '✗ Incorrect. ') + question.querySelector('.explanation').dataset.explanation;
+          explanation.classList.add('show', isCorrect ? 'correct' : 'incorrect');
+          
+          answeredQuestions.add(question.dataset.questionId);
+          
+          if (answeredQuestions.size === questions.length && completeBtn) {
+            completeBtn.disabled = false;
+            completeHint.textContent = 'Ready to complete!';
+          }
+        });
+      });
+    });
+    
+    // Complete lesson
+    if (completeBtn) {
+      completeBtn.addEventListener('click', async () => {
+        completeBtn.disabled = true;
+        completeBtn.textContent = 'Completing...';
+        
+        try {
+          const response = await fetch('{% url "complete_curriculum_lesson" language=language level=level skill=skill %}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': '{{ csrf_token }}'
+            }
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            completeBtn.textContent = '✓ Completed!';
+            completeBtn.classList.remove('btn-primary');
+            completeBtn.classList.add('btn-success');
+            completeHint.innerHTML = data.message;
+            
+            setTimeout(() => {
+              window.location.href = '{% url "module_detail" language=language level=level %}';
+            }, 1500);
+          }
+        } catch (error) {
+          completeBtn.disabled = false;
+          completeBtn.textContent = '✓ Complete Lesson';
+          completeHint.textContent = 'Error completing. Please try again.';
+        }
+      });
+    }
+    
+    // Text-to-speech
+    function speakText(text, lang) {
+      // Try browser TTS
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        const langMap = {
+          'spanish': 'es-ES',
+          'french': 'fr-FR',
+          'german': 'de-DE',
+          'italian': 'it-IT',
+          'portuguese': 'pt-BR',
+          'japanese': 'ja-JP',
+          'korean': 'ko-KR',
+          'chinese': 'zh-CN',
+          'arabic': 'ar-SA',
+          'russian': 'ru-RU',
+          'en': 'en-US'
+        };
+        utterance.lang = langMap[lang.toLowerCase()] || 'en-US';
+        utterance.rate = 0.9;
+        speechSynthesis.speak(utterance);
+      }
+    }
+    
+    // Nav toggle
+    const navToggle = document.querySelector('.nav-toggle');
+    const navCenter = document.querySelector('.nav-center');
+    if (navToggle && navCenter) {
+      navToggle.addEventListener('click', () => {
+        navCenter.classList.toggle('active');
+        navToggle.classList.toggle('active');
+      });
+    }
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,245 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ language }} Curriculum - Language Learning Platform</title>
+  {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
+  <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+  <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+  <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
+  <style>
+    .curriculum-header {
+      text-align: center;
+      padding: var(--space-3xl) 0;
+      background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 50%, #fecaca 100%);
+      border-radius: var(--radius-xl);
+      margin-bottom: var(--space-2xl);
+    }
+    .curriculum-header h1 {
+      font-size: var(--text-4xl);
+      margin-bottom: var(--space-sm);
+      color: var(--text-primary);
+    }
+    .curriculum-header .level-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      background: rgba(255,255,255,0.9);
+      padding: var(--space-sm) var(--space-lg);
+      border-radius: var(--radius-full);
+      font-weight: 600;
+    }
+    .levels-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--space-xl);
+    }
+    .level-card {
+      background: var(--surface);
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-xl);
+      padding: var(--space-xl);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .level-card:hover:not(.locked) {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      border-color: var(--primary);
+    }
+    .level-card.complete {
+      border-color: var(--success);
+      background: linear-gradient(135deg, #f0fdf4, #fff);
+    }
+    .level-card.locked {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .level-card.current {
+      border-color: var(--primary);
+      background: linear-gradient(135deg, #ecfeff, #fff);
+    }
+    .level-number {
+      position: absolute;
+      top: var(--space-md);
+      right: var(--space-md);
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff6b6b, #ff9770);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-xl);
+      font-weight: 700;
+    }
+    .level-card.complete .level-number {
+      background: linear-gradient(135deg, #10b981, #34d399);
+    }
+    .level-card.locked .level-number {
+      background: var(--gray-400);
+    }
+    .level-title {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      margin-bottom: var(--space-xs);
+      padding-right: 60px;
+    }
+    .level-description {
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      margin-bottom: var(--space-lg);
+    }
+    .progress-indicator {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      margin-bottom: var(--space-md);
+    }
+    .progress-bar {
+      flex: 1;
+      height: 8px;
+      background: var(--gray-200);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #14b8a6, #10b981);
+      border-radius: var(--radius-full);
+      transition: width 0.5s ease;
+    }
+    .progress-text {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--text-secondary);
+      min-width: 40px;
+    }
+    .level-stats {
+      display: flex;
+      gap: var(--space-lg);
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+    }
+    .level-stat {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+    .level-link {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+    }
+    .lock-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 3rem;
+      opacity: 0.3;
+    }
+  </style>
+</head>
+<body>
+  {% include '_nav.html' %}
+  
+  <main class="container" style="padding-top: var(--space-3xl);">
+    {% if messages %}
+      <div class="mt-xl">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    
+    <div class="curriculum-header fade-in">
+      <h1>{{ language }} Curriculum</h1>
+      <p style="color: var(--text-secondary); margin-bottom: var(--space-md);">
+        Master {{ language }} through 10 progressive levels
+      </p>
+      <div class="level-badge">
+        <span>📊</span>
+        <span>Your Level: {{ current_level }}</span>
+      </div>
+    </div>
+    
+    <div class="levels-grid">
+      {% for item in modules %}
+        <div class="level-card {% if item.is_complete %}complete{% elif item.is_locked %}locked{% elif item.module.proficiency_level == current_level %}current{% endif %} fade-in-up" style="animation-delay: {{ forloop.counter0|add:1 }}00ms;">
+          <span class="level-number">
+            {% if item.is_complete %}✓{% else %}{{ item.module.proficiency_level }}{% endif %}
+          </span>
+          
+          {% if item.is_locked %}
+            <span class="lock-icon">🔒</span>
+          {% endif %}
+          
+          {% if not item.is_locked %}
+            <a href="{% url 'module_detail' language=language level=item.module.proficiency_level %}" class="level-link">
+          {% endif %}
+          
+          <h3 class="level-title">{{ item.module.name|default:"Level "|add:item.module.proficiency_level }}</h3>
+          <p class="level-description">{{ item.module.description|truncatewords:15 }}</p>
+          
+          <div class="progress-indicator">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: {% widthratio item.lessons_completed 5 100 %}%;"></div>
+            </div>
+            <span class="progress-text">{{ item.lessons_completed }}/5</span>
+          </div>
+          
+          <div class="level-stats">
+            <div class="level-stat">
+              <span>📖</span>
+              <span>{{ item.lessons_completed }} lessons</span>
+            </div>
+            {% if item.best_score > 0 %}
+              <div class="level-stat">
+                <span>🏆</span>
+                <span>{{ item.best_score|floatformat:0 }}%</span>
+              </div>
+            {% endif %}
+          </div>
+          
+          {% if not item.is_locked %}
+            </a>
+          {% endif %}
+        </div>
+      {% empty %}
+        <div class="text-center" style="grid-column: 1/-1; padding: var(--space-3xl);">
+          <p class="text-secondary">No levels available yet.</p>
+        </div>
+      {% endfor %}
+    </div>
+    
+    <div class="text-center mt-3xl">
+      <a href="{% url 'lessons_list' %}" class="btn btn-outline">
+        ← Back to Lessons
+      </a>
+    </div>
+  </main>
+  
+  <footer>
+    <p>&copy; 2025 Language Learning Platform</p>
+  </footer>
+  
+  <script>
+    const navToggle = document.querySelector('.nav-toggle');
+    const navCenter = document.querySelector('.nav-center');
+    if (navToggle && navCenter) {
+      navToggle.addEventListener('click', () => {
+        navCenter.classList.toggle('active');
+        navToggle.classList.toggle('active');
+      });
+    }
+  </script>
+</body>
+</html>
+

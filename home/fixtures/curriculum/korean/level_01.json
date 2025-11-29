@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Korean",
+    "level": 1,
+    "theme": "Basics",
+    "description": "Essential greetings, numbers 1-10, colors, and basic phrases to start your Korean journey."
+  },
+  "module": {
+    "name": "Basics",
+    "description": "Learn essential greetings, numbers, colors, and basic phrases to start your Korean journey.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Essential Korean Words",
+      "description": "Build your foundation with the most important Korean words including greetings, numbers, and colors.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Hello", "back": "안녕하세요 (Annyeonghaseyo)", "order": 1},
+        {"front": "Goodbye (to person leaving)", "back": "안녕히 가세요 (Annyeonghi gaseyo)", "order": 2},
+        {"front": "Please", "back": "제발 / 주세요 (Jebal / Juseyo)", "order": 3},
+        {"front": "Thank you", "back": "감사합니다 (Gamsahamnida)", "order": 4},
+        {"front": "Yes", "back": "네 (Ne)", "order": 5},
+        {"front": "No", "back": "아니요 (Aniyo)", "order": 6},
+        {"front": "Good morning", "back": "좋은 아침이에요 (Joeun achimieyo)", "order": 7},
+        {"front": "Good night", "back": "안녕히 주무세요 (Annyeonghi jumuseyo)", "order": 8},
+        {"front": "Excuse me", "back": "실례합니다 (Sillyehamnida)", "order": 9},
+        {"front": "I'm sorry", "back": "죄송합니다 (Joesonghamnida)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Hello' in Korean?",
+          "options": ["안녕히 가세요", "안녕하세요", "감사합니다", "제발"],
+          "correct_index": 1,
+          "explanation": "'안녕하세요' (Annyeonghaseyo) is the standard polite greeting.",
+          "order": 1
+        },
+        {
+          "question": "What does '감사합니다' (Gamsahamnida) mean?",
+          "options": ["Please", "Goodbye", "Thank you", "Hello"],
+          "correct_index": 2,
+          "explanation": "'감사합니다' is the formal way to say 'Thank you' in Korean.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'Goodbye' to someone who is leaving?",
+          "options": ["안녕하세요", "좋은 아침", "안녕히 가세요", "감사합니다"],
+          "correct_index": 2,
+          "explanation": "'안녕히 가세요' (go peacefully) is said to someone leaving.",
+          "order": 3
+        },
+        {
+          "question": "What is 'Yes' in Korean?",
+          "options": ["아니요", "네", "죄송합니다", "실례합니다"],
+          "correct_index": 1,
+          "explanation": "'네' (Ne) or '예' (Ye) means 'Yes' in Korean.",
+          "order": 4
+        },
+        {
+          "question": "How do you politely apologize in Korean?",
+          "options": ["감사합니다", "죄송합니다", "안녕하세요", "네"],
+          "correct_index": 1,
+          "explanation": "'죄송합니다' (Joesonghamnida) means 'I'm sorry' (formal).",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Basic Korean Grammar",
+      "description": "Learn fundamental grammar concepts: particles, sentence structure, and speech levels.",
+      "order": 2,
+      "flashcards": [
+        {"front": "Topic marker particle", "back": "은/는 (eun/neun)", "order": 1},
+        {"front": "Subject marker particle", "back": "이/가 (i/ga)", "order": 2},
+        {"front": "Object marker particle", "back": "을/를 (eul/reul)", "order": 3},
+        {"front": "am/is/are (polite)", "back": "이에요/예요 (ieyo/yeyo)", "order": 4},
+        {"front": "am/is/are (formal)", "back": "입니다 (imnida)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which particle marks the topic of a sentence?",
+          "options": ["이/가", "은/는", "을/를", "에"],
+          "correct_index": 1,
+          "explanation": "'은/는' (eun/neun) marks the topic in Korean.",
+          "order": 1
+        },
+        {
+          "question": "What is the correct word order in Korean?",
+          "options": ["Subject-Verb-Object", "Subject-Object-Verb", "Verb-Subject-Object", "Object-Subject-Verb"],
+          "correct_index": 1,
+          "explanation": "Korean uses Subject-Object-Verb (SOV) word order.",
+          "order": 2
+        },
+        {
+          "question": "Which particle marks the direct object?",
+          "options": ["은/는", "이/가", "을/를", "의"],
+          "correct_index": 2,
+          "explanation": "'을/를' (eul/reul) marks the direct object.",
+          "order": 3
+        },
+        {
+          "question": "How do you say 'I am a student' formally in Korean?",
+          "options": ["저 학생입니다", "저는 학생입니다", "학생은 저입니다", "입니다 저 학생"],
+          "correct_index": 1,
+          "explanation": "'저는 학생입니다' (Jeoneun haksaeng-imnida) - topic + noun + copula.",
+          "order": 4
+        },
+        {
+          "question": "'입니다' (imnida) is used for:",
+          "options": ["Casual speech", "Formal/polite statements", "Questions only", "Negative sentences"],
+          "correct_index": 1,
+          "explanation": "'입니다' is the formal polite copula (am/is/are).",
+          "order": 5
+        },
+        {
+          "question": "Korean sentences typically end with:",
+          "options": ["A subject", "A noun", "A verb or copula", "A particle"],
+          "correct_index": 2,
+          "explanation": "Korean sentences end with a verb or copula in various politeness levels.",
+          "order": 6
+        },
+        {
+          "question": "When do you use '은' vs '는' for topic marking?",
+          "options": ["After vowels use 은", "After consonants use 은", "They're interchangeable", "은 is more formal"],
+          "correct_index": 1,
+          "explanation": "'은' follows consonants, '는' follows vowels.",
+          "order": 7
+        },
+        {
+          "question": "The particle '의' (ui) is used to:",
+          "options": ["Mark objects", "Show possession", "Mark topics", "Ask questions"],
+          "correct_index": 1,
+          "explanation": "'의' shows possession, like English \"'s\" or 'of'.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "First Conversations",
+      "description": "Practice essential phrases for introducing yourself and basic social interactions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "My name is...", "back": "제 이름은 ...입니다 (Je ireumeun ...imnida)", "order": 1},
+        {"front": "What is your name?", "back": "이름이 뭐예요? (Ireumi mwoyeyo?)", "order": 2},
+        {"front": "Nice to meet you", "back": "만나서 반갑습니다 (Mannaseo bangapseumnida)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'My name is Minho' in Korean?",
+          "options": ["이름 민호입니다", "제 이름은 민호입니다", "민호 이름 저입니다", "입니다 저 민호"],
+          "correct_index": 1,
+          "explanation": "'제 이름은 〇〇입니다' is the standard self-introduction.",
+          "order": 1
+        },
+        {
+          "question": "What does '만나서 반갑습니다' mean?",
+          "options": ["How are you?", "Nice to meet you", "Where are you from?", "Thank you"],
+          "correct_index": 1,
+          "explanation": "'만나서 반갑습니다' means 'Nice to meet you'.",
+          "order": 2
+        },
+        {
+          "question": "How would you respond to '어떻게 지내세요?' (How are you)?",
+          "options": ["저는 민호입니다", "잘 지내요, 감사합니다", "만나서 반갑습니다", "천만에요"],
+          "correct_index": 1,
+          "explanation": "'잘 지내요' means 'I'm doing well.'",
+          "order": 3
+        },
+        {
+          "question": "What does '처음 뵙겠습니다' mean?",
+          "options": ["Nice to meet you (very formal)", "Thank you very much", "I'm sorry", "Goodbye"],
+          "correct_index": 0,
+          "explanation": "'처음 뵙겠습니다' is a very formal way to say 'Nice to meet you'.",
+          "order": 4
+        },
+        {
+          "question": "How do you ask 'Where are you from?' in Korean?",
+          "options": ["어떻게 지내세요?", "지금 몇 시예요?", "어디에서 오셨어요?", "몇 살이에요?"],
+          "correct_index": 2,
+          "explanation": "'어디에서 오셨어요?' asks about someone's origin.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Simple Korean",
+      "description": "Practice reading comprehension with simple Korean texts using Hangul.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Open", "back": "열림 (Yeollim)", "order": 1},
+        {"front": "Closed", "back": "닫힘 (Dachim)", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: '개가 큽니다.' What is big?",
+          "options": ["The cat", "The dog", "The house", "The car"],
+          "correct_index": 1,
+          "explanation": "'개' (gae) means 'dog'. The sentence says the dog is big.",
+          "order": 1
+        },
+        {
+          "question": "Read: '마리아는 검은 고양이가 있어요.' What color is the cat?",
+          "options": ["White", "Brown", "Black", "Gray"],
+          "correct_index": 2,
+          "explanation": "'검은' (geomeun) means 'black'. Maria has a black cat.",
+          "order": 2
+        },
+        {
+          "question": "Read: '이 집은 작지만 예뻐요.' Is the house big or small?",
+          "options": ["Big", "Small", "Medium", "Very big"],
+          "correct_index": 1,
+          "explanation": "'작다' (jakda) means 'small'. The house is small but pretty.",
+          "order": 3
+        },
+        {
+          "question": "Read the sign: '출구'. What does it indicate?",
+          "options": ["Entrance", "Exit", "Bathroom", "Danger"],
+          "correct_index": 1,
+          "explanation": "'출구' (chulgu) means 'exit'.",
+          "order": 4
+        },
+        {
+          "question": "Read: '저는 사과를 먹어요.' What is the person eating?",
+          "options": ["An orange", "A banana", "An apple", "A pear"],
+          "correct_index": 2,
+          "explanation": "'사과' (sagwa) means 'apple'. '먹어요' means 'eat'.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Hearing Korean Sounds",
+      "description": "Train your ear to recognize Korean pronunciation and understand spoken words.",
+      "order": 5,
+      "flashcards": [
+        {"front": "One", "back": "하나 (Hana) / 일 (Il)", "order": 1},
+        {"front": "Two", "back": "둘 (Dul) / 이 (I)", "order": 2},
+        {"front": "Three", "back": "셋 (Set) / 삼 (Sam)", "order": 3},
+        {"front": "Four", "back": "넷 (Net) / 사 (Sa)", "order": 4},
+        {"front": "Five", "back": "다섯 (Daseot) / 오 (O)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Listen: Which native Korean number sounds like 'HA-na'?",
+          "options": ["둘", "하나", "셋", "영"],
+          "correct_index": 1,
+          "explanation": "'하나' (hana = one) is pronounced 'HA-na'.",
+          "order": 1
+        },
+        {
+          "question": "Korean has two number systems. When counting objects you use:",
+          "options": ["Sino-Korean only", "Native Korean only", "Native Korean numbers", "Either one"],
+          "correct_index": 2,
+          "explanation": "Native Korean numbers (하나, 둘, 셋...) are used for counting objects.",
+          "order": 2
+        },
+        {
+          "question": "How are the Korean consonants ㄱ, ㄷ, ㅂ pronounced at the start of a word?",
+          "options": ["Voiced (g, d, b)", "Unaspirated (between g/k, d/t, b/p)", "Aspirated", "Silent"],
+          "correct_index": 1,
+          "explanation": "These are unaspirated stops, sounding between voiced and voiceless.",
+          "order": 3
+        },
+        {
+          "question": "What makes ㅋ, ㅌ, ㅍ different from ㄱ, ㄷ, ㅂ?",
+          "options": ["Nothing", "They are aspirated (with air puff)", "They are doubled", "They are silent"],
+          "correct_index": 1,
+          "explanation": "ㅋ, ㅌ, ㅍ are aspirated versions (k, t, p with strong air).",
+          "order": 4
+        },
+        {
+          "question": "Which Sino-Korean number sounds like 'OH'?",
+          "options": ["사", "육", "오", "칠"],
+          "correct_index": 2,
+          "explanation": "'오' (o = five in Sino-Korean) sounds like 'oh'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

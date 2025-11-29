@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Italian",
+    "level": 3,
+    "theme": "Getting Around",
+    "description": "Directions, transportation, places in the city, and asking for help in Italian."
+  },
+  "module": {
+    "name": "Getting Around",
+    "description": "Learn to navigate cities, use transportation, and ask for directions in Italian.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Transportation and Places",
+      "description": "Essential vocabulary for getting around town and using public transportation.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Street", "back": "Via / Strada", "order": 1},
+        {"front": "Bus", "back": "Autobus", "order": 2},
+        {"front": "Train", "back": "Treno", "order": 3},
+        {"front": "Airport", "back": "Aeroporto", "order": 4},
+        {"front": "Left", "back": "Sinistra", "order": 5},
+        {"front": "Right", "back": "Destra", "order": 6},
+        {"front": "Straight", "back": "Dritto", "order": 7},
+        {"front": "Bank", "back": "Banca", "order": 8},
+        {"front": "Hospital", "back": "Ospedale", "order": 9},
+        {"front": "Store/Shop", "back": "Negozio", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'street' in Italian?",
+          "options": ["Piazza", "Via", "Ponte", "Vicolo"],
+          "correct_index": 1,
+          "explanation": "'Via' or 'Strada' means street.",
+          "order": 1
+        },
+        {
+          "question": "What does 'sinistra' mean?",
+          "options": ["Right", "Left", "Straight", "Back"],
+          "correct_index": 1,
+          "explanation": "'Sinistra' means left. 'Destra' is right.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'train' in Italian?",
+          "options": ["Autobus", "Aereo", "Treno", "Macchina"],
+          "correct_index": 2,
+          "explanation": "'Treno' means train.",
+          "order": 3
+        },
+        {
+          "question": "What is 'aeroporto' in English?",
+          "options": ["Bus station", "Train station", "Airport", "Port"],
+          "correct_index": 2,
+          "explanation": "'Aeroporto' means airport.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'straight ahead'?",
+          "options": ["A sinistra", "A destra", "Dritto / Sempre dritto", "Indietro"],
+          "correct_index": 2,
+          "explanation": "'Dritto' or 'Sempre dritto' means straight ahead.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Giving Directions and Commands",
+      "description": "Learn imperative forms and prepositions for directions.",
+      "order": 2,
+      "flashcards": [
+        {"front": "Turn (command, formal)", "back": "Giri", "order": 1},
+        {"front": "Go (command, formal)", "back": "Vada", "order": 2},
+        {"front": "Continue (command)", "back": "Continui", "order": 3},
+        {"front": "next to", "back": "accanto a / vicino a", "order": 4},
+        {"front": "in front of", "back": "davanti a", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Turn left' (formal command)?",
+          "options": ["Gira a sinistra", "Giri a sinistra", "Girare sinistra", "Sinistra giri"],
+          "correct_index": 1,
+          "explanation": "'Giri' is the formal imperative (Lei form) of 'girare'.",
+          "order": 1
+        },
+        {
+          "question": "What does 'accanto a' mean?",
+          "options": ["In front of", "Behind", "Next to", "Far from"],
+          "correct_index": 2,
+          "explanation": "'Accanto a' means 'next to' or 'beside'.",
+          "order": 2
+        },
+        {
+          "question": "Complete: 'La banca è ___ l'ospedale' (in front of)",
+          "options": ["dietro", "accanto a", "davanti a", "lontano da"],
+          "correct_index": 2,
+          "explanation": "'Davanti a' means 'in front of'.",
+          "order": 3
+        },
+        {
+          "question": "'Vada sempre dritto' means:",
+          "options": ["Turn right", "Turn left", "Go straight", "Go back"],
+          "correct_index": 2,
+          "explanation": "'Vada sempre dritto' = Go straight ahead.",
+          "order": 4
+        },
+        {
+          "question": "The preposition 'tra/fra' means:",
+          "options": ["Behind", "In front of", "Between", "Under"],
+          "correct_index": 2,
+          "explanation": "'Tra' or 'Fra' means between.",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'behind'?",
+          "options": ["Davanti a", "Dietro", "Sopra", "Sotto"],
+          "correct_index": 1,
+          "explanation": "'Dietro' means behind.",
+          "order": 6
+        },
+        {
+          "question": "'Prenda la prima strada a destra' means:",
+          "options": ["Go left", "Go straight", "Take the first street on the right", "Turn around"],
+          "correct_index": 2,
+          "explanation": "'Prenda la prima strada' = take the first street.",
+          "order": 7
+        },
+        {
+          "question": "Which preposition means 'near'?",
+          "options": ["Lontano da", "Vicino a", "Dentro", "Fuori"],
+          "correct_index": 1,
+          "explanation": "'Vicino a' means near. 'Lontano da' is far from.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Asking for Directions",
+      "description": "Practice asking for and understanding directions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Where is the...?", "back": "Dov'è il/la...?", "order": 1},
+        {"front": "How do I get to...?", "back": "Come arrivo a...?", "order": 2},
+        {"front": "Is it far?", "back": "È lontano?", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Where is the bank?'",
+          "options": ["Cos'è la banca?", "Dov'è la banca?", "Quando è la banca?", "Com'è la banca?"],
+          "correct_index": 1,
+          "explanation": "'Dov'è...?' asks for location.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Come arrivo alla stazione?' mean?",
+          "options": ["Where is the station?", "How do I get to the station?", "When does the station open?", "What is the station?"],
+          "correct_index": 1,
+          "explanation": "'Come arrivo a...?' = How do I get to...?",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'It's five minutes away'?",
+          "options": ["È a cinque minuti", "Ci sono cinque minuti", "Cinque minuti sono", "Avere cinque minuti"],
+          "correct_index": 0,
+          "explanation": "'È a cinque minuti' = It's five minutes away.",
+          "order": 3
+        },
+        {
+          "question": "What does 'C'è una farmacia qui vicino?' mean?",
+          "options": ["Where is the pharmacy?", "Is there a pharmacy nearby?", "How is the pharmacy?", "What pharmacy?"],
+          "correct_index": 1,
+          "explanation": "'C'è...qui vicino?' = Is there...nearby?",
+          "order": 4
+        },
+        {
+          "question": "How would you respond to 'È lontano?' if it's close?",
+          "options": ["Sì, molto lontano", "No, è vicinissimo", "Non lo so", "Forse"],
+          "correct_index": 1,
+          "explanation": "'No, è vicinissimo' = No, it's very close.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Signs and Maps",
+      "description": "Understand common signs, directions, and transit information.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Entrance", "back": "Entrata / Ingresso", "order": 1},
+        {"front": "Exit", "back": "Uscita", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'Per arrivare al museo, vada dritto e giri a sinistra.' What direction do you turn?",
+          "options": ["Right", "Left", "Go back", "Don't turn"],
+          "correct_index": 1,
+          "explanation": "'Giri a sinistra' = turn left.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'La metro è a cinque minuti a piedi.' How do you get there?",
+          "options": ["By car", "By bus", "Walking", "By taxi"],
+          "correct_index": 2,
+          "explanation": "'A piedi' means on foot/walking.",
+          "order": 2
+        },
+        {
+          "question": "Read sign: 'DIVIETO DI SOSTA'. What is prohibited?",
+          "options": ["Entry", "Exit", "Parking/Stopping", "Smoking"],
+          "correct_index": 2,
+          "explanation": "'Sosta' means stopping/parking.",
+          "order": 3
+        },
+        {
+          "question": "Read: 'La fermata dell'autobus è davanti alla banca.' Where is the bus stop?",
+          "options": ["Behind the bank", "Inside the bank", "In front of the bank", "Far from the bank"],
+          "correct_index": 2,
+          "explanation": "'Davanti a' = in front of.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'Il treno parte alle nove di mattina.' When does the train leave?",
+          "options": ["9 PM", "9 AM", "At night", "Noon"],
+          "correct_index": 1,
+          "explanation": "'Alle nove di mattina' = at 9 in the morning.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Understanding Transit Announcements",
+      "description": "Train your ear to understand transportation announcements.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Next stop", "back": "Prossima fermata", "order": 1},
+        {"front": "Platform", "back": "Binario", "order": 2},
+        {"front": "Departure", "back": "Partenza", "order": 3},
+        {"front": "Arrival", "back": "Arrivo", "order": 4},
+        {"front": "Ticket", "back": "Biglietto", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "You hear 'Prossima fermata: Termini'. What are you being told?",
+          "options": ["Final stop", "Next stop is Termini", "Transfer point", "End of service"],
+          "correct_index": 1,
+          "explanation": "'Prossima fermata' announces the next stop.",
+          "order": 1
+        },
+        {
+          "question": "What does 'binario tre' mean?",
+          "options": ["Bus number 3", "Platform/Track 3", "Route 3", "Gate 3"],
+          "correct_index": 1,
+          "explanation": "'Binario' means platform/track (for trains).",
+          "order": 2
+        },
+        {
+          "question": "You hear 'Il treno per Roma'. Where is the train going?",
+          "options": ["From Rome", "To Rome", "Near Rome", "Around Rome"],
+          "correct_index": 1,
+          "explanation": "'Per' indicates destination = to Rome.",
+          "order": 3
+        },
+        {
+          "question": "'Partenza' and 'Arrivo' are:",
+          "options": ["Departure and Arrival", "Entry and Exit", "Start and End", "Open and Closed"],
+          "correct_index": 0,
+          "explanation": "'Partenza' = departure, 'Arrivo' = arrival.",
+          "order": 4
+        },
+        {
+          "question": "You hear 'Per favore, convalidi il biglietto'. What should you do?",
+          "options": ["Wait for the train", "Validate your ticket", "Find your seat", "Show your ID"],
+          "correct_index": 1,
+          "explanation": "'Convalidare' = to validate your ticket.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+
