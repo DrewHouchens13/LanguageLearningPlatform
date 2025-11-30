@@ -491,6 +491,94 @@ class AdaptiveTestService:
             logger.error('Failed to load lesson content from database: %s', str(e))
             return {}
     
+    def _get_skill_specific_config(self, skill: str) -> dict:
+        """
+        Get skill-specific configuration for context prompt building.
+        
+        Args:
+            skill: Skill category name
+            
+        Returns:
+            dict: Configuration with header, separator, and guidelines
+        """
+        skill_lower = skill.lower()
+        configs = {
+            'vocabulary': {
+                'header': 'VOCABULARY WORDS TAUGHT IN THIS LESSON:',
+                'separator': ' = ',
+                'intro': 'IMPORTANT: Generate questions that test understanding of these specific words:',
+                'guidelines': [
+                    '- Word meanings and translations',
+                    '- Usage in context and sentences',
+                    '- Appropriate situations for each word',
+                    '- Distinguishing between similar words',
+                ],
+            },
+            'grammar': {
+                'header': 'GRAMMAR CONCEPTS TAUGHT IN THIS LESSON:',
+                'separator': ' → ',
+                'intro': 'IMPORTANT: Generate questions that test understanding of these specific grammar rules:',
+                'guidelines': [
+                    '- Correct application of these rules',
+                    '- Identifying correct vs incorrect usage',
+                    '- Sentence construction using these concepts',
+                ],
+            },
+            'conversation': {
+                'header': 'CONVERSATION PHRASES TAUGHT IN THIS LESSON:',
+                'separator': ' = ',
+                'intro': 'IMPORTANT: Generate questions that test understanding of these phrases:',
+                'guidelines': [
+                    '- When to use each phrase',
+                    '- Appropriate responses in conversations',
+                    '- Social context and formality levels',
+                ],
+            },
+            'reading': {
+                'header': 'READING CONTENT FROM THIS LESSON:',
+                'separator': ' / ',
+                'intro': 'IMPORTANT: Generate questions that test reading comprehension:',
+                'guidelines': [
+                    '- Understanding of simple texts and sentences',
+                    '- Identifying key information',
+                    '- Interpreting meaning from context',
+                ],
+            },
+            'listening': {
+                'header': 'LISTENING CONTENT FROM THIS LESSON:',
+                'separator': ' / ',
+                'intro': 'IMPORTANT: Generate questions that test listening comprehension:',
+                'guidelines': [
+                    '- Recognizing pronunciation and sounds',
+                    '- Understanding spoken words and phrases',
+                    '- Distinguishing between similar sounds',
+                ],
+            },
+        }
+        return configs.get(skill_lower, {})
+
+    def _build_skill_section(self, flashcards: list, config: dict) -> list:
+        """
+        Build skill-specific content section from flashcards.
+        
+        Args:
+            flashcards: List of flashcard dicts
+            config: Skill configuration from _get_skill_specific_config
+            
+        Returns:
+            list: Context parts for this skill section
+        """
+        if not flashcards or not config:
+            return []
+        
+        parts = [config['header']]
+        for card in flashcards:
+            parts.append(f"  - {card['front']}{config['separator']}{card['back']}")
+        parts.append("")
+        parts.append(config['intro'])
+        parts.extend(config['guidelines'])
+        return parts
+
     def _build_lesson_context_prompt(self, lesson_content: Dict, skill: str) -> str:
         """
         Build a detailed context prompt section from lesson content.
@@ -515,67 +603,12 @@ class AdaptiveTestService:
         
         context_parts.append("")  # Blank line
         
-        # Add skill-specific content
-        if skill.lower() == 'vocabulary':
-            flashcards = lesson_content.get('flashcards', [])
-            if flashcards:
-                context_parts.append("VOCABULARY WORDS TAUGHT IN THIS LESSON:")
-                for card in flashcards:
-                    context_parts.append(f"  - {card['front']} = {card['back']}")
-                context_parts.append("")
-                context_parts.append("IMPORTANT: Generate questions that test understanding of these specific words:")
-                context_parts.append("- Word meanings and translations")
-                context_parts.append("- Usage in context and sentences")
-                context_parts.append("- Appropriate situations for each word")
-                context_parts.append("- Distinguishing between similar words")
-        
-        elif skill.lower() == 'grammar':
-            flashcards = lesson_content.get('flashcards', [])
-            if flashcards:
-                context_parts.append("GRAMMAR CONCEPTS TAUGHT IN THIS LESSON:")
-                for card in flashcards:
-                    context_parts.append(f"  - {card['front']} → {card['back']}")
-                context_parts.append("")
-                context_parts.append("IMPORTANT: Generate questions that test understanding of these specific grammar rules:")
-                context_parts.append("- Correct application of these rules")
-                context_parts.append("- Identifying correct vs incorrect usage")
-                context_parts.append("- Sentence construction using these concepts")
-        
-        elif skill.lower() == 'conversation':
-            flashcards = lesson_content.get('flashcards', [])
-            if flashcards:
-                context_parts.append("CONVERSATION PHRASES TAUGHT IN THIS LESSON:")
-                for card in flashcards:
-                    context_parts.append(f"  - {card['front']} = {card['back']}")
-                context_parts.append("")
-                context_parts.append("IMPORTANT: Generate questions that test understanding of these phrases:")
-                context_parts.append("- When to use each phrase")
-                context_parts.append("- Appropriate responses in conversations")
-                context_parts.append("- Social context and formality levels")
-        
-        elif skill.lower() == 'reading':
-            flashcards = lesson_content.get('flashcards', [])
-            if flashcards:
-                context_parts.append("READING CONTENT FROM THIS LESSON:")
-                for card in flashcards:
-                    context_parts.append(f"  - {card['front']} / {card['back']}")
-                context_parts.append("")
-                context_parts.append("IMPORTANT: Generate questions that test reading comprehension:")
-                context_parts.append("- Understanding of simple texts and sentences")
-                context_parts.append("- Identifying key information")
-                context_parts.append("- Interpreting meaning from context")
-        
-        elif skill.lower() == 'listening':
-            flashcards = lesson_content.get('flashcards', [])
-            if flashcards:
-                context_parts.append("LISTENING CONTENT FROM THIS LESSON:")
-                for card in flashcards:
-                    context_parts.append(f"  - {card['front']} / {card['back']}")
-                context_parts.append("")
-                context_parts.append("IMPORTANT: Generate questions that test listening comprehension:")
-                context_parts.append("- Recognizing pronunciation and sounds")
-                context_parts.append("- Understanding spoken words and phrases")
-                context_parts.append("- Distinguishing between similar sounds")
+        # Add skill-specific content using configuration-based approach
+        flashcards = lesson_content.get('flashcards', [])
+        if flashcards:
+            config = self._get_skill_specific_config(skill)
+            skill_section = self._build_skill_section(flashcards, config)
+            context_parts.extend(skill_section)
         
         return "\n".join(context_parts)
     

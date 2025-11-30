@@ -5,6 +5,139 @@ from django.conf import settings
 from django.db import migrations, models
 
 
+def convert_proficiency_level_field(apps, schema_editor):
+    """
+    Convert proficiency_level from CharField to IntegerField.
+    
+    Handles both PostgreSQL (production) and SQLite (tests) databases.
+    Converts CEFR strings (A1, A2, B1) to integers (1, 2, 3).
+    """
+    from django.db import connection
+    
+    vendor = connection.vendor
+    
+    # Mapping from CEFR string to integer
+    cefr_to_int = {'A1': 1, 'A2': 2, 'B1': 3}
+    
+    with connection.cursor() as cursor:
+        if vendor == 'postgresql':
+            # PostgreSQL: Use USING clause for efficient conversion
+            for table in ['home_userlanguageprofile', 'home_userprofile']:
+                cursor.execute(f"""
+                    ALTER TABLE {table}
+                    ALTER COLUMN proficiency_level TYPE INTEGER
+                    USING CASE
+                        WHEN proficiency_level = 'A1' THEN 1
+                        WHEN proficiency_level = 'A2' THEN 2
+                        WHEN proficiency_level = 'B1' THEN 3
+                        WHEN proficiency_level ~ '^[0-9]+$' THEN proficiency_level::INTEGER
+                        ELSE NULL
+                    END;
+                """)
+        
+        elif vendor == 'sqlite':
+            # SQLite: Create new column, copy data, drop old, rename new
+            for table in ['home_userlanguageprofile', 'home_userprofile']:
+                # Step 1: Create new INTEGER column
+                cursor.execute(f"ALTER TABLE {table} ADD COLUMN proficiency_level_new INTEGER")
+                
+                # Step 2: Copy and convert data
+                cursor.execute(f"SELECT id, proficiency_level FROM {table}")
+                rows = cursor.fetchall()
+                
+                for row_id, old_value in rows:
+                    if old_value is None:
+                        new_value = None
+                    elif old_value in cefr_to_int:
+                        new_value = cefr_to_int[old_value]
+                    elif isinstance(old_value, str) and old_value.isdigit():
+                        new_value = int(old_value)
+                    else:
+                        new_value = None
+                    
+                    cursor.execute(
+                        f"UPDATE {table} SET proficiency_level_new = ? WHERE id = ?",
+                        [new_value, row_id]
+                    )
+                
+                # Step 3: Drop old column
+                cursor.execute(f"ALTER TABLE {table} DROP COLUMN proficiency_level")
+                
+                # Step 4: Rename new column
+                cursor.execute(f"ALTER TABLE {table} RENAME COLUMN proficiency_level_new TO proficiency_level")
+        
+        else:
+            # Fallback: Use Django ORM (slower but universal)
+            UserProfile = apps.get_model('home', 'UserProfile')
+            UserLanguageProfile = apps.get_model('home', 'UserLanguageProfile')
+            
+            for profile in UserProfile.objects.exclude(proficiency_level__isnull=True):
+                if isinstance(profile.proficiency_level, str):
+                    profile.proficiency_level = cefr_to_int.get(profile.proficiency_level.upper(), None)
+                    profile.save(update_fields=['proficiency_level'])
+            
+            for lang_profile in UserLanguageProfile.objects.exclude(proficiency_level__isnull=True):
+                if isinstance(lang_profile.proficiency_level, str):
+                    lang_profile.proficiency_level = cefr_to_int.get(lang_profile.proficiency_level.upper(), None)
+                    lang_profile.save(update_fields=['proficiency_level'])
+
+
+def reverse_convert_proficiency_level(apps, schema_editor):
+    """
+    Reverse conversion (for rollback) - converts integers back to CEFR strings.
+    Only maps 1-3 back to A1-B1, other values become NULL.
+    """
+    from django.db import connection
+    
+    vendor = connection.vendor
+    int_to_cefr = {1: 'A1', 2: 'A2', 3: 'B1'}
+    
+    with connection.cursor() as cursor:
+        if vendor == 'postgresql':
+            for table in ['home_userlanguageprofile', 'home_userprofile']:
+                cursor.execute(f"""
+                    ALTER TABLE {table}
+                    ALTER COLUMN proficiency_level TYPE VARCHAR(2)
+                    USING CASE
+                        WHEN proficiency_level = 1 THEN 'A1'
+                        WHEN proficiency_level = 2 THEN 'A2'
+                        WHEN proficiency_level = 3 THEN 'B1'
+                        ELSE NULL
+                    END;
+                """)
+        
+        elif vendor == 'sqlite':
+            for table in ['home_userlanguageprofile', 'home_userprofile']:
+                cursor.execute(f"ALTER TABLE {table} ADD COLUMN proficiency_level_old VARCHAR(2)")
+                
+                cursor.execute(f"SELECT id, proficiency_level FROM {table}")
+                rows = cursor.fetchall()
+                
+                for row_id, old_value in rows:
+                    new_value = int_to_cefr.get(old_value) if old_value in int_to_cefr else None
+                    cursor.execute(
+                        f"UPDATE {table} SET proficiency_level_old = ? WHERE id = ?",
+                        [new_value, row_id]
+                    )
+                
+                cursor.execute(f"ALTER TABLE {table} DROP COLUMN proficiency_level")
+                cursor.execute(f"ALTER TABLE {table} RENAME COLUMN proficiency_level_old TO proficiency_level")
+        
+        else:
+            UserProfile = apps.get_model('home', 'UserProfile')
+            UserLanguageProfile = apps.get_model('home', 'UserLanguageProfile')
+            
+            for profile in UserProfile.objects.exclude(proficiency_level__isnull=True):
+                if isinstance(profile.proficiency_level, int):
+                    profile.proficiency_level = int_to_cefr.get(profile.proficiency_level)
+                    profile.save(update_fields=['proficiency_level'])
+            
+            for lang_profile in UserLanguageProfile.objects.exclude(proficiency_level__isnull=True):
+                if isinstance(lang_profile.proficiency_level, int):
+                    lang_profile.proficiency_level = int_to_cefr.get(lang_profile.proficiency_level)
+                    lang_profile.save(update_fields=['proficiency_level'])
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -33,55 +166,12 @@ class Migration(migrations.Migration):
             name='difficulty_level',
             field=models.IntegerField(default=1, help_text='Proficiency level 1-10 (1=absolute beginner, 10=advanced)'),
         ),
-        # Convert UserLanguageProfile proficiency_level from CharField to IntegerField
-        # Using PostgreSQL's USING clause to convert CEFR strings (A1, A2, B1) to integers (1, 2, 3)
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE home_userlanguageprofile
-                ALTER COLUMN proficiency_level TYPE INTEGER
-                USING CASE
-                    WHEN proficiency_level = 'A1' THEN 1
-                    WHEN proficiency_level = 'A2' THEN 2
-                    WHEN proficiency_level = 'B1' THEN 3
-                    WHEN proficiency_level ~ '^[0-9]+$' THEN proficiency_level::INTEGER
-                    ELSE NULL
-                END;
-            """,
-            reverse_sql="""
-                ALTER TABLE home_userlanguageprofile
-                ALTER COLUMN proficiency_level TYPE VARCHAR(2)
-                USING CASE
-                    WHEN proficiency_level = 1 THEN 'A1'
-                    WHEN proficiency_level = 2 THEN 'A2'
-                    WHEN proficiency_level = 3 THEN 'B1'
-                    ELSE NULL
-                END;
-            """,
-        ),
-        # Convert UserProfile proficiency_level from CharField to IntegerField
-        # Using PostgreSQL's USING clause to convert CEFR strings (A1, A2, B1) to integers (1, 2, 3)
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE home_userprofile
-                ALTER COLUMN proficiency_level TYPE INTEGER
-                USING CASE
-                    WHEN proficiency_level = 'A1' THEN 1
-                    WHEN proficiency_level = 'A2' THEN 2
-                    WHEN proficiency_level = 'B1' THEN 3
-                    WHEN proficiency_level ~ '^[0-9]+$' THEN proficiency_level::INTEGER
-                    ELSE NULL
-                END;
-            """,
-            reverse_sql="""
-                ALTER TABLE home_userprofile
-                ALTER COLUMN proficiency_level TYPE VARCHAR(2)
-                USING CASE
-                    WHEN proficiency_level = 1 THEN 'A1'
-                    WHEN proficiency_level = 2 THEN 'A2'
-                    WHEN proficiency_level = 3 THEN 'B1'
-                    ELSE NULL
-                END;
-            """,
+        # Convert proficiency_level fields from CharField to IntegerField
+        # Database-agnostic conversion: handles both PostgreSQL (production) and SQLite (tests)
+        migrations.RunPython(
+            convert_proficiency_level_field,
+            reverse_convert_proficiency_level,
+            atomic=True
         ),
         # Update Django's migration state to reflect the field type change (database already changed by RunSQL above)
         migrations.SeparateDatabaseAndState(
