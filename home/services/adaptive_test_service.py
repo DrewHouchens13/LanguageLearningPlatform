@@ -195,8 +195,7 @@ class AdaptiveTestService:
         # Update progress
         progress.test_attempts += 1
         progress.last_test_date = timezone.now()
-        if score > progress.best_test_score:
-            progress.best_test_score = score
+        progress.best_test_score = max(progress.best_test_score, score)
         
         # Determine pass/fail
         passed = score >= self.PASSING_SCORE
@@ -364,10 +363,6 @@ class AdaptiveTestService:
         
         # Get all 5 skills to ensure coverage
         all_skills = list(SkillCategory.objects.all().values_list('name', flat=True))
-        
-        # Target counts
-        weak_count = int(self.TEST_QUESTION_COUNT * self.WEAK_SKILL_RATIO)  # 7
-        strong_count = self.TEST_QUESTION_COUNT - weak_count  # 3
         
         distribution = {}
         

@@ -33,15 +33,73 @@ class Migration(migrations.Migration):
             name='difficulty_level',
             field=models.IntegerField(default=1, help_text='Proficiency level 1-10 (1=absolute beginner, 10=advanced)'),
         ),
-        migrations.AlterField(
-            model_name='userlanguageprofile',
-            name='proficiency_level',
-            field=models.IntegerField(blank=True, help_text='Proficiency level 1-10 (1=absolute beginner, 10=advanced)', null=True),
+        # Convert UserLanguageProfile proficiency_level from CharField to IntegerField
+        # Using PostgreSQL's USING clause to convert CEFR strings (A1, A2, B1) to integers (1, 2, 3)
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE home_userlanguageprofile
+                ALTER COLUMN proficiency_level TYPE INTEGER
+                USING CASE
+                    WHEN proficiency_level = 'A1' THEN 1
+                    WHEN proficiency_level = 'A2' THEN 2
+                    WHEN proficiency_level = 'B1' THEN 3
+                    WHEN proficiency_level ~ '^[0-9]+$' THEN proficiency_level::INTEGER
+                    ELSE NULL
+                END;
+            """,
+            reverse_sql="""
+                ALTER TABLE home_userlanguageprofile
+                ALTER COLUMN proficiency_level TYPE VARCHAR(2)
+                USING CASE
+                    WHEN proficiency_level = 1 THEN 'A1'
+                    WHEN proficiency_level = 2 THEN 'A2'
+                    WHEN proficiency_level = 3 THEN 'B1'
+                    ELSE NULL
+                END;
+            """,
         ),
-        migrations.AlterField(
-            model_name='userprofile',
-            name='proficiency_level',
-            field=models.IntegerField(blank=True, help_text='Proficiency level 1-10 (1=absolute beginner, 10=advanced)', null=True),
+        # Convert UserProfile proficiency_level from CharField to IntegerField
+        # Using PostgreSQL's USING clause to convert CEFR strings (A1, A2, B1) to integers (1, 2, 3)
+        migrations.RunSQL(
+            sql="""
+                ALTER TABLE home_userprofile
+                ALTER COLUMN proficiency_level TYPE INTEGER
+                USING CASE
+                    WHEN proficiency_level = 'A1' THEN 1
+                    WHEN proficiency_level = 'A2' THEN 2
+                    WHEN proficiency_level = 'B1' THEN 3
+                    WHEN proficiency_level ~ '^[0-9]+$' THEN proficiency_level::INTEGER
+                    ELSE NULL
+                END;
+            """,
+            reverse_sql="""
+                ALTER TABLE home_userprofile
+                ALTER COLUMN proficiency_level TYPE VARCHAR(2)
+                USING CASE
+                    WHEN proficiency_level = 1 THEN 'A1'
+                    WHEN proficiency_level = 2 THEN 'A2'
+                    WHEN proficiency_level = 3 THEN 'B1'
+                    ELSE NULL
+                END;
+            """,
+        ),
+        # Update Django's migration state to reflect the field type change (database already changed by RunSQL above)
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                # Database operations already completed by RunSQL above
+            ],
+            state_operations=[
+                migrations.AlterField(
+                    model_name='userlanguageprofile',
+                    name='proficiency_level',
+                    field=models.IntegerField(blank=True, help_text='Proficiency level 1-10 (1=absolute beginner, 10=advanced)', null=True),
+                ),
+                migrations.AlterField(
+                    model_name='userprofile',
+                    name='proficiency_level',
+                    field=models.IntegerField(blank=True, help_text='Proficiency level 1-10 (1=absolute beginner, 10=advanced)', null=True),
+                ),
+            ],
         ),
         migrations.CreateModel(
             name='LearningModule',
