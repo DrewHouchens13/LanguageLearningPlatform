@@ -108,35 +108,50 @@ class TestAdaptiveTestService(TestCase):
     @patch('home.services.adaptive_test_service.settings')
     def test_generate_adaptive_test_with_ai(self, mock_settings, mock_openai):
         """Test test generation with AI (mocked)."""
-        # Set API key in settings
+        # Set API key in settings - ensure getattr works with mock
         mock_settings.OPENAI_API_KEY = 'test-key'
         
-        # Mock OpenAI response - create a response that returns questions
-        # The service will call OpenAI once per skill, so we need to return questions each time
+        # Track unique question counter to avoid duplicates
+        question_counter = [0]
+        
         def make_mock_response(count):
-            """Create mock response with requested number of questions."""
-            questions_data = [
-                {
-                    "question": f"Test question {i} for skill?",
-                    "options": ["A", "B", "C", "D"],
+            """Create mock response with unique questions."""
+            questions_data = []
+            for i in range(count):
+                question_counter[0] += 1
+                unique_id = question_counter[0]
+                questions_data.append({
+                    "question": f"Unique test question {unique_id} for skill category?",
+                    "options": [f"Option A-{unique_id}", f"Option B-{unique_id}", f"Option C-{unique_id}", f"Option D-{unique_id}"],
                     "correct_index": 0,
-                    "explanation": "Test explanation",
+                    "explanation": f"Test explanation {unique_id}",
                     "skill": "vocabulary"
-                }
-                for i in range(count)
-            ]
+                })
+            
             mock_response = MagicMock()
             mock_response.choices[0].message.content = json.dumps({"questions": questions_data})
             return mock_response
         
         mock_client = MagicMock()
         mock_openai.return_value = mock_client
-        # Return different responses based on call count to simulate per-skill calls
-        call_count = [0]
+        
+        # Extract count from prompt and return appropriate number of questions
         def side_effect(*args, **kwargs):
-            call_count[0] += 1
-            # Return enough questions for the largest skill request (typically 2-3 per skill)
-            return make_mock_response(3)
+            messages = kwargs.get('messages', [])
+            prompt = ''
+            for msg in messages:
+                if msg.get('role') == 'user':
+                    prompt = msg.get('content', '')
+                    break
+            
+            # Extract count from prompt (e.g., "Generate 2 multiple-choice questions")
+            import re
+            count = 3  # default
+            match = re.search(r'Generate (\d+)', prompt)
+            if match:
+                count = int(match.group(1))
+            
+            return make_mock_response(count)
         
         mock_client.chat.completions.create.side_effect = side_effect
 

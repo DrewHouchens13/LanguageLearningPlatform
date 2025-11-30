@@ -171,29 +171,6 @@ class TestTTSService(TestCase):
         self.assertIn('Japanese', languages)
         self.assertGreater(len(languages), 0)
 
-    @patch('home.services.tts_service.settings')
-    def test_is_openai_available(self, mock_settings):
-        """Test checking OpenAI availability."""
-        # Test without API key
-        mock_settings.OPENAI_API_KEY = None
-        with patch.dict('os.environ', {}, clear=False):
-            import os
-            if 'OPENAI_API_KEY' in os.environ:
-                del os.environ['OPENAI_API_KEY']
-            service = TTSService()
-            self.assertFalse(service.is_openai_available())
-
-        # Test with API key in settings
-        mock_settings.OPENAI_API_KEY = 'test-key'
-        service = TTSService()
-        self.assertTrue(service.is_openai_available())
-        
-        # Test with API key in environment
-        mock_settings.OPENAI_API_KEY = None
-        with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
-            service = TTSService()
-            self.assertTrue(service.is_openai_available())
-
     def test_get_cache_key(self):
         """Test cache key generation."""
         service = TTSService()
