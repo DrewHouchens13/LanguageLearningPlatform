@@ -21,7 +21,7 @@ class TestColorsLessonManagementCommand(TestCase):
         # Verify lesson was created
         lesson = Lesson.objects.get(title='Colors in Spanish')
         self.assertEqual(lesson.language, 'Spanish')
-        self.assertEqual(lesson.difficulty_level, 'A1')
+        self.assertEqual(lesson.difficulty_level, 1)
         self.assertEqual(lesson.slug, 'colors')
         self.assertEqual(lesson.order, 2)
         self.assertTrue(lesson.is_published)

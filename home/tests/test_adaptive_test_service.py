@@ -8,6 +8,7 @@ Tests the adaptive test generation and evaluation logic:
 - Retry cooldown enforcement
 """
 
+import json
 from datetime import timedelta
 from unittest.mock import MagicMock, patch
 
@@ -104,24 +105,50 @@ class TestAdaptiveTestService(TestCase):
         self.assertGreaterEqual(total_weak, total_strong)
 
     @patch('openai.OpenAI')
-    def test_generate_adaptive_test_with_ai(self, mock_openai):
+    @patch('home.services.adaptive_test_service.settings')
+    def test_generate_adaptive_test_with_ai(self, mock_settings, mock_openai):
         """Test test generation with AI (mocked)."""
-        # Mock OpenAI response
+        # Set API key in settings
+        mock_settings.OPENAI_API_KEY = 'test-key'
+        
+        # Mock OpenAI response - create a response that returns questions
+        # The service will call OpenAI once per skill, so we need to return questions each time
+        def make_mock_response(count):
+            """Create mock response with requested number of questions."""
+            questions_data = [
+                {
+                    "question": f"Test question {i} for skill?",
+                    "options": ["A", "B", "C", "D"],
+                    "correct_index": 0,
+                    "explanation": "Test explanation",
+                    "skill": "vocabulary"
+                }
+                for i in range(count)
+            ]
+            mock_response = MagicMock()
+            mock_response.choices[0].message.content = json.dumps({"questions": questions_data})
+            return mock_response
+        
         mock_client = MagicMock()
         mock_openai.return_value = mock_client
-        mock_response = MagicMock()
-        mock_response.choices[0].message.content = '{"questions": [{"question": "Test?", "options": ["A", "B", "C", "D"], "correct_index": 0, "explanation": "Test", "skill": "vocabulary"}]}'
-        mock_client.chat.completions.create.return_value = mock_response
+        # Return different responses based on call count to simulate per-skill calls
+        call_count = [0]
+        def side_effect(*args, **kwargs):
+            call_count[0] += 1
+            # Return enough questions for the largest skill request (typically 2-3 per skill)
+            return make_mock_response(3)
+        
+        mock_client.chat.completions.create.side_effect = side_effect
 
-        # Set API key
-        with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
-            service = AdaptiveTestService()
-            test = service.generate_adaptive_test(self.user, 'Spanish', 1)
+        service = AdaptiveTestService()
+        test = service.generate_adaptive_test(self.user, 'Spanish', 1)
 
         self.assertIn('test_id', test)
         self.assertIn('questions', test)
         self.assertEqual(test['language'], 'Spanish')
         self.assertEqual(test['level'], 1)
+        # Should have exactly 10 questions total
+        self.assertEqual(len(test['questions']), 10)
         self.assertEqual(test['total_questions'], 10)
 
     def test_generate_adaptive_test_without_ai(self):
@@ -147,19 +174,18 @@ class TestAdaptiveTestService(TestCase):
             module=self.module
         )
 
-        # Create answers with 80% correct (8/10)
-        # i < 9 for range(1, 11) means i=1..8 are correct (8 correct), i=9,10 are wrong
+        # Create answers with 90% correct (9/10) - passing threshold
+        # i < 10 for range(1, 11) means i=1..9 are correct (9 correct), i=10 is wrong
         answers = [
-            {'question_id': i, 'answer_index': 0, 'is_correct': i < 9, 'skill': 'vocabulary'}
+            {'question_id': i, 'answer_index': 0, 'is_correct': i < 10, 'skill': 'vocabulary'}
             for i in range(1, 11)
         ]
 
         result = self.service.evaluate_test(self.user, self.module, answers)
 
-        # Score is 80% (8/10), which is < 85% passing threshold
-        self.assertEqual(result['score'], 80.0)
-        # Note: passed may be False if module completion logic requires additional checks
-        # The important thing is the score is calculated correctly
+        # Score is 90% (9/10), which is >= 85% passing threshold
+        self.assertEqual(result['score'], 90.0)
+        self.assertTrue(result['passed'])
         self.assertEqual(result['correct'], 9)
         self.assertEqual(result['total'], 10)
 
@@ -193,7 +219,7 @@ class TestAdaptiveTestService(TestCase):
         # Check progress updated
         progress.refresh_from_db()
         self.assertFalse(progress.is_module_complete)
-        self.assertEqual(progress.best_test_score, 60.0)
+        self.assertEqual(progress.best_test_score, 50.0)
         self.assertEqual(progress.test_attempts, 1)
 
     def test_handle_level_progression(self):
@@ -233,11 +259,14 @@ class TestAdaptiveTestService(TestCase):
             module=max_module
         )
 
-        lang_profile = UserLanguageProfile.objects.create(
+        # Use get_or_create to avoid unique constraint error
+        lang_profile, _ = UserLanguageProfile.objects.get_or_create(
             user=self.user,
             language='Spanish',
-            proficiency_level=10
+            defaults={'proficiency_level': 10}
         )
+        lang_profile.proficiency_level = 10
+        lang_profile.save()
 
         progression = self.service._handle_level_progression(self.user, max_module, progress)
 

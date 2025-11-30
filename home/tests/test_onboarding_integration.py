@@ -145,7 +145,7 @@ class TestCompleteGuestOnboardingFlow(TestCase):
         # Step 3: Verify UserProfile created
         profile = UserProfile.objects.get(user=user)
         self.assertTrue(profile.has_completed_onboarding)
-        self.assertEqual(profile.proficiency_level, 'B1')
+        self.assertEqual(profile.proficiency_level, 3)  # B1 -> 3
 
     def test_guest_onboarding_stats_linked_on_signup(self):
         """When guest completes onboarding then signs up, stats are properly linked"""
@@ -235,7 +235,7 @@ class TestCompleteAuthenticatedOnboardingFlow(TestCase):
         # Step 3: Verify UserProfile created
         profile = UserProfile.objects.get(user=self.user)
         self.assertTrue(profile.has_completed_onboarding)
-        self.assertEqual(profile.proficiency_level, 'B1')
+        self.assertEqual(profile.proficiency_level, 3)  # B1 -> 3
 
     def test_authenticated_user_can_retake_quiz(self):
         """Authenticated users can restart the quiz even after finishing."""
@@ -254,7 +254,7 @@ class TestCompleteAuthenticatedOnboardingFlow(TestCase):
         )
         
         profile = UserProfile.objects.get(user=self.user)
-        self.assertEqual(profile.proficiency_level, 'B1')
+        self.assertEqual(profile.proficiency_level, 3)  # B1 -> 3
         
         # Try to access quiz again - retake is allowed
         response = self.client.get(reverse('onboarding_quiz'))

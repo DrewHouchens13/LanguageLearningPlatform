@@ -24,8 +24,11 @@ class TestTTSService(TestCase):
         cache.clear()
 
     @patch('openai.OpenAI')
-    def test_generate_audio_with_openai(self, mock_openai):
+    @patch('home.services.tts_service.settings')
+    def test_generate_audio_with_openai(self, mock_settings, mock_openai):
         """Test audio generation with OpenAI API."""
+        # Mock settings to have OPENAI_API_KEY
+        mock_settings.OPENAI_API_KEY = 'test-key'
         # Mock OpenAI client
         mock_client = MagicMock()
         mock_openai.return_value = mock_client
@@ -33,9 +36,8 @@ class TestTTSService(TestCase):
         mock_response.content = b'fake_audio_data'
         mock_client.audio.speech.create.return_value = mock_response
 
-        with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
-            service = TTSService()
-            result = service.generate_audio('Hola, ¿cómo estás?', 'Spanish')
+        service = TTSService()
+        result = service.generate_audio('Hola, ¿cómo estás?', 'Spanish')
 
         self.assertEqual(result['type'], 'audio')
         self.assertIsNotNone(result['audio_base64'])
@@ -88,47 +90,49 @@ class TestTTSService(TestCase):
         result = service._browser_fallback('Test text', 'Unknown')
         self.assertEqual(result['browser_config']['lang'], 'en-US')
 
-    def test_generate_audio_caching(self):
+    @patch('openai.OpenAI')
+    @patch('home.services.tts_service.settings')
+    def test_generate_audio_caching(self, mock_settings, mock_openai):
         """Test that generated audio is cached."""
-        with patch('openai.OpenAI') as mock_openai:
-            mock_client = MagicMock()
-            mock_openai.return_value = mock_client
-            mock_response = MagicMock()
-            mock_response.content = b'cached_audio_data'
-            mock_client.audio.speech.create.return_value = mock_response
+        mock_settings.OPENAI_API_KEY = 'test-key'
+        mock_client = MagicMock()
+        mock_openai.return_value = mock_client
+        mock_response = MagicMock()
+        mock_response.content = b'cached_audio_data'
+        mock_client.audio.speech.create.return_value = mock_response
 
-            with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
-                service = TTSService()
-                text = 'Test caching'
-                language = 'Spanish'
+        service = TTSService()
+        text = 'Test caching'
+        language = 'Spanish'
 
-                # First call - should call OpenAI
-                result1 = service.generate_audio(text, language, use_cache=True)
-                self.assertEqual(mock_client.audio.speech.create.call_count, 1)
+        # First call - should call OpenAI
+        result1 = service.generate_audio(text, language, use_cache=True)
+        self.assertEqual(mock_client.audio.speech.create.call_count, 1)
 
-                # Second call - should use cache
-                result2 = service.generate_audio(text, language, use_cache=True)
-                self.assertEqual(mock_client.audio.speech.create.call_count, 1)  # No new call
-                self.assertEqual(result1['audio_base64'], result2['audio_base64'])
+        # Second call - should use cache
+        result2 = service.generate_audio(text, language, use_cache=True)
+        self.assertEqual(mock_client.audio.speech.create.call_count, 1)  # No new call
+        self.assertEqual(result1['audio_base64'], result2['audio_base64'])
 
-    def test_generate_audio_no_cache(self):
+    @patch('openai.OpenAI')
+    @patch('home.services.tts_service.settings')
+    def test_generate_audio_no_cache(self, mock_settings, mock_openai):
         """Test that cache can be bypassed."""
-        with patch('openai.OpenAI') as mock_openai:
-            mock_client = MagicMock()
-            mock_openai.return_value = mock_client
-            mock_response = MagicMock()
-            mock_response.content = b'audio_data'
-            mock_client.audio.speech.create.return_value = mock_response
+        mock_settings.OPENAI_API_KEY = 'test-key'
+        mock_client = MagicMock()
+        mock_openai.return_value = mock_client
+        mock_response = MagicMock()
+        mock_response.content = b'audio_data'
+        mock_client.audio.speech.create.return_value = mock_response
 
-            with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
-                service = TTSService()
-                text = 'Test no cache'
-                language = 'Spanish'
+        service = TTSService()
+        text = 'Test no cache'
+        language = 'Spanish'
 
-                # Call with cache disabled
-                service.generate_audio(text, language, use_cache=False)
-                # Should still call OpenAI
-                self.assertEqual(mock_client.audio.speech.create.call_count, 1)
+        # Call with cache disabled
+        service.generate_audio(text, language, use_cache=False)
+        # Should still call OpenAI
+        self.assertEqual(mock_client.audio.speech.create.call_count, 1)
 
     def test_generate_audio_empty_text(self):
         """Test handling of empty text."""
@@ -167,18 +171,25 @@ class TestTTSService(TestCase):
         self.assertIn('Japanese', languages)
         self.assertGreater(len(languages), 0)
 
-    def test_is_openai_available(self):
+    @patch('home.services.tts_service.settings')
+    def test_is_openai_available(self, mock_settings):
         """Test checking OpenAI availability."""
-        # Use patch to temporarily clear the API key
+        # Test without API key
+        mock_settings.OPENAI_API_KEY = None
         with patch.dict('os.environ', {}, clear=False):
-            # Remove OPENAI_API_KEY if it exists
             import os
             if 'OPENAI_API_KEY' in os.environ:
                 del os.environ['OPENAI_API_KEY']
             service = TTSService()
             self.assertFalse(service.is_openai_available())
 
-        # Test with API key set
+        # Test with API key in settings
+        mock_settings.OPENAI_API_KEY = 'test-key'
+        service = TTSService()
+        self.assertTrue(service.is_openai_available())
+        
+        # Test with API key in environment
+        mock_settings.OPENAI_API_KEY = None
         with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
             service = TTSService()
             self.assertTrue(service.is_openai_available())
