@@ -24,6 +24,7 @@ import json
 import logging
 import os
 import random
+import re
 from datetime import timedelta
 from typing import Optional, Dict, List
 
@@ -463,10 +464,14 @@ class AdaptiveTestService:
             # Normalize and get absolute paths for security
             fixture_root = os.path.abspath(os.path.normpath(fixture_root))
             
-            # Sanitize language input (only allow alphanumeric and hyphens)
+            # Strictly validate language input using regex (only allow alphanumeric and hyphens)
             language_dir = language.strip().lower()
-            # Remove any path traversal attempts
-            language_dir = language_dir.replace('..', '').replace('/', '').replace('\\', '')
+            
+            # Validate language directory name: only letters, numbers, and hyphens, 2-30 chars
+            if not re.fullmatch(r'[a-z0-9-]{2,30}', language_dir):
+                logger.warning('Invalid language directory name: %s (must be 2-30 chars, alphanumeric and hyphens only)', 
+                             language_dir)
+                return None
             
             # Construct fixture path
             fixture_path = os.path.join(
@@ -479,11 +484,20 @@ class AdaptiveTestService:
             normalized_path = os.path.abspath(os.path.normpath(fixture_path))
             
             # Ensure the normalized path is within the fixture root directory
-            # Use os.sep to ensure proper path separator handling across platforms
-            if not normalized_path.startswith(fixture_root + os.sep) and normalized_path != fixture_root:
-                logger.warning('Potential path traversal attack blocked: %s (root: %s)', 
-                             normalized_path, fixture_root)
-                return None
+            # Use os.path.commonpath for robust cross-platform path containment check
+            try:
+                common_path = os.path.commonpath([fixture_root, normalized_path])
+                if common_path != fixture_root:
+                    logger.warning('Potential path traversal attack blocked: %s (root: %s)', 
+                                 normalized_path, fixture_root)
+                    return None
+            except ValueError:
+                # commonpath raises ValueError if paths are on different drives (Windows)
+                # In this case, check if normalized_path starts with fixture_root
+                if not normalized_path.startswith(fixture_root + os.sep):
+                    logger.warning('Potential path traversal attack blocked: %s (root: %s)', 
+                                 normalized_path, fixture_root)
+                    return None
             
             if not os.path.exists(normalized_path):
                 logger.warning('Fixture not found: %s', normalized_path)
