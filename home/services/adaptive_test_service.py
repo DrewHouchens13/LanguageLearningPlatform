@@ -24,7 +24,6 @@ import json
 import logging
 import os
 import random
-import re
 from datetime import timedelta
 from typing import Optional, Dict, List
 
@@ -436,263 +435,6 @@ class AdaptiveTestService:
         
         return questions
     
-    def _validate_and_build_fixture_path(self, language: str, level: int) -> Optional[str]:
-        """
-        Validate inputs and build a safe fixture file path.
-        
-        SECURITY: This method performs strict validation and returns a path
-        only if all security checks pass. The returned path is guaranteed
-        to be within the fixture root directory.
-        
-        Args:
-            language: Target language (will be validated)
-            level: Proficiency level (will be validated)
-            
-        Returns:
-            str: Absolute path to fixture file, or None if validation fails
-        """
-        # Validate level (whitelist: 1-10)
-        if not isinstance(level, int) or level < 1 or level > 10:
-            logger.warning('Invalid level: %s (must be 1-10)', level)
-            return None
-        
-        # Construct and normalize fixture root (hardcoded, safe)
-        fixture_root = os.path.join(
-            settings.BASE_DIR,
-            'home',
-            'fixtures',
-            'curriculum',
-        )
-        fixture_root = os.path.abspath(os.path.normpath(fixture_root))
-        
-        # Validate language input (regex allowlist: alphanumeric and hyphens only)
-        language_sanitized = language.strip().lower()
-        if not re.fullmatch(r'[a-z0-9-]{2,30}', language_sanitized):
-            logger.warning('Invalid language: %s (must be 2-30 chars, alphanumeric and hyphens only)', 
-                         language_sanitized)
-            return None
-        
-        # Validate filename format (level must be 01-10)
-        filename = f'level_{level:02d}.json'
-        if not re.fullmatch(r'level_\d{2}\.json', filename):
-            logger.warning('Invalid filename format: %s', filename)
-            return None
-        
-        # Build path from validated components only
-        safe_path = os.path.join(fixture_root, language_sanitized, filename)
-        normalized_path = os.path.abspath(os.path.normpath(safe_path))
-        
-        # Security check: ensure path is contained within fixture_root
-        try:
-            common_path = os.path.commonpath([fixture_root, normalized_path])
-            if common_path != fixture_root:
-                logger.warning('Path validation failed: %s', normalized_path)
-                return None
-        except ValueError:
-            # Windows: different drives - use prefix check
-            fixture_root_norm = os.path.normpath(fixture_root)
-            if not (normalized_path.startswith(fixture_root_norm + os.sep) or 
-                   normalized_path == fixture_root_norm):
-                logger.warning('Path validation failed: %s', normalized_path)
-                return None
-        
-        # Path is validated and safe
-        return normalized_path
-    
-    def _load_level_fixture(self, language: str, level: int) -> Optional[Dict]:
-        """
-        Load the level fixture data for a specific language and level.
-        
-        SECURITY: Uses _validate_and_build_fixture_path() which performs
-        strict validation and returns only safe, validated paths. The path
-        is only used for file operations after validation passes.
-        
-        Args:
-            language: Target language
-            level: Proficiency level
-            
-        Returns:
-            dict: Fixture data or None if not found
-        """
-        try:
-            # Get validated safe path (returns None if validation fails)
-            validated_fixture_path = self._validate_and_build_fixture_path(language, level)
-            
-            # SECURITY: Early return if validation failed - no path operations on invalid input
-            if validated_fixture_path is None:
-                return None
-            
-            # validated_fixture_path is guaranteed safe:
-            # - Inputs validated (level 1-10, language regex allowlist)
-            # - Path constructed only from validated components
-            # - Path verified to be within fixture_root directory
-            # - No user input flows through path operations
-            
-            # Check file existence (path is already validated)
-            if not os.path.exists(validated_fixture_path):
-                logger.warning('Fixture not found: %s', validated_fixture_path)
-                return None
-            
-            # Open and read file (path is already validated and verified safe)
-            with open(validated_fixture_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-                
-        except Exception as e:
-            logger.error('Failed to load fixture for %s level %d: %s', language, level, str(e))
-            return None
-    
-    def _extract_lesson_content(self, fixture: Dict, skill: str) -> Dict:
-        """
-        Extract relevant lesson content for a specific skill from fixture data.
-        
-        Args:
-            fixture: Complete fixture data
-            skill: Skill category to extract
-            
-        Returns:
-            dict: Extracted content for the skill
-        """
-        if not fixture or 'lessons' not in fixture:
-            return {}
-        
-        # Find the lesson for this skill
-        lesson = None
-        for l in fixture.get('lessons', []):
-            if l.get('skill', '').lower() == skill.lower():
-                lesson = l
-                break
-        
-        if not lesson:
-            return {}
-        
-        # Extract relevant content based on skill type
-        content = {
-            'title': lesson.get('title', ''),
-            'description': lesson.get('description', ''),
-            'flashcards': lesson.get('flashcards', []),
-            'quiz_questions': lesson.get('quiz_questions', []),
-        }
-        
-        # For vocabulary: extract all vocabulary words
-        if skill.lower() == 'vocabulary':
-            vocab_words = []
-            for card in content.get('flashcards', []):
-                vocab_words.append({
-                    'english': card.get('front', ''),
-                    'target_language': card.get('back', '')
-                })
-            content['vocabulary_words'] = vocab_words
-        
-        # For grammar: extract grammar concepts from flashcards
-        elif skill.lower() == 'grammar':
-            grammar_concepts = []
-            for card in content.get('flashcards', []):
-                grammar_concepts.append({
-                    'concept': card.get('front', ''),
-                    'example': card.get('back', '')
-                })
-            content['grammar_concepts'] = grammar_concepts
-        
-        # For conversation: extract phrases and scenarios
-        elif skill.lower() == 'conversation':
-            phrases = []
-            for card in content.get('flashcards', []):
-                phrases.append({
-                    'english': card.get('front', ''),
-                    'target_language': card.get('back', '')
-                })
-            content['phrases'] = phrases
-        
-        return content
-    
-    def _build_lesson_context_prompt(self, lesson_content: Dict, skill: str) -> str:
-        """
-        Build a detailed context prompt section from lesson content.
-        
-        Args:
-            lesson_content: Extracted lesson content
-            skill: Skill category
-            
-        Returns:
-            str: Formatted context section for the prompt
-        """
-        if not lesson_content:
-            return ""
-        
-        context_parts = []
-        
-        # Add lesson title and description
-        if lesson_content.get('title'):
-            context_parts.append(f"Lesson Title: {lesson_content['title']}")
-        if lesson_content.get('description'):
-            context_parts.append(f"Lesson Description: {lesson_content['description']}")
-        
-        context_parts.append("")  # Blank line
-        
-        # Add skill-specific content
-        if skill.lower() == 'vocabulary':
-            vocab_words = lesson_content.get('vocabulary_words', [])
-            if vocab_words:
-                context_parts.append("VOCABULARY WORDS TAUGHT IN THIS LESSON:")
-                for word in vocab_words[:20]:  # Limit to avoid token overflow
-                    context_parts.append(f"  - {word['english']} = {word['target_language']}")
-                context_parts.append("")
-                context_parts.append("IMPORTANT: Generate questions that test understanding of these specific words:")
-                context_parts.append("- Word meanings and translations")
-                context_parts.append("- Usage in context and sentences")
-                context_parts.append("- Appropriate situations for each word")
-                context_parts.append("- Distinguishing between similar words")
-        
-        elif skill.lower() == 'grammar':
-            grammar_concepts = lesson_content.get('grammar_concepts', [])
-            if grammar_concepts:
-                context_parts.append("GRAMMAR CONCEPTS TAUGHT IN THIS LESSON:")
-                for concept in grammar_concepts[:15]:  # Limit to avoid token overflow
-                    context_parts.append(f"  - {concept['concept']} → {concept['example']}")
-                context_parts.append("")
-                context_parts.append("IMPORTANT: Generate questions that test understanding of these specific grammar rules:")
-                context_parts.append("- Correct application of these rules")
-                context_parts.append("- Identifying correct vs incorrect usage")
-                context_parts.append("- Sentence construction using these concepts")
-        
-        elif skill.lower() == 'conversation':
-            phrases = lesson_content.get('phrases', [])
-            if phrases:
-                context_parts.append("CONVERSATION PHRASES TAUGHT IN THIS LESSON:")
-                for phrase in phrases[:15]:  # Limit to avoid token overflow
-                    context_parts.append(f"  - {phrase['english']} = {phrase['target_language']}")
-                context_parts.append("")
-                context_parts.append("IMPORTANT: Generate questions that test understanding of these phrases:")
-                context_parts.append("- When to use each phrase")
-                context_parts.append("- Appropriate responses in conversations")
-                context_parts.append("- Social context and formality levels")
-        
-        elif skill.lower() == 'reading':
-            # Use flashcards and quiz questions as context
-            flashcards = lesson_content.get('flashcards', [])
-            if flashcards:
-                context_parts.append("READING CONTENT FROM THIS LESSON:")
-                for card in flashcards[:10]:
-                    context_parts.append(f"  - {card.get('front', '')} / {card.get('back', '')}")
-                context_parts.append("")
-                context_parts.append("IMPORTANT: Generate questions that test reading comprehension:")
-                context_parts.append("- Understanding of simple texts and sentences")
-                context_parts.append("- Identifying key information")
-                context_parts.append("- Interpreting meaning from context")
-        
-        elif skill.lower() == 'listening':
-            flashcards = lesson_content.get('flashcards', [])
-            if flashcards:
-                context_parts.append("LISTENING CONTENT FROM THIS LESSON:")
-                for card in flashcards[:10]:
-                    context_parts.append(f"  - {card.get('front', '')} / {card.get('back', '')}")
-                context_parts.append("")
-                context_parts.append("IMPORTANT: Generate questions that test listening comprehension:")
-                context_parts.append("- Recognizing pronunciation and sounds")
-                context_parts.append("- Understanding spoken words and phrases")
-                context_parts.append("- Distinguishing between similar sounds")
-        
-        return "\n".join(context_parts)
     
     def _generate_ai_questions(
         self,
@@ -719,34 +461,21 @@ class AdaptiveTestService:
             client = OpenAI(api_key=self.api_key)
             theme = self.LEVEL_THEMES.get(level, self.LEVEL_THEMES[1])
             
-            # Load fixture data for this level
-            fixture = self._load_level_fixture(language, level)
-            lesson_content = self._extract_lesson_content(fixture, skill) if fixture else {}
-            lesson_context = self._build_lesson_context_prompt(lesson_content, skill)
-            
-            # Build the enhanced prompt
+            # Build the prompt
             prompt_parts = [
                 f"Generate {count} multiple-choice questions for a {language} language test.",
                 "",
                 f"Level: {level}/10 ({theme['name']})",
                 f"Skill Focus: {skill}",
                 f"Theme Topics: {', '.join(theme['topics'])}",
-                ""
+                "",
+                "Generate appropriate questions for this level and skill focus.",
+                "",
+                "=" * 60,
+                "QUESTION REQUIREMENTS:",
+                "=" * 60,
+                "",
             ]
-            
-            # Add lesson-specific context if available
-            if lesson_context:
-                prompt_parts.append("=" * 60)
-                prompt_parts.append("LESSON CONTENT - USE THIS AS THE BASIS FOR YOUR QUESTIONS:")
-                prompt_parts.append("=" * 60)
-                prompt_parts.append(lesson_context)
-                prompt_parts.append("")
-                prompt_parts.append("CRITICAL: Your questions MUST be based on the specific content listed above.")
-                prompt_parts.append("Do NOT generate generic questions. Test the actual material taught in this lesson.")
-                prompt_parts.append("")
-            else:
-                prompt_parts.append("NOTE: Lesson content not available. Generate appropriate questions for this level.")
-                prompt_parts.append("")
             
             prompt_parts.extend([
                 "=" * 60,
@@ -766,7 +495,6 @@ class AdaptiveTestService:
                 "- Each question must test a different concept, word, rule, or scenario",
                 "- DO NOT create variations of the same question",
                 "- DO NOT ask the same thing in different words",
-                "- Cover the full breadth of content from the lesson",
                 "",
                 "Question Type Guidelines:",
                 "- For vocabulary: Mix word meanings, usage in context, synonyms/antonyms, collocations, and appropriate situations",
@@ -793,7 +521,7 @@ class AdaptiveTestService:
             
             system_message = (
                 f"You are an expert {language} language teacher creating comprehensive test questions. "
-                "Your questions must be based on the specific lesson content provided. "
+                "Generate questions appropriate for the specified level and skill focus. "
                 "Each question must test a DIFFERENT concept - avoid repetition and variations of the same question. "
                 "Always return valid JSON with exactly the structure requested."
             )
