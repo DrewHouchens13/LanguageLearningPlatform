@@ -359,7 +359,7 @@ class TestUserProfileModel(TestCase):
         completed_time = timezone.now()
         # Use auto-created profile and update it
         profile = self.user.profile
-        profile.proficiency_level = 'A2'
+        profile.proficiency_level = 2
         profile.has_completed_onboarding = True
         profile.onboarding_completed_at = completed_time
         profile.target_language = 'Spanish'
@@ -367,7 +367,7 @@ class TestUserProfileModel(TestCase):
         profile.learning_motivation = 'Want to travel to Spain'
         profile.save()
 
-        self.assertEqual(profile.proficiency_level, 'A2')
+        self.assertEqual(profile.proficiency_level, 2)
         self.assertTrue(profile.has_completed_onboarding)
         self.assertEqual(profile.onboarding_completed_at, completed_time)
         self.assertEqual(profile.daily_goal_minutes, 30)
@@ -377,9 +377,9 @@ class TestUserProfileModel(TestCase):
         """Test __str__ method returns correct format"""
         # Use auto-created profile and update it
         profile = self.user.profile
-        profile.proficiency_level = 'A1'
+        profile.proficiency_level = 1
         profile.save()
-        expected = f"{self.user.username}'s Profile - Beginner (A1)"
+        expected = f"{self.user.username}'s Profile - Level 1"
         self.assertEqual(str(profile), expected)
 
     def test_user_profile_str_repr_no_level(self):
@@ -393,7 +393,7 @@ class TestUserProfileModel(TestCase):
         """Test OneToOne relationship with User"""
         # Use auto-created profile and update it
         profile = self.user.profile
-        profile.proficiency_level = 'B1'
+        profile.proficiency_level = 3
         profile.save()
 
         # Access profile from user
@@ -410,14 +410,14 @@ class TestUserProfileModel(TestCase):
             UserProfile.objects.create(user=self.user)
 
     def test_user_profile_proficiency_level_choices(self):
-        """Test proficiency level choices"""
-        valid_levels = ['A1', 'A2', 'B1']
+        """Test proficiency level accepts integer values 1-10"""
+        valid_levels = [1, 2, 3]
 
         for level in valid_levels:
             # Create new user (which auto-creates profile via signal)
             user = User.objects.create_user(
                 username=f'user_{level}',
-                email=f'{level}@example.com'
+                email=f'user{level}@example.com'
             )
             profile = user.profile
             profile.proficiency_level = level

@@ -24,7 +24,7 @@ class TestLessonModel(TestCase):
             title='Basic Spanish Greetings',
             description='Learn common Spanish greetings',
             language='Spanish',
-            difficulty_level='A1',
+            difficulty_level=1,
             order=1,
             is_published=True
         )
@@ -32,7 +32,7 @@ class TestLessonModel(TestCase):
             title='Spanish Numbers',
             description='Learn numbers 1-10',
             language='Spanish',
-            difficulty_level='A1',
+            difficulty_level=1,
             order=2,
             is_published=True
         )
@@ -43,7 +43,7 @@ class TestLessonModel(TestCase):
         """Test Lesson is created with correct values"""
         self.assertEqual(self.lesson.title, 'Basic Spanish Greetings')
         self.assertEqual(self.lesson.language, 'Spanish')
-        self.assertEqual(self.lesson.difficulty_level, 'A1')
+        self.assertEqual(self.lesson.difficulty_level, 1)
         self.assertEqual(self.lesson.order, 1)
         self.assertTrue(self.lesson.is_published)
         self.assertIsNotNone(self.lesson.created_at)
@@ -51,7 +51,7 @@ class TestLessonModel(TestCase):
 
     def test_lesson_string_representation(self):
         """Test __str__ method returns correct format"""
-        expected = "Basic Spanish Greetings (A1)"
+        expected = "Basic Spanish Greetings (Level 1)"
         self.assertEqual(str(self.lesson), expected)
 
     def test_lesson_ordering(self):
@@ -59,7 +59,7 @@ class TestLessonModel(TestCase):
         lesson3 = Lesson.objects.create(
             title='Spanish Colors',
             order=0,
-            difficulty_level='A1'
+            difficulty_level=1
         )
         lessons = list(
             Lesson.objects.filter(id__in=[lesson3.id, self.lesson.id, self.next_lesson.id])
@@ -81,14 +81,14 @@ class TestLessonModel(TestCase):
         self.assertIsNone(self.lesson.next_lesson)
 
     def test_lesson_difficulty_choices(self):
-        """Test difficulty_level accepts only valid choices"""
-        self.lesson.difficulty_level = 'A2'
+        """Test difficulty_level accepts integer values 1-10"""
+        self.lesson.difficulty_level = 2
         self.lesson.save()
-        self.assertEqual(self.lesson.difficulty_level, 'A2')
+        self.assertEqual(self.lesson.difficulty_level, 2)
 
-        self.lesson.difficulty_level = 'B1'
+        self.lesson.difficulty_level = 3
         self.lesson.save()
-        self.assertEqual(self.lesson.difficulty_level, 'B1')
+        self.assertEqual(self.lesson.difficulty_level, 3)
 
     def test_lesson_unpublished(self):
         """Test unpublished lessons can be created"""
@@ -106,7 +106,7 @@ class TestFlashcardModel(TestCase):
         """Create test lesson and flashcards"""
         self.lesson = Lesson.objects.create(
             title='Spanish Colors',
-            difficulty_level='A1'
+            difficulty_level=1
         )
         self.card1 = Flashcard.objects.create(
             lesson=self.lesson,
@@ -159,7 +159,7 @@ class TestLessonQuizQuestionModel(TestCase):
         """Create test lesson and questions"""
         self.lesson = Lesson.objects.create(
             title='Spanish Shapes',
-            difficulty_level='A1'
+            difficulty_level=1
         )
         self.question = LessonQuizQuestion.objects.create(
             lesson=self.lesson,
@@ -221,7 +221,7 @@ class TestLessonAttemptModel(TestCase):
         )
         self.lesson = Lesson.objects.create(
             title='Spanish Shapes',
-            difficulty_level='A1'
+            difficulty_level=1
         )
         self.attempt = LessonAttempt.objects.create(
             lesson=self.lesson,
@@ -377,7 +377,7 @@ class TestLessonDetailView(TestCase):
         self.lesson = Lesson.objects.create(
             title='Spanish Colors',
             description='Learn colors in Spanish',
-            difficulty_level='A1',
+            difficulty_level=1,
             is_published=True
         )
         self.card1 = Flashcard.objects.create(

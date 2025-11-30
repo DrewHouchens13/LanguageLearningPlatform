@@ -23,7 +23,7 @@ class TestTTSService(TestCase):
         """Set up test data."""
         cache.clear()
 
-    @patch('home.services.tts_service.OpenAI')
+    @patch('openai.OpenAI')
     def test_generate_audio_with_openai(self, mock_openai):
         """Test audio generation with OpenAI API."""
         # Mock OpenAI client
@@ -90,7 +90,7 @@ class TestTTSService(TestCase):
 
     def test_generate_audio_caching(self):
         """Test that generated audio is cached."""
-        with patch('home.services.tts_service.OpenAI') as mock_openai:
+        with patch('openai.OpenAI') as mock_openai:
             mock_client = MagicMock()
             mock_openai.return_value = mock_client
             mock_response = MagicMock()
@@ -113,7 +113,7 @@ class TestTTSService(TestCase):
 
     def test_generate_audio_no_cache(self):
         """Test that cache can be bypassed."""
-        with patch('home.services.tts_service.OpenAI') as mock_openai:
+        with patch('openai.OpenAI') as mock_openai:
             mock_client = MagicMock()
             mock_openai.return_value = mock_client
             mock_response = MagicMock()
@@ -141,7 +141,7 @@ class TestTTSService(TestCase):
         result = service.generate_audio('   ', 'Spanish')
         self.assertEqual(result['type'], 'browser')
 
-    @patch('home.services.tts_service.OpenAI')
+    @patch('openai.OpenAI')
     def test_generate_audio_openai_error(self, mock_openai):
         """Test fallback to browser when OpenAI fails."""
         mock_client = MagicMock()
@@ -169,10 +169,16 @@ class TestTTSService(TestCase):
 
     def test_is_openai_available(self):
         """Test checking OpenAI availability."""
-        with patch.dict('os.environ', {}, clear=True):
+        # Use patch to temporarily clear the API key
+        with patch.dict('os.environ', {}, clear=False):
+            # Remove OPENAI_API_KEY if it exists
+            import os
+            if 'OPENAI_API_KEY' in os.environ:
+                del os.environ['OPENAI_API_KEY']
             service = TTSService()
             self.assertFalse(service.is_openai_available())
 
+        # Test with API key set
         with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
             service = TTSService()
             self.assertTrue(service.is_openai_available())

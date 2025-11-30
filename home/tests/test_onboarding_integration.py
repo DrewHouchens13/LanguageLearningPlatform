@@ -102,7 +102,8 @@ class TestCompleteGuestOnboardingFlow(TestCase):
         user = User.objects.get(email='john@example.com')
         profile = UserProfile.objects.get(user=user)
         self.assertTrue(profile.has_completed_onboarding)
-        self.assertEqual(profile.proficiency_level, 'B1')
+        # Onboarding converts CEFR levels (A1/A2/B1) to integers (1/2/3)
+        self.assertEqual(profile.proficiency_level, 3)  # B1 -> 3
         
         # Step 4: Verify attempt linked to user
         attempt = OnboardingAttempt.objects.get(id=attempt_id)

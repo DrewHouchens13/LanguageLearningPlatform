@@ -173,7 +173,12 @@ def _get_or_create_language_profile(user, language):
 def _upsert_language_onboarding(user, language, proficiency_level, completed_at=None):
     """Update onboarding metadata for a specific language."""
     language_profile = _get_or_create_language_profile(user, language)
-    language_profile.proficiency_level = proficiency_level
+    # Convert CEFR level (A1, A2, B1) to integer (1, 2, 3) if needed
+    if isinstance(proficiency_level, str):
+        cefr_to_level = {'A1': 1, 'A2': 2, 'B1': 3}
+        language_profile.proficiency_level = cefr_to_level.get(proficiency_level, 1)
+    else:
+        language_profile.proficiency_level = proficiency_level
     language_profile.has_completed_onboarding = True
     language_profile.onboarding_completed_at = completed_at or timezone.now()
     language_profile.save(update_fields=[

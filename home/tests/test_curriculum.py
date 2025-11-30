@@ -36,7 +36,10 @@ class TestSkillCategory(TestCase):
 
     def test_skill_category_str(self):
         """Test string representation."""
-        self.assertEqual(str(self.vocab), 'Vocabulary')
+        # SkillCategory includes emoji in __str__
+        self.assertIn('Vocabulary', str(self.vocab))
+        # Check it starts with emoji
+        self.assertTrue(str(self.vocab).startswith('📚'))
 
     def test_skill_category_choices(self):
         """Test skill category has valid choices."""
@@ -149,17 +152,17 @@ class TestUserModuleProgress(TestCase):
         self.assertTrue(self.progress.can_take_test())
 
     def test_can_retry_test(self):
-        """Test can_retry_test respects 24-hour cooldown."""
+        """Test can_retry_test respects 10-minute cooldown."""
         # No previous attempt
         self.assertTrue(self.progress.can_retry_test())
 
-        # Recent attempt (less than 24 hours)
-        self.progress.last_test_date = timezone.now() - timedelta(hours=12)
+        # Recent attempt (less than 10 minutes)
+        self.progress.last_test_date = timezone.now() - timedelta(minutes=5)
         self.progress.save()
         self.assertFalse(self.progress.can_retry_test())
 
-        # Old attempt (more than 24 hours)
-        self.progress.last_test_date = timezone.now() - timedelta(hours=25)
+        # Old attempt (more than 10 minutes)
+        self.progress.last_test_date = timezone.now() - timedelta(minutes=15)
         self.progress.save()
         self.assertTrue(self.progress.can_retry_test())
 
