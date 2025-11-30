@@ -13,7 +13,9 @@ def convert_proficiency_level_field(apps, schema_editor):
     Converts CEFR strings (A1, A2, B1) to integers (1, 2, 3).
     """
     from django.db import connection
+    import logging
     
+    logger = logging.getLogger(__name__)
     vendor = connection.vendor
     
     # Mapping from CEFR string to integer
@@ -23,17 +25,45 @@ def convert_proficiency_level_field(apps, schema_editor):
         if vendor == 'postgresql':
             # PostgreSQL: Use USING clause for efficient conversion
             for table in ['home_userlanguageprofile', 'home_userprofile']:
-                cursor.execute(f"""
-                    ALTER TABLE {table}
-                    ALTER COLUMN proficiency_level TYPE INTEGER
-                    USING CASE
-                        WHEN proficiency_level = 'A1' THEN 1
-                        WHEN proficiency_level = 'A2' THEN 2
-                        WHEN proficiency_level = 'B1' THEN 3
-                        WHEN proficiency_level ~ '^[0-9]+$' THEN proficiency_level::INTEGER
-                        ELSE NULL
-                    END;
-                """)
+                try:
+                    # First, check if the column exists and what type it is
+                    cursor.execute("""
+                        SELECT data_type 
+                        FROM information_schema.columns 
+                        WHERE table_name = %s AND column_name = 'proficiency_level'
+                    """, [table])
+                    result = cursor.fetchone()
+                    
+                    if result and result[0] == 'integer':
+                        # Column is already integer, skip conversion
+                        logger.info(f"Column {table}.proficiency_level is already integer, skipping conversion")
+                        continue
+                    
+                    # Check if column exists at all
+                    if not result:
+                        # Column doesn't exist, skip
+                        logger.info(f"Column {table}.proficiency_level does not exist, skipping conversion")
+                        continue
+                    
+                    # Column exists and is not integer, convert it
+                    # Use explicit CAST to text first, then convert to integer
+                    logger.info(f"Converting {table}.proficiency_level from {result[0]} to integer")
+                    cursor.execute(f"""
+                        ALTER TABLE {table}
+                        ALTER COLUMN proficiency_level TYPE INTEGER
+                        USING CASE
+                            WHEN proficiency_level::text = 'A1' THEN 1
+                            WHEN proficiency_level::text = 'A2' THEN 2
+                            WHEN proficiency_level::text = 'B1' THEN 3
+                            WHEN proficiency_level::text ~ '^[0-9]+$' THEN CAST(proficiency_level::text AS INTEGER)
+                            ELSE NULL
+                        END;
+                    """)
+                    logger.info(f"Successfully converted {table}.proficiency_level to integer")
+                except Exception as e:
+                    # Log the error and re-raise it so the migration fails clearly
+                    logger.error(f"Error converting {table}.proficiency_level: {e}")
+                    raise
         
         elif vendor == 'sqlite':
             # SQLite: Create new column, copy data, drop old, rename new
@@ -168,15 +198,18 @@ class Migration(migrations.Migration):
         ),
         # Convert proficiency_level fields from CharField to IntegerField
         # Database-agnostic conversion: handles both PostgreSQL (production) and SQLite (tests)
+        # This RunPython handles the actual database conversion
         migrations.RunPython(
             convert_proficiency_level_field,
             reverse_convert_proficiency_level,
-            atomic=True
+            atomic=False  # Set to False to allow the SQL to run outside transaction if needed
         ),
-        # Update Django's migration state to reflect the field type change (database already changed by RunSQL above)
+        # Update Django's migration state to reflect the field type change
+        # The database schema was already changed by RunPython above
         migrations.SeparateDatabaseAndState(
             database_operations=[
-                # Database operations already completed by RunSQL above
+                # Database operations already completed by RunPython above
+                # No database operations needed here - the RunPython function handles it
             ],
             state_operations=[
                 migrations.AlterField(

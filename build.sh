@@ -92,6 +92,23 @@ echo "========================================="
 # Collect static files
 python manage.py collectstatic --no-input
 
+# ===================================================================
+# CRITICAL: Fix proficiency level data before migrations
+# ===================================================================
+# Convert any remaining CEFR string values (A1, A2, B1) to integers
+# (1, 2, 3) before Django tries to alter the column type.
+# This prevents migration errors when the database has string values
+# that can't be automatically converted to integers.
+# ===================================================================
+echo "========================================="
+echo "Fixing proficiency level data before migrations..."
+echo "========================================="
+python fix_proficiency_levels.py || {
+    echo "WARNING: Proficiency level fix script encountered an error."
+    echo "This may be normal if the data is already converted or the tables don't exist yet."
+    echo "Continuing with migrations..."
+}
+
 # Apply database migrations
 python manage.py migrate
 
