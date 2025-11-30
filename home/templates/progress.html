@@ -180,9 +180,9 @@
           </div>
           <div class="card-body text-center">
             <div class="mb-xl">
-              <span class="badge badge-primary" style="font-size: var(--text-2xl); padding: var(--space-lg) var(--space-2xl);">
-                {{ user_profile.get_proficiency_level_display }}
-              </span>
+              <div style="font-size: var(--text-2xl); color: var(--text-primary); font-weight: 500;">
+                Your Proficiency Level: {{ user_profile.proficiency_level }}
+              </div>
             </div>
             {% if latest_onboarding_attempt %}
             <div style="color: var(--text-secondary);">

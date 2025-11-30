@@ -2241,6 +2241,38 @@ def lessons_by_language(request, language):
     return render(request, 'lessons/lessons_by_language.html', context)
 
 
+def _get_custom_lesson_icon(lesson):
+    """
+    Returns custom icon for specific lessons that need unique emojis.
+    
+    This overrides the default skill category icons for lessons that
+    would otherwise have duplicate or overused emojis.
+    """
+    title_lower = lesson.title.lower()
+    
+    # Level 1 custom icons - replace overused book emoji
+    if 'essential' in title_lower and 'word' in title_lower:
+        return '💎'  # Gem for essential words
+    if 'hearing' in title_lower and 'sound' in title_lower:
+        return '👂'  # Ear for hearing sounds
+    
+    # Level 2 - change one family lesson icon to avoid duplicates
+    if 'family' in title_lower and 'conversation' in title_lower:
+        return '💬'  # Keep conversation icon (already unique)
+    if 'family' in title_lower and 'daily' in title_lower and 'word' in title_lower:
+        return '🏡'  # House with garden for family and daily words
+    
+    # Level 3 - change one direction lesson icon and transit announcement
+    if 'giving' in title_lower and 'direction' in title_lower:
+        return '🧭'  # Keep compass for giving directions
+    if 'asking' in title_lower and 'direction' in title_lower:
+        return '🗺️'  # Map for asking directions
+    if 'transit' in title_lower and 'announcement' in title_lower:
+        return '📢'  # Megaphone for transit announcements
+    
+    return None  # No custom icon, use default
+
+
 def _get_lesson_icon(lesson):
     """
     Helper function to determine lesson icon based on topic.
@@ -2252,6 +2284,11 @@ def _get_lesson_icon(lesson):
 
     Returns icon emoji based on lesson topic keywords.
     """
+    # Check for custom icon first (for lessons that need unique emojis)
+    custom_icon = _get_custom_lesson_icon(lesson)
+    if custom_icon:
+        return custom_icon
+    
     # SOFA: Open/Closed - Dictionary mapping (extensible without modification)
     lesson_icon_map = {
         'color': '🎨',
@@ -3169,10 +3206,13 @@ def module_detail(request, language, level):
     lessons = module.get_lessons()
     lesson_data = []
     for lesson in lessons:
+        # Check for custom icon first, then fall back to skill category icon
+        custom_icon = _get_custom_lesson_icon(lesson)
+        icon = custom_icon if custom_icon else (lesson.skill_category.icon if lesson.skill_category else '📚')
         lesson_data.append({
             'lesson': lesson,
             'is_complete': lesson.id in progress.lessons_completed,
-            'skill_icon': lesson.skill_category.icon if lesson.skill_category else '📚',
+            'skill_icon': icon,
             'skill_name': lesson.skill_category.get_name_display() if lesson.skill_category else 'Unknown',
         })
     
@@ -3182,10 +3222,13 @@ def module_detail(request, language, level):
         for lesson in special_lessons:
             # Check if already in lesson_data (shouldn't happen, but safe)
             if not any(item['lesson'].id == lesson.id for item in lesson_data):
+                # Check for custom icon first, then fall back to lesson icon
+                custom_icon = _get_custom_lesson_icon(lesson)
+                icon = custom_icon if custom_icon else _get_lesson_icon(lesson)
                 lesson_data.append({
                     'lesson': lesson,
                     'is_complete': lesson.id in progress.lessons_completed,
-                    'skill_icon': _get_lesson_icon(lesson),
+                    'skill_icon': icon,
                     'skill_name': lesson.title.replace(f' in {language}', '').replace(f' in {language.title()}', ''),
                 })
         # Sort by order to maintain proper sequence

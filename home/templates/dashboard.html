@@ -172,9 +172,9 @@
             {% endif %}
             {% if user_profile and user_profile.has_completed_onboarding %}
               <div>
-                <span class="badge badge-primary" style="font-size: var(--font-size-sm); padding: var(--space-xs) var(--space-md);">
-                  {{ user_profile.get_proficiency_level_display }}
-                </span>
+                <div style="font-size: var(--font-size-sm); color: var(--text-primary);">
+                  Your Proficiency Level: {{ user_profile.proficiency_level }}
+                </div>
               </div>
             {% endif %}
           </div>
