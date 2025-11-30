@@ -447,21 +447,49 @@ class AdaptiveTestService:
             dict: Fixture data or None if not found
         """
         try:
-            language_dir = language.strip().lower()
-            fixture_path = os.path.join(
+            # Validate level is within expected range
+            if not isinstance(level, int) or level < 1 or level > 10:
+                logger.warning('Invalid level: %s (must be 1-10)', level)
+                return None
+            
+            # Construct base fixture root directory
+            fixture_root = os.path.join(
                 settings.BASE_DIR,
                 'home',
                 'fixtures',
                 'curriculum',
+            )
+            
+            # Normalize and get absolute paths for security
+            fixture_root = os.path.abspath(os.path.normpath(fixture_root))
+            
+            # Sanitize language input (only allow alphanumeric and hyphens)
+            language_dir = language.strip().lower()
+            # Remove any path traversal attempts
+            language_dir = language_dir.replace('..', '').replace('/', '').replace('\\', '')
+            
+            # Construct fixture path
+            fixture_path = os.path.join(
+                fixture_root,
                 language_dir,
                 f'level_{level:02d}.json'
             )
             
-            if not os.path.exists(fixture_path):
-                logger.warning('Fixture not found: %s', fixture_path)
+            # Normalize and verify path is within fixture_root (prevent path traversal)
+            normalized_path = os.path.abspath(os.path.normpath(fixture_path))
+            
+            # Ensure the normalized path is within the fixture root directory
+            # Use os.sep to ensure proper path separator handling across platforms
+            if not normalized_path.startswith(fixture_root + os.sep) and normalized_path != fixture_root:
+                logger.warning('Potential path traversal attack blocked: %s (root: %s)', 
+                             normalized_path, fixture_root)
                 return None
             
-            with open(fixture_path, 'r', encoding='utf-8') as f:
+            if not os.path.exists(normalized_path):
+                logger.warning('Fixture not found: %s', normalized_path)
+                return None
+            
+            with open(normalized_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
                 
         except Exception as e:
