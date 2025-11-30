@@ -74,23 +74,52 @@
             align-items: center;
             gap: 0.75rem;
             justify-content: space-between;
-            padding: 1rem;
-            border: 2px solid #e0e0e0;
+            padding: 1rem 1rem 1rem 1.25rem;
+            border: 3px solid #cbd5e1;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
             background: white;
+            position: relative;
+        }
+        .option-label {
+            position: absolute;
+            left: 0.75rem;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            border: 2px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #475569;
+            flex-shrink: 0;
         }
         .option span {
             flex: 1;
+            margin-left: 2.5rem;
         }
         .option:hover {
-            border-color: var(--primary);
+            border-color: #14b8a6;
             background: rgba(20, 184, 166, 0.05);
         }
+        .option:hover .option-label {
+            background: #14b8a6;
+            border-color: #14b8a6;
+            color: white;
+        }
         .option.selected {
-            border-color: var(--primary);
-            background: rgba(20, 184, 166, 0.1);
+            border-color: #14b8a6;
+            background: rgba(20, 184, 166, 0.08);
+            box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+        }
+        .option.selected .option-label {
+            background: #14b8a6;
+            border-color: #14b8a6;
+            color: white;
         }
         .submit-btn {
             display: block;
@@ -154,7 +183,10 @@
                                    value="{{ option.index }}"
                                data-question-id="{{ q.id }}"
                                required
-                               style="margin-right: 0.5rem;">
+                               style="position: absolute; opacity: 0; pointer-events: none;">
+                        <div class="option-label">
+                            {% if forloop.counter0 == 0 %}A{% elif forloop.counter0 == 1 %}B{% elif forloop.counter0 == 2 %}C{% elif forloop.counter0 == 3 %}D{% else %}{{ forloop.counter }}{% endif %}
+                        </div>
                             <span>{{ option.text }}</span>
                             <button class="pronounce-inline-btn" type="button" aria-label="Play pronunciation" data-speak-text="{{ option.text }}" data-speak-lang="{{ speech_code }}">🔊</button>
                     </label>

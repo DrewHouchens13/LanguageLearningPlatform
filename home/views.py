@@ -35,7 +35,7 @@ from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.mail import BadHeaderError, send_mail
 from django.core.validators import validate_email as django_validate_email
 from django.db import DatabaseError, IntegrityError
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.http import (Http404, HttpResponse, HttpResponseRedirect,
                          JsonResponse)
 from django.shortcuts import get_object_or_404, redirect, render
@@ -60,6 +60,8 @@ from .services.chatbot_service import ChatbotService
 from .services.daily_quest_service import DailyQuestService
 from .services.help_service import HelpService
 from .services.onboarding_service import OnboardingService
+from .services.adaptive_test_service import AdaptiveTestService
+from .services.tts_service import TTSService
 
 # Configure logger for security events
 # Note: IP address logging is standard security practice for:
@@ -171,7 +173,12 @@ def _get_or_create_language_profile(user, language):
 def _upsert_language_onboarding(user, language, proficiency_level, completed_at=None):
     """Update onboarding metadata for a specific language."""
     language_profile = _get_or_create_language_profile(user, language)
-    language_profile.proficiency_level = proficiency_level
+    # Convert CEFR level (A1, A2, B1) to integer (1, 2, 3) if needed
+    if isinstance(proficiency_level, str):
+        cefr_to_level = {'A1': 1, 'A2': 2, 'B1': 3}
+        language_profile.proficiency_level = cefr_to_level.get(proficiency_level, 1)
+    else:
+        language_profile.proficiency_level = proficiency_level
     language_profile.has_completed_onboarding = True
     language_profile.onboarding_completed_at = completed_at or timezone.now()
     language_profile.save(update_fields=[
@@ -247,7 +254,14 @@ def _link_onboarding_attempt_to_user(request, user):
                 attempt.completed_at > user_profile.onboarding_completed_at):
 
                 normalized_language = normalize_language_name(attempt.language)
-                user_profile.proficiency_level = attempt.calculated_level
+                
+                # Convert CEFR level (A1, A2, B1) to integer (1, 2, 3) if needed
+                if isinstance(attempt.calculated_level, str):
+                    cefr_to_level = {'A1': 1, 'A2': 2, 'B1': 3}
+                    user_profile.proficiency_level = cefr_to_level.get(attempt.calculated_level, 1)
+                else:
+                    user_profile.proficiency_level = attempt.calculated_level
+                
                 user_profile.has_completed_onboarding = True
                 user_profile.onboarding_completed_at = attempt.completed_at or timezone.now()
                 user_profile.target_language = normalized_language
@@ -573,7 +587,14 @@ def _link_guest_onboarding_to_user(request, user, first_name):
         # Create user profile with onboarding data
         user_profile, _ = UserProfile.objects.get_or_create(user=user)
         normalized_language = normalize_language_name(attempt.language)
-        user_profile.proficiency_level = attempt.calculated_level
+        
+        # Convert CEFR level (A1, A2, B1) to integer (1, 2, 3) if needed
+        if isinstance(attempt.calculated_level, str):
+            cefr_to_level = {'A1': 1, 'A2': 2, 'B1': 3}
+            user_profile.proficiency_level = cefr_to_level.get(attempt.calculated_level, 1)
+        else:
+            user_profile.proficiency_level = attempt.calculated_level
+        
         user_profile.has_completed_onboarding = True
         user_profile.onboarding_completed_at = attempt.completed_at or timezone.now()
         user_profile.target_language = normalized_language
@@ -1510,14 +1531,21 @@ def _update_onboarding_user_profile(request, attempt, *, calculated_level, total
     Args:
         request: Django request object
         attempt: OnboardingAttempt object
-        calculated_level: (keyword-only) Calculated proficiency level
+        calculated_level: (keyword-only) Calculated proficiency level (CEFR string or int)
         total_score: (keyword-only) Total score achieved
         total_possible: (keyword-only) Total possible score
         answers: (keyword-only) List of answer dicts (for time calculation)
     """
     user_profile, _created = UserProfile.objects.get_or_create(user=request.user)
     normalized_language = normalize_language_name(attempt.language)
-    user_profile.proficiency_level = calculated_level
+    
+    # Convert CEFR level (A1, A2, B1) to integer (1, 2, 3) if needed
+    if isinstance(calculated_level, str):
+        cefr_to_level = {'A1': 1, 'A2': 2, 'B1': 3}
+        user_profile.proficiency_level = cefr_to_level.get(calculated_level, 1)
+    else:
+        user_profile.proficiency_level = calculated_level
+    
     user_profile.has_completed_onboarding = True
     user_profile.onboarding_completed_at = timezone.now()
     user_profile.target_language = normalized_language
@@ -1817,17 +1845,107 @@ def _build_language_data(language, lessons):
     }
 
 
-def _build_lesson_icon_entries(lessons):
+def _build_lesson_icon_entries(lessons, user=None):
     """
     Convert a list/queryset of Lesson objects into icon-enriched dicts.
+    
+    Args:
+        lessons: List or QuerySet of Lesson objects
+        user: Optional User object to check completion status
+    
+    Returns:
+        list: List of dicts with 'lesson', 'icon', and 'is_complete' keys
     """
+    from .models import UserModuleProgress, LearningModule
+    
     result = []
+    
+    # Build a map of lesson completions if user is authenticated
+    completion_map = {}
+    if user and user.is_authenticated:
+        # Get all module progress for lessons we're displaying
+        lesson_ids = [lesson.id for lesson in lessons]
+        lesson_modules = {}  # Map lesson_id to module
+        
+        # Get all unique (language, level) combinations from lessons
+        lesson_lang_levels = set(
+            (lesson.language, lesson.difficulty_level) 
+            for lesson in lessons 
+            if lesson.skill_category  # Only curriculum lessons are tracked in modules
+        )
+        
+        # Get modules and progress in bulk
+        for language, level in lesson_lang_levels:
+            try:
+                module = LearningModule.objects.get(language=language, proficiency_level=level)
+                progress = UserModuleProgress.objects.filter(
+                    user=user,
+                    module=module
+                ).first()
+                
+                if progress:
+                    # Map all lessons in this module to their completion status
+                    for lesson in lessons:
+                        if (lesson.language == language and 
+                            lesson.difficulty_level == level and
+                            lesson.skill_category):
+                            completion_map[lesson.id] = lesson.id in progress.lessons_completed
+            except LearningModule.DoesNotExist:
+                pass
+    
     for lesson in lessons:
+        is_complete = completion_map.get(lesson.id, False)
         result.append({
             'lesson': lesson,
-            'icon': _get_lesson_icon(lesson)
+            'icon': _get_lesson_icon(lesson),
+            'is_complete': is_complete
         })
     return result
+
+
+def _organize_lessons_by_level(lesson_entries):
+    """
+    Organize lessons by level, separating optional lessons (shapes/colors).
+    
+    Args:
+        lesson_entries: List of dicts with 'lesson', 'icon', 'is_complete' keys
+    
+    Returns:
+        dict: {
+            'levels': [
+                {'level': 1, 'lessons': [...]},
+                {'level': 2, 'lessons': [...]},
+                ...
+            ],
+            'optional_lessons': [...]
+        }
+    """
+    # Separate optional lessons (shapes and colors)
+    optional_lessons = []
+    regular_lessons = []
+    
+    for entry in lesson_entries:
+        lesson = entry['lesson']
+        # Check if slug starts with 'shapes' or 'colors' (handles 'shapes', 'shapes-french', etc.)
+        if lesson.slug and (lesson.slug.startswith('shapes') or lesson.slug.startswith('colors')):
+            optional_lessons.append(entry)
+        else:
+            regular_lessons.append(entry)
+    
+    # Group regular lessons by level
+    lessons_by_level = defaultdict(list)
+    for entry in regular_lessons:
+        level = entry['lesson'].difficulty_level or 1
+        lessons_by_level[level].append(entry)
+    
+    # Sort levels and build structure
+    sorted_levels = sorted(lessons_by_level.keys())
+    levels = [{'level': level, 'lessons': lessons_by_level[level]} for level in sorted_levels]
+    
+    return {
+        'levels': levels,
+        'optional_lessons': optional_lessons
+    }
 
 
 def _get_user_language_context(request):
@@ -1907,6 +2025,11 @@ def _build_language_dropdown(grouped_lessons, language_profile_map, selected_lan
 def lessons_list(request):
     """
     Display lessons for the user's selected language with inline navigation.
+    
+    Filters lessons based on user's current level:
+    - Shows all lessons for current level
+    - Shows completed lessons from previous levels
+    - Hides lessons from future levels
     """
     # Get all published lessons grouped by language for dropdown + rendering
     all_lessons = Lesson.objects.filter(is_published=True).order_by('language', 'order', 'id')
@@ -1921,21 +2044,75 @@ def lessons_list(request):
 
     # Get user language context (SOFA: Extracted helper)
     language_profile_map, current_language_profile, current_language, _ = _get_user_language_context(request)
-
+    
     # Determine which language to display (query param overrides default)
     requested_language = request.GET.get('language')
     if requested_language:
         selected_language = normalize_language_name(requested_language)
     else:
         selected_language = current_language
-
+    
     # Fallback if no lessons exist for the requested language
     if selected_language not in grouped_lessons and grouped_lessons:
         selected_language = next(iter(grouped_lessons.keys()))
-
+    
     # Get selected language profile for context
     selected_language_profile = language_profile_map.get(selected_language)
-
+    
+    # Filter lessons based on user level
+    selected_language_lessons_list = grouped_lessons.get(selected_language, [])
+    if request.user.is_authenticated:
+        # Convert list to QuerySet for filtering
+        lesson_ids = [lesson.id for lesson in selected_language_lessons_list]
+        lessons_qs = Lesson.objects.filter(id__in=lesson_ids, is_published=True)
+        filtered_lessons = _filter_lessons_by_user_level(lessons_qs, request.user, selected_language)
+        selected_language_lessons_list = list(filtered_lessons.order_by('order', 'id'))
+    
+    # Get progress information for current level
+    module_progress = None
+    test_progress = None
+    if request.user.is_authenticated and selected_language_profile:
+        from .models import LearningModule, UserModuleProgress
+        
+        # Get user's current level
+        current_level = 1
+        if selected_language_profile.proficiency_level:
+            prof_level = selected_language_profile.proficiency_level
+            if isinstance(prof_level, str):
+                cefr_to_level = {'A1': 1, 'A2': 2, 'B1': 3}
+                current_level = cefr_to_level.get(prof_level, 1)
+            else:
+                try:
+                    current_level = int(prof_level)
+                except (ValueError, TypeError):
+                    current_level = 1
+        
+        # Get module progress for current level
+        try:
+            module = LearningModule.objects.get(
+                language=selected_language,
+                proficiency_level=current_level
+            )
+            progress, _ = UserModuleProgress.objects.get_or_create(
+                user=request.user,
+                module=module
+            )
+            module_progress = progress
+            
+            # Calculate test progress (completed lessons / 5)
+            required_lessons = module.get_lessons()
+            completed_count = sum(1 for lesson in required_lessons if lesson.id in progress.lessons_completed)
+            test_progress = {
+                'completed': completed_count,
+                'total': 5,
+                'percentage': (completed_count / 5 * 100) if completed_count > 0 else 0,
+                'can_take_test': progress.all_lessons_completed(),
+                'is_module_complete': progress.is_module_complete,
+                'current_level': current_level,
+            }
+        except LearningModule.DoesNotExist:
+            pass
+    
     # Build language dropdown (SOFA: Extracted helper, inline base URL to reduce R0914)
     language_dropdown = _build_language_dropdown(
         grouped_lessons,
@@ -1944,16 +2121,18 @@ def lessons_list(request):
         reverse('lessons_list'),
         request.user.is_authenticated
     )
-
-    # SOFA: Inline single-use variables to reduce R0914 (19→15 locals)
-    selected_language_lessons_list = grouped_lessons.get(selected_language, [])
+    # Build lesson entries and organize by level
+    lesson_entries = _build_lesson_icon_entries(selected_language_lessons_list, request.user)
+    organized_lessons = _organize_lessons_by_level(lesson_entries)
+    
     context = {
         'languages_with_lessons': languages_with_lessons,
         'language_dropdown': language_dropdown,
         'selected_language': selected_language,
         'selected_language_metadata': get_language_metadata(selected_language),
         'selected_language_profile': selected_language_profile,
-        'selected_language_lessons': _build_lesson_icon_entries(selected_language_lessons_list),
+        'selected_language_lessons': lesson_entries,  # Keep for backward compatibility if needed
+        'organized_lessons': organized_lessons,  # New organized structure
         'selected_language_completed': bool(
             request.user.is_authenticated and selected_language_profile and selected_language_profile.has_completed_onboarding
         ),
@@ -1961,6 +2140,8 @@ def lessons_list(request):
         'current_language_name': current_language,
         'current_language_profile': current_language_profile,
         'current_language_metadata': get_language_metadata(current_language),
+        'module_progress': module_progress,
+        'test_progress': test_progress,
     }
     return render(request, 'lessons_list.html', context)
 
@@ -1971,7 +2152,8 @@ def lessons_by_language(request, language):
 
     🤖 AI ASSISTANT INSTRUCTIONS:
     This view handles language-specific lesson pages. It receives a language
-    name from the URL (lowercase) and displays all lessons for that language.
+    name from the URL (lowercase) and displays lessons for that language,
+    filtered by user's current level.
 
     URL PATTERN: lessons/<str:language>/ (defined in home/urls.py)
     EXAMPLE URLs: /lessons/spanish/, /lessons/french/, /lessons/german/
@@ -1990,8 +2172,9 @@ def lessons_by_language(request, language):
     1. Receives language from URL (e.g., 'spanish')
     2. Capitalizes it to match database format (e.g., 'Spanish')
     3. Queries all published lessons with that language
-    4. Orders by lesson.order field, then by ID
-    5. Passes lessons to template
+    4. Filters by user's current level (shows current + completed previous)
+    5. Orders by lesson.order field, then by ID
+    6. Passes lessons to template
 
     TEMPLATE: home/templates/lessons/lessons_by_language.html
     - Displays lesson cards in a grid
@@ -2040,6 +2223,10 @@ def lessons_by_language(request, language):
         language=language,
         is_published=True
     ).order_by('order', 'id')
+    
+    # Filter lessons based on user level
+    if request.user.is_authenticated:
+        lessons = _filter_lessons_by_user_level(lessons, request.user, language)
 
     lessons_with_icons = _build_lesson_icon_entries(lessons)
 
@@ -2054,6 +2241,38 @@ def lessons_by_language(request, language):
     return render(request, 'lessons/lessons_by_language.html', context)
 
 
+def _get_custom_lesson_icon(lesson):
+    """
+    Returns custom icon for specific lessons that need unique emojis.
+    
+    This overrides the default skill category icons for lessons that
+    would otherwise have duplicate or overused emojis.
+    """
+    title_lower = lesson.title.lower()
+    
+    # Level 1 custom icons - replace overused book emoji
+    if 'essential' in title_lower and 'word' in title_lower:
+        return '💎'  # Gem for essential words
+    if 'hearing' in title_lower and 'sound' in title_lower:
+        return '👂'  # Ear for hearing sounds
+    
+    # Level 2 - change one family lesson icon to avoid duplicates
+    if 'family' in title_lower and 'conversation' in title_lower:
+        return '💬'  # Keep conversation icon (already unique)
+    if 'family' in title_lower and 'daily' in title_lower and 'word' in title_lower:
+        return '🏡'  # House with garden for family and daily words
+    
+    # Level 3 - change one direction lesson icon and transit announcement
+    if 'giving' in title_lower and 'direction' in title_lower:
+        return '🧭'  # Keep compass for giving directions
+    if 'asking' in title_lower and 'direction' in title_lower:
+        return '🗺️'  # Map for asking directions
+    if 'transit' in title_lower and 'announcement' in title_lower:
+        return '📢'  # Megaphone for transit announcements
+    
+    return None  # No custom icon, use default
+
+
 def _get_lesson_icon(lesson):
     """
     Helper function to determine lesson icon based on topic.
@@ -2065,6 +2284,11 @@ def _get_lesson_icon(lesson):
 
     Returns icon emoji based on lesson topic keywords.
     """
+    # Check for custom icon first (for lessons that need unique emojis)
+    custom_icon = _get_custom_lesson_icon(lesson)
+    if custom_icon:
+        return custom_icon
+    
     # SOFA: Open/Closed - Dictionary mapping (extensible without modification)
     lesson_icon_map = {
         'color': '🎨',
@@ -2079,12 +2303,65 @@ def _get_lesson_icon(lesson):
         'time': '🕐',
         'weather': '🌤️',
         'clothing': '👕',
+        'body': '👤',
+        'house': '🏠',
+        'home': '🏠',
+        'room': '🚪',
+        'school': '🏫',
+        'work': '💼',
+        'job': '💼',
+        'travel': '✈️',
+        'transport': '🚗',
+        'car': '🚗',
+        'bus': '🚌',
+        'train': '🚂',
+        'plane': '✈️',
+        'sport': '⚽',
+        'sports': '⚽',
+        'music': '🎵',
+        'movie': '🎬',
+        'film': '🎬',
+        'book': '📖',
+        'reading': '📖',
+        'shopping': '🛒',
+        'store': '🛒',
+        'restaurant': '🍽️',
+        'cafe': '☕',
+        'drink': '🥤',
+        'fruit': '🍊',
+        'vegetable': '🥕',
+        'nature': '🌳',
+        'tree': '🌳',
+        'flower': '🌸',
+        'country': '🌍',
+        'city': '🏙️',
+        'place': '📍',
+        'direction': '🧭',
+        'emotion': '😊',
+        'feeling': '😊',
+        'health': '🏥',
+        'doctor': '🏥',
+        'hospital': '🏥',
+        'hobby': '🎨',
+        'activity': '🎯',
+        'day': '☀️',
+        'night': '🌙',
+        'season': '🍂',
+        'month': '📅',
+        'week': '📆',
+        'grammar': '📝',
+        'vocabulary': '📚',
+        'pronunciation': '🗣️',
+        'conversation': '💬',
+        'question': '❓',
+        'answer': '💡',
     }
 
     slug = (lesson.slug or '').lower()
     title = lesson.title.lower()
 
-    # SOFA: DRY - Single loop replaces 12 duplicate if statements
+    # SOFA: DRY - Single loop replaces duplicate if statements
+    # Check for exact matches first, then partial matches
     for keyword, icon in lesson_icon_map.items():
         if keyword in slug or keyword in title:
             return icon
@@ -2133,10 +2410,22 @@ def lesson_quiz(request, lesson_id):
         'speech_code': metadata.get('speech_code', 'en-US'),
     }
 
-    template_candidates = [f'lessons/{lesson.slug}/quiz.html']
-    if '-' in (lesson.slug or ''):
-        base_slug = lesson.slug.split('-')[0]
-        template_candidates.append(f'lessons/{base_slug}/quiz.html')
+    # Build template candidates - curriculum lessons use generic template
+    template_candidates = []
+    
+    # If lesson has skill_category, it's a curriculum lesson - use generic template
+    if lesson.skill_category:
+        template_candidates.append('curriculum/lesson_quiz.html')
+    
+    # Also try slug-based templates for backward compatibility (old lessons)
+    if lesson.slug:
+        template_candidates.append(f'lessons/{lesson.slug}/quiz.html')
+        if '-' in lesson.slug:
+            base_slug = lesson.slug.split('-')[0]
+            template_candidates.append(f'lessons/{base_slug}/quiz.html')
+    
+    # Always include generic fallback as last resort
+    template_candidates.append('curriculum/lesson_quiz.html')
 
     try:
         template = select_template(template_candidates)
@@ -2682,3 +2971,709 @@ def chatbot_query(request):
             {'error': 'An error occurred while processing your request'},
             status=500
         )
+
+
+# ============================================
+# CURRICULUM SYSTEM VIEWS
+# ============================================
+
+@login_required
+def curriculum_overview(request, language):
+    """
+    Display all 10 levels for a language curriculum.
+    
+    Shows level progress, completion status, and navigation to each module.
+    
+    Args:
+        request: HTTP request object
+        language: Target language (e.g., 'Spanish', 'French')
+    
+    Returns:
+        HttpResponse: Rendered curriculum overview template
+    """
+    from .models import LearningModule, UserModuleProgress
+    
+    # Normalize language name
+    language = language.strip().title()
+    
+    # Get all modules for this language
+    modules = LearningModule.objects.filter(
+        language=language
+    ).order_by('proficiency_level')
+    
+    if not modules.exists():
+        messages.info(request, f'No curriculum available for {language} yet.')
+        return redirect('lessons_list')
+    
+    # Get user's progress for each module
+    user_progress = {
+        p.module_id: p for p in UserModuleProgress.objects.filter(
+            user=request.user,
+            module__language=language
+        ).select_related('module')
+    }
+    
+    # Build module data with progress
+    module_data = []
+    for module in modules:
+        progress = user_progress.get(module.id)
+        module_data.append({
+            'module': module,
+            'progress': progress,
+            'lessons_completed': len(progress.lessons_completed) if progress else 0,
+            'is_complete': progress.is_module_complete if progress else False,
+            'best_score': progress.best_test_score if progress else 0,
+            'is_locked': module.proficiency_level > 1 and not _is_previous_level_complete(
+                user_progress, language, module.proficiency_level
+            ),
+        })
+    
+    # Get user's current level for this language
+    lang_profile = UserLanguageProfile.objects.filter(
+        user=request.user,
+        language=language
+    ).first()
+    current_level = lang_profile.proficiency_level if lang_profile else 1
+    
+    context = {
+        'language': language,
+        'modules': module_data,
+        'current_level': current_level,
+    }
+    
+    return render(request, 'curriculum/overview.html', context)
+
+
+def _is_previous_level_complete(user_progress: dict, language: str, level: int) -> bool:
+    """Check if the previous level is complete."""
+    if level <= 1:
+        return True
+    
+    for module_id, progress in user_progress.items():
+        if (progress.module.language == language and 
+            progress.module.proficiency_level == level - 1):
+            return progress.is_module_complete
+    
+    return False
+
+
+def _filter_lessons_by_user_level(lessons, user, language):
+    """
+    Filter lessons based on user's current level and completion status.
+    
+    Rules:
+    - Show all lessons for user's current level
+    - Show completed lessons from previous levels
+    - Hide lessons from future levels
+    - Always show shapes and colors if they're level 1
+    
+    Args:
+        lessons: QuerySet of Lesson objects
+        user: User object (can be AnonymousUser)
+        language: Target language
+        
+    Returns:
+        QuerySet: Filtered lessons
+    """
+    from .models import UserLanguageProfile, UserModuleProgress, LearningModule
+    
+    if not user.is_authenticated:
+        # For anonymous users, only show level 1 lessons
+        return lessons.filter(difficulty_level=1)
+    
+    # Get user's current level for this language
+    lang_profile = UserLanguageProfile.objects.filter(
+        user=user,
+        language=language
+    ).first()
+    
+    # Ensure current_level is always an integer (default to 1 if None)
+    # Handle legacy CEFR string values (A1, A2, B1) by converting to integers
+    if lang_profile and lang_profile.proficiency_level is not None:
+        prof_level = lang_profile.proficiency_level
+        # If it's a string (legacy CEFR format), convert it
+        if isinstance(prof_level, str):
+            cefr_to_level = {'A1': 1, 'A2': 2, 'B1': 3}
+            current_level = cefr_to_level.get(prof_level, 1)
+        else:
+            # It's already an integer or can be converted
+            try:
+                current_level = int(prof_level)
+            except (ValueError, TypeError):
+                current_level = 1
+    else:
+        current_level = 1
+    
+    # Get all completed lesson IDs across all levels for this language
+    completed_lesson_ids = set()
+    user_progress = UserModuleProgress.objects.filter(
+        user=user,
+        module__language=language
+    ).select_related('module')
+    
+    for progress in user_progress:
+        completed_lesson_ids.update(progress.lessons_completed)
+    
+    # Filter lessons:
+    # 1. Current level lessons (always visible)
+    # 2. Previous level lessons that are completed
+    # 3. Shapes and colors if level 1 (always visible at level 1+)
+    filtered_lessons = []
+    for lesson in lessons:
+        # Ensure difficulty_level is an integer (handle any legacy string values)
+        try:
+            lesson_level = int(lesson.difficulty_level) if lesson.difficulty_level is not None else 1
+        except (ValueError, TypeError):
+            # If difficulty_level is invalid, default to 1
+            lesson_level = 1
+        
+        # Check if this is a shapes/colors lesson (handles 'shapes', 'shapes-french', etc.)
+        is_shapes_colors = lesson.slug and (lesson.slug.startswith('shapes') or lesson.slug.startswith('colors'))
+        
+        if is_shapes_colors and lesson_level == 1:
+            # Always show shapes/colors if user is at least level 1
+            if current_level >= 1:
+                filtered_lessons.append(lesson.id)
+        elif lesson_level == current_level:
+            # Always show current level lessons
+            filtered_lessons.append(lesson.id)
+        elif lesson_level < current_level:
+            # Show previous level lessons only if completed
+            if lesson.id in completed_lesson_ids:
+                filtered_lessons.append(lesson.id)
+    
+    return lessons.filter(id__in=filtered_lessons)
+
+
+def _get_level_1_special_lessons(language):
+    """
+    Get shapes and colors lessons for level 1.
+    
+    These are special lessons that should always appear in level 1
+    alongside the 5 skill-based lessons.
+    
+    Args:
+        language: Target language
+        
+    Returns:
+        QuerySet: Shapes and colors lessons for this language at level 1
+    """
+    from .models import Lesson
+    
+    return Lesson.objects.filter(
+        language=language,
+        difficulty_level=1,
+        is_published=True
+    ).filter(
+        Q(slug__startswith='shapes') | Q(slug__startswith='colors')
+    ).order_by('order', 'id')
+
+
+@login_required
+def module_detail(request, language, level):
+    """
+    Display a learning module with its 5 lessons and test access.
+    
+    Shows lesson completion status and enables test-taking when ready.
+    For level 1, also includes shapes and colors lessons.
+    
+    Args:
+        request: HTTP request object
+        language: Target language
+        level: Proficiency level (1-10)
+    
+    Returns:
+        HttpResponse: Rendered module detail template
+    """
+    from .models import LearningModule, UserModuleProgress, SkillCategory
+    
+    language = language.strip().title()
+    
+    # Get the module
+    module = get_object_or_404(
+        LearningModule,
+        language=language,
+        proficiency_level=level
+    )
+    
+    # Get user's progress
+    progress, _ = UserModuleProgress.objects.get_or_create(
+        user=request.user,
+        module=module
+    )
+    
+    # Get lessons for this module with completion status
+    lessons = module.get_lessons()
+    lesson_data = []
+    for lesson in lessons:
+        # Check for custom icon first, then fall back to skill category icon
+        custom_icon = _get_custom_lesson_icon(lesson)
+        icon = custom_icon if custom_icon else (lesson.skill_category.icon if lesson.skill_category else '📚')
+        lesson_data.append({
+            'lesson': lesson,
+            'is_complete': lesson.id in progress.lessons_completed,
+            'skill_icon': icon,
+            'skill_name': lesson.skill_category.get_name_display() if lesson.skill_category else 'Unknown',
+        })
+    
+    # For level 1, also include optional lessons
+    if level == 1:
+        special_lessons = _get_level_1_special_lessons(language)
+        for lesson in special_lessons:
+            # Check if already in lesson_data (shouldn't happen, but safe)
+            if not any(item['lesson'].id == lesson.id for item in lesson_data):
+                # Check for custom icon first, then fall back to lesson icon
+                custom_icon = _get_custom_lesson_icon(lesson)
+                icon = custom_icon if custom_icon else _get_lesson_icon(lesson)
+                lesson_data.append({
+                    'lesson': lesson,
+                    'is_complete': lesson.id in progress.lessons_completed,
+                    'skill_icon': icon,
+                    'skill_name': lesson.title.replace(f' in {language}', '').replace(f' in {language.title()}', ''),
+                })
+        # Sort by order to maintain proper sequence
+        lesson_data.sort(key=lambda x: (x['lesson'].order, x['lesson'].id))
+    
+    # Check if test is available
+    test_service = AdaptiveTestService()
+    test_status = test_service.can_take_test(request.user, module)
+    
+    # Calculate progress toward test (only count the 5 required skill-based lessons)
+    required_lessons = module.get_lessons()
+    completed_required = sum(1 for lesson in required_lessons if lesson.id in progress.lessons_completed)
+    lessons_remaining = max(0, 5 - completed_required)
+    
+    context = {
+        'language': language,
+        'level': level,
+        'module': module,
+        'progress': progress,
+        'lessons': lesson_data,
+        'can_take_test': test_status['can_take'],
+        'test_status_reason': test_status['reason'],
+        'retry_available_at': test_status.get('retry_available_at'),
+        'completed_required': completed_required,
+        'lessons_remaining': lessons_remaining,
+    }
+    
+    return render(request, 'curriculum/module_detail.html', context)
+
+
+@login_required
+def lesson_by_skill(request, language, level, skill):
+    """
+    Display a lesson by skill category within a level.
+    
+    Args:
+        request: HTTP request object
+        language: Target language
+        level: Proficiency level (1-10)
+        skill: Skill category (vocabulary, grammar, etc.)
+    
+    Returns:
+        HttpResponse: Rendered lesson template
+    """
+    from .models import SkillCategory, UserModuleProgress, LearningModule
+    
+    language = language.strip().title()
+    skill = skill.strip().lower()
+    
+    # Get the skill category
+    skill_category = get_object_or_404(SkillCategory, name=skill)
+    
+    # Get the lesson
+    lesson = get_object_or_404(
+        Lesson,
+        language=language,
+        difficulty_level=level,
+        skill_category=skill_category,
+        is_published=True
+    )
+    
+    # Get module progress for marking completion
+    module = LearningModule.objects.filter(
+        language=language,
+        proficiency_level=level
+    ).first()
+    
+    progress = None
+    if module:
+        progress, _ = UserModuleProgress.objects.get_or_create(
+            user=request.user,
+            module=module
+        )
+    
+    # Get flashcards and quiz questions
+    flashcards = lesson.cards.all().order_by('order')
+    quiz_questions = lesson.quiz_questions.all().order_by('order')
+    
+    context = {
+        'language': language,
+        'level': level,
+        'skill': skill,
+        'lesson': lesson,
+        'flashcards': flashcards,
+        'quiz_questions': quiz_questions,
+        'progress': progress,
+        'is_complete': progress and lesson.id in progress.lessons_completed,
+    }
+    
+    # Choose template based on skill type
+    template_name = f'curriculum/lesson_{skill}.html'
+    try:
+        return render(request, template_name, context)
+    except TemplateDoesNotExist:
+        return render(request, 'curriculum/lesson_base.html', context)
+
+
+@login_required
+@require_POST
+def complete_curriculum_lesson(request, language, level, skill):
+    """
+    Mark a curriculum lesson as complete and award XP.
+    
+    Args:
+        request: HTTP request object
+        language: Target language
+        level: Proficiency level
+        skill: Skill category
+    
+    Returns:
+        JsonResponse: Success/failure response
+    """
+    from .models import LearningModule, UserModuleProgress, SkillCategory
+    
+    language = language.strip().title()
+    skill = skill.strip().lower()
+    
+    # Get the lesson
+    skill_category = get_object_or_404(SkillCategory, name=skill)
+    lesson = get_object_or_404(
+        Lesson,
+        language=language,
+        difficulty_level=level,
+        skill_category=skill_category,
+        is_published=True
+    )
+    
+    # Get module progress
+    module = get_object_or_404(
+        LearningModule,
+        language=language,
+        proficiency_level=level
+    )
+    
+    progress, _ = UserModuleProgress.objects.get_or_create(
+        user=request.user,
+        module=module
+    )
+    
+    # Mark lesson complete
+    if lesson.id not in progress.lessons_completed:
+        progress.mark_lesson_complete(lesson.id)
+        
+        # Award XP
+        if hasattr(request.user, 'profile'):
+            xp_result = request.user.profile.award_xp(lesson.xp_value)
+        else:
+            xp_result = {'xp_awarded': 0}
+        
+        # Record lesson completion
+        LessonCompletion.objects.create(
+            user=request.user,
+            lesson_id=str(lesson.id),
+            lesson_title=lesson.title,
+            language=language,
+            duration_minutes=5  # Estimated
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Lesson completed! +{xp_result.get("xp_awarded", 0)} XP',
+            'lessons_completed': len(progress.lessons_completed),
+            'can_take_test': progress.all_lessons_completed(),
+        })
+    
+    return JsonResponse({
+        'success': True,
+        'message': 'Lesson already completed',
+        'lessons_completed': len(progress.lessons_completed),
+        'can_take_test': progress.all_lessons_completed(),
+    })
+
+
+@login_required
+def module_test_generate(request, language, level):
+    """
+    Generate the adaptive test asynchronously (called from loading page).
+    
+    Args:
+        request: HTTP request object
+        language: Target language
+        level: Proficiency level
+    
+    Returns:
+        JsonResponse: Success/error status
+    """
+    import json
+    from django.http import JsonResponse
+    from .models import LearningModule
+    
+    language = language.strip().title()
+    
+    # Get the module
+    module = get_object_or_404(
+        LearningModule,
+        language=language,
+        proficiency_level=level
+    )
+    
+    # Check if user can take the test
+    test_service = AdaptiveTestService()
+    test_status = test_service.can_take_test(request.user, module)
+    
+    if not test_status['can_take']:
+        return JsonResponse({
+            'success': False,
+            'error': test_status['reason']
+        }, status=403)
+    
+    try:
+        # Generate the test
+        test_data = test_service.generate_adaptive_test(
+            request.user, language, level
+        )
+        
+        # Store test data in session for validation on submit
+        request.session[f'test_{language}_{level}'] = test_data
+        request.session.modified = True
+        
+        return JsonResponse({
+            'success': True,
+            'test_id': test_data.get('test_id'),
+            'total_questions': test_data.get('total_questions', 0)
+        })
+    except Exception as e:
+        logger.error('Error generating test: %s', str(e), exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': 'Failed to generate test. Please try again.'
+        }, status=500)
+
+
+@login_required
+def module_test(request, language, level):
+    """
+    Display the adaptive test for a module.
+    
+    Shows loading page if test not yet generated, otherwise displays the test.
+    
+    Args:
+        request: HTTP request object
+        language: Target language
+        level: Proficiency level
+    
+    Returns:
+        HttpResponse: Rendered test template, loading page, or redirect if not eligible
+    """
+    from .models import LearningModule
+    
+    language = language.strip().title()
+    
+    # Get the module
+    module = get_object_or_404(
+        LearningModule,
+        language=language,
+        proficiency_level=level
+    )
+    
+    # Check if user can take the test
+    test_service = AdaptiveTestService()
+    test_status = test_service.can_take_test(request.user, module)
+    
+    if not test_status['can_take']:
+        messages.warning(request, test_status['reason'])
+        return redirect('module_detail', language=language, level=level)
+    
+    # Check if test is already generated in session
+    session_key = f'test_{language}_{level}'
+    test_data = request.session.get(session_key)
+    
+    # If test not generated yet, show loading page
+    if not test_data:
+        context = {
+            'language': language,
+            'level': level,
+            'module': module,
+        }
+        return render(request, 'curriculum/test_loading.html', context)
+    
+    # Test is ready, display it
+    context = {
+        'language': language,
+        'level': level,
+        'module': module,
+        'test': test_data,
+        'questions': test_data['questions'],
+        'time_limit': test_data['time_limit_minutes'],
+    }
+    
+    return render(request, 'curriculum/test.html', context)
+
+
+@login_required
+@require_POST
+def submit_module_test(request, language, level):
+    """
+    Submit and evaluate a module test.
+    
+    Args:
+        request: HTTP request object
+        language: Target language
+        level: Proficiency level
+    
+    Returns:
+        JsonResponse: Test results with score and progression info
+    """
+    from .models import LearningModule
+    
+    language = language.strip().title()
+    
+    # Get the module
+    module = get_object_or_404(
+        LearningModule,
+        language=language,
+        proficiency_level=level
+    )
+    
+    # Get test data from session
+    session_key = f'test_{language}_{level}'
+    test_data = request.session.get(session_key)
+    
+    if not test_data:
+        return JsonResponse({
+            'error': 'Test session expired. Please start a new test.'
+        }, status=400)
+    
+    # Parse answers from request
+    try:
+        data = json.loads(request.body)
+        user_answers = data.get('answers', [])
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid request data'}, status=400)
+    
+    # Grade answers
+    questions = test_data['questions']
+    graded_answers = []
+    
+    for answer in user_answers:
+        q_id = answer.get('question_id')
+        user_answer = answer.get('answer_index')
+        
+        # Find the question
+        question = next((q for q in questions if q['id'] == q_id), None)
+        if question:
+            is_correct = user_answer == question['correct_index']
+            graded_answers.append({
+                'question_id': q_id,
+                'is_correct': is_correct,
+                'skill': question.get('skill', 'vocabulary'),
+                'correct_index': question['correct_index'],
+                'user_answer': user_answer,
+            })
+    
+    # Evaluate with the service
+    test_service = AdaptiveTestService()
+    result = test_service.evaluate_test(request.user, module, graded_answers)
+    
+    # Clear test from session
+    del request.session[session_key]
+    
+    # Return results
+    return JsonResponse({
+        'success': True,
+        'score': result['score'],
+        'correct': result['correct'],
+        'total': result['total'],
+        'passed': result['passed'],
+        'new_level': result['new_level'],
+        'feedback': result['feedback'],
+        'can_retry_at': result['can_retry_at'].isoformat() if result['can_retry_at'] else None,
+        'redirect_url': reverse('test_results', kwargs={
+            'language': language,
+            'level': level,
+        }) if result['passed'] else None,
+    })
+
+
+@login_required
+def test_results(request, language, level):
+    """
+    Display test results page.
+    
+    Args:
+        request: HTTP request object
+        language: Target language
+        level: Proficiency level
+    
+    Returns:
+        HttpResponse: Rendered results template
+    """
+    from .models import LearningModule, UserModuleProgress
+    
+    language = language.strip().title()
+    
+    module = get_object_or_404(
+        LearningModule,
+        language=language,
+        proficiency_level=level
+    )
+    
+    progress = UserModuleProgress.objects.filter(
+        user=request.user,
+        module=module
+    ).first()
+    
+    context = {
+        'language': language,
+        'level': level,
+        'module': module,
+        'progress': progress,
+        'passed': progress.is_module_complete if progress else False,
+        'best_score': progress.best_test_score if progress else 0,
+        'next_level': level + 1 if level < 10 else None,
+    }
+    
+    return render(request, 'curriculum/test_results.html', context)
+
+
+@login_required
+@require_POST
+def generate_tts(request):
+    """
+    API endpoint for text-to-speech generation.
+    
+    Args:
+        request: HTTP request with JSON body {text, language}
+    
+    Returns:
+        JsonResponse: Audio data or browser TTS configuration
+    """
+    try:
+        data = json.loads(request.body)
+        text = data.get('text', '').strip()
+        language = data.get('language', 'Spanish')
+        
+        if not text:
+            return JsonResponse({'error': 'Text is required'}, status=400)
+        
+        tts_service = TTSService()
+        result = tts_service.generate_audio(text, language)
+        
+        return JsonResponse(result)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        logger.error('TTS generation error: %s', str(e))
+        return JsonResponse({'error': 'TTS generation failed'}, status=500)

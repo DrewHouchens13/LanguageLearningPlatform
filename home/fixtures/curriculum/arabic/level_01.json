@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Arabic",
+    "level": 1,
+    "theme": "Basics",
+    "description": "Essential greetings, numbers 1-10, colors, and basic phrases to start your Arabic journey."
+  },
+  "module": {
+    "name": "Basics",
+    "description": "Learn essential greetings, numbers, colors, and basic phrases to start your Arabic journey.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Essential Arabic Words",
+      "description": "Build your foundation with the most important Arabic words including greetings, numbers, and colors.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Hello", "back": "مرحبا (Marhaba)", "order": 1},
+        {"front": "Goodbye", "back": "مع السلامة (Ma'a salama)", "order": 2},
+        {"front": "Please", "back": "من فضلك (Min fadlik)", "order": 3},
+        {"front": "Thank you", "back": "شكراً (Shukran)", "order": 4},
+        {"front": "Yes", "back": "نعم (Na'am)", "order": 5},
+        {"front": "No", "back": "لا (La)", "order": 6},
+        {"front": "Good morning", "back": "صباح الخير (Sabah al-khayr)", "order": 7},
+        {"front": "Good evening", "back": "مساء الخير (Masa' al-khayr)", "order": 8},
+        {"front": "Excuse me", "back": "عفواً (Afwan)", "order": 9},
+        {"front": "I'm sorry", "back": "آسف (Aasif)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Hello' in Arabic?",
+          "options": ["مع السلامة", "مرحبا", "شكراً", "من فضلك"],
+          "correct_index": 1,
+          "explanation": "'مرحبا' (Marhaba) is a common way to say hello in Arabic.",
+          "order": 1
+        },
+        {
+          "question": "What does 'شكراً' (Shukran) mean?",
+          "options": ["Please", "Goodbye", "Thank you", "Hello"],
+          "correct_index": 2,
+          "explanation": "'شكراً' means 'Thank you' in Arabic.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'Goodbye' in Arabic?",
+          "options": ["مرحبا", "صباح الخير", "مع السلامة", "شكراً"],
+          "correct_index": 2,
+          "explanation": "'مع السلامة' (Ma'a salama) means 'go with peace/safety'.",
+          "order": 3
+        },
+        {
+          "question": "What is 'Please' in Arabic?",
+          "options": ["شكراً", "عفواً", "من فضلك", "نعم"],
+          "correct_index": 2,
+          "explanation": "'من فضلك' (Min fadlik) means 'please'.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'Good morning' in Arabic?",
+          "options": ["مساء الخير", "صباح الخير", "مرحبا", "مع السلامة"],
+          "correct_index": 1,
+          "explanation": "'صباح الخير' (Sabah al-khayr) means 'morning of goodness'.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Basic Arabic Grammar",
+      "description": "Learn fundamental grammar concepts: the definite article, gender, and basic sentence structure.",
+      "order": 2,
+      "flashcards": [
+        {"front": "the (definite article)", "back": "الـ (Al-)", "order": 1},
+        {"front": "I", "back": "أنا (Ana)", "order": 2},
+        {"front": "you (masc.)", "back": "أنتَ (Anta)", "order": 3},
+        {"front": "you (fem.)", "back": "أنتِ (Anti)", "order": 4},
+        {"front": "he/it", "back": "هو (Huwa)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "What is the Arabic definite article (the)?",
+          "options": ["إن", "الـ", "و", "في"],
+          "correct_index": 1,
+          "explanation": "'الـ' (Al-) is added to the beginning of nouns to mean 'the'.",
+          "order": 1
+        },
+        {
+          "question": "How many grammatical genders does Arabic have?",
+          "options": ["One", "Two", "Three", "Four"],
+          "correct_index": 1,
+          "explanation": "Arabic has two genders: masculine and feminine.",
+          "order": 2
+        },
+        {
+          "question": "Arabic is written from:",
+          "options": ["Left to right", "Right to left", "Top to bottom", "Any direction"],
+          "correct_index": 1,
+          "explanation": "Arabic is written from right to left.",
+          "order": 3
+        },
+        {
+          "question": "How do you say 'I am a student' in Arabic?",
+          "options": ["أنا طالب", "طالب أنا", "أنا هو طالب", "طالب"],
+          "correct_index": 0,
+          "explanation": "'أنا طالب' (Ana talib) - no 'am' needed in present tense.",
+          "order": 4
+        },
+        {
+          "question": "In Arabic, the verb 'to be' in present tense is:",
+          "options": ["Always required", "Usually omitted", "Only for questions", "Only for negatives"],
+          "correct_index": 1,
+          "explanation": "The present tense of 'to be' is usually omitted in Arabic.",
+          "order": 5
+        },
+        {
+          "question": "Feminine nouns in Arabic often end with:",
+          "options": ["ون", "ة (ta marbuta)", "ان", "ي"],
+          "correct_index": 1,
+          "explanation": "Many feminine nouns end in 'ة' (ta marbuta).",
+          "order": 6
+        },
+        {
+          "question": "Which is the correct way to say 'the book' in Arabic?",
+          "options": ["كتاب ال", "الكتاب", "كتاب", "ال كتاب"],
+          "correct_index": 1,
+          "explanation": "'الكتاب' (al-kitab) - the article attaches to the noun.",
+          "order": 7
+        },
+        {
+          "question": "Arabic nouns have how many numbers?",
+          "options": ["One (singular only)", "Two (singular/plural)", "Three (singular/dual/plural)", "Four"],
+          "correct_index": 2,
+          "explanation": "Arabic has singular, dual (two), and plural forms.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "First Conversations",
+      "description": "Practice essential phrases for introducing yourself and basic social interactions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "My name is...", "back": "اسمي... (Ismi...)", "order": 1},
+        {"front": "What is your name?", "back": "ما اسمك؟ (Ma ismuk?)", "order": 2},
+        {"front": "Nice to meet you", "back": "تشرفنا (Tasharrafna)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'My name is Ahmed' in Arabic?",
+          "options": ["أنا اسم أحمد", "اسمي أحمد", "أحمد اسمي", "اسم أنا أحمد"],
+          "correct_index": 1,
+          "explanation": "'اسمي' (Ismi) means 'my name is'.",
+          "order": 1
+        },
+        {
+          "question": "What does 'ما اسمك؟' mean?",
+          "options": ["How are you?", "What is your name?", "Where are you from?", "How old are you?"],
+          "correct_index": 1,
+          "explanation": "'ما اسمك؟' (Ma ismuk?) asks 'What is your name?'",
+          "order": 2
+        },
+        {
+          "question": "How would you respond to 'كيف حالك؟' (How are you)?",
+          "options": ["اسمي محمد", "بخير، شكراً", "تشرفنا", "عفواً"],
+          "correct_index": 1,
+          "explanation": "'بخير، شكراً' (Bikhayr, shukran) means 'Fine, thank you.'",
+          "order": 3
+        },
+        {
+          "question": "What does 'تشرفنا' mean?",
+          "options": ["Nice to meet you", "Thank you very much", "I'm sorry", "Goodbye"],
+          "correct_index": 0,
+          "explanation": "'تشرفنا' (Tasharrafna) means 'We are honored' = Nice to meet you.",
+          "order": 4
+        },
+        {
+          "question": "How do you ask 'Where are you from?' in Arabic?",
+          "options": ["كيف حالك؟", "كم الساعة؟", "من أين أنت؟", "كم عمرك؟"],
+          "correct_index": 2,
+          "explanation": "'من أين أنت؟' (Min ayna anta?) asks about origin.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Simple Arabic",
+      "description": "Practice reading comprehension with simple Arabic texts and the Arabic alphabet.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Open", "back": "مفتوح (Maftooh)", "order": 1},
+        {"front": "Closed", "back": "مغلق (Mughlaq)", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'الكلب كبير.' What is big?",
+          "options": ["The cat", "The dog", "The house", "The car"],
+          "correct_index": 1,
+          "explanation": "'الكلب' (al-kalb) means 'the dog'. The sentence says the dog is big.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'مريم لديها قطة سوداء.' What color is the cat?",
+          "options": ["White", "Brown", "Black", "Gray"],
+          "correct_index": 2,
+          "explanation": "'سوداء' (sawda') means 'black'. Maryam has a black cat.",
+          "order": 2
+        },
+        {
+          "question": "Read: 'البيت صغير لكنه جميل.' Is the house big or small?",
+          "options": ["Big", "Small", "Medium", "Very big"],
+          "correct_index": 1,
+          "explanation": "'صغير' (saghir) means 'small'. The house is small but beautiful.",
+          "order": 3
+        },
+        {
+          "question": "Read the sign: 'مخرج'. What does it indicate?",
+          "options": ["Entrance", "Exit", "Bathroom", "Danger"],
+          "correct_index": 1,
+          "explanation": "'مخرج' (makhraj) means 'exit'.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'أنا آكل تفاحة.' What is the person eating?",
+          "options": ["An orange", "A banana", "An apple", "A pear"],
+          "correct_index": 2,
+          "explanation": "'تفاحة' (tuffaha) means 'apple'. 'آكل' means 'I eat'.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Hearing Arabic Sounds",
+      "description": "Train your ear to recognize Arabic pronunciation and unique sounds.",
+      "order": 5,
+      "flashcards": [
+        {"front": "One", "back": "واحد (Wahid)", "order": 1},
+        {"front": "Two", "back": "اثنان (Ithnan)", "order": 2},
+        {"front": "Three", "back": "ثلاثة (Thalatha)", "order": 3},
+        {"front": "Four", "back": "أربعة (Arba'a)", "order": 4},
+        {"front": "Five", "back": "خمسة (Khamsa)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Listen: Which number sounds like 'WA-hid'?",
+          "options": ["اثنان", "واحد", "ثلاثة", "صفر"],
+          "correct_index": 1,
+          "explanation": "'واحد' (wahid = one) is pronounced 'WA-hid'.",
+          "order": 1
+        },
+        {
+          "question": "The Arabic letter 'ع' (ayn) is pronounced:",
+          "options": ["Like English 'a'", "A deep throat sound", "Silent", "Like 'w'"],
+          "correct_index": 1,
+          "explanation": "'ع' (ayn) is a voiced pharyngeal sound, deep in the throat.",
+          "order": 2
+        },
+        {
+          "question": "How is the Arabic 'خ' (kha) pronounced?",
+          "options": ["Like 'k'", "Like a guttural 'ch' (as in Scottish 'loch')", "Like 'h'", "Silent"],
+          "correct_index": 1,
+          "explanation": "'خ' is like the 'ch' in Scottish 'loch' or German 'Bach'.",
+          "order": 3
+        },
+        {
+          "question": "Arabic has how many letters in its alphabet?",
+          "options": ["24", "26", "28", "30"],
+          "correct_index": 2,
+          "explanation": "The Arabic alphabet has 28 letters.",
+          "order": 4
+        },
+        {
+          "question": "Which number sounds like 'KHAM-sa'?",
+          "options": ["أربعة", "ستة", "خمسة", "سبعة"],
+          "correct_index": 2,
+          "explanation": "'خمسة' (khamsa = five) is pronounced 'KHAM-sa'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

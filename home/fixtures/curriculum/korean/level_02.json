@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Korean",
+    "level": 2,
+    "theme": "Daily Life",
+    "description": "Family members, common foods, everyday objects, and telling time in Korean."
+  },
+  "module": {
+    "name": "Daily Life",
+    "description": "Learn vocabulary for family, food, everyday objects, and time expressions.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Family and Daily Words",
+      "description": "Learn essential vocabulary for family members, common foods, and household items.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Mother", "back": "어머니 (Eomeoni) / 엄마 (Eomma)", "order": 1},
+        {"front": "Father", "back": "아버지 (Abeoji) / 아빠 (Appa)", "order": 2},
+        {"front": "Older brother (female speaking)", "back": "오빠 (Oppa)", "order": 3},
+        {"front": "Older sister (female speaking)", "back": "언니 (Eonni)", "order": 4},
+        {"front": "Water", "back": "물 (Mul)", "order": 5},
+        {"front": "Bread", "back": "빵 (Ppang)", "order": 6},
+        {"front": "Milk", "back": "우유 (Uyu)", "order": 7},
+        {"front": "House", "back": "집 (Jip)", "order": 8},
+        {"front": "Table", "back": "테이블 (Teibeul) / 탁자 (Takja)", "order": 9},
+        {"front": "Chair", "back": "의자 (Uija)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'mother' politely in Korean?",
+          "options": ["언니", "어머니", "할머니", "이모"],
+          "correct_index": 1,
+          "explanation": "'어머니' is formal. '엄마' (eomma) is informal/casual.",
+          "order": 1
+        },
+        {
+          "question": "What does '오빠' (oppa) mean?",
+          "options": ["Older sister", "Older brother (said by female)", "Father", "Uncle"],
+          "correct_index": 1,
+          "explanation": "'오빠' is used by females to address older brothers or older males.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'water' in Korean?",
+          "options": ["우유", "빵", "물", "차"],
+          "correct_index": 2,
+          "explanation": "'물' (mul) means water.",
+          "order": 3
+        },
+        {
+          "question": "What is '빵' in English?",
+          "options": ["Water", "Bread", "Milk", "Rice"],
+          "correct_index": 1,
+          "explanation": "'빵' (ppang) means bread.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'house' in Korean?",
+          "options": ["의자", "테이블", "집", "방"],
+          "correct_index": 2,
+          "explanation": "'집' (jip) means house/home.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Possession and Existence",
+      "description": "Learn possessive expressions and 있다/없다 for existence.",
+      "order": 2,
+      "flashcards": [
+        {"front": "my/mine", "back": "나의 / 내 (Naui / Nae)", "order": 1},
+        {"front": "your", "back": "너의 / 네 (Neoui / Ne)", "order": 2},
+        {"front": "to exist/have", "back": "있다 (Itda)", "order": 3},
+        {"front": "to not exist/not have", "back": "없다 (Eopda)", "order": 4},
+        {"front": "possessive particle", "back": "의 (Ui)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'my mother' in Korean?",
+          "options": ["어머니 나의", "나의 어머니", "의 나 어머니", "어머니의 나"],
+          "correct_index": 1,
+          "explanation": "'나의 어머니' - possessor + 의 + possessed.",
+          "order": 1
+        },
+        {
+          "question": "'형제가 있어요' means:",
+          "options": ["I am siblings", "I have siblings", "I see siblings", "I want siblings"],
+          "correct_index": 1,
+          "explanation": "'있어요' indicates existence = 'there are' or 'I have'.",
+          "order": 2
+        },
+        {
+          "question": "Which form is used for 'there is no...'?",
+          "options": ["있어요", "없어요", "이에요", "해요"],
+          "correct_index": 1,
+          "explanation": "'없어요' means 'there is not' or 'don't have'.",
+          "order": 3
+        },
+        {
+          "question": "Complete: '고양이__있어요' (There is a cat)",
+          "options": ["은", "가", "를", "에"],
+          "correct_index": 1,
+          "explanation": "'고양이가 있어요' - 가 marks the subject with 있다/없다.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'I have two older brothers'?",
+          "options": ["오빠가 두 명 있어요", "두 명 오빠가 있어요", "있어요 오빠 두 명", "오빠 두 명을 있어요"],
+          "correct_index": 0,
+          "explanation": "'오빠가 두 명 있어요' - subject + counter + 있어요.",
+          "order": 5
+        },
+        {
+          "question": "What is the counter for people in Korean?",
+          "options": ["개", "명", "마리", "권"],
+          "correct_index": 1,
+          "explanation": "'명' (myeong) is the counter for people.",
+          "order": 6
+        },
+        {
+          "question": "'이것은 제 집이에요' means:",
+          "options": ["This is my house", "That is your house", "My house is here", "Where is my house"],
+          "correct_index": 0,
+          "explanation": "'이것은' (this) + 제 (my/humble) + 집 (house) + 이에요 (is).",
+          "order": 7
+        },
+        {
+          "question": "Which particle shows possession?",
+          "options": ["은/는", "이/가", "의", "을/를"],
+          "correct_index": 2,
+          "explanation": "'의' connects possessor and possessed: 나의 책 (my book).",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Family Conversations",
+      "description": "Practice talking about your family and daily routines.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Do you have siblings?", "back": "형제가 있어요? (Hyeongje-ga isseoyo?)", "order": 1},
+        {"front": "I have two brothers", "back": "남동생이 두 명 있어요 (Namdongsaeng-i du myeong isseoyo)", "order": 2},
+        {"front": "What time is it?", "back": "지금 몇 시예요? (Jigeum myeot siyeyo?)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Do you have siblings?' in Korean?",
+          "options": ["형제가 뭐예요?", "형제가 있어요?", "형제가 어디예요?", "형제를 있어요?"],
+          "correct_index": 1,
+          "explanation": "'형제가 있어요?' uses 있다 for possession.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'I live with my family'?",
+          "options": ["가족과 살아요", "가족이 있어요", "가족이에요", "가족에 있어요"],
+          "correct_index": 0,
+          "explanation": "'가족과 살아요' - 과 = with, 살다 = to live.",
+          "order": 2
+        },
+        {
+          "question": "What does '지금 몇 시예요?' mean?",
+          "options": ["What day is it?", "What time is it now?", "How are you?", "Where is it?"],
+          "correct_index": 1,
+          "explanation": "'지금 몇 시예요?' asks for the current time.",
+          "order": 3
+        },
+        {
+          "question": "How do you say 'It's 3 o'clock'?",
+          "options": ["세 시예요", "삼 시예요", "세 시간이에요", "삼 개예요"],
+          "correct_index": 0,
+          "explanation": "'세 시예요' - use native Korean numbers (하나, 둘, 셋) for hours.",
+          "order": 4
+        },
+        {
+          "question": "How do you respond to '형제가 몇 명 있어요?'",
+          "options": ["네, 있어요", "세 명 있어요", "형제 있어요", "아주 좋아요"],
+          "correct_index": 1,
+          "explanation": "'세 명 있어요' - answer with number + counter + 있어요.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading About Daily Life",
+      "description": "Read and understand texts about family and daily routines.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Every day", "back": "매일 (Maeil)", "order": 1},
+        {"front": "In the morning", "back": "아침에 (Achime)", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: '우리 가족은 커요. 오빠가 세 명 있어요.' How many older brothers?",
+          "options": ["One", "Two", "Three", "Four"],
+          "correct_index": 2,
+          "explanation": "'세 명' (se myeong) means three people.",
+          "order": 1
+        },
+        {
+          "question": "Read: '아침 여덟 시에 밥을 먹어요.' When does the person eat breakfast?",
+          "options": ["6 AM", "7 AM", "8 AM", "9 AM"],
+          "correct_index": 2,
+          "explanation": "'여덟 시에' means at 8 o'clock.",
+          "order": 2
+        },
+        {
+          "question": "Read: '엄마는 매일 요리해요.' What does the mother do?",
+          "options": ["Works", "Cooks", "Cleans", "Sleeps"],
+          "correct_index": 1,
+          "explanation": "'요리해요' means 'cooks'. 요리하다 = to cook.",
+          "order": 3
+        },
+        {
+          "question": "Read: '우리 집은 작지만 깨끗해요.' The house is:",
+          "options": ["Big and old", "Small but clean", "New and large", "Old but nice"],
+          "correct_index": 1,
+          "explanation": "'작지만 깨끗해요' = small but clean.",
+          "order": 4
+        },
+        {
+          "question": "Read: '일요일에 할아버지, 할머니와 점심을 먹어요.' When do they eat lunch with grandparents?",
+          "options": ["Saturdays", "Sundays", "Mondays", "Every day"],
+          "correct_index": 1,
+          "explanation": "'일요일에' means on Sunday.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Days and Time Expressions",
+      "description": "Learn to understand days of the week and time expressions.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Monday", "back": "월요일 (Woryoil)", "order": 1},
+        {"front": "Tuesday", "back": "화요일 (Hwayoil)", "order": 2},
+        {"front": "Wednesday", "back": "수요일 (Suyoil)", "order": 3},
+        {"front": "Thursday", "back": "목요일 (Mogyoil)", "order": 4},
+        {"front": "Friday", "back": "금요일 (Geumyoil)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which day sounds like 'WOL-yo-il'?",
+          "options": ["화요일", "월요일", "목요일", "금요일"],
+          "correct_index": 1,
+          "explanation": "'월요일' (Woryoil - Monday) = 'moon day'.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'Saturday' in Korean?",
+          "options": ["금요일", "토요일", "일요일", "월요일"],
+          "correct_index": 1,
+          "explanation": "'토요일' (Toyoil) = Saturday. '일요일' = Sunday.",
+          "order": 2
+        },
+        {
+          "question": "Korean days use the same characters as:",
+          "options": ["Numbers", "Japanese days (Chinese elements)", "English days", "Colors"],
+          "correct_index": 1,
+          "explanation": "Like Japanese, Korean days use 月火水木金土日 elements.",
+          "order": 3
+        },
+        {
+          "question": "What does '주말' mean?",
+          "options": ["The end of the month", "The weekend", "The holiday", "The vacation"],
+          "correct_index": 1,
+          "explanation": "'주말' (jumal) = week + end = weekend.",
+          "order": 4
+        },
+        {
+          "question": "Which day sounds like 'SOO-yo-il'?",
+          "options": ["화요일", "수요일", "목요일", "월요일"],
+          "correct_index": 1,
+          "explanation": "'수요일' (Suyoil - Wednesday) = 'water day'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

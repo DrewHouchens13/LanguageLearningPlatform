@@ -18,7 +18,7 @@ class Command(BaseCommand):
             defaults={
                 'description': 'Learn basic color names in Spanish',
                 'language': 'Spanish',
-                'difficulty_level': 'A1',
+                'difficulty_level': 1,
                 'slug': 'colors',
                 'order': 2,  # After shapes lesson
                 'is_published': True,

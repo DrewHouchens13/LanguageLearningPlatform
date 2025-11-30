@@ -18,7 +18,7 @@ class Command(BaseCommand):
             defaults={
                 'description': 'Learn basic shape names in Spanish',
                 'language': 'Spanish',
-                'difficulty_level': 'A1',
+                'difficulty_level': 1,
                 'slug': 'shapes',
                 'order': 1,
                 'is_published': True,

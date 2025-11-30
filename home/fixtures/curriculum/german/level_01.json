@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "German",
+    "level": 1,
+    "theme": "Basics",
+    "description": "Essential greetings, numbers 1-10, colors, and basic phrases to start your German journey."
+  },
+  "module": {
+    "name": "Basics",
+    "description": "Learn essential greetings, numbers, colors, and basic phrases to start your German journey.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Essential German Words",
+      "description": "Build your foundation with the most important German words including greetings, numbers, and colors.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Hello", "back": "Hallo", "order": 1},
+        {"front": "Goodbye", "back": "Auf Wiedersehen", "order": 2},
+        {"front": "Please", "back": "Bitte", "order": 3},
+        {"front": "Thank you", "back": "Danke", "order": 4},
+        {"front": "Yes", "back": "Ja", "order": 5},
+        {"front": "No", "back": "Nein", "order": 6},
+        {"front": "Good morning", "back": "Guten Morgen", "order": 7},
+        {"front": "Good evening", "back": "Guten Abend", "order": 8},
+        {"front": "Excuse me", "back": "Entschuldigung", "order": 9},
+        {"front": "I'm sorry", "back": "Es tut mir leid", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Hello' in German?",
+          "options": ["Auf Wiedersehen", "Hallo", "Danke", "Bitte"],
+          "correct_index": 1,
+          "explanation": "'Hallo' is a common way to say hello in German.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Danke' mean?",
+          "options": ["Please", "Goodbye", "Thank you", "Hello"],
+          "correct_index": 2,
+          "explanation": "'Danke' means 'Thank you' in German.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'Goodbye' in German?",
+          "options": ["Hallo", "Guten Morgen", "Auf Wiedersehen", "Danke"],
+          "correct_index": 2,
+          "explanation": "'Auf Wiedersehen' literally means 'until we see again'.",
+          "order": 3
+        },
+        {
+          "question": "What is 'Please' in German?",
+          "options": ["Danke", "Entschuldigung", "Bitte", "Ja"],
+          "correct_index": 2,
+          "explanation": "'Bitte' means 'please' and also 'you're welcome'.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'Good morning' in German?",
+          "options": ["Gute Nacht", "Guten Morgen", "Guten Abend", "Hallo"],
+          "correct_index": 1,
+          "explanation": "'Guten Morgen' is used in the morning until about noon.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Basic German Grammar",
+      "description": "Learn fundamental grammar concepts: articles, gender (masculine, feminine, neuter), and cases.",
+      "order": 2,
+      "flashcards": [
+        {"front": "the (masculine)", "back": "der", "order": 1},
+        {"front": "the (feminine)", "back": "die", "order": 2},
+        {"front": "the (neuter)", "back": "das", "order": 3},
+        {"front": "the (plural)", "back": "die", "order": 4},
+        {"front": "a/an (masculine)", "back": "ein", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which article is used with masculine nouns in nominative case?",
+          "options": ["die", "der", "das", "den"],
+          "correct_index": 1,
+          "explanation": "'Der' is the definite article for masculine nouns in nominative case.",
+          "order": 1
+        },
+        {
+          "question": "Which is the correct article for 'Frau' (woman, feminine)?",
+          "options": ["der Frau", "die Frau", "das Frau", "ein Frau"],
+          "correct_index": 1,
+          "explanation": "'Frau' is feminine, so we use 'die' - die Frau.",
+          "order": 2
+        },
+        {
+          "question": "What article does 'Kind' (child) take?",
+          "options": ["der Kind", "die Kind", "das Kind", "den Kind"],
+          "correct_index": 2,
+          "explanation": "'Kind' is neuter, so we use 'das' - das Kind.",
+          "order": 3
+        },
+        {
+          "question": "What is the plural article in German?",
+          "options": ["der", "die", "das", "den"],
+          "correct_index": 1,
+          "explanation": "'Die' is used for all plural nouns regardless of gender.",
+          "order": 4
+        },
+        {
+          "question": "Which sentence is grammatically correct?",
+          "options": ["Der Tisch ist groß", "Die Tisch ist groß", "Das Tisch ist groß", "Tisch der ist groß"],
+          "correct_index": 0,
+          "explanation": "'Tisch' (table) is masculine, so 'der Tisch' is correct.",
+          "order": 5
+        },
+        {
+          "question": "German has how many grammatical genders?",
+          "options": ["One", "Two", "Three", "Four"],
+          "correct_index": 2,
+          "explanation": "German has three genders: masculine (der), feminine (die), and neuter (das).",
+          "order": 6
+        },
+        {
+          "question": "All German nouns are:",
+          "options": ["Lowercase", "Capitalized", "In bold", "Underlined"],
+          "correct_index": 1,
+          "explanation": "All German nouns are capitalized, regardless of position in sentence.",
+          "order": 7
+        },
+        {
+          "question": "How do you make 'Buch' (book) plural?",
+          "options": ["Buchs", "Buche", "Bücher", "Bucheren"],
+          "correct_index": 2,
+          "explanation": "'Buch' becomes 'Bücher' in plural (with umlaut and -er ending).",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "First Conversations",
+      "description": "Practice essential phrases for introducing yourself and basic social interactions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "My name is...", "back": "Ich heiße...", "order": 1},
+        {"front": "What is your name?", "back": "Wie heißen Sie?", "order": 2},
+        {"front": "Nice to meet you", "back": "Freut mich", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'My name is Hans' in German?",
+          "options": ["Mein Name Hans", "Ich heiße Hans", "Ich bin Name Hans", "Heiße ich Hans"],
+          "correct_index": 1,
+          "explanation": "'Ich heiße' is the standard way to introduce yourself.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Wie heißen Sie?' mean?",
+          "options": ["How are you?", "What is your name?", "Where are you from?", "How old are you?"],
+          "correct_index": 1,
+          "explanation": "'Wie heißen Sie?' is the formal way to ask someone's name.",
+          "order": 2
+        },
+        {
+          "question": "How would you respond to 'Wie geht es Ihnen?'?",
+          "options": ["Ich heiße Maria", "Mir geht es gut, danke", "Freut mich", "Bitte schön"],
+          "correct_index": 1,
+          "explanation": "'Mir geht es gut, danke' means 'I'm fine, thank you.'",
+          "order": 3
+        },
+        {
+          "question": "What does 'Freut mich' mean?",
+          "options": ["I'm happy", "Nice to meet you", "Very good", "Thank you"],
+          "correct_index": 1,
+          "explanation": "'Freut mich' (short for 'Es freut mich') is used when meeting someone.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'Where are you from?' in German?",
+          "options": ["Wie geht es Ihnen?", "Wie spät ist es?", "Woher kommen Sie?", "Wie alt sind Sie?"],
+          "correct_index": 2,
+          "explanation": "'Woher kommen Sie?' asks about someone's origin.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Simple German",
+      "description": "Practice reading comprehension with simple German texts and signs.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Open", "back": "Geöffnet", "order": 1},
+        {"front": "Closed", "back": "Geschlossen", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'Der Hund ist groß.' What is big?",
+          "options": ["The cat", "The dog", "The house", "The car"],
+          "correct_index": 1,
+          "explanation": "'Der Hund' means 'the dog'. The sentence says the dog is big.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'Maria hat eine schwarze Katze.' What color is Maria's cat?",
+          "options": ["White", "Brown", "Black", "Gray"],
+          "correct_index": 2,
+          "explanation": "'Schwarz' means 'black'. Maria has a black cat.",
+          "order": 2
+        },
+        {
+          "question": "Read: 'Das Haus ist klein aber schön.' Is the house big or small?",
+          "options": ["Big", "Small", "Medium", "Very big"],
+          "correct_index": 1,
+          "explanation": "'Klein' means 'small'. The house is small but beautiful.",
+          "order": 3
+        },
+        {
+          "question": "Read the sign: 'AUSGANG'. What does it indicate?",
+          "options": ["Entrance", "Exit", "Bathroom", "Danger"],
+          "correct_index": 1,
+          "explanation": "'Ausgang' means 'exit'. You'll see this on exit signs.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'Ich esse einen Apfel.' What is the person eating?",
+          "options": ["An orange", "A banana", "An apple", "A pear"],
+          "correct_index": 2,
+          "explanation": "'Apfel' means 'apple'. 'Ich esse' means 'I eat'.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Hearing German Sounds",
+      "description": "Train your ear to recognize German pronunciation and understand spoken words.",
+      "order": 5,
+      "flashcards": [
+        {"front": "One", "back": "Eins", "order": 1},
+        {"front": "Two", "back": "Zwei", "order": 2},
+        {"front": "Three", "back": "Drei", "order": 3},
+        {"front": "Four", "back": "Vier", "order": 4},
+        {"front": "Five", "back": "Fünf", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Listen: Which number sounds like 'TSVAI'?",
+          "options": ["Eins", "Zwei", "Drei", "Null"],
+          "correct_index": 1,
+          "explanation": "'Zwei' (two) is pronounced 'tsvai'.",
+          "order": 1
+        },
+        {
+          "question": "How is the German 'W' pronounced?",
+          "options": ["Like English W", "Like English V", "Silent", "Like F"],
+          "correct_index": 1,
+          "explanation": "The German 'W' is pronounced like the English 'V'.",
+          "order": 2
+        },
+        {
+          "question": "How is 'ü' (u-umlaut) pronounced?",
+          "options": ["Like 'oo' in 'food'", "Rounded lips, tongue forward", "Like 'uh'", "Like 'i'"],
+          "correct_index": 1,
+          "explanation": "The 'ü' requires rounded lips with the tongue positioned forward.",
+          "order": 3
+        },
+        {
+          "question": "The German 'ch' after 'i' or 'e' sounds like:",
+          "options": ["English 'ch' in 'church'", "A soft hissing sound", "Like 'k'", "Silent"],
+          "correct_index": 1,
+          "explanation": "The 'ich-laut' is a soft, breathy sound made in the front of the mouth.",
+          "order": 4
+        },
+        {
+          "question": "Which number sounds like 'FUENF'?",
+          "options": ["Vier", "Sechs", "Fünf", "Sieben"],
+          "correct_index": 2,
+          "explanation": "'Fünf' (five) is pronounced 'fuenf' with the ü sound.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

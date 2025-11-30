@@ -1,0 +1,229 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ lesson.title }} Quiz - Language Learning Platform</title>
+    {% if IS_DEVEDU %}<base href="/proxy/8000{{ request.path }}{% if not request.path|slice:'-1:' == '/' %}/{% endif %}">{% endif %}
+    <link rel="stylesheet" href="{% static 'home/css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/components.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'home/css/utilities.css' %}">
+    <style>
+        .quiz-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .question-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: var(--space-sm);
+        }
+        .question-text span {
+            flex: 1;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            justify-content: space-between;
+            padding: 1rem 1rem 1rem 1.25rem;
+            border: 3px solid #cbd5e1;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+            position: relative;
+        }
+        .option-label {
+            position: absolute;
+            left: 0.75rem;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            border: 2px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #475569;
+            flex-shrink: 0;
+        }
+        .option span {
+            flex: 1;
+            margin-left: 2.5rem;
+        }
+        .option:hover {
+            border-color: #14b8a6;
+            background: rgba(20, 184, 166, 0.05);
+        }
+        .option:hover .option-label {
+            background: #14b8a6;
+            border-color: #14b8a6;
+            color: white;
+        }
+        .option.selected {
+            border-color: #14b8a6;
+            background: rgba(20, 184, 166, 0.08);
+            box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+        }
+        .option.selected .option-label {
+            background: #14b8a6;
+            border-color: #14b8a6;
+            color: white;
+        }
+        .submit-btn {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 2rem auto;
+            padding: 1rem 2rem;
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(20, 184, 166, 0.4);
+        }
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .pronounce-inline-btn {
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary);
+            font-size: 1rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+        .pronounce-inline-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    {% include '_nav.html' %}
+    
+    <main class="quiz-container">
+        <div class="quiz-header">
+            <h1>{{ lesson.title }} Quiz</h1>
+            <p>Answer all questions to complete the lesson</p>
+        </div>
+        
+        <form id="quiz-form">
+            {% csrf_token %}
+            {% for q in questions %}
+            <div class="question-card">
+                <div class="question-text">
+                    <span>{{ forloop.counter }}. {{ q.question }}</span>
+                    <button class="pronounce-inline-btn" type="button" aria-label="Play pronunciation" data-speak-text="{{ q.question }}" data-speak-lang="en-US">🔊</button>
+                </div>
+                <div class="options">
+                    {% for option in q.options %}
+                    <label class="option">
+                        <input type="radio" 
+                               name="question_{{ q.id }}" 
+                               value="{{ option.index }}"
+                               data-question-id="{{ q.id }}"
+                               required
+                               style="position: absolute; opacity: 0; pointer-events: none;">
+                        <div class="option-label">
+                            {% if forloop.counter0 == 0 %}A{% elif forloop.counter0 == 1 %}B{% elif forloop.counter0 == 2 %}C{% elif forloop.counter0 == 3 %}D{% else %}{{ forloop.counter }}{% endif %}
+                        </div>
+                        <span>{{ option.text }}</span>
+                        <button class="pronounce-inline-btn" type="button" aria-label="Play pronunciation" data-speak-text="{{ option.text }}" data-speak-lang="{{ speech_code }}">🔊</button>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            
+            <button type="submit" class="submit-btn">Submit Quiz</button>
+        </form>
+    </main>
+    
+    <script>
+        document.querySelectorAll('.option input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const questionCard = this.closest('.question-card');
+                questionCard.querySelectorAll('.option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                this.closest('.option').classList.add('selected');
+            });
+        });
+        
+        document.getElementById('quiz-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const answers = [];
+            document.querySelectorAll('input[type="radio"]:checked').forEach(input => {
+                answers.push({
+                    question_id: parseInt(input.dataset.questionId),
+                    selected_index: parseInt(input.value)
+                });
+            });
+            
+            try {
+                const response = await fetch('{% url "submit_lesson_quiz" lesson.id %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({ answers: answers })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.href = result.redirect_url;
+                } else {
+                    alert('Error submitting quiz. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error submitting quiz. Please try again.');
+            }
+        });
+    </script>
+    {% include 'includes/pronunciation_script.html' with speech_code=speech_code %}
+</body>
+</html>
+

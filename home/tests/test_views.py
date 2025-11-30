@@ -651,7 +651,7 @@ class TestProgressView(TestCase):
             total_quizzes_taken=2,
             total_xp=250,
             has_completed_onboarding=True,
-            proficiency_level='A2'
+            proficiency_level=2
         )
 
         response = self.client.get(self.progress_url)
@@ -661,7 +661,7 @@ class TestProgressView(TestCase):
         self.assertEqual(stats[0]['name'], 'French')
         self.assertEqual(stats[0]['minutes'], 45)
         self.assertEqual(stats[0]['lessons'], 3)
-        self.assertEqual(stats[0]['proficiency'], 'Elementary (A2)')
+        self.assertEqual(stats[0]['proficiency'], 'Level 2')
 
 class TestDashboardView(TestCase):
     """Test dashboard view"""

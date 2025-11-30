@@ -192,7 +192,7 @@ class TestSubmitOnboardingView(TestCase):
         # Check UserProfile was created
         profile = UserProfile.objects.get(user=self.user)
         self.assertTrue(profile.has_completed_onboarding)
-        self.assertEqual(profile.proficiency_level, 'B1')
+        self.assertEqual(profile.proficiency_level, 3)  # B1 -> 3
 
     def test_submit_validates_answer_count(self):
         """Test submission rejects if not all 10 questions answered"""

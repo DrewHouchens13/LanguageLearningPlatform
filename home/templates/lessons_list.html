@@ -196,6 +196,10 @@ RELATED FILES:
         transform: translateY(-4px);
         box-shadow: 0 25px 60px rgba(15, 23, 42, 0.15);
       }
+      .lesson-card.lesson-complete {
+        border-color: #10b981;
+        background: linear-gradient(135deg, #f0fdf4 0%, #fff 100%);
+      }
       .lesson-card h3 {
         margin: 0;
       }
@@ -284,23 +288,141 @@ RELATED FILES:
             <p>Hang tight! We're preparing brand new content for {{ selected_language }}.</p>
           </div>
         {% else %}
+          {% if test_progress and user.is_authenticated %}
+          <div class="fade-in-up" style="margin-top: var(--space-3xl); margin-bottom: var(--space-4xl);">
+            <div style="background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(8, 145, 178, 0.1) 100%); border-radius: var(--radius-xl); padding: var(--space-xl); border: 2px solid var(--primary);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md); flex-wrap: wrap; gap: var(--space-md);">
+                <div>
+                  <h3 style="margin: 0; font-size: var(--text-xl); color: var(--text-primary);">Progress to Level {{ test_progress.current_level|add:1 }} Test</h3>
+                  <p style="margin: var(--space-xs) 0 0 0; color: var(--text-secondary); font-size: var(--text-sm);">
+                    Completed {{ test_progress.completed }}/{{ test_progress.total }} lessons
+                  </p>
+                </div>
+                {% if test_progress.can_take_test %}
+                <a href="{% url 'module_detail' language=selected_language level=test_progress.current_level %}" class="btn btn-primary">
+                  Take Test →
+                </a>
+                {% elif test_progress.is_module_complete %}
+                <span class="badge badge-success" style="font-size: var(--text-lg); padding: var(--space-sm) var(--space-lg);">
+                  ✓ Level Complete!
+                </span>
+                {% endif %}
+              </div>
+              <div style="background: rgba(255, 255, 255, 0.8); border-radius: var(--radius-lg); padding: var(--space-xs); margin-bottom: var(--space-sm); box-shadow: var(--shadow-sm);">
+                <div style="background: var(--gradient-primary); height: 16px; border-radius: var(--radius-md); width: {{ test_progress.percentage }}%; transition: width 0.3s ease; box-shadow: 0 2px 8px rgba(20, 184, 166, 0.3);"></div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          
+          {% if organized_lessons %}
+          <div class="fade-in-up" style="margin-top: var(--space-3xl);">
+            {% for level_group in organized_lessons.levels %}
+            <div style="margin-bottom: var(--space-3xl);">
+              <h2 style="font-size: var(--text-3xl); font-weight: var(--font-bold); margin-bottom: var(--space-xl); color: var(--text-primary); border-bottom: 2px solid var(--primary); padding-bottom: var(--space-md);">
+                Level {{ level_group.level }}
+              </h2>
+              <div class="lessons-grid">
+                {% for item in level_group.lessons %}
+                {% if item.lesson.skill_category %}
+                <a href="{% url 'lesson_by_skill' language=selected_language level=item.lesson.difficulty_level skill=item.lesson.skill_category.name %}" class="lesson-card {% if item.is_complete %}lesson-complete{% endif %}" style="position: relative;">
+                {% else %}
+                <a href="{% if IS_DEVEDU %}../../{{ item.lesson.id }}/{% else %}{% url 'lesson_detail' item.lesson.id %}{% endif %}" class="lesson-card {% if item.is_complete %}lesson-complete{% endif %}" style="position: relative;">
+                {% endif %}
+                  {% if item.is_complete %}
+                  <div style="position: absolute; top: var(--space-md); right: var(--space-md); background: #10b981; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
+                    ✓
+                  </div>
+                  {% endif %}
+                  <div style="font-size: 3rem; line-height: 1; margin-bottom: var(--space-md);">
+                    {{ item.icon }}
+                  </div>
+                  <h3 style="margin-bottom: var(--space-xs);">{{ item.lesson.title }}</h3>
+                  <p class="text-muted" style="margin-bottom: var(--space-md);">{{ item.lesson.description }}</p>
+                  <div class="flex gap-sm" style="flex-wrap: wrap;">
+                    <span class="badge badge-primary">Level {{ item.lesson.difficulty_level }}</span>
+                    {% if item.lesson.cards.count > 0 %}
+                    <span class="badge badge-outline">{{ item.lesson.cards.count }} flashcard{{ item.lesson.cards.count|pluralize }}</span>
+                    {% endif %}
+                    {% if item.lesson.skill_category %}
+                    <span class="badge badge-outline">{{ item.lesson.skill_category.get_name_display }}</span>
+                    {% endif %}
+                  </div>
+                </a>
+                {% endfor %}
+              </div>
+            </div>
+            {% endfor %}
+            
+            {% if organized_lessons.optional_lessons %}
+            <div style="margin-top: var(--space-4xl); margin-bottom: var(--space-3xl);">
+              <h2 style="font-size: var(--text-3xl); font-weight: var(--font-bold); margin-bottom: var(--space-xl); color: var(--text-primary); border-bottom: 2px solid var(--primary); padding-bottom: var(--space-md);">
+                Optional Lessons
+              </h2>
+              <div class="lessons-grid">
+                {% for item in organized_lessons.optional_lessons %}
+                {% if item.lesson.skill_category %}
+                <a href="{% url 'lesson_by_skill' language=selected_language level=item.lesson.difficulty_level skill=item.lesson.skill_category.name %}" class="lesson-card {% if item.is_complete %}lesson-complete{% endif %}" style="position: relative;">
+                {% else %}
+                <a href="{% if IS_DEVEDU %}../../{{ item.lesson.id }}/{% else %}{% url 'lesson_detail' item.lesson.id %}{% endif %}" class="lesson-card {% if item.is_complete %}lesson-complete{% endif %}" style="position: relative;">
+                {% endif %}
+                  {% if item.is_complete %}
+                  <div style="position: absolute; top: var(--space-md); right: var(--space-md); background: #10b981; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
+                    ✓
+                  </div>
+                  {% endif %}
+                  <div style="font-size: 3rem; line-height: 1; margin-bottom: var(--space-md);">
+                    {{ item.icon }}
+                  </div>
+                  <h3 style="margin-bottom: var(--space-xs);">{{ item.lesson.title }}</h3>
+                  <p class="text-muted" style="margin-bottom: var(--space-md);">{{ item.lesson.description }}</p>
+                  <div class="flex gap-sm" style="flex-wrap: wrap;">
+                    <span class="badge badge-primary">Level {{ item.lesson.difficulty_level }}</span>
+                    {% if item.lesson.cards.count > 0 %}
+                    <span class="badge badge-outline">{{ item.lesson.cards.count }} flashcard{{ item.lesson.cards.count|pluralize }}</span>
+                    {% endif %}
+                    {% if item.lesson.skill_category %}
+                    <span class="badge badge-outline">{{ item.lesson.skill_category.get_name_display }}</span>
+                    {% endif %}
+                  </div>
+                </a>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+          {% else %}
+          <!-- Fallback to old structure if organized_lessons is not available -->
           <div class="lessons-grid fade-in-up" style="margin-top: var(--space-3xl);">
             {% for item in selected_language_lessons %}
-            <a href="{% if IS_DEVEDU %}../../{{ item.lesson.id }}/{% else %}{% url 'lesson_detail' item.lesson.id %}{% endif %}" class="lesson-card">
+            {% if item.lesson.skill_category %}
+            <a href="{% url 'lesson_by_skill' language=selected_language level=item.lesson.difficulty_level skill=item.lesson.skill_category.name %}" class="lesson-card {% if item.is_complete %}lesson-complete{% endif %}" style="position: relative;">
+            {% else %}
+            <a href="{% if IS_DEVEDU %}../../{{ item.lesson.id }}/{% else %}{% url 'lesson_detail' item.lesson.id %}{% endif %}" class="lesson-card {% if item.is_complete %}lesson-complete{% endif %}" style="position: relative;">
+            {% endif %}
+              {% if item.is_complete %}
+              <div style="position: absolute; top: var(--space-md); right: var(--space-md); background: #10b981; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
+                ✓
+              </div>
+              {% endif %}
               <div style="font-size: 3rem; line-height: 1; margin-bottom: var(--space-md);">
                 {{ item.icon }}
               </div>
               <h3 style="margin-bottom: var(--space-xs);">{{ item.lesson.title }}</h3>
               <p class="text-muted" style="margin-bottom: var(--space-md);">{{ item.lesson.description }}</p>
               <div class="flex gap-sm" style="flex-wrap: wrap;">
-                <span class="badge badge-primary">{{ item.lesson.difficulty }}</span>
+                <span class="badge badge-primary">Level {{ item.lesson.difficulty_level }}</span>
                 {% if item.lesson.cards.count > 0 %}
                 <span class="badge badge-outline">{{ item.lesson.cards.count }} flashcard{{ item.lesson.cards.count|pluralize }}</span>
+                {% endif %}
+                {% if item.lesson.skill_category %}
+                <span class="badge badge-outline">{{ item.lesson.skill_category.get_name_display }}</span>
                 {% endif %}
               </div>
             </a>
             {% endfor %}
           </div>
+          {% endif %}
         {% endif %}
         {% endif %}
     </main>

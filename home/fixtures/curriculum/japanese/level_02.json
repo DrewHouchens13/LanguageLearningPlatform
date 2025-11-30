@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Japanese",
+    "level": 2,
+    "theme": "Daily Life",
+    "description": "Family members, common foods, everyday objects, and telling time in Japanese."
+  },
+  "module": {
+    "name": "Daily Life",
+    "description": "Learn vocabulary for family, food, everyday objects, and time expressions.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Family and Daily Words",
+      "description": "Learn essential vocabulary for family members, common foods, and household items.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Mother (own)", "back": "母 (はは / Haha)", "order": 1},
+        {"front": "Father (own)", "back": "父 (ちち / Chichi)", "order": 2},
+        {"front": "Older brother", "back": "兄 (あに / Ani)", "order": 3},
+        {"front": "Older sister", "back": "姉 (あね / Ane)", "order": 4},
+        {"front": "Water", "back": "水 (みず / Mizu)", "order": 5},
+        {"front": "Bread", "back": "パン (Pan)", "order": 6},
+        {"front": "Milk", "back": "牛乳 (ぎゅうにゅう / Gyuunyuu)", "order": 7},
+        {"front": "House", "back": "家 (いえ / Ie)", "order": 8},
+        {"front": "Table", "back": "テーブル (Teeburu)", "order": 9},
+        {"front": "Chair", "back": "椅子 (いす / Isu)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'my mother' in Japanese?",
+          "options": ["お母さん", "母", "姉", "おばあさん"],
+          "correct_index": 1,
+          "explanation": "'母' (haha) for your own mother. 'お母さん' for someone else's or polite.",
+          "order": 1
+        },
+        {
+          "question": "What does '兄' (ani) mean?",
+          "options": ["Younger brother", "Older brother", "Father", "Uncle"],
+          "correct_index": 1,
+          "explanation": "'兄' means older brother. '弟' (otōto) is younger brother.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'water' in Japanese?",
+          "options": ["牛乳", "パン", "水", "お茶"],
+          "correct_index": 2,
+          "explanation": "'水' (mizu) means water.",
+          "order": 3
+        },
+        {
+          "question": "What is 'パン' in English?",
+          "options": ["Water", "Bread", "Milk", "Rice"],
+          "correct_index": 1,
+          "explanation": "'パン' (pan) means bread (from Portuguese 'pão').",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'house/home' in Japanese?",
+          "options": ["椅子", "テーブル", "家", "部屋"],
+          "correct_index": 2,
+          "explanation": "'家' (ie) means house/home.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Possession and Existence",
+      "description": "Learn possessive expressions and います/あります for existence.",
+      "order": 2,
+      "flashcards": [
+        {"front": "my/mine", "back": "私の (わたしの / Watashi no)", "order": 1},
+        {"front": "your", "back": "あなたの (Anata no)", "order": 2},
+        {"front": "exists (animate)", "back": "います (Imasu)", "order": 3},
+        {"front": "exists (inanimate)", "back": "あります (Arimasu)", "order": 4},
+        {"front": "possessive particle", "back": "の (No)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'my mother' in Japanese?",
+          "options": ["母私の", "私の母", "の私母", "母の私"],
+          "correct_index": 1,
+          "explanation": "'私の母' - possessor + の + possessed.",
+          "order": 1
+        },
+        {
+          "question": "'兄弟がいます' means:",
+          "options": ["I am siblings", "I have siblings", "I see siblings", "I want siblings"],
+          "correct_index": 1,
+          "explanation": "'います' indicates existence of living things = 'I have siblings'.",
+          "order": 2
+        },
+        {
+          "question": "Which verb is used for 'there is a book'?",
+          "options": ["います", "あります", "です", "します"],
+          "correct_index": 1,
+          "explanation": "'あります' for inanimate objects. 本があります = There is a book.",
+          "order": 3
+        },
+        {
+          "question": "Complete: '猫__います' (There is a cat)",
+          "options": ["は", "が", "を", "に"],
+          "correct_index": 1,
+          "explanation": "'猫がいます' - が marks the subject with います/あります.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'I have two brothers'?",
+          "options": ["私は兄弟が二人います", "二人兄弟います私は", "私兄弟二人が", "います二人兄弟"],
+          "correct_index": 0,
+          "explanation": "'私は兄弟が二人います' - topic + subject + counter + います.",
+          "order": 5
+        },
+        {
+          "question": "What is the counter for people?",
+          "options": ["つ", "個", "人", "本"],
+          "correct_index": 2,
+          "explanation": "'人' (nin/ri) is the counter for people.",
+          "order": 6
+        },
+        {
+          "question": "'これは私の家です' means:",
+          "options": ["This is my house", "That is your house", "My house is here", "Where is my house"],
+          "correct_index": 0,
+          "explanation": "'これ' (this) + は + 私の家 (my house) + です (is).",
+          "order": 7
+        },
+        {
+          "question": "Which particle shows possession?",
+          "options": ["は", "が", "の", "を"],
+          "correct_index": 2,
+          "explanation": "'の' connects possessor and possessed: 私の本 (my book).",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Family Conversations",
+      "description": "Practice talking about your family and daily routines.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Do you have siblings?", "back": "兄弟がいますか (Kyōdai ga imasu ka)", "order": 1},
+        {"front": "I have two brothers", "back": "兄が二人います (Ani ga futari imasu)", "order": 2},
+        {"front": "What time is it?", "back": "何時ですか (Nanji desu ka)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Do you have siblings?' in Japanese?",
+          "options": ["兄弟はなんですか", "兄弟がいますか", "兄弟がありますか", "兄弟をいますか"],
+          "correct_index": 1,
+          "explanation": "'兄弟がいますか' uses います for people.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'I live with my family'?",
+          "options": ["家族と住んでいます", "家族があります", "家族です", "家族にいます"],
+          "correct_index": 0,
+          "explanation": "'家族と住んでいます' - と = with, 住んでいます = am living.",
+          "order": 2
+        },
+        {
+          "question": "What does '何時ですか' mean?",
+          "options": ["What day is it?", "What time is it?", "How are you?", "Where is it?"],
+          "correct_index": 1,
+          "explanation": "'何時ですか' (Nanji desu ka) asks for the time.",
+          "order": 3
+        },
+        {
+          "question": "How do you say 'It's 3 o'clock'?",
+          "options": ["三です", "三時です", "三時間です", "三つです"],
+          "correct_index": 1,
+          "explanation": "'三時です' (Sanji desu) - 時 (ji) means o'clock.",
+          "order": 4
+        },
+        {
+          "question": "How do you respond to '兄弟は何人いますか'?",
+          "options": ["はい、います", "三人います", "兄弟います", "とても良い"],
+          "correct_index": 1,
+          "explanation": "'三人います' - answer with number + counter + います.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading About Daily Life",
+      "description": "Read and understand texts about family and daily routines.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Every day", "back": "毎日 (まいにち / Mainichi)", "order": 1},
+        {"front": "In the morning", "back": "朝 (あさ / Asa)", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: '私の家族は大きいです。兄が三人います。' How many older brothers?",
+          "options": ["One", "Two", "Three", "Four"],
+          "correct_index": 2,
+          "explanation": "'三人' (sannin) means three people.",
+          "order": 1
+        },
+        {
+          "question": "Read: '朝ご飯を八時に食べます。' When does the person eat breakfast?",
+          "options": ["6 AM", "7 AM", "8 AM", "9 AM"],
+          "correct_index": 2,
+          "explanation": "'八時に' means at 8 o'clock.",
+          "order": 2
+        },
+        {
+          "question": "Read: '母は毎日料理をします。' What does the mother do?",
+          "options": ["Works", "Cooks", "Cleans", "Sleeps"],
+          "correct_index": 1,
+          "explanation": "'料理をします' means 'does cooking' = cooks.",
+          "order": 3
+        },
+        {
+          "question": "Read: '私たちの家は小さいですが、きれいです。' The house is:",
+          "options": ["Big and old", "Small but clean/pretty", "New and large", "Old but nice"],
+          "correct_index": 1,
+          "explanation": "'小さいですが、きれいです' = small but clean/pretty.",
+          "order": 4
+        },
+        {
+          "question": "Read: '日曜日に祖父母と昼ご飯を食べます。' When do they eat lunch with grandparents?",
+          "options": ["Saturdays", "Sundays", "Mondays", "Every day"],
+          "correct_index": 1,
+          "explanation": "'日曜日に' means on Sunday.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Days and Time Expressions",
+      "description": "Learn to understand days of the week and time expressions.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Monday", "back": "月曜日 (げつようび / Getsuyōbi)", "order": 1},
+        {"front": "Tuesday", "back": "火曜日 (かようび / Kayōbi)", "order": 2},
+        {"front": "Wednesday", "back": "水曜日 (すいようび / Suiyōbi)", "order": 3},
+        {"front": "Thursday", "back": "木曜日 (もくようび / Mokuyōbi)", "order": 4},
+        {"front": "Friday", "back": "金曜日 (きんようび / Kinyōbi)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which day sounds like 'GEH-tsoo-YOH-bee'?",
+          "options": ["火曜日", "月曜日", "木曜日", "金曜日"],
+          "correct_index": 1,
+          "explanation": "'月曜日' (Getsuyōbi - Monday) = 'moon day'.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'Saturday' in Japanese?",
+          "options": ["金曜日", "土曜日", "日曜日", "月曜日"],
+          "correct_index": 1,
+          "explanation": "'土曜日' (Doyōbi) = Saturday. '日曜日' = Sunday.",
+          "order": 2
+        },
+        {
+          "question": "Japanese days are named after:",
+          "options": ["Numbers", "Elements/celestial bodies", "Gods", "Animals"],
+          "correct_index": 1,
+          "explanation": "Days use 月火水木金土日 (moon, fire, water, wood, metal, earth, sun).",
+          "order": 3
+        },
+        {
+          "question": "What does '週末' mean?",
+          "options": ["The end of the month", "The weekend", "The holiday", "The vacation"],
+          "correct_index": 1,
+          "explanation": "'週末' (shūmatsu) = week + end = weekend.",
+          "order": 4
+        },
+        {
+          "question": "Which day sounds like 'SOO-ee-YOH-bee'?",
+          "options": ["火曜日", "水曜日", "木曜日", "月曜日"],
+          "correct_index": 1,
+          "explanation": "'水曜日' (Suiyōbi - Wednesday) = 'water day'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

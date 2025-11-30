@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Korean",
+    "level": 3,
+    "theme": "Getting Around",
+    "description": "Directions, transportation, places in the city, and asking for help in Korean."
+  },
+  "module": {
+    "name": "Getting Around",
+    "description": "Learn to navigate cities, use transportation, and ask for directions in Korean.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Transportation and Places",
+      "description": "Essential vocabulary for getting around town and using public transportation.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Street/Road", "back": "길 (Gil)", "order": 1},
+        {"front": "Bus", "back": "버스 (Beoseu)", "order": 2},
+        {"front": "Train/Subway", "back": "지하철 (Jihacheol)", "order": 3},
+        {"front": "Airport", "back": "공항 (Gonghang)", "order": 4},
+        {"front": "Left", "back": "왼쪽 (Oenjjok)", "order": 5},
+        {"front": "Right", "back": "오른쪽 (Oreunjjok)", "order": 6},
+        {"front": "Straight", "back": "직진 (Jikjin) / 똑바로 (Ttokbaro)", "order": 7},
+        {"front": "Bank", "back": "은행 (Eunhaeng)", "order": 8},
+        {"front": "Hospital", "back": "병원 (Byeongwon)", "order": 9},
+        {"front": "Store/Shop", "back": "가게 (Gage)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'street' in Korean?",
+          "options": ["역", "길", "다리", "광장"],
+          "correct_index": 1,
+          "explanation": "'길' (gil) means street/road.",
+          "order": 1
+        },
+        {
+          "question": "What does '왼쪽' mean?",
+          "options": ["Right", "Left", "Straight", "Back"],
+          "correct_index": 1,
+          "explanation": "'왼쪽' means left. '오른쪽' is right.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'subway' in Korean?",
+          "options": ["버스", "비행기", "지하철", "자동차"],
+          "correct_index": 2,
+          "explanation": "'지하철' (jihacheol) means subway.",
+          "order": 3
+        },
+        {
+          "question": "What is '공항' in English?",
+          "options": ["Bus station", "Train station", "Airport", "Port"],
+          "correct_index": 2,
+          "explanation": "'공항' (gonghang) means airport.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'straight ahead'?",
+          "options": ["왼쪽으로", "오른쪽으로", "직진 / 똑바로", "뒤로"],
+          "correct_index": 2,
+          "explanation": "'직진' or '똑바로' means straight ahead.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Giving Directions",
+      "description": "Learn direction phrases and location expressions.",
+      "order": 2,
+      "flashcards": [
+        {"front": "Turn (please turn)", "back": "도세요 (Doseyo) / 돌아가세요", "order": 1},
+        {"front": "Go (please go)", "back": "가세요 (Gaseyo)", "order": 2},
+        {"front": "next to", "back": "옆에 (Yeope)", "order": 3},
+        {"front": "in front of", "back": "앞에 (Ape)", "order": 4},
+        {"front": "behind", "back": "뒤에 (Dwie)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Please turn left'?",
+          "options": ["왼쪽 돌다", "왼쪽으로 도세요", "돌다 왼쪽", "도세요 왼쪽으로"],
+          "correct_index": 1,
+          "explanation": "'왼쪽으로 도세요' - direction + 으로 + verb.",
+          "order": 1
+        },
+        {
+          "question": "What does '옆에' mean?",
+          "options": ["In front of", "Behind", "Next to", "Far from"],
+          "correct_index": 2,
+          "explanation": "'옆에' (yeope) means 'next to'.",
+          "order": 2
+        },
+        {
+          "question": "Complete: '은행은 병원___있어요' (in front of)",
+          "options": ["뒤에", "옆에", "앞에", "에서 멀리"],
+          "correct_index": 2,
+          "explanation": "'앞에' (ape) means 'in front of'.",
+          "order": 3
+        },
+        {
+          "question": "'직진하세요' means:",
+          "options": ["Turn right", "Turn left", "Please go straight", "Please go back"],
+          "correct_index": 2,
+          "explanation": "'직진하세요' = Please go straight.",
+          "order": 4
+        },
+        {
+          "question": "The particle '으로/로' indicates:",
+          "options": ["Subject", "Direction/means", "Object", "Time"],
+          "correct_index": 1,
+          "explanation": "'으로/로' indicates direction or means.",
+          "order": 5
+        },
+        {
+          "question": "How do you say 'by bus'?",
+          "options": ["버스가", "버스로", "버스를", "버스의"],
+          "correct_index": 1,
+          "explanation": "'버스로' - 로 indicates means of transportation.",
+          "order": 6
+        },
+        {
+          "question": "'다음 코너에서 오른쪽으로 도세요' means:",
+          "options": ["Go left at the corner", "Go straight", "Turn right at the next corner", "Turn around"],
+          "correct_index": 2,
+          "explanation": "'다음 코너에서' = at the next corner, '오른쪽으로 도세요' = turn right.",
+          "order": 7
+        },
+        {
+          "question": "Which phrase means 'near'?",
+          "options": ["멀어요", "가까워요", "안에", "밖에"],
+          "correct_index": 1,
+          "explanation": "'가까워요' (gakkawayo) means nearby/close. '멀어요' is far.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Asking for Directions",
+      "description": "Practice asking for and understanding directions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Where is the...?", "back": "...이/가 어디에 있어요? (... i/ga eodie isseoyo?)", "order": 1},
+        {"front": "How do I get to...?", "back": "...에 어떻게 가요? (... e eotteoke gayo?)", "order": 2},
+        {"front": "Is it far?", "back": "멀어요? (Meoreoyo?)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Where is the bank?'",
+          "options": ["은행이 뭐예요?", "은행이 어디에 있어요?", "은행이 언제예요?", "은행이 어때요?"],
+          "correct_index": 1,
+          "explanation": "'...이 어디에 있어요?' asks for location.",
+          "order": 1
+        },
+        {
+          "question": "What does '역에 어떻게 가요?' mean?",
+          "options": ["Where is the station?", "How do I get to the station?", "When does the station open?", "What is the station?"],
+          "correct_index": 1,
+          "explanation": "'...에 어떻게 가요?' = How do I get to...?",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'It's about 5 minutes'?",
+          "options": ["오 분쯤이에요", "오 분이 있어요", "오 분을이에요", "오 분에 있어요"],
+          "correct_index": 0,
+          "explanation": "'오 분쯤이에요' = It's about 5 minutes.",
+          "order": 3
+        },
+        {
+          "question": "What does '이 근처에 약국 있어요?' mean?",
+          "options": ["Where is the pharmacy?", "Is there a pharmacy nearby?", "How is the pharmacy?", "What pharmacy?"],
+          "correct_index": 1,
+          "explanation": "'이 근처에...있어요?' = Is there a...nearby?",
+          "order": 4
+        },
+        {
+          "question": "How would you respond to '멀어요?' if it's close?",
+          "options": ["네, 아주 멀어요", "아니요, 바로 가까워요", "몰라요", "아마도"],
+          "correct_index": 1,
+          "explanation": "'아니요, 바로 가까워요' = No, it's very close.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Signs and Maps",
+      "description": "Understand common signs, directions, and transit information.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Entrance", "back": "입구 (Ipgu)", "order": 1},
+        {"front": "Exit", "back": "출구 (Chulgu)", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: '박물관에 가려면 직진해서 왼쪽으로 도세요.' What direction do you turn?",
+          "options": ["Right", "Left", "Go back", "Don't turn"],
+          "correct_index": 1,
+          "explanation": "'왼쪽으로 도세요' = turn left.",
+          "order": 1
+        },
+        {
+          "question": "Read: '지하철역은 걸어서 오 분이에요.' How do you get there?",
+          "options": ["By car", "By bus", "Walking", "By taxi"],
+          "correct_index": 2,
+          "explanation": "'걸어서' (georeoseo) means on foot/walking.",
+          "order": 2
+        },
+        {
+          "question": "Read sign: '주차금지'. What is prohibited?",
+          "options": ["Entry", "Exit", "Parking", "Smoking"],
+          "correct_index": 2,
+          "explanation": "'주차' means parking.",
+          "order": 3
+        },
+        {
+          "question": "Read: '버스정류장은 은행 앞에 있어요.' Where is the bus stop?",
+          "options": ["Behind the bank", "Inside the bank", "In front of the bank", "Far from the bank"],
+          "correct_index": 2,
+          "explanation": "'앞에' = in front of.",
+          "order": 4
+        },
+        {
+          "question": "Read: '기차는 오전 아홉 시에 출발해요.' When does the train leave?",
+          "options": ["9 PM", "9 AM", "At night", "Noon"],
+          "correct_index": 1,
+          "explanation": "'오전 아홉 시' = 9 AM.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Understanding Transit Announcements",
+      "description": "Train your ear to understand transportation announcements.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Next stop", "back": "다음 역 (Daeum yeok)", "order": 1},
+        {"front": "Platform", "back": "승강장 (Seunggangjang)", "order": 2},
+        {"front": "Departure", "back": "출발 (Chulbal)", "order": 3},
+        {"front": "Arrival", "back": "도착 (Dochak)", "order": 4},
+        {"front": "Ticket", "back": "표 (Pyo)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "You hear '다음 역은 강남역입니다'. What are you being told?",
+          "options": ["Final stop", "Next stop is Gangnam", "Transfer point", "End of service"],
+          "correct_index": 1,
+          "explanation": "'다음 역은' announces the next stop.",
+          "order": 1
+        },
+        {
+          "question": "What does '삼 번 승강장' mean?",
+          "options": ["Bus number 3", "Platform 3", "Route 3", "Gate 3"],
+          "correct_index": 1,
+          "explanation": "'승강장' means platform.",
+          "order": 2
+        },
+        {
+          "question": "You hear '부산행 열차'. Where is the train going?",
+          "options": ["From Busan", "To Busan", "Near Busan", "Around Busan"],
+          "correct_index": 1,
+          "explanation": "'행' (haeng) indicates destination = bound for.",
+          "order": 3
+        },
+        {
+          "question": "'출발' and '도착' are:",
+          "options": ["Departure and Arrival", "Entry and Exit", "Start and End", "Open and Closed"],
+          "correct_index": 0,
+          "explanation": "'출발' = departure, '도착' = arrival.",
+          "order": 4
+        },
+        {
+          "question": "You hear '표를 준비해 주세요'. What should you do?",
+          "options": ["Wait for the train", "Please have your ticket ready", "Find your seat", "Show your ID"],
+          "correct_index": 1,
+          "explanation": "'표를 준비해 주세요' = Please have your ticket ready.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

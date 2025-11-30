@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Arabic",
+    "level": 2,
+    "theme": "Daily Life",
+    "description": "Family members, common foods, everyday objects, and telling time in Arabic."
+  },
+  "module": {
+    "name": "Daily Life",
+    "description": "Learn vocabulary for family, food, everyday objects, and time expressions.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Family and Daily Words",
+      "description": "Learn essential vocabulary for family members, common foods, and household items.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Mother", "back": "أم (Umm)", "order": 1},
+        {"front": "Father", "back": "أب (Ab)", "order": 2},
+        {"front": "Brother", "back": "أخ (Akh)", "order": 3},
+        {"front": "Sister", "back": "أخت (Ukht)", "order": 4},
+        {"front": "Water", "back": "ماء (Maa')", "order": 5},
+        {"front": "Bread", "back": "خبز (Khubz)", "order": 6},
+        {"front": "Milk", "back": "حليب (Haleeb)", "order": 7},
+        {"front": "House", "back": "بيت (Bayt)", "order": 8},
+        {"front": "Table", "back": "طاولة (Tawila)", "order": 9},
+        {"front": "Chair", "back": "كرسي (Kursi)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'mother' in Arabic?",
+          "options": ["أخت", "أم", "جدة", "عمة"],
+          "correct_index": 1,
+          "explanation": "'أم' (umm) means mother.",
+          "order": 1
+        },
+        {
+          "question": "What does 'أخ' (akh) mean?",
+          "options": ["Sister", "Brother", "Father", "Uncle"],
+          "correct_index": 1,
+          "explanation": "'أخ' means brother. 'أخت' (ukht) is sister.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'water' in Arabic?",
+          "options": ["حليب", "خبز", "ماء", "شاي"],
+          "correct_index": 2,
+          "explanation": "'ماء' (maa') means water.",
+          "order": 3
+        },
+        {
+          "question": "What is 'خبز' in English?",
+          "options": ["Water", "Bread", "Milk", "Rice"],
+          "correct_index": 1,
+          "explanation": "'خبز' (khubz) means bread.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'house' in Arabic?",
+          "options": ["كرسي", "طاولة", "بيت", "باب"],
+          "correct_index": 2,
+          "explanation": "'بيت' (bayt) means house/home.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Possession and Pronouns",
+      "description": "Learn possessive suffixes and the verb 'to have' construction.",
+      "order": 2,
+      "flashcards": [
+        {"front": "my (suffix)", "back": "ـي (-i)", "order": 1},
+        {"front": "your (masc. suffix)", "back": "ـك (-ka)", "order": 2},
+        {"front": "his (suffix)", "back": "ـه (-hu)", "order": 3},
+        {"front": "I have (lit. 'with me')", "back": "عندي ('indi)", "order": 4},
+        {"front": "you have", "back": "عندك ('indak)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'my mother' in Arabic?",
+          "options": ["أم أنا", "أمي", "أنا أم", "الأم لي"],
+          "correct_index": 1,
+          "explanation": "'أمي' - attach ـي suffix to the noun.",
+          "order": 1
+        },
+        {
+          "question": "'عندي أخوان' means:",
+          "options": ["I am brothers", "I have two brothers", "I see brothers", "I want brothers"],
+          "correct_index": 1,
+          "explanation": "'عندي' (with me = I have) + 'أخوان' (two brothers - dual form).",
+          "order": 2
+        },
+        {
+          "question": "How do you express possession in Arabic?",
+          "options": ["Using 'have' verb", "Using عند + pronoun suffix", "No way to express it", "Using 'is' only"],
+          "correct_index": 1,
+          "explanation": "Arabic uses 'عند' (at/with) + pronoun to express having.",
+          "order": 3
+        },
+        {
+          "question": "Complete: 'بيت__' (my house)",
+          "options": ["أنا", "ي", "ك", "ها"],
+          "correct_index": 1,
+          "explanation": "'بيتي' - suffix ـي means 'my'.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'your (masc.) book'?",
+          "options": ["كتابي", "كتابك", "كتابها", "كتابه"],
+          "correct_index": 1,
+          "explanation": "'كتابك' - suffix ـك means 'your' (masculine).",
+          "order": 5
+        },
+        {
+          "question": "The Arabic dual form is used for:",
+          "options": ["One item", "Exactly two items", "Three or more", "Uncountable"],
+          "correct_index": 1,
+          "explanation": "Arabic has singular, dual (exactly 2), and plural forms.",
+          "order": 6
+        },
+        {
+          "question": "'هذا بيتي' means:",
+          "options": ["This is my house", "That is your house", "My house is here", "Where is my house"],
+          "correct_index": 0,
+          "explanation": "'هذا' (this) + 'بيتي' (my house).",
+          "order": 7
+        },
+        {
+          "question": "How do you say 'her brother'?",
+          "options": ["أخي", "أخك", "أخها", "أخه"],
+          "correct_index": 2,
+          "explanation": "'أخها' - suffix ـها means 'her'.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "Family Conversations",
+      "description": "Practice talking about your family and daily routines.",
+      "order": 3,
+      "flashcards": [
+        {"front": "Do you have siblings?", "back": "هل عندك إخوة؟ (Hal 'indak ikhwa?)", "order": 1},
+        {"front": "I have two brothers", "back": "عندي أخوان ('Indi akhawan)", "order": 2},
+        {"front": "What time is it?", "back": "كم الساعة؟ (Kam as-saa'a?)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you ask 'Do you have siblings?' in Arabic?",
+          "options": ["ما عندك إخوة؟", "هل عندك إخوة؟", "أين عندك إخوة؟", "لماذا عندك إخوة؟"],
+          "correct_index": 1,
+          "explanation": "'هل عندك إخوة؟' uses 'هل' for yes/no questions.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'I live with my family'?",
+          "options": ["أعيش مع عائلتي", "عندي عائلة", "أنا عائلتي", "مع عائلتي أكون"],
+          "correct_index": 0,
+          "explanation": "'أعيش مع عائلتي' - أعيش = I live, مع = with, عائلتي = my family.",
+          "order": 2
+        },
+        {
+          "question": "What does 'كم الساعة؟' mean?",
+          "options": ["What day is it?", "What time is it?", "How are you?", "Where is it?"],
+          "correct_index": 1,
+          "explanation": "'كم الساعة؟' asks for the time.",
+          "order": 3
+        },
+        {
+          "question": "How do you say 'It's 3 o'clock'?",
+          "options": ["ثلاثة", "الساعة ثلاثة", "ساعة ثلاث", "هي ثلاثة"],
+          "correct_index": 1,
+          "explanation": "'الساعة ثلاثة' = the hour (is) three.",
+          "order": 4
+        },
+        {
+          "question": "How do you respond to 'كم أخاً عندك؟'",
+          "options": ["نعم، عندي", "عندي ثلاثة إخوة", "إخوة عندي", "جيد جداً"],
+          "correct_index": 1,
+          "explanation": "'عندي ثلاثة إخوة' - I have three brothers.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading About Daily Life",
+      "description": "Read and understand texts about family and daily routines.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Every day", "back": "كل يوم (Kull yawm)", "order": 1},
+        {"front": "In the morning", "back": "في الصباح (Fi as-sabah)", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'عائلتي كبيرة. عندي ثلاثة إخوة.' How many brothers?",
+          "options": ["One", "Two", "Three", "Four"],
+          "correct_index": 2,
+          "explanation": "'ثلاثة إخوة' means three brothers.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'أتناول الفطور في الساعة الثامنة.' When does the person eat breakfast?",
+          "options": ["6 AM", "7 AM", "8 AM", "9 AM"],
+          "correct_index": 2,
+          "explanation": "'الساعة الثامنة' means 8 o'clock.",
+          "order": 2
+        },
+        {
+          "question": "Read: 'أمي تطبخ كل يوم.' What does the mother do?",
+          "options": ["Works", "Cooks", "Cleans", "Sleeps"],
+          "correct_index": 1,
+          "explanation": "'تطبخ' means 'she cooks'. طبخ = to cook.",
+          "order": 3
+        },
+        {
+          "question": "Read: 'نسكن في بيت صغير لكنه مريح.' The house is:",
+          "options": ["Big and old", "Small but comfortable", "New and large", "Old but nice"],
+          "correct_index": 1,
+          "explanation": "'صغير لكنه مريح' = small but comfortable.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'يوم الأحد نتغدى مع الأجداد.' When do they lunch with grandparents?",
+          "options": ["Saturdays", "Sundays", "Mondays", "Every day"],
+          "correct_index": 1,
+          "explanation": "'يوم الأحد' means Sunday.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Days and Time Expressions",
+      "description": "Learn to understand days of the week and time expressions.",
+      "order": 5,
+      "flashcards": [
+        {"front": "Sunday", "back": "الأحد (Al-ahad)", "order": 1},
+        {"front": "Monday", "back": "الإثنين (Al-ithnayn)", "order": 2},
+        {"front": "Tuesday", "back": "الثلاثاء (Ath-thulathaa')", "order": 3},
+        {"front": "Wednesday", "back": "الأربعاء (Al-arbi'aa')", "order": 4},
+        {"front": "Thursday", "back": "الخميس (Al-khamees)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which day sounds like 'al-AH-had'?",
+          "options": ["الإثنين", "الأحد", "الخميس", "الجمعة"],
+          "correct_index": 1,
+          "explanation": "'الأحد' (Al-ahad - Sunday) = 'the first/one'.",
+          "order": 1
+        },
+        {
+          "question": "How do you say 'Friday' in Arabic?",
+          "options": ["الخميس", "الجمعة", "السبت", "الأحد"],
+          "correct_index": 1,
+          "explanation": "'الجمعة' (Al-jumu'a) = Friday (day of gathering/prayer).",
+          "order": 2
+        },
+        {
+          "question": "In most Arab countries, the weekend is:",
+          "options": ["Saturday-Sunday", "Friday-Saturday", "Thursday-Friday", "Sunday-Monday"],
+          "correct_index": 1,
+          "explanation": "Most Arab countries have Friday-Saturday as the weekend.",
+          "order": 3
+        },
+        {
+          "question": "What does 'نهاية الأسبوع' mean?",
+          "options": ["The end of the month", "The weekend", "The holiday", "The vacation"],
+          "correct_index": 1,
+          "explanation": "'نهاية الأسبوع' = end of the week = weekend.",
+          "order": 4
+        },
+        {
+          "question": "Which day sounds like 'ath-thoo-la-THAA'?",
+          "options": ["الإثنين", "الثلاثاء", "الأربعاء", "الأحد"],
+          "correct_index": 1,
+          "explanation": "'الثلاثاء' (Tuesday) = 'the third'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

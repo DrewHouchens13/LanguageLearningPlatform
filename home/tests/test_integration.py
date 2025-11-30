@@ -113,7 +113,7 @@ class OnboardingFlowTest(TestCase):
         user = User.objects.get(email='john@example.com')
         profile = UserProfile.objects.get(user=user)
         self.assertTrue(profile.has_completed_onboarding)
-        self.assertEqual(profile.proficiency_level, 'B1')
+        self.assertEqual(profile.proficiency_level, 3)  # B1 -> 3
         
         # Step 5: Verify attempt linked to user
         attempt = OnboardingAttempt.objects.get(id=attempt_id)
@@ -146,7 +146,7 @@ class OnboardingFlowTest(TestCase):
         # Step 3: Verify results saved
         profile = UserProfile.objects.get(user=user)
         self.assertTrue(profile.has_completed_onboarding)
-        self.assertEqual(profile.proficiency_level, 'B1')
+        self.assertEqual(profile.proficiency_level, 3)  # B1 -> 3
     
     def test_authenticated_user_quiz_flow(self):
         """Test authenticated user: quiz → submit → profile updated"""
@@ -169,7 +169,7 @@ class OnboardingFlowTest(TestCase):
         # Step 3: Verify profile created
         profile = UserProfile.objects.get(user=user)
         self.assertTrue(profile.has_completed_onboarding)
-        self.assertEqual(profile.proficiency_level, 'B1')
+        self.assertEqual(profile.proficiency_level, 3)  # B1 -> 3
     
     def test_user_can_retake_quiz_after_completion(self):
         """Test users can restart the assessment even after completing it."""
@@ -188,7 +188,7 @@ class OnboardingFlowTest(TestCase):
         )
         
         profile = UserProfile.objects.get(user=user)
-        self.assertEqual(profile.proficiency_level, 'B1')
+        self.assertEqual(profile.proficiency_level, 3)  # B1 -> 3
         
         # Try to access quiz again - retakes are allowed
         response = client.get('/onboarding/quiz/')
@@ -198,7 +198,7 @@ class OnboardingFlowTest(TestCase):
 
         # Verify level stayed at B1 and attempts incremented
         profile.refresh_from_db()
-        self.assertEqual(profile.proficiency_level, 'B1')
+        self.assertEqual(profile.proficiency_level, 3)  # B1 -> 3
         self.assertEqual(OnboardingAttempt.objects.filter(user=user).count(), 2)
 
 

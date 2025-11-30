@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Russian",
+    "level": 1,
+    "theme": "Basics",
+    "description": "Essential greetings, numbers 1-10, colors, and basic phrases to start your Russian journey."
+  },
+  "module": {
+    "name": "Basics",
+    "description": "Learn essential greetings, numbers, colors, and basic phrases to start your Russian journey.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Essential Russian Words",
+      "description": "Build your foundation with the most important Russian words including greetings, numbers, and colors.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Hello", "back": "Привет (Privet) / Здравствуйте (Zdravstvuyte)", "order": 1},
+        {"front": "Goodbye", "back": "До свидания (Do svidaniya)", "order": 2},
+        {"front": "Please", "back": "Пожалуйста (Pozhaluysta)", "order": 3},
+        {"front": "Thank you", "back": "Спасибо (Spasibo)", "order": 4},
+        {"front": "Yes", "back": "Да (Da)", "order": 5},
+        {"front": "No", "back": "Нет (Nyet)", "order": 6},
+        {"front": "Good morning", "back": "Доброе утро (Dobroye utro)", "order": 7},
+        {"front": "Good evening", "back": "Добрый вечер (Dobryy vecher)", "order": 8},
+        {"front": "Excuse me", "back": "Извините (Izvinite)", "order": 9},
+        {"front": "I'm sorry", "back": "Простите (Prostite)", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Hello' informally in Russian?",
+          "options": ["До свидания", "Привет", "Спасибо", "Пожалуйста"],
+          "correct_index": 1,
+          "explanation": "'Привет' (Privet) is the informal way to say hello in Russian.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Спасибо' (Spasibo) mean?",
+          "options": ["Please", "Goodbye", "Thank you", "Hello"],
+          "correct_index": 2,
+          "explanation": "'Спасибо' means 'Thank you' in Russian.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'Goodbye' in Russian?",
+          "options": ["Привет", "Доброе утро", "До свидания", "Спасибо"],
+          "correct_index": 2,
+          "explanation": "'До свидания' (Do svidaniya) means 'until meeting again'.",
+          "order": 3
+        },
+        {
+          "question": "What is 'Please' in Russian?",
+          "options": ["Спасибо", "Извините", "Пожалуйста", "Да"],
+          "correct_index": 2,
+          "explanation": "'Пожалуйста' means 'please' and also 'you're welcome'.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'Good morning' in Russian?",
+          "options": ["Добрый вечер", "Доброе утро", "Привет", "До свидания"],
+          "correct_index": 1,
+          "explanation": "'Доброе утро' (Dobroye utro) is the morning greeting.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Basic Russian Grammar",
+      "description": "Learn fundamental grammar concepts: gender, cases, and basic sentence structure.",
+      "order": 2,
+      "flashcards": [
+        {"front": "I", "back": "Я (Ya)", "order": 1},
+        {"front": "you (informal)", "back": "Ты (Ty)", "order": 2},
+        {"front": "he", "back": "Он (On)", "order": 3},
+        {"front": "she", "back": "Она (Ona)", "order": 4},
+        {"front": "it (neuter)", "back": "Оно (Ono)", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How many grammatical genders does Russian have?",
+          "options": ["One", "Two", "Three", "Four"],
+          "correct_index": 2,
+          "explanation": "Russian has three genders: masculine, feminine, and neuter.",
+          "order": 1
+        },
+        {
+          "question": "How many cases does Russian have?",
+          "options": ["Four", "Five", "Six", "Seven"],
+          "correct_index": 2,
+          "explanation": "Russian has six grammatical cases.",
+          "order": 2
+        },
+        {
+          "question": "In present tense, the verb 'to be' is:",
+          "options": ["Always used", "Usually omitted", "Only for questions", "Only for negatives"],
+          "correct_index": 1,
+          "explanation": "In present tense, Russians usually omit 'to be' (I student, not I am student).",
+          "order": 3
+        },
+        {
+          "question": "How do you say 'I am a student' in Russian?",
+          "options": ["Я есть студент", "Я студент", "Студент я", "Есть я студент"],
+          "correct_index": 1,
+          "explanation": "'Я студент' - the verb 'to be' is omitted in present tense.",
+          "order": 4
+        },
+        {
+          "question": "Masculine nouns typically end in:",
+          "options": ["A consonant", "-а or -я", "-о or -е", "-ь only"],
+          "correct_index": 0,
+          "explanation": "Most masculine nouns end in a consonant (стол, дом).",
+          "order": 5
+        },
+        {
+          "question": "Feminine nouns typically end in:",
+          "options": ["A consonant", "-а or -я", "-о or -е", "-ы or -и"],
+          "correct_index": 1,
+          "explanation": "Most feminine nouns end in -а or -я (книга, земля).",
+          "order": 6
+        },
+        {
+          "question": "Which is the correct way to say 'this is a book'?",
+          "options": ["Это книга есть", "Книга это", "Это книга", "Есть это книга"],
+          "correct_index": 2,
+          "explanation": "'Это книга' (Eto kniga) - 'this is a book' without 'is'.",
+          "order": 7
+        },
+        {
+          "question": "Neuter nouns typically end in:",
+          "options": ["A consonant", "-а or -я", "-о or -е", "-ь"],
+          "correct_index": 2,
+          "explanation": "Most neuter nouns end in -о or -е (окно, море).",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "First Conversations",
+      "description": "Practice essential phrases for introducing yourself and basic social interactions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "My name is...", "back": "Меня зовут... (Menya zovut...)", "order": 1},
+        {"front": "What is your name?", "back": "Как вас зовут? (Kak vas zovut?)", "order": 2},
+        {"front": "Nice to meet you", "back": "Приятно познакомиться (Priyatno poznakomitsya)", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'My name is Ivan' in Russian?",
+          "options": ["Моё имя Иван", "Меня зовут Иван", "Я имя Иван", "Зовут меня Иван"],
+          "correct_index": 1,
+          "explanation": "'Меня зовут' (They call me) is the standard way to give your name.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Как вас зовут?' mean?",
+          "options": ["How are you?", "What is your name?", "Where are you from?", "How old are you?"],
+          "correct_index": 1,
+          "explanation": "'Как вас зовут?' literally means 'How do they call you?'",
+          "order": 2
+        },
+        {
+          "question": "How would you respond to 'Как дела?' (How are you)?",
+          "options": ["Меня зовут Анна", "Хорошо, спасибо", "Приятно познакомиться", "Пожалуйста"],
+          "correct_index": 1,
+          "explanation": "'Хорошо, спасибо' means 'Good, thank you.'",
+          "order": 3
+        },
+        {
+          "question": "What does 'Приятно познакомиться' mean?",
+          "options": ["Nice to meet you", "Thank you very much", "I'm sorry", "Goodbye"],
+          "correct_index": 0,
+          "explanation": "'Приятно познакомиться' means 'Pleasant to meet' = Nice to meet you.",
+          "order": 4
+        },
+        {
+          "question": "How do you ask 'Where are you from?' in Russian?",
+          "options": ["Как дела?", "Который час?", "Откуда вы?", "Сколько вам лет?"],
+          "correct_index": 2,
+          "explanation": "'Откуда вы?' (Otkuda vy?) asks about origin.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Simple Russian",
+      "description": "Practice reading comprehension with simple Russian texts using Cyrillic.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Open", "back": "Открыто (Otkryto)", "order": 1},
+        {"front": "Closed", "back": "Закрыто (Zakryto)", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'Собака большая.' What is big?",
+          "options": ["The cat", "The dog", "The house", "The car"],
+          "correct_index": 1,
+          "explanation": "'Собака' (sobaka) means 'dog'. The sentence says the dog is big.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'У Марии чёрная кошка.' What color is the cat?",
+          "options": ["White", "Brown", "Black", "Gray"],
+          "correct_index": 2,
+          "explanation": "'Чёрная' (chyornaya) means 'black'. Maria has a black cat.",
+          "order": 2
+        },
+        {
+          "question": "Read: 'Дом маленький, но красивый.' Is the house big or small?",
+          "options": ["Big", "Small", "Medium", "Very big"],
+          "correct_index": 1,
+          "explanation": "'Маленький' (malenkiy) means 'small'. The house is small but beautiful.",
+          "order": 3
+        },
+        {
+          "question": "Read the sign: 'ВЫХОД'. What does it indicate?",
+          "options": ["Entrance", "Exit", "Bathroom", "Danger"],
+          "correct_index": 1,
+          "explanation": "'Выход' (vykhod) means 'exit'.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'Я ем яблоко.' What is the person eating?",
+          "options": ["An orange", "A banana", "An apple", "A pear"],
+          "correct_index": 2,
+          "explanation": "'Яблоко' (yabloko) means 'apple'. 'Ем' means 'I eat'.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Hearing Russian Sounds",
+      "description": "Train your ear to recognize Russian pronunciation and Cyrillic letters.",
+      "order": 5,
+      "flashcards": [
+        {"front": "One", "back": "Один (Odin)", "order": 1},
+        {"front": "Two", "back": "Два (Dva)", "order": 2},
+        {"front": "Three", "back": "Три (Tri)", "order": 3},
+        {"front": "Four", "back": "Четыре (Chetyre)", "order": 4},
+        {"front": "Five", "back": "Пять (Pyat')", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Listen: Which number sounds like 'a-DEEN'?",
+          "options": ["Два", "Один", "Три", "Ноль"],
+          "correct_index": 1,
+          "explanation": "'Один' (odin = one) is pronounced 'a-DEEN'.",
+          "order": 1
+        },
+        {
+          "question": "The Russian letter 'Р' sounds like:",
+          "options": ["English P", "English R (rolled)", "English B", "Silent"],
+          "correct_index": 1,
+          "explanation": "'Р' is the Russian R, typically rolled/trilled.",
+          "order": 2
+        },
+        {
+          "question": "How is the Russian 'Ы' sound produced?",
+          "options": ["Like 'ee' in 'see'", "A sound between 'i' and 'u'", "Like 'oo' in 'food'", "Silent"],
+          "correct_index": 1,
+          "explanation": "'Ы' is unique to Russian - tongue pulled back, lips not rounded.",
+          "order": 3
+        },
+        {
+          "question": "The Russian alphabet (Cyrillic) has how many letters?",
+          "options": ["26", "28", "33", "36"],
+          "correct_index": 2,
+          "explanation": "The Russian Cyrillic alphabet has 33 letters.",
+          "order": 4
+        },
+        {
+          "question": "Which number sounds like 'PYAT'?",
+          "options": ["Четыре", "Шесть", "Пять", "Семь"],
+          "correct_index": 2,
+          "explanation": "'Пять' (pyat' = five) is pronounced 'pyat'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+

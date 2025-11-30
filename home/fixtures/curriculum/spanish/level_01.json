@@ -1,0 +1,287 @@
+{
+  "meta": {
+    "language": "Spanish",
+    "level": 1,
+    "theme": "Basics",
+    "description": "Essential greetings, numbers 1-10, colors, and basic phrases to start your Spanish journey."
+  },
+  "module": {
+    "name": "Basics",
+    "description": "Learn essential greetings, numbers, colors, and basic phrases to start your Spanish journey.",
+    "passing_score": 85
+  },
+  "lessons": [
+    {
+      "skill": "vocabulary",
+      "title": "Essential Spanish Words",
+      "description": "Build your foundation with the most important Spanish words including greetings, numbers, and colors.",
+      "order": 1,
+      "flashcards": [
+        {"front": "Hello", "back": "Hola", "order": 1},
+        {"front": "Goodbye", "back": "Adiós", "order": 2},
+        {"front": "Please", "back": "Por favor", "order": 3},
+        {"front": "Thank you", "back": "Gracias", "order": 4},
+        {"front": "Yes", "back": "Sí", "order": 5},
+        {"front": "No", "back": "No", "order": 6},
+        {"front": "Good morning", "back": "Buenos días", "order": 7},
+        {"front": "Good night", "back": "Buenas noches", "order": 8},
+        {"front": "Excuse me", "back": "Perdón / Con permiso", "order": 9},
+        {"front": "I'm sorry", "back": "Lo siento", "order": 10}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'Hello' in Spanish?",
+          "options": ["Adiós", "Hola", "Gracias", "Por favor"],
+          "correct_index": 1,
+          "explanation": "'Hola' is the most common way to say hello in Spanish.",
+          "order": 1
+        },
+        {
+          "question": "What does 'Gracias' mean?",
+          "options": ["Please", "Goodbye", "Thank you", "Hello"],
+          "correct_index": 2,
+          "explanation": "'Gracias' means 'Thank you' in Spanish.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'Goodbye' in Spanish?",
+          "options": ["Hola", "Buenos días", "Adiós", "Buenas noches"],
+          "correct_index": 2,
+          "explanation": "'Adiós' is used to say goodbye.",
+          "order": 3
+        },
+        {
+          "question": "What is 'Please' in Spanish?",
+          "options": ["Gracias", "Lo siento", "Por favor", "Perdón"],
+          "correct_index": 2,
+          "explanation": "'Por favor' means 'please' and is used to make polite requests.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'Good morning' in Spanish?",
+          "options": ["Buenas noches", "Buenos días", "Buenas tardes", "Hola"],
+          "correct_index": 1,
+          "explanation": "'Buenos días' is used in the morning until noon.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "grammar",
+      "title": "Basic Spanish Grammar",
+      "description": "Learn fundamental grammar concepts: articles, gender, and simple sentence structure.",
+      "order": 2,
+      "flashcards": [
+        {"front": "the (masculine singular)", "back": "el", "order": 1},
+        {"front": "the (feminine singular)", "back": "la", "order": 2},
+        {"front": "the (masculine plural)", "back": "los", "order": 3},
+        {"front": "the (feminine plural)", "back": "las", "order": 4},
+        {"front": "a/an (masculine)", "back": "un", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Which article is used with masculine singular nouns?",
+          "options": ["la", "el", "los", "las"],
+          "correct_index": 1,
+          "explanation": "'El' is the definite article for masculine singular nouns.",
+          "order": 1
+        },
+        {
+          "question": "Which is the correct article for 'casa' (house, feminine)?",
+          "options": ["el casa", "la casa", "los casa", "un casa"],
+          "correct_index": 1,
+          "explanation": "'Casa' is feminine, so we use 'la' - la casa.",
+          "order": 2
+        },
+        {
+          "question": "How do you say 'the boys' in Spanish?",
+          "options": ["el niños", "la niños", "los niños", "las niños"],
+          "correct_index": 2,
+          "explanation": "'Niños' is masculine plural, so we use 'los'.",
+          "order": 3
+        },
+        {
+          "question": "What is the plural article for feminine nouns?",
+          "options": ["el", "la", "los", "las"],
+          "correct_index": 3,
+          "explanation": "'Las' is used with feminine plural nouns.",
+          "order": 4
+        },
+        {
+          "question": "Which sentence is grammatically correct?",
+          "options": ["El mesa es grande", "La mesa es grande", "Los mesa es grande", "Mesa la es grande"],
+          "correct_index": 1,
+          "explanation": "'Mesa' (table) is feminine, so 'la mesa' is correct.",
+          "order": 5
+        },
+        {
+          "question": "In Spanish, adjectives usually come:",
+          "options": ["Before the noun", "After the noun", "At the start of the sentence", "Never used"],
+          "correct_index": 1,
+          "explanation": "In Spanish, most adjectives come after the noun they describe.",
+          "order": 6
+        },
+        {
+          "question": "Which is correct: 'un libro' or 'una libro'?",
+          "options": ["un libro", "una libro", "el libro", "Both are correct"],
+          "correct_index": 0,
+          "explanation": "'Libro' (book) is masculine, so we use 'un libro'.",
+          "order": 7
+        },
+        {
+          "question": "How do you make 'gato' (cat) plural?",
+          "options": ["gatos", "gatoes", "gatoes", "gato"],
+          "correct_index": 0,
+          "explanation": "Most Spanish nouns add '-s' to form the plural: gato → gatos.",
+          "order": 8
+        }
+      ]
+    },
+    {
+      "skill": "conversation",
+      "title": "First Conversations",
+      "description": "Practice essential phrases for introducing yourself and basic social interactions.",
+      "order": 3,
+      "flashcards": [
+        {"front": "My name is...", "back": "Me llamo...", "order": 1},
+        {"front": "What is your name?", "back": "¿Cómo te llamas?", "order": 2},
+        {"front": "Nice to meet you", "back": "Mucho gusto", "order": 3}
+      ],
+      "quiz_questions": [
+        {
+          "question": "How do you say 'My name is María' in Spanish?",
+          "options": ["Mi nombre María", "Me llamo María", "Soy nombre María", "Llamo me María"],
+          "correct_index": 1,
+          "explanation": "'Me llamo' is the standard way to introduce yourself.",
+          "order": 1
+        },
+        {
+          "question": "What does '¿Cómo te llamas?' mean?",
+          "options": ["How are you?", "What is your name?", "Where are you from?", "How old are you?"],
+          "correct_index": 1,
+          "explanation": "'¿Cómo te llamas?' literally means 'How do you call yourself?'",
+          "order": 2
+        },
+        {
+          "question": "How would you respond to '¿Cómo estás?'?",
+          "options": ["Me llamo Juan", "Estoy bien, gracias", "Mucho gusto", "De nada"],
+          "correct_index": 1,
+          "explanation": "'Estoy bien, gracias' means 'I'm fine, thank you.'",
+          "order": 3
+        },
+        {
+          "question": "What does 'Mucho gusto' mean?",
+          "options": ["Much food", "Nice to meet you", "Very good", "Thank you"],
+          "correct_index": 1,
+          "explanation": "'Mucho gusto' is used when meeting someone for the first time.",
+          "order": 4
+        },
+        {
+          "question": "How do you say 'Where are you from?' in Spanish?",
+          "options": ["¿Cómo estás?", "¿Qué hora es?", "¿De dónde eres?", "¿Cuántos años tienes?"],
+          "correct_index": 2,
+          "explanation": "'¿De dónde eres?' asks about someone's origin.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "reading",
+      "title": "Reading Simple Spanish",
+      "description": "Practice reading comprehension with simple Spanish texts and signs.",
+      "order": 4,
+      "flashcards": [
+        {"front": "Open", "back": "Abierto", "order": 1},
+        {"front": "Closed", "back": "Cerrado", "order": 2}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Read: 'El perro es grande.' What is big?",
+          "options": ["The cat", "The dog", "The house", "The car"],
+          "correct_index": 1,
+          "explanation": "'El perro' means 'the dog'. The sentence says the dog is big.",
+          "order": 1
+        },
+        {
+          "question": "Read: 'María tiene un gato negro.' What color is María's cat?",
+          "options": ["White", "Brown", "Black", "Gray"],
+          "correct_index": 2,
+          "explanation": "'Negro' means 'black'. María has a black cat.",
+          "order": 2
+        },
+        {
+          "question": "Read: 'La casa es pequeña pero bonita.' Is the house big or small?",
+          "options": ["Big", "Small", "Medium", "Very big"],
+          "correct_index": 1,
+          "explanation": "'Pequeña' means 'small'. The house is small but pretty.",
+          "order": 3
+        },
+        {
+          "question": "Read the sign: 'SALIDA'. What does it indicate?",
+          "options": ["Entrance", "Exit", "Bathroom", "Danger"],
+          "correct_index": 1,
+          "explanation": "'Salida' means 'exit'. You'll see this on exit signs.",
+          "order": 4
+        },
+        {
+          "question": "Read: 'Yo como una manzana.' What is the person eating?",
+          "options": ["An orange", "A banana", "An apple", "A pear"],
+          "correct_index": 2,
+          "explanation": "'Manzana' means 'apple'. 'Yo como' means 'I eat'.",
+          "order": 5
+        }
+      ]
+    },
+    {
+      "skill": "listening",
+      "title": "Hearing Spanish Sounds",
+      "description": "Train your ear to recognize Spanish pronunciation and understand spoken words.",
+      "order": 5,
+      "flashcards": [
+        {"front": "One", "back": "Uno", "order": 1},
+        {"front": "Two", "back": "Dos", "order": 2},
+        {"front": "Three", "back": "Tres", "order": 3},
+        {"front": "Four", "back": "Cuatro", "order": 4},
+        {"front": "Five", "back": "Cinco", "order": 5}
+      ],
+      "quiz_questions": [
+        {
+          "question": "Listen: Which number sounds like 'OO-no'?",
+          "options": ["Dos", "Uno", "Tres", "Cero"],
+          "correct_index": 1,
+          "explanation": "'Uno' (one) is pronounced 'OO-no'.",
+          "order": 1
+        },
+        {
+          "question": "Which Spanish vowel sounds like 'eh' in 'bed'?",
+          "options": ["A", "E", "I", "O"],
+          "correct_index": 1,
+          "explanation": "The Spanish 'E' sounds similar to 'eh' in English.",
+          "order": 2
+        },
+        {
+          "question": "How is the Spanish 'ñ' pronounced?",
+          "options": ["Like 'n'", "Like 'ny' in canyon", "Like 'gn'", "Silent"],
+          "correct_index": 1,
+          "explanation": "The 'ñ' sounds like 'ny' as in 'canyon' or 'onion'.",
+          "order": 3
+        },
+        {
+          "question": "In Spanish, the letter 'J' sounds like:",
+          "options": ["English 'J' in 'jump'", "English 'H' in 'hello'", "English 'Y' in 'yes'", "Silent"],
+          "correct_index": 1,
+          "explanation": "Spanish 'J' is pronounced like a strong 'H' sound.",
+          "order": 4
+        },
+        {
+          "question": "Which number sounds like 'SEEN-ko'?",
+          "options": ["Cuatro", "Seis", "Cinco", "Siete"],
+          "correct_index": 2,
+          "explanation": "'Cinco' (five) is pronounced 'SEEN-ko'.",
+          "order": 5
+        }
+      ]
+    }
+  ]
+}
+
