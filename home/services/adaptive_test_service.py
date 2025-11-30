@@ -436,6 +436,154 @@ class AdaptiveTestService:
         return questions
     
     
+    def _load_lesson_content_from_db(self, language: str, level: int, skill: str) -> Dict:
+        """
+        Load lesson content from database using Django ORM.
+        
+        SECURITY: Uses Django ORM queries - no file path operations.
+        User input is sanitized through Django's queryset filtering.
+        
+        Args:
+            language: Target language
+            level: Proficiency level
+            skill: Skill category name
+            
+        Returns:
+            dict: Lesson content with flashcards and quiz questions
+        """
+        from home.models import Lesson, SkillCategory
+        
+        try:
+            # Get skill category object (safely via ORM)
+            skill_category = SkillCategory.objects.filter(name__iexact=skill).first()
+            if not skill_category:
+                return {}
+            
+            # Get lesson for this language, level, and skill (ORM query - safe)
+            lesson = Lesson.objects.filter(
+                language=language,
+                difficulty_level=level,
+                skill_category=skill_category,
+                is_published=True
+            ).prefetch_related('cards', 'quiz_questions').first()
+            
+            if not lesson:
+                return {}
+            
+            # Extract flashcards
+            flashcards = []
+            for card in lesson.cards.all()[:20]:  # Limit to avoid token overflow
+                flashcards.append({
+                    'front': card.front_text,
+                    'back': card.back_text,
+                })
+            
+            # Extract quiz questions
+            quiz_questions = []
+            for q in lesson.quiz_questions.all()[:10]:  # Limit to avoid token overflow
+                quiz_questions.append({
+                    'question': q.question,
+                    'options': q.options,
+                })
+            
+            return {
+                'title': lesson.title,
+                'description': lesson.description,
+                'flashcards': flashcards,
+                'quiz_questions': quiz_questions,
+            }
+        except Exception as e:
+            logger.error('Failed to load lesson content from database: %s', str(e))
+            return {}
+    
+    def _build_lesson_context_prompt(self, lesson_content: Dict, skill: str) -> str:
+        """
+        Build a detailed context prompt section from lesson content.
+        
+        Args:
+            lesson_content: Lesson content from database
+            skill: Skill category
+            
+        Returns:
+            str: Formatted context section for the prompt
+        """
+        if not lesson_content:
+            return ""
+        
+        context_parts = []
+        
+        # Add lesson title and description
+        if lesson_content.get('title'):
+            context_parts.append(f"Lesson Title: {lesson_content['title']}")
+        if lesson_content.get('description'):
+            context_parts.append(f"Lesson Description: {lesson_content['description']}")
+        
+        context_parts.append("")  # Blank line
+        
+        # Add skill-specific content
+        if skill.lower() == 'vocabulary':
+            flashcards = lesson_content.get('flashcards', [])
+            if flashcards:
+                context_parts.append("VOCABULARY WORDS TAUGHT IN THIS LESSON:")
+                for card in flashcards:
+                    context_parts.append(f"  - {card['front']} = {card['back']}")
+                context_parts.append("")
+                context_parts.append("IMPORTANT: Generate questions that test understanding of these specific words:")
+                context_parts.append("- Word meanings and translations")
+                context_parts.append("- Usage in context and sentences")
+                context_parts.append("- Appropriate situations for each word")
+                context_parts.append("- Distinguishing between similar words")
+        
+        elif skill.lower() == 'grammar':
+            flashcards = lesson_content.get('flashcards', [])
+            if flashcards:
+                context_parts.append("GRAMMAR CONCEPTS TAUGHT IN THIS LESSON:")
+                for card in flashcards:
+                    context_parts.append(f"  - {card['front']} → {card['back']}")
+                context_parts.append("")
+                context_parts.append("IMPORTANT: Generate questions that test understanding of these specific grammar rules:")
+                context_parts.append("- Correct application of these rules")
+                context_parts.append("- Identifying correct vs incorrect usage")
+                context_parts.append("- Sentence construction using these concepts")
+        
+        elif skill.lower() == 'conversation':
+            flashcards = lesson_content.get('flashcards', [])
+            if flashcards:
+                context_parts.append("CONVERSATION PHRASES TAUGHT IN THIS LESSON:")
+                for card in flashcards:
+                    context_parts.append(f"  - {card['front']} = {card['back']}")
+                context_parts.append("")
+                context_parts.append("IMPORTANT: Generate questions that test understanding of these phrases:")
+                context_parts.append("- When to use each phrase")
+                context_parts.append("- Appropriate responses in conversations")
+                context_parts.append("- Social context and formality levels")
+        
+        elif skill.lower() == 'reading':
+            flashcards = lesson_content.get('flashcards', [])
+            if flashcards:
+                context_parts.append("READING CONTENT FROM THIS LESSON:")
+                for card in flashcards:
+                    context_parts.append(f"  - {card['front']} / {card['back']}")
+                context_parts.append("")
+                context_parts.append("IMPORTANT: Generate questions that test reading comprehension:")
+                context_parts.append("- Understanding of simple texts and sentences")
+                context_parts.append("- Identifying key information")
+                context_parts.append("- Interpreting meaning from context")
+        
+        elif skill.lower() == 'listening':
+            flashcards = lesson_content.get('flashcards', [])
+            if flashcards:
+                context_parts.append("LISTENING CONTENT FROM THIS LESSON:")
+                for card in flashcards:
+                    context_parts.append(f"  - {card['front']} / {card['back']}")
+                context_parts.append("")
+                context_parts.append("IMPORTANT: Generate questions that test listening comprehension:")
+                context_parts.append("- Recognizing pronunciation and sounds")
+                context_parts.append("- Understanding spoken words and phrases")
+                context_parts.append("- Distinguishing between similar sounds")
+        
+        return "\n".join(context_parts)
+    
     def _generate_ai_questions(
         self,
         language: str,
@@ -461,6 +609,10 @@ class AdaptiveTestService:
             client = OpenAI(api_key=self.api_key)
             theme = self.LEVEL_THEMES.get(level, self.LEVEL_THEMES[1])
             
+            # Load lesson content from database (safe - uses Django ORM)
+            lesson_content = self._load_lesson_content_from_db(language, level, skill)
+            lesson_context = self._build_lesson_context_prompt(lesson_content, skill)
+            
             # Build the prompt
             prompt_parts = [
                 f"Generate {count} multiple-choice questions for a {language} language test.",
@@ -468,14 +620,29 @@ class AdaptiveTestService:
                 f"Level: {level}/10 ({theme['name']})",
                 f"Skill Focus: {skill}",
                 f"Theme Topics: {', '.join(theme['topics'])}",
-                "",
-                "Generate appropriate questions for this level and skill focus.",
-                "",
+                ""
+            ]
+            
+            # Add lesson-specific context if available
+            if lesson_context:
+                prompt_parts.append("=" * 60)
+                prompt_parts.append("LESSON CONTENT - USE THIS AS THE BASIS FOR YOUR QUESTIONS:")
+                prompt_parts.append("=" * 60)
+                prompt_parts.append(lesson_context)
+                prompt_parts.append("")
+                prompt_parts.append("CRITICAL: Your questions MUST be based on the specific content listed above.")
+                prompt_parts.append("Do NOT generate generic questions. Test the actual material taught in this lesson.")
+                prompt_parts.append("")
+            else:
+                prompt_parts.append("NOTE: Lesson content not available. Generate appropriate questions for this level.")
+                prompt_parts.append("")
+            
+            prompt_parts.extend([
                 "=" * 60,
                 "QUESTION REQUIREMENTS:",
                 "=" * 60,
                 "",
-            ]
+            ])
             
             prompt_parts.extend([
                 "=" * 60,
@@ -495,6 +662,7 @@ class AdaptiveTestService:
                 "- Each question must test a different concept, word, rule, or scenario",
                 "- DO NOT create variations of the same question",
                 "- DO NOT ask the same thing in different words",
+                "- Cover the full breadth of content from the lesson",
                 "",
                 "Question Type Guidelines:",
                 "- For vocabulary: Mix word meanings, usage in context, synonyms/antonyms, collocations, and appropriate situations",
@@ -521,7 +689,7 @@ class AdaptiveTestService:
             
             system_message = (
                 f"You are an expert {language} language teacher creating comprehensive test questions. "
-                "Generate questions appropriate for the specified level and skill focus. "
+                "Your questions must be based on the specific lesson content provided. "
                 "Each question must test a DIFFERENT concept - avoid repetition and variations of the same question. "
                 "Always return valid JSON with exactly the structure requested."
             )
