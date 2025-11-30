@@ -436,9 +436,76 @@ class AdaptiveTestService:
         
         return questions
     
+    def _validate_and_build_fixture_path(self, language: str, level: int) -> Optional[str]:
+        """
+        Validate inputs and build a safe fixture file path.
+        
+        SECURITY: This method performs strict validation and returns a path
+        only if all security checks pass. The returned path is guaranteed
+        to be within the fixture root directory.
+        
+        Args:
+            language: Target language (will be validated)
+            level: Proficiency level (will be validated)
+            
+        Returns:
+            str: Absolute path to fixture file, or None if validation fails
+        """
+        # Validate level (whitelist: 1-10)
+        if not isinstance(level, int) or level < 1 or level > 10:
+            logger.warning('Invalid level: %s (must be 1-10)', level)
+            return None
+        
+        # Construct and normalize fixture root (hardcoded, safe)
+        fixture_root = os.path.join(
+            settings.BASE_DIR,
+            'home',
+            'fixtures',
+            'curriculum',
+        )
+        fixture_root = os.path.abspath(os.path.normpath(fixture_root))
+        
+        # Validate language input (regex allowlist: alphanumeric and hyphens only)
+        language_sanitized = language.strip().lower()
+        if not re.fullmatch(r'[a-z0-9-]{2,30}', language_sanitized):
+            logger.warning('Invalid language: %s (must be 2-30 chars, alphanumeric and hyphens only)', 
+                         language_sanitized)
+            return None
+        
+        # Validate filename format (level must be 01-10)
+        filename = f'level_{level:02d}.json'
+        if not re.fullmatch(r'level_\d{2}\.json', filename):
+            logger.warning('Invalid filename format: %s', filename)
+            return None
+        
+        # Build path from validated components only
+        safe_path = os.path.join(fixture_root, language_sanitized, filename)
+        normalized_path = os.path.abspath(os.path.normpath(safe_path))
+        
+        # Security check: ensure path is contained within fixture_root
+        try:
+            common_path = os.path.commonpath([fixture_root, normalized_path])
+            if common_path != fixture_root:
+                logger.warning('Path validation failed: %s', normalized_path)
+                return None
+        except ValueError:
+            # Windows: different drives - use prefix check
+            fixture_root_norm = os.path.normpath(fixture_root)
+            if not (normalized_path.startswith(fixture_root_norm + os.sep) or 
+                   normalized_path == fixture_root_norm):
+                logger.warning('Path validation failed: %s', normalized_path)
+                return None
+        
+        # Path is validated and safe
+        return normalized_path
+    
     def _load_level_fixture(self, language: str, level: int) -> Optional[Dict]:
         """
         Load the level fixture data for a specific language and level.
+        
+        SECURITY: Uses _validate_and_build_fixture_path() which performs
+        strict validation and returns only safe, validated paths. The path
+        is only used for file operations after validation passes.
         
         Args:
             language: Target language
@@ -448,72 +515,26 @@ class AdaptiveTestService:
             dict: Fixture data or None if not found
         """
         try:
-            # Validate level is within expected range
-            if not isinstance(level, int) or level < 1 or level > 10:
-                logger.warning('Invalid level: %s (must be 1-10)', level)
+            # Get validated safe path (returns None if validation fails)
+            validated_fixture_path = self._validate_and_build_fixture_path(language, level)
+            
+            # SECURITY: Early return if validation failed - no path operations on invalid input
+            if validated_fixture_path is None:
                 return None
             
-            # Construct base fixture root directory
-            fixture_root = os.path.join(
-                settings.BASE_DIR,
-                'home',
-                'fixtures',
-                'curriculum',
-            )
+            # validated_fixture_path is guaranteed safe:
+            # - Inputs validated (level 1-10, language regex allowlist)
+            # - Path constructed only from validated components
+            # - Path verified to be within fixture_root directory
+            # - No user input flows through path operations
             
-            # Normalize and get absolute paths for security
-            fixture_root = os.path.abspath(os.path.normpath(fixture_root))
-            
-            # Strictly validate language input using regex (only allow alphanumeric and hyphens)
-            language_dir = language.strip().lower()
-            
-            # Validate language directory name: only letters, numbers, and hyphens, 2-30 chars
-            if not re.fullmatch(r'[a-z0-9-]{2,30}', language_dir):
-                logger.warning('Invalid language directory name: %s (must be 2-30 chars, alphanumeric and hyphens only)', 
-                             language_dir)
+            # Check file existence (path is already validated)
+            if not os.path.exists(validated_fixture_path):
+                logger.warning('Fixture not found: %s', validated_fixture_path)
                 return None
             
-            # Construct fixture path using validated inputs
-            # Level is already validated (1-10), language_dir is validated (regex allowlist)
-            fixture_path = os.path.join(
-                fixture_root,
-                language_dir,
-                f'level_{level:02d}.json'
-            )
-            
-            # Normalize and verify path is within fixture_root (prevent path traversal)
-            # Following CodeQL recommendation: normalize then verify with startswith
-            normalized_path = os.path.normpath(fixture_path)
-            normalized_path = os.path.abspath(normalized_path)
-            
-            # Security check: Ensure normalized path stays within fixture_root
-            # This prevents directory traversal attacks (e.g., ../etc/passwd)
-            # Use both commonpath (cross-platform) and startswith (Windows fallback)
-            path_is_safe = False
-            try:
-                # Cross-platform check using commonpath
-                common_path = os.path.commonpath([fixture_root, normalized_path])
-                path_is_safe = (common_path == fixture_root)
-            except ValueError:
-                # commonpath raises ValueError if paths are on different drives (Windows)
-                # Fall back to string prefix check
-                fixture_root_normalized = os.path.normpath(fixture_root)
-                path_is_safe = normalized_path.startswith(fixture_root_normalized + os.sep) or \
-                              normalized_path == fixture_root_normalized
-            
-            # SECURITY: Reject path if it's outside the allowed directory
-            if not path_is_safe:
-                logger.warning('Path traversal attack blocked: %s (not within %s)', 
-                             normalized_path, fixture_root)
-                return None
-            
-            # Now safe to use normalized_path - it's verified to be within fixture_root
-            if not os.path.exists(normalized_path):
-                logger.warning('Fixture not found: %s', normalized_path)
-                return None
-            
-            # Safe to open - path is validated to be within fixture_root
-            with open(normalized_path, 'r', encoding='utf-8') as f:
+            # Open and read file (path is already validated and verified safe)
+            with open(validated_fixture_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
                 
         except Exception as e:
