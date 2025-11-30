@@ -83,7 +83,7 @@ class Command(BaseCommand):
         try:
             generator = CurriculumGenerator()
         except ValueError as e:
-            raise CommandError(str(e))
+            raise CommandError(str(e)) from e
         
         if show_status:
             self._show_status(generator)
@@ -119,13 +119,10 @@ class Command(BaseCommand):
             
             if existing == 10:
                 emoji = '✅'
-                style = self.style.SUCCESS
             elif existing > 0:
                 emoji = '🔶'
-                style = self.style.WARNING
             else:
                 emoji = '❌'
-                style = self.style.ERROR
             
             # Build level indicators
             level_str = ''
@@ -180,7 +177,7 @@ class Command(BaseCommand):
                 self.style.SUCCESS(f'\n✅ Generated {language} Level {level}')
             )
         except Exception as e:
-            raise CommandError(f'Generation failed: {str(e)}')
+            raise CommandError(f'Generation failed: {str(e)}') from e
     
     def _generate_language(self, generator, language: str, dry_run: bool, delay: float):
         """Generate all 10 levels for a language."""
@@ -300,7 +297,7 @@ class Command(BaseCommand):
                 f'{specs["quiz_questions"]} quiz questions'
             )
         
-        self.stdout.write(f'\nTotal: 25 flashcards, 28 quiz questions')
+        self.stdout.write('\nTotal: 25 flashcards, 28 quiz questions')
     
     def _report_fixture(self, fixture: dict):
         """Report details of generated fixture."""
@@ -309,7 +306,7 @@ class Command(BaseCommand):
         
         self.stdout.write(f'\n  Theme: {meta.get("theme", "Unknown")}')
         self.stdout.write(f'  Description: {meta.get("description", "")[:60]}...')
-        self.stdout.write(f'\n  Lessons generated:')
+        self.stdout.write('\n  Lessons generated:')
         
         total_fc = 0
         total_qq = 0

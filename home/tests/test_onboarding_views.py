@@ -332,7 +332,7 @@ class TestOnboardingRetakeBlocking(TestCase):
         """Authenticated users with completed onboarding can still access welcome page."""
         # Use auto-created profile and mark as completed
         profile = self.user.profile
-        profile.proficiency_level = 'A2'
+        profile.proficiency_level = 2  # A2 -> 2
         profile.has_completed_onboarding = True
         profile.save()
 
@@ -347,7 +347,7 @@ class TestOnboardingRetakeBlocking(TestCase):
         """Authenticated users can launch quiz even after previously completing."""
         # Use auto-created profile and mark as completed
         profile = self.user.profile
-        profile.proficiency_level = 'A2'
+        profile.proficiency_level = 2  # A2 -> 2
         profile.has_completed_onboarding = True
         profile.save()
 
@@ -397,7 +397,7 @@ class TestOnboardingRetakeBlocking(TestCase):
 
         # Use auto-created profile and mark as completed
         profile = self.user.profile
-        profile.proficiency_level = 'A2'
+        profile.proficiency_level = 2  # A2 -> 2
         profile.has_completed_onboarding = True
         profile.save()
         

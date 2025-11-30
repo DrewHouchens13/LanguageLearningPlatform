@@ -1845,6 +1845,56 @@ def _build_language_data(language, lessons):
     }
 
 
+def _build_lesson_completion_map(lessons, user):
+    """
+    Build a map of lesson completion status for authenticated users.
+    
+    Args:
+        lessons: List or QuerySet of Lesson objects
+        user: Authenticated User object
+    
+    Returns:
+        dict: Map of lesson_id -> bool indicating completion status
+    """
+    from .models import UserModuleProgress, LearningModule
+    
+    completion_map = {}
+    if not user.is_authenticated:
+        return completion_map
+    
+    # Get all unique (language, level) combinations from lessons
+    lesson_lang_levels = set(
+        (lesson.language, lesson.difficulty_level) 
+        for lesson in lessons 
+        if lesson.skill_category  # Only curriculum lessons are tracked in modules
+    )
+    
+    # Get modules and progress in bulk
+    for language, level in lesson_lang_levels:
+        try:
+            module = LearningModule.objects.get(language=language, proficiency_level=level)
+        except LearningModule.DoesNotExist:
+            continue
+        
+        progress = UserModuleProgress.objects.filter(
+            user=user,
+            module=module
+        ).first()
+        
+        if not progress:
+            continue
+        
+        # Map all lessons in this module to their completion status
+        for lesson in lessons:
+            if not (lesson.language == language and 
+                   lesson.difficulty_level == level and
+                   lesson.skill_category):
+                continue
+            completion_map[lesson.id] = lesson.id in progress.lessons_completed
+    
+    return completion_map
+
+
 def _build_lesson_icon_entries(lessons, user=None):
     """
     Convert a list/queryset of Lesson objects into icon-enriched dicts.
@@ -1856,42 +1906,10 @@ def _build_lesson_icon_entries(lessons, user=None):
     Returns:
         list: List of dicts with 'lesson', 'icon', and 'is_complete' keys
     """
-    from .models import UserModuleProgress, LearningModule
-    
     result = []
     
     # Build a map of lesson completions if user is authenticated
-    completion_map = {}
-    if user and user.is_authenticated:
-        # Get all module progress for lessons we're displaying
-        lesson_ids = [lesson.id for lesson in lessons]
-        lesson_modules = {}  # Map lesson_id to module
-        
-        # Get all unique (language, level) combinations from lessons
-        lesson_lang_levels = set(
-            (lesson.language, lesson.difficulty_level) 
-            for lesson in lessons 
-            if lesson.skill_category  # Only curriculum lessons are tracked in modules
-        )
-        
-        # Get modules and progress in bulk
-        for language, level in lesson_lang_levels:
-            try:
-                module = LearningModule.objects.get(language=language, proficiency_level=level)
-                progress = UserModuleProgress.objects.filter(
-                    user=user,
-                    module=module
-                ).first()
-                
-                if progress:
-                    # Map all lessons in this module to their completion status
-                    for lesson in lessons:
-                        if (lesson.language == language and 
-                            lesson.difficulty_level == level and
-                            lesson.skill_category):
-                            completion_map[lesson.id] = lesson.id in progress.lessons_completed
-            except LearningModule.DoesNotExist:
-                pass
+    completion_map = _build_lesson_completion_map(lessons, user) if user else {}
     
     for lesson in lessons:
         is_complete = completion_map.get(lesson.id, False)
@@ -2022,6 +2040,63 @@ def _build_language_dropdown(grouped_lessons, language_profile_map, selected_lan
     return language_dropdown
 
 
+def _get_module_and_test_progress(user, language_profile, language):
+    """
+    Get module progress and test progress for a user's current level.
+    
+    Args:
+        user: User object
+        language_profile: UserLanguageProfile object
+        language: Language name
+        
+    Returns:
+        tuple: (module_progress, test_progress) where both can be None
+    """
+    if not user.is_authenticated or not language_profile:
+        return None, None
+    
+    from .models import LearningModule, UserModuleProgress
+    
+    # Get user's current level
+    current_level = 1
+    if language_profile.proficiency_level:
+        prof_level = language_profile.proficiency_level
+        if isinstance(prof_level, str):
+            cefr_to_level = {'A1': 1, 'A2': 2, 'B1': 3}
+            current_level = cefr_to_level.get(prof_level, 1)
+        else:
+            try:
+                current_level = int(prof_level)
+            except (ValueError, TypeError):
+                current_level = 1
+    
+    # Get module progress for current level
+    try:
+        module = LearningModule.objects.get(
+            language=language,
+            proficiency_level=current_level
+        )
+        progress, _ = UserModuleProgress.objects.get_or_create(
+            user=user,
+            module=module
+        )
+        
+        # Calculate test progress (completed lessons / 5)
+        required_lessons = module.get_lessons()
+        completed_count = sum(1 for lesson in required_lessons if lesson.id in progress.lessons_completed)
+        test_progress = {
+            'completed': completed_count,
+            'total': 5,
+            'percentage': (completed_count / 5 * 100) if completed_count > 0 else 0,
+            'can_take_test': progress.all_lessons_completed(),
+            'is_module_complete': progress.is_module_complete,
+            'current_level': current_level,
+        }
+        return progress, test_progress
+    except LearningModule.DoesNotExist:
+        return None, None
+
+
 def lessons_list(request):
     """
     Display lessons for the user's selected language with inline navigation.
@@ -2069,49 +2144,9 @@ def lessons_list(request):
         selected_language_lessons_list = list(filtered_lessons.order_by('order', 'id'))
     
     # Get progress information for current level
-    module_progress = None
-    test_progress = None
-    if request.user.is_authenticated and selected_language_profile:
-        from .models import LearningModule, UserModuleProgress
-        
-        # Get user's current level
-        current_level = 1
-        if selected_language_profile.proficiency_level:
-            prof_level = selected_language_profile.proficiency_level
-            if isinstance(prof_level, str):
-                cefr_to_level = {'A1': 1, 'A2': 2, 'B1': 3}
-                current_level = cefr_to_level.get(prof_level, 1)
-            else:
-                try:
-                    current_level = int(prof_level)
-                except (ValueError, TypeError):
-                    current_level = 1
-        
-        # Get module progress for current level
-        try:
-            module = LearningModule.objects.get(
-                language=selected_language,
-                proficiency_level=current_level
-            )
-            progress, _ = UserModuleProgress.objects.get_or_create(
-                user=request.user,
-                module=module
-            )
-            module_progress = progress
-            
-            # Calculate test progress (completed lessons / 5)
-            required_lessons = module.get_lessons()
-            completed_count = sum(1 for lesson in required_lessons if lesson.id in progress.lessons_completed)
-            test_progress = {
-                'completed': completed_count,
-                'total': 5,
-                'percentage': (completed_count / 5 * 100) if completed_count > 0 else 0,
-                'can_take_test': progress.all_lessons_completed(),
-                'is_module_complete': progress.is_module_complete,
-                'current_level': current_level,
-            }
-        except LearningModule.DoesNotExist:
-            pass
+    module_progress, test_progress = _get_module_and_test_progress(
+        request.user, selected_language_profile, selected_language
+    )
     
     # Build language dropdown (SOFA: Extracted helper, inline base URL to reduce R0914)
     language_dropdown = _build_language_dropdown(
@@ -3049,7 +3084,7 @@ def _is_previous_level_complete(user_progress: dict, language: str, level: int) 
     if level <= 1:
         return True
     
-    for module_id, progress in user_progress.items():
+    for progress in user_progress.values():
         if (progress.module.language == language and 
             progress.module.proficiency_level == level - 1):
             return progress.is_module_complete
@@ -3075,7 +3110,7 @@ def _filter_lessons_by_user_level(lessons, user, language):
     Returns:
         QuerySet: Filtered lessons
     """
-    from .models import UserLanguageProfile, UserModuleProgress, LearningModule
+    from .models import UserModuleProgress, LearningModule
     
     if not user.is_authenticated:
         # For anonymous users, only show level 1 lessons
@@ -3158,8 +3193,6 @@ def _get_level_1_special_lessons(language):
     Returns:
         QuerySet: Shapes and colors lessons for this language at level 1
     """
-    from .models import Lesson
-    
     return Lesson.objects.filter(
         language=language,
         difficulty_level=1,
@@ -3415,8 +3448,6 @@ def module_test_generate(request, language, level):
     Returns:
         JsonResponse: Success/error status
     """
-    import json
-    from django.http import JsonResponse
     from .models import LearningModule
     
     language = language.strip().title()

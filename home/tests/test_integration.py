@@ -220,7 +220,7 @@ class ProgressTrackingFlowTest(TestCase):
 
         # Use auto-created profile and update it
         profile = user.profile
-        profile.proficiency_level = 'A2'
+        profile.proficiency_level = 2  # A2 -> 2
         profile.has_completed_onboarding = True
         profile.onboarding_completed_at = timezone.now()
         profile.save()
