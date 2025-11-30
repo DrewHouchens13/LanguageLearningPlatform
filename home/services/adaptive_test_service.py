@@ -473,7 +473,8 @@ class AdaptiveTestService:
                              language_dir)
                 return None
             
-            # Construct fixture path
+            # Construct fixture path using validated inputs
+            # Level is already validated (1-10), language_dir is validated (regex allowlist)
             fixture_path = os.path.join(
                 fixture_root,
                 language_dir,
@@ -481,28 +482,37 @@ class AdaptiveTestService:
             )
             
             # Normalize and verify path is within fixture_root (prevent path traversal)
-            normalized_path = os.path.abspath(os.path.normpath(fixture_path))
+            # Following CodeQL recommendation: normalize then verify with startswith
+            normalized_path = os.path.normpath(fixture_path)
+            normalized_path = os.path.abspath(normalized_path)
             
-            # Ensure the normalized path is within the fixture root directory
-            # Use os.path.commonpath for robust cross-platform path containment check
+            # Security check: Ensure normalized path stays within fixture_root
+            # This prevents directory traversal attacks (e.g., ../etc/passwd)
+            # Use both commonpath (cross-platform) and startswith (Windows fallback)
+            path_is_safe = False
             try:
+                # Cross-platform check using commonpath
                 common_path = os.path.commonpath([fixture_root, normalized_path])
-                if common_path != fixture_root:
-                    logger.warning('Potential path traversal attack blocked: %s (root: %s)', 
-                                 normalized_path, fixture_root)
-                    return None
+                path_is_safe = (common_path == fixture_root)
             except ValueError:
                 # commonpath raises ValueError if paths are on different drives (Windows)
-                # In this case, check if normalized_path starts with fixture_root
-                if not normalized_path.startswith(fixture_root + os.sep):
-                    logger.warning('Potential path traversal attack blocked: %s (root: %s)', 
-                                 normalized_path, fixture_root)
-                    return None
+                # Fall back to string prefix check
+                fixture_root_normalized = os.path.normpath(fixture_root)
+                path_is_safe = normalized_path.startswith(fixture_root_normalized + os.sep) or \
+                              normalized_path == fixture_root_normalized
             
+            # SECURITY: Reject path if it's outside the allowed directory
+            if not path_is_safe:
+                logger.warning('Path traversal attack blocked: %s (not within %s)', 
+                             normalized_path, fixture_root)
+                return None
+            
+            # Now safe to use normalized_path - it's verified to be within fixture_root
             if not os.path.exists(normalized_path):
                 logger.warning('Fixture not found: %s', normalized_path)
                 return None
             
+            # Safe to open - path is validated to be within fixture_root
             with open(normalized_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
                 
