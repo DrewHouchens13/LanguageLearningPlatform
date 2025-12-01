@@ -25,29 +25,12 @@ class Command(BaseCommand):
             }
         )
 
-        # IMPORTANT: Always update slug and difficulty_level even if lesson exists
-        # This ensures consistency after migrations that change field types
-        needs_save = False
-        if not created:
-            if lesson.slug != 'shapes':
-                lesson.slug = 'shapes'
-                needs_save = True
-                self.stdout.write(self.style.WARNING(f'Fixed missing slug for existing lesson: {lesson.title}'))
-            
-            # Ensure difficulty_level is an integer (handles migration from string to integer)
-            # Convert to int in case it's stored as string in database
-            try:
-                current_level = int(lesson.difficulty_level) if lesson.difficulty_level is not None else 1
-            except (ValueError, TypeError):
-                current_level = 1
-            if current_level != 1:
-                lesson.difficulty_level = 1
-                needs_save = True
-                self.stdout.write(self.style.WARNING(f'Fixed difficulty_level for existing lesson: {lesson.title}'))
-            
-            if needs_save:
-                lesson.save()
-        
+        # IMPORTANT: Always update slug even if lesson exists (fixes production bug)
+        if not created and lesson.slug != 'shapes':
+            lesson.slug = 'shapes'
+            lesson.save()
+            self.stdout.write(self.style.WARNING(f'Fixed missing slug for existing lesson: {lesson.title}'))
+
         if created:
             self.stdout.write(self.style.SUCCESS(f'Created lesson: {lesson.title}'))
         else:
