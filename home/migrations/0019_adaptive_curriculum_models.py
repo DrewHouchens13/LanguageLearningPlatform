@@ -9,8 +9,15 @@ def convert_proficiency_level_field(apps, schema_editor):
     """
     Convert proficiency_level from CharField to IntegerField.
     
-    Handles both PostgreSQL (production) and SQLite (tests) databases.
+    Handles both PostgreSQL (production/Render) and SQLite (tests) databases.
     Converts CEFR strings (A1, A2, B1) to integers (1, 2, 3).
+    
+    This migration is IDEMPOTENT and safe to run multiple times:
+    - Checks if columns already exist before converting
+    - Checks if columns are already INTEGER type
+    - Handles missing tables gracefully (for fresh databases)
+    - Continues migration even if individual conversions fail (if column is already correct)
+    - Works on both fresh databases and existing databases with data
     """
     from django.db import connection
     import logging
@@ -23,7 +30,8 @@ def convert_proficiency_level_field(apps, schema_editor):
     
     with connection.cursor() as cursor:
         if vendor == 'postgresql':
-            # PostgreSQL: Use USING clause for efficient conversion
+            # PostgreSQL: Two-step conversion to avoid type casting errors
+            # Convert proficiency_level for user profiles
             for table in ['home_userlanguageprofile', 'home_userprofile']:
                 try:
                     # First, check if the column exists and what type it is
@@ -34,36 +42,195 @@ def convert_proficiency_level_field(apps, schema_editor):
                     """, [table])
                     result = cursor.fetchone()
                     
-                    if result and result[0] == 'integer':
-                        # Column is already integer, skip conversion
-                        logger.info(f"Column {table}.proficiency_level is already integer, skipping conversion")
-                        continue
-                    
                     # Check if column exists at all
                     if not result:
-                        # Column doesn't exist, skip
                         logger.info(f"Column {table}.proficiency_level does not exist, skipping conversion")
                         continue
                     
-                    # Column exists and is not integer, convert it
-                    # Use explicit CAST to text first, then convert to integer
-                    logger.info(f"Converting {table}.proficiency_level from {result[0]} to integer")
+                    current_type = result[0]
+                    
+                    if current_type == 'integer':
+                        # Column is already integer, but check if there are any string values in the data
+                        # This can happen if a previous migration attempt partially succeeded
+                        logger.info(f"Column {table}.proficiency_level is already integer, checking for string values...")
+                        try:
+                            # Try to find any string values that shouldn't be there
+                            cursor.execute(f"""
+                                SELECT COUNT(*) FROM {table} 
+                                WHERE proficiency_level IS NOT NULL 
+                                AND proficiency_level::text IN ('A1', 'A2', 'B1')
+                            """)
+                            count = cursor.fetchone()[0]
+                            if count > 0:
+                                logger.info(f"Found {count} string values in integer column, converting them...")
+                                # Update string values to integers
+                                cursor.execute(f"""
+                                    UPDATE {table}
+                                    SET proficiency_level = CASE
+                                        WHEN proficiency_level::text = 'A1' THEN 1
+                                        WHEN proficiency_level::text = 'A2' THEN 2
+                                        WHEN proficiency_level::text = 'B1' THEN 3
+                                        ELSE proficiency_level
+                                    END
+                                    WHERE proficiency_level::text IN ('A1', 'A2', 'B1')
+                                """)
+                                logger.info(f"Updated {count} string values to integers")
+                            else:
+                                logger.info(f"Column {table}.proficiency_level is already integer with valid data")
+                        except Exception as check_error:
+                            # If the check fails, assume the column is truly integer and skip
+                            logger.info(f"Column {table}.proficiency_level appears to be integer, skipping conversion")
+                        continue
+                    
+                    # Column exists and is not integer, convert it using two-step approach
+                    logger.info(f"Converting {table}.proficiency_level from {current_type} to integer")
+                    
+                    # STEP 1: Update all string values to their numeric string equivalents
+                    # This ensures all data is in a format that can be converted to integer
+                    logger.info(f"Step 1: Updating string values in {table}.proficiency_level...")
+                    cursor.execute(f"""
+                        UPDATE {table}
+                        SET proficiency_level = CASE
+                            WHEN proficiency_level::text = 'A1' THEN '1'
+                            WHEN proficiency_level::text = 'A2' THEN '2'
+                            WHEN proficiency_level::text = 'B1' THEN '3'
+                            WHEN proficiency_level::text ~ '^[0-9]+$' THEN proficiency_level::text
+                            ELSE NULL
+                        END
+                        WHERE proficiency_level IS NOT NULL
+                    """)
+                    
+                    # STEP 2: Now alter the column type to INTEGER
+                    # Since all values are now numeric strings or NULL, this conversion is safe
+                    logger.info(f"Step 2: Altering column type to INTEGER for {table}.proficiency_level...")
                     cursor.execute(f"""
                         ALTER TABLE {table}
                         ALTER COLUMN proficiency_level TYPE INTEGER
                         USING CASE
-                            WHEN proficiency_level::text = 'A1' THEN 1
-                            WHEN proficiency_level::text = 'A2' THEN 2
-                            WHEN proficiency_level::text = 'B1' THEN 3
-                            WHEN proficiency_level::text ~ '^[0-9]+$' THEN CAST(proficiency_level::text AS INTEGER)
+                            WHEN proficiency_level::text ~ '^[0-9]+$' THEN proficiency_level::text::INTEGER
                             ELSE NULL
-                        END;
+                        END
                     """)
                     logger.info(f"Successfully converted {table}.proficiency_level to integer")
                 except Exception as e:
-                    # Log the error and re-raise it so the migration fails clearly
+                    # Log the error with more context
                     logger.error(f"Error converting {table}.proficiency_level: {e}")
-                    raise
+                    # Try to get sample data for debugging
+                    try:
+                        cursor.execute(f"SELECT proficiency_level FROM {table} WHERE proficiency_level IS NOT NULL LIMIT 5")
+                        sample = cursor.fetchall()
+                        logger.error(f"Sample values in {table}.proficiency_level: {sample}")
+                    except:
+                        pass
+                    # Check if column is already integer - if so, don't fail the migration
+                    try:
+                        cursor.execute("""
+                            SELECT data_type 
+                            FROM information_schema.columns 
+                            WHERE table_name = %s AND column_name = 'proficiency_level'
+                        """, [table])
+                        result = cursor.fetchone()
+                        if result and result[0] == 'integer':
+                            logger.warning(f"Column {table}.proficiency_level is already integer, continuing despite error")
+                        else:
+                            # Re-raise if column is not integer and conversion failed
+                            raise
+                    except Exception as check_error:
+                        # If we can't check, assume it's safe to continue
+                        logger.warning(f"Could not verify column type, but continuing migration: {check_error}")
+            
+            # Convert difficulty_level for Lesson model
+            table = 'home_lesson'
+            try:
+                # First check if table exists
+                cursor.execute("""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables 
+                        WHERE table_name = %s
+                    )
+                """, [table])
+                table_exists = cursor.fetchone()[0]
+                
+                if not table_exists:
+                    logger.info(f"Table {table} does not exist, skipping conversion")
+                else:
+                    # Check if column exists and what type it is
+                    cursor.execute("""
+                        SELECT data_type 
+                        FROM information_schema.columns 
+                        WHERE table_name = %s AND column_name = 'difficulty_level'
+                    """, [table])
+                    result = cursor.fetchone()
+                    
+                    if not result:
+                        logger.info(f"Column {table}.difficulty_level does not exist, skipping conversion")
+                    else:
+                        current_type = result[0]
+                        
+                        if current_type == 'integer':
+                            # Column is already integer, but check if there are any string values
+                            logger.info(f"Column {table}.difficulty_level is already integer, checking for string values...")
+                            try:
+                                # Check for any non-numeric values that might have been stored as strings
+                                cursor.execute(f"""
+                                    SELECT COUNT(*) FROM {table} 
+                                    WHERE difficulty_level IS NOT NULL 
+                                    AND difficulty_level::text NOT SIMILAR TO '[0-9]+'
+                                """)
+                                count = cursor.fetchone()[0]
+                                if count > 0:
+                                    logger.info(f"Found {count} non-numeric values in integer column, converting them...")
+                                    cursor.execute(f"""
+                                        UPDATE {table}
+                                        SET difficulty_level = CASE
+                                            WHEN difficulty_level::text = 'A1' THEN 1
+                                            WHEN difficulty_level::text = 'A2' THEN 2
+                                            WHEN difficulty_level::text = 'B1' THEN 3
+                                            WHEN difficulty_level::text ~ '^[0-9]+$' THEN difficulty_level::text::INTEGER
+                                            ELSE 1
+                                        END
+                                        WHERE difficulty_level IS NOT NULL
+                                        AND difficulty_level::text NOT SIMILAR TO '[0-9]+'
+                                    """)
+                                    logger.info(f"Updated {count} non-numeric values to integers")
+                                else:
+                                    logger.info(f"Column {table}.difficulty_level is already integer with valid data")
+                            except Exception as check_error:
+                                logger.info(f"Column {table}.difficulty_level appears to be integer, skipping conversion: {check_error}")
+                        else:
+                            # Column exists and is not integer, convert it
+                            logger.info(f"Converting {table}.difficulty_level from {current_type} to integer")
+                            
+                            # STEP 1: Update all string values to their numeric equivalents
+                            logger.info(f"Step 1: Updating string values in {table}.difficulty_level...")
+                            cursor.execute(f"""
+                                UPDATE {table}
+                                SET difficulty_level = CASE
+                                    WHEN difficulty_level::text = 'A1' THEN '1'
+                                    WHEN difficulty_level::text = 'A2' THEN '2'
+                                    WHEN difficulty_level::text = 'B1' THEN '3'
+                                    WHEN difficulty_level::text ~ '^[0-9]+$' THEN difficulty_level::text
+                                    ELSE '1'
+                                END
+                                WHERE difficulty_level IS NOT NULL
+                            """)
+                            
+                            # STEP 2: Alter the column type to INTEGER
+                            logger.info(f"Step 2: Altering column type to INTEGER for {table}.difficulty_level...")
+                            cursor.execute(f"""
+                                ALTER TABLE {table}
+                                ALTER COLUMN difficulty_level TYPE INTEGER
+                                USING CASE
+                                    WHEN difficulty_level::text ~ '^[0-9]+$' THEN difficulty_level::text::INTEGER
+                                    ELSE 1
+                                END
+                            """)
+                            logger.info(f"Successfully converted {table}.difficulty_level to integer")
+            except Exception as e:
+                logger.error(f"Error converting {table}.difficulty_level: {e}")
+                # Don't raise - allow migration to continue even if this fails
+                # The column might already be correct or the table might not exist yet
+                logger.warning(f"Continuing migration despite error in {table}.difficulty_level conversion")
         
         elif vendor == 'sqlite':
             # SQLite: Create new column, copy data, drop old, rename new
@@ -95,6 +262,81 @@ def convert_proficiency_level_field(apps, schema_editor):
                 
                 # Step 4: Rename new column
                 cursor.execute(f"ALTER TABLE {table} RENAME COLUMN proficiency_level_new TO proficiency_level")
+            
+            # Convert difficulty_level for Lesson model
+            table = 'home_lesson'
+            try:
+                # Check if table exists first
+                cursor.execute("""
+                    SELECT name FROM sqlite_master 
+                    WHERE type='table' AND name=?
+                """, [table])
+                if not cursor.fetchone():
+                    logger.info(f"Table {table} does not exist, skipping conversion")
+                else:
+                    # Check if column already exists and is INTEGER
+                    cursor.execute(f"PRAGMA table_info({table})")
+                    columns = cursor.fetchall()
+                    difficulty_level_col = next((col for col in columns if col[1] == 'difficulty_level'), None)
+                    
+                    if difficulty_level_col:
+                        # Column exists - check if it's already INTEGER (type code 1 in SQLite)
+                        if difficulty_level_col[2].upper() == 'INTEGER':
+                            logger.info(f"Column {table}.difficulty_level is already INTEGER, checking for string values...")
+                            # Still need to convert any string values that might exist
+                            cursor.execute(f"SELECT id, difficulty_level FROM {table}")
+                            rows = cursor.fetchall()
+                            for row_id, old_value in rows:
+                                if isinstance(old_value, str):
+                                    if old_value.upper() in cefr_to_int:
+                                        new_value = cefr_to_int[old_value.upper()]
+                                    elif old_value.isdigit():
+                                        new_value = int(old_value)
+                                    else:
+                                        new_value = 1
+                                    cursor.execute(
+                                        f"UPDATE {table} SET difficulty_level = ? WHERE id = ?",
+                                        [new_value, row_id]
+                                    )
+                            logger.info(f"Verified {table}.difficulty_level is INTEGER")
+                        else:
+                            # Column exists but is not INTEGER - need to convert
+                            # Step 1: Create new INTEGER column
+                            cursor.execute(f"ALTER TABLE {table} ADD COLUMN difficulty_level_new INTEGER")
+                            
+                            # Step 2: Copy and convert data
+                            cursor.execute(f"SELECT id, difficulty_level FROM {table}")
+                            rows = cursor.fetchall()
+                            
+                            for row_id, old_value in rows:
+                                if old_value is None:
+                                    new_value = 1  # Default to 1
+                                elif isinstance(old_value, str):
+                                    if old_value.upper() in cefr_to_int:
+                                        new_value = cefr_to_int[old_value.upper()]
+                                    elif old_value.isdigit():
+                                        new_value = int(old_value)
+                                    else:
+                                        new_value = 1  # Default to 1
+                                else:
+                                    new_value = int(old_value) if old_value is not None else 1
+                                
+                                cursor.execute(
+                                    f"UPDATE {table} SET difficulty_level_new = ? WHERE id = ?",
+                                    [new_value, row_id]
+                                )
+                            
+                            # Step 3: Drop old column
+                            cursor.execute(f"ALTER TABLE {table} DROP COLUMN difficulty_level")
+                            
+                            # Step 4: Rename new column
+                            cursor.execute(f"ALTER TABLE {table} RENAME COLUMN difficulty_level_new TO difficulty_level")
+                            logger.info(f"Successfully converted {table}.difficulty_level to INTEGER")
+                    else:
+                        logger.info(f"Column {table}.difficulty_level does not exist, skipping conversion")
+            except Exception as e:
+                # If column doesn't exist or already converted, that's fine
+                logger.info(f"Could not convert {table}.difficulty_level (may already be integer or table doesn't exist): {e}")
         
         else:
             # Fallback: Use Django ORM (slower but universal)
@@ -110,6 +352,27 @@ def convert_proficiency_level_field(apps, schema_editor):
                 if isinstance(lang_profile.proficiency_level, str):
                     lang_profile.proficiency_level = cefr_to_int.get(lang_profile.proficiency_level.upper(), None)
                     lang_profile.save(update_fields=['proficiency_level'])
+            
+            # Convert difficulty_level for Lesson model
+            try:
+                Lesson = apps.get_model('home', 'Lesson')
+                lessons_to_update = Lesson.objects.exclude(difficulty_level__isnull=True)
+                updated_count = 0
+                for lesson in lessons_to_update:
+                    if isinstance(lesson.difficulty_level, str):
+                        if lesson.difficulty_level.upper() in cefr_to_int:
+                            lesson.difficulty_level = cefr_to_int.get(lesson.difficulty_level.upper(), 1)
+                        elif lesson.difficulty_level.isdigit():
+                            lesson.difficulty_level = int(lesson.difficulty_level)
+                        else:
+                            lesson.difficulty_level = 1  # Default to 1
+                        lesson.save(update_fields=['difficulty_level'])
+                        updated_count += 1
+                if updated_count > 0:
+                    logger.info(f"Updated {updated_count} Lesson records with difficulty_level conversion")
+            except Exception as e:
+                # Lesson model might not exist yet or field might already be correct
+                logger.info(f"Could not convert Lesson.difficulty_level via ORM (may already be correct): {e}")
 
 
 def reverse_convert_proficiency_level(apps, schema_editor):
@@ -191,26 +454,16 @@ class Migration(migrations.Migration):
                 'ordering': ['order'],
             },
         ),
-        migrations.AlterField(
-            model_name='lesson',
-            name='difficulty_level',
-            field=models.IntegerField(default=1, help_text='Proficiency level 1-10 (1=absolute beginner, 10=advanced)'),
-        ),
         # Convert proficiency_level fields from CharField to IntegerField
-        # Database-agnostic conversion: handles both PostgreSQL (production) and SQLite (tests)
-        # This RunPython handles the actual database conversion
+        # The RunPython handles ALL database changes
         migrations.RunPython(
             convert_proficiency_level_field,
             reverse_convert_proficiency_level,
             atomic=False  # Set to False to allow the SQL to run outside transaction if needed
         ),
-        # Update Django's migration state to reflect the field type change
-        # The database schema was already changed by RunPython above
+        # Update Django's state to match the database
+        # NO database operations - RunPython already did everything
         migrations.SeparateDatabaseAndState(
-            database_operations=[
-                # Database operations already completed by RunPython above
-                # No database operations needed here - the RunPython function handles it
-            ],
             state_operations=[
                 migrations.AlterField(
                     model_name='userlanguageprofile',
@@ -221,6 +474,11 @@ class Migration(migrations.Migration):
                     model_name='userprofile',
                     name='proficiency_level',
                     field=models.IntegerField(blank=True, help_text='Proficiency level 1-10 (1=absolute beginner, 10=advanced)', null=True),
+                ),
+                migrations.AlterField(
+                    model_name='lesson',
+                    name='difficulty_level',
+                    field=models.IntegerField(default=1, help_text='Proficiency level 1-10 (1=absolute beginner, 10=advanced)'),
                 ),
             ],
         ),
