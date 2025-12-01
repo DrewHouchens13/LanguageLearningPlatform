@@ -242,26 +242,16 @@ class Migration(migrations.Migration):
                 'ordering': ['order'],
             },
         ),
-        migrations.AlterField(
-            model_name='lesson',
-            name='difficulty_level',
-            field=models.IntegerField(default=1, help_text='Proficiency level 1-10 (1=absolute beginner, 10=advanced)'),
-        ),
         # Convert proficiency_level fields from CharField to IntegerField
-        # Database-agnostic conversion: handles both PostgreSQL (production) and SQLite (tests)
-        # This RunPython handles the actual database conversion
+        # The RunPython handles ALL database changes
         migrations.RunPython(
             convert_proficiency_level_field,
             reverse_convert_proficiency_level,
             atomic=False  # Set to False to allow the SQL to run outside transaction if needed
         ),
-        # Update Django's migration state to reflect the field type change
-        # The database schema was already changed by RunPython above
+        # Update Django's state to match the database
+        # NO database operations - RunPython already did everything
         migrations.SeparateDatabaseAndState(
-            database_operations=[
-                # Database operations already completed by RunPython above
-                # No database operations needed here - the RunPython function handles it
-            ],
             state_operations=[
                 migrations.AlterField(
                     model_name='userlanguageprofile',
@@ -272,6 +262,11 @@ class Migration(migrations.Migration):
                     model_name='userprofile',
                     name='proficiency_level',
                     field=models.IntegerField(blank=True, help_text='Proficiency level 1-10 (1=absolute beginner, 10=advanced)', null=True),
+                ),
+                migrations.AlterField(
+                    model_name='lesson',
+                    name='difficulty_level',
+                    field=models.IntegerField(default=1, help_text='Proficiency level 1-10 (1=absolute beginner, 10=advanced)'),
                 ),
             ],
         ),
