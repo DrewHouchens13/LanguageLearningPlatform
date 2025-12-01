@@ -23,7 +23,7 @@ def convert_proficiency_level_field(apps, schema_editor):
     
     with connection.cursor() as cursor:
         if vendor == 'postgresql':
-            # PostgreSQL: Use USING clause for efficient conversion
+            # PostgreSQL: Two-step conversion to avoid type casting errors
             for table in ['home_userlanguageprofile', 'home_userprofile']:
                 try:
                     # First, check if the column exists and what type it is
@@ -34,35 +34,86 @@ def convert_proficiency_level_field(apps, schema_editor):
                     """, [table])
                     result = cursor.fetchone()
                     
-                    if result and result[0] == 'integer':
-                        # Column is already integer, skip conversion
-                        logger.info(f"Column {table}.proficiency_level is already integer, skipping conversion")
-                        continue
-                    
                     # Check if column exists at all
                     if not result:
-                        # Column doesn't exist, skip
                         logger.info(f"Column {table}.proficiency_level does not exist, skipping conversion")
                         continue
                     
-                    # Column exists and is not integer, convert it
-                    # Use explicit CAST to text first, then convert to integer
-                    logger.info(f"Converting {table}.proficiency_level from {result[0]} to integer")
+                    current_type = result[0]
+                    
+                    if current_type == 'integer':
+                        # Column is already integer, but check if there are any string values in the data
+                        # This can happen if a previous migration attempt partially succeeded
+                        logger.info(f"Column {table}.proficiency_level is already integer, checking for string values...")
+                        try:
+                            # Try to find any string values that shouldn't be there
+                            cursor.execute(f"""
+                                SELECT COUNT(*) FROM {table} 
+                                WHERE proficiency_level IS NOT NULL 
+                                AND proficiency_level::text IN ('A1', 'A2', 'B1')
+                            """)
+                            count = cursor.fetchone()[0]
+                            if count > 0:
+                                logger.info(f"Found {count} string values in integer column, converting them...")
+                                # Update string values to integers
+                                cursor.execute(f"""
+                                    UPDATE {table}
+                                    SET proficiency_level = CASE
+                                        WHEN proficiency_level::text = 'A1' THEN 1
+                                        WHEN proficiency_level::text = 'A2' THEN 2
+                                        WHEN proficiency_level::text = 'B1' THEN 3
+                                        ELSE proficiency_level
+                                    END
+                                    WHERE proficiency_level::text IN ('A1', 'A2', 'B1')
+                                """)
+                                logger.info(f"Updated {count} string values to integers")
+                            else:
+                                logger.info(f"Column {table}.proficiency_level is already integer with valid data")
+                        except Exception as check_error:
+                            # If the check fails, assume the column is truly integer and skip
+                            logger.info(f"Column {table}.proficiency_level appears to be integer, skipping conversion")
+                        continue
+                    
+                    # Column exists and is not integer, convert it using two-step approach
+                    logger.info(f"Converting {table}.proficiency_level from {current_type} to integer")
+                    
+                    # STEP 1: Update all string values to their numeric string equivalents
+                    # This ensures all data is in a format that can be converted to integer
+                    logger.info(f"Step 1: Updating string values in {table}.proficiency_level...")
+                    cursor.execute(f"""
+                        UPDATE {table}
+                        SET proficiency_level = CASE
+                            WHEN proficiency_level::text = 'A1' THEN '1'
+                            WHEN proficiency_level::text = 'A2' THEN '2'
+                            WHEN proficiency_level::text = 'B1' THEN '3'
+                            WHEN proficiency_level::text ~ '^[0-9]+$' THEN proficiency_level::text
+                            ELSE NULL
+                        END
+                        WHERE proficiency_level IS NOT NULL
+                    """)
+                    
+                    # STEP 2: Now alter the column type to INTEGER
+                    # Since all values are now numeric strings or NULL, this conversion is safe
+                    logger.info(f"Step 2: Altering column type to INTEGER for {table}.proficiency_level...")
                     cursor.execute(f"""
                         ALTER TABLE {table}
                         ALTER COLUMN proficiency_level TYPE INTEGER
                         USING CASE
-                            WHEN proficiency_level::text = 'A1' THEN 1
-                            WHEN proficiency_level::text = 'A2' THEN 2
-                            WHEN proficiency_level::text = 'B1' THEN 3
-                            WHEN proficiency_level::text ~ '^[0-9]+$' THEN CAST(proficiency_level::text AS INTEGER)
+                            WHEN proficiency_level::text ~ '^[0-9]+$' THEN proficiency_level::text::INTEGER
                             ELSE NULL
-                        END;
+                        END
                     """)
                     logger.info(f"Successfully converted {table}.proficiency_level to integer")
                 except Exception as e:
-                    # Log the error and re-raise it so the migration fails clearly
+                    # Log the error with more context and re-raise it
                     logger.error(f"Error converting {table}.proficiency_level: {e}")
+                    # Try to get sample data for debugging
+                    try:
+                        cursor.execute(f"SELECT proficiency_level FROM {table} WHERE proficiency_level IS NOT NULL LIMIT 5")
+                        sample = cursor.fetchall()
+                        logger.error(f"Sample values in {table}.proficiency_level: {sample}")
+                    except:
+                        pass
                     raise
         
         elif vendor == 'sqlite':
