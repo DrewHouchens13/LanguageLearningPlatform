@@ -1,6 +1,6 @@
 asgiref==3.11.0
 Django==5.2.8  # Updated from 5.1.13 to fix CVEs: GHSA-qw25-v68c-qjf3, GHSA-frmv-pr5f-9mcr
-sqlparse==0.5.3
+sqlparse==0.5.4
 
 # Production dependencies
 gunicorn==23.0.0           # WSGI HTTP server for production (updated per dependabot PR #79)
@@ -11,12 +11,12 @@ Pillow==12.0.0             # Image processing for user avatars (updated per depe
 cloudinary==1.44.1         # Cloudinary SDK for cloud media storage
 django-cloudinary-storage==0.3.0  # Django storage backend for Cloudinary
 django-redis==6.0.0        # Redis cache backend for Django (updated per dependabot PR #76)
-Markdown==3.7              # Markdown to HTML conversion for help documentation
-bleach==6.2.0              # HTML sanitization for markdown output (security)
+Markdown==3.10              # Markdown to HTML conversion for help documentation
+bleach==6.3.0              # HTML sanitization for markdown output (security)
 openai==1.57.0             # OpenAI API client for AI chatbot assistant
 
 # Testing dependencies
-pytest==9.0.1              # Testing framework (updated per dependabot PR #78)
+pytest==9.0.2              # Testing framework (updated per dependabot PR #78)
 pytest-django==4.11.1       # Django integration for pytest
 pytest-cov==7.0.0          # Coverage plugin for pytest (updated per dependabot PR #77)
 pytest-xdist==3.8.0        # Parallel test execution (use -n auto flag)
@@ -29,11 +29,11 @@ isort==6.1.0               # Import sorting (dependency of pylint)
 # Security Scanning Tools (Sprint 3)
 bandit==1.9.2             # Security linter for Python
 safety==3.7.0             # Dependency vulnerability scanner
-pip-audit==2.9.0           # Python package security auditing
-semgrep==1.144.0           # Advanced static analysis (optional)
+pip-audit==2.10.0           # Python package security auditing
+semgrep==1.145.0           # Advanced static analysis (optional)
 
 # Advanced Testing Tools (Optional - Recommended)
-hypothesis==6.148.2        # Property-based testing (fuzz testing)
+hypothesis==6.148.7        # Property-based testing (fuzz testing)
 freezegun==1.5.5          # Time mocking for deterministic tests
 pytest-mock==3.15.1        # Mock fixtures for pytest
 mutmut==3.4.0              # Mutation testing (updated per dependabot PR #75)
