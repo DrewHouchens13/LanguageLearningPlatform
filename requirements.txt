@@ -13,7 +13,7 @@ django-cloudinary-storage==0.3.0  # Django storage backend for Cloudinary
 django-redis==6.0.0        # Redis cache backend for Django (updated per dependabot PR #76)
 Markdown==3.7              # Markdown to HTML conversion for help documentation
 bleach==6.2.0              # HTML sanitization for markdown output (security)
-openai==1.57.0             # OpenAI API client for AI chatbot assistant
+openai==2.9.0             # OpenAI API client for AI chatbot assistant
 
 # Testing dependencies
 pytest==9.0.1              # Testing framework (updated per dependabot PR #78)
