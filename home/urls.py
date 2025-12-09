@@ -11,6 +11,8 @@ Defines URL patterns for:
 from django.urls import path
 
 from . import views
+from . import curriculum_views
+from . import tts_views
 
 urlpatterns = [
     path("", views.landing, name="landing"),
@@ -55,8 +57,8 @@ urlpatterns = [
     path("lessons/<int:lesson_id>/submit/", views.submit_lesson_quiz, name="submit_lesson_quiz"),
     path("lessons/<int:lesson_id>/results/<int:attempt_id>/", views.lesson_results, name="lesson_results"),
     path("lessons/<str:language>/", views.lessons_by_language, name="lessons_by_language"),
-    path("speech/generate/", views.generate_onboarding_speech, name="generate_onboarding_speech"),
-    path("lessons/<int:lesson_id>/speech/<int:card_order>/", views.generate_onboarding_speech, name="generate_speech"),
+    path("speech/generate/", tts_views.generate_onboarding_speech, name="generate_onboarding_speech"),
+    path("lessons/<int:lesson_id>/speech/<int:card_order>/", tts_views.generate_onboarding_speech, name="generate_speech"),
 
 
     # Daily Quest paths
@@ -68,16 +70,16 @@ urlpatterns = [
     # 🤖 AI ASSISTANT WARNING - URL PATTERN ORDERING IS CRITICAL!
     # More specific patterns (test, complete) must come BEFORE general skill pattern
     # Otherwise /test/ gets matched by /<str:skill>/ pattern!
-    path("curriculum/<str:language>/level/<int:level>/", views.module_detail, name="module_detail"),
-    path("curriculum/<str:language>/level/<int:level>/test/submit/", views.submit_module_test, name="submit_module_test"),
-    path("curriculum/<str:language>/level/<int:level>/test/generate/", views.module_test_generate, name="module_test_generate"),
-    path("curriculum/<str:language>/level/<int:level>/test/", views.module_test, name="module_test"),
-    path("curriculum/<str:language>/level/<int:level>/results/", views.test_results, name="test_results"),
-    path("curriculum/<str:language>/level/<int:level>/<str:skill>/complete/", views.complete_curriculum_lesson, name="complete_curriculum_lesson"),
-    path("curriculum/<str:language>/level/<int:level>/<str:skill>/", views.lesson_by_skill, name="lesson_by_skill"),
+    path("curriculum/<str:language>/level/<int:level>/", curriculum_views.module_detail, name="module_detail"),
+    path("curriculum/<str:language>/level/<int:level>/test/submit/", curriculum_views.submit_module_test, name="submit_module_test"),
+    path("curriculum/<str:language>/level/<int:level>/test/generate/", curriculum_views.module_test_generate, name="module_test_generate"),
+    path("curriculum/<str:language>/level/<int:level>/test/", curriculum_views.module_test, name="module_test"),
+    path("curriculum/<str:language>/level/<int:level>/results/", curriculum_views.test_results, name="test_results"),
+    path("curriculum/<str:language>/level/<int:level>/<str:skill>/complete/", curriculum_views.complete_curriculum_lesson, name="complete_curriculum_lesson"),
+    path("curriculum/<str:language>/level/<int:level>/<str:skill>/", curriculum_views.lesson_by_skill, name="lesson_by_skill"),
     
     # TTS API endpoint
-    path("api/tts/generate/", views.generate_tts, name="generate_tts"),
+    path("api/tts/generate/", tts_views.generate_tts, name="generate_tts"),
 ]
 
 
