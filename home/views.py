@@ -410,11 +410,7 @@ def _process_login_post(request):
 
     if user is None:
         # Log failed login attempt (incorrect password)
-        # Security: Log IP only to prevent user enumeration and credential exposure
-        logger.warning(
-            'Failed login attempt - incorrect password from IP: %s',
-            get_client_ip(request)
-        )
+        logger.warning('Failed login attempt - incorrect password')
         messages.error(request, 'Invalid username/email or password.')
         return None
 
