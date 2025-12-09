@@ -113,6 +113,71 @@
         color: var(--text-secondary);
         margin: 0;
       }
+      .badges-section {
+        background: linear-gradient(135deg, #fef3c7 0%, #fef9e7 100%);
+        border: 2px solid #fbbf24;
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 2rem 0;
+      }
+      .badges-header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+      .badges-header h3 {
+        font-size: 2rem;
+        margin: 0 0 0.5rem 0;
+        color: #92400e;
+      }
+      .badges-progress {
+        font-size: 1.25rem;
+        color: #78350f;
+        font-weight: 600;
+      }
+      .badges-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+      .badge-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: 2px solid transparent;
+      }
+      .badge-card.earned {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #5a67d8;
+      }
+      .badge-card.locked {
+        opacity: 0.6;
+        filter: grayscale(70%);
+      }
+      .badge-card.earned:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+      }
+      .badge-icon {
+        font-size: 3.5rem;
+        margin-bottom: 0.5rem;
+        display: block;
+      }
+      .badge-name {
+        font-weight: bold;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+      }
+      .badge-description {
+        font-size: 0.85rem;
+        opacity: 0.9;
+      }
+      .badge-card.locked .badge-description {
+        color: #6b7280;
+      }
     </style>
   </head>
   <body>
@@ -302,6 +367,26 @@
             </div>
           </div>
         </section>
+      {% endif %}
+
+      <!-- Achievement Badges Section -->
+      {% if all_badges %}
+      <section class="badges-section fade-in-up delay-200">
+        <div class="badges-header">
+          <h3>🏆 Your Achievements</h3>
+          <p class="badges-progress">{{ badges_earned }} / {{ total_badges }} Badges Earned</p>
+        </div>
+        
+        <div class="badges-grid">
+          {% for badge in all_badges %}
+          <div class="badge-card {% if badge.id in earned_badge_ids %}earned{% else %}locked{% endif %}">
+            <span class="badge-icon">{{ badge.icon }}</span>
+            <div class="badge-name">{{ badge.name }}</div>
+            <div class="badge-description">{{ badge.description }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
       {% endif %}
       
       <!-- Quick Actions -->

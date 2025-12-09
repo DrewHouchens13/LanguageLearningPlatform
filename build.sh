@@ -121,3 +121,5 @@ python manage.py create_shapes_lesson
 # Create colors lesson with flashcards and quiz
 python manage.py create_colors_lesson
 
+#Create badges
+python manage.py create_badges
