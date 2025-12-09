@@ -1606,3 +1606,36 @@ class UserQuestionAttempt(models.Model):
     def __str__(self):
         status = "✓" if self.is_correct else "✗"
         return f"{status} {self.user.username} - Q{self.question.id}"
+class Badge(models.Model):
+    """Achievement badges that users can earn"""
+    BADGE_TYPES = [
+        ('first_lesson', 'First Lesson'),
+        ('perfect_score', 'Perfect Score'),
+        ('five_lessons', 'Dedicated Learner'),
+        ('ten_lessons', 'Language Explorer'),
+        ('streak_3', '3 Day Streak'),
+        ('streak_7', '7 Day Streak'),
+        ('quiz_master', 'Quiz Master'),
+    ]
+    
+    name = models.CharField(max_length=100)
+    badge_type = models.CharField(max_length=50, choices=BADGE_TYPES, unique=True)
+    description = models.TextField()
+    icon = models.CharField(max_length=10, default='🏆')  # Emoji icon
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.name
+
+class UserBadge(models.Model):
+    """Tracks which badges users have earned"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='badges')
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE)
+    earned_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('user', 'badge')
+        ordering = ['-earned_at']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.badge.name}"

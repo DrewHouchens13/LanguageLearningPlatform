@@ -35,7 +35,7 @@ from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.mail import BadHeaderError, send_mail
 from django.core.validators import validate_email as django_validate_email
 from django.db import DatabaseError, IntegrityError
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, F
 from django.http import (Http404, HttpResponse, HttpResponseRedirect,
                          JsonResponse)
 from django.shortcuts import get_object_or_404, redirect, render
@@ -55,7 +55,8 @@ from .language_registry import (DEFAULT_LANGUAGE, get_language_metadata,
 from .models import (Lesson, LessonAttempt, LessonCompletion,
                      LessonQuizQuestion, OnboardingAnswer, OnboardingAttempt,
                      OnboardingQuestion, QuizResult, UserDailyQuestAttempt,
-                     UserLanguageProfile, UserProfile, UserProgress)
+                     UserLanguageProfile, UserProfile, UserProgress,
+	     Badge, UserBadge)
 from .services.chatbot_service import ChatbotService
 from .services.daily_quest_service import DailyQuestService
 from .services.help_service import HelpService
@@ -781,7 +782,6 @@ def _cleanup_onboarding_session(request):
 def dashboard(request):
     """
     Render the user dashboard (protected view).
-
     This view requires authentication. Users must be logged in to access.
     Unauthenticated users are redirected to the login page.
     """
@@ -793,10 +793,8 @@ def dashboard(request):
         has_completed_onboarding = user_profile.has_completed_onboarding
     except UserProfile.DoesNotExist:
         has_completed_onboarding = False
-
     # Clean up stale onboarding session data (SOFA: Extracted helper)
     _cleanup_onboarding_session(request)
-
     # Get today's daily quests status (Sprint 3 - Issue #18)
     daily_challenge = None
     try:
@@ -809,38 +807,31 @@ def dashboard(request):
             )
     except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error('Failed to load daily challenge for dashboard: %s', str(e), exc_info=True)
-
     # Get XP and streak data
     user_progress = None
     current_streak = 0
     xp_to_next = 0
     xp_progress_percent = 0
-
     if user_profile:
         xp_to_next = user_profile.get_xp_to_next_level()
         xp_progress_percent = user_profile.get_progress_to_next_level()
-
     try:
         user_progress = UserProgress.objects.get(user=request.user)
         current_streak = user_progress.current_streak
     except UserProgress.DoesNotExist:
         pass
-
     # Get language statistics (SOFA: Reusing extracted helper)
     language_stats, pending_languages = _get_language_statistics(request.user)
-
     preferred_language = DEFAULT_LANGUAGE
     if user_profile and user_profile.target_language:
         preferred_language = normalize_language_name(user_profile.target_language)
     elif language_stats:
         preferred_language = language_stats[0]['name']
-
     # Get current language profile
     current_language_profile = UserLanguageProfile.objects.filter(
         user=request.user,
         language=preferred_language
     ).first()
-
     overall_xp_row = None
     if user_profile:
         overall_xp_row = {
@@ -851,7 +842,12 @@ def dashboard(request):
             'xp_to_next': xp_to_next,
             'progress_percent': xp_progress_percent,
         }
-
+    
+    # Get badges data
+    user_badges = UserBadge.objects.filter(user=request.user).select_related('badge')
+    all_badges = Badge.objects.all()
+    earned_badge_ids = list(user_badges.values_list('badge_id', flat=True))
+    
     # SOFA: Inline metadata call to reduce local variable count (R0914)
     context = {
         'has_completed_onboarding': has_completed_onboarding,
@@ -867,9 +863,13 @@ def dashboard(request):
         'current_language_metadata': get_language_metadata(preferred_language),
         'current_language_name': preferred_language,
         'overall_xp_row': overall_xp_row,
+        'user_badges': user_badges,
+        'all_badges': all_badges,
+        'badges_earned': user_badges.count(),
+        'total_badges': all_badges.count(),
+        'earned_badge_ids': earned_badge_ids,
     }
     return render(request, 'dashboard.html', context)
-
 
 def _get_language_statistics(user):
     """
@@ -2721,19 +2721,31 @@ def lesson_results(request, lesson_id, attempt_id):
     lesson = get_object_or_404(Lesson, id=lesson_id)
     attempt = get_object_or_404(LessonAttempt, id=attempt_id, lesson=lesson)
     next_lesson = lesson.next_lesson
-    context = {'lesson': lesson, 'attempt': attempt, 'next_lesson': next_lesson}
+    
+    # Check for new badges
+    new_badges = []
+    if request.user.is_authenticated:
+        new_badges = check_and_award_badges(request.user)
+    
+    context = {
+        'lesson': lesson,
+        'attempt': attempt,
+        'next_lesson': next_lesson,
+        'new_badges': new_badges,
+    }
+    
     template_candidates = [f'lessons/{lesson.slug}/results.html']
     if '-' in (lesson.slug or ''):
         base_slug = lesson.slug.split('-')[0]
         template_candidates.append(f'lessons/{base_slug}/results.html')
-
+    
     try:
         template = select_template(template_candidates)
         template_name = template.template.name
     except TemplateDoesNotExist as exc:
         # SOFA: Proper exception chaining preserves debugging context
         raise Http404("Lesson results template is missing. Please contact support.") from exc
-
+    
     return render(request, template_name, context)
 
 
@@ -3708,3 +3720,41 @@ def generate_tts(request):
     except Exception as e:
         logger.error('TTS generation error: %s', str(e))
         return JsonResponse({'error': 'TTS generation failed'}, status=500)
+def check_and_award_badges(user):
+    """Check if user has earned any new badges"""
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    if not user.is_authenticated:
+        return []
+    
+    newly_earned = []
+    
+    # Get user's lesson attempts and progress
+    lesson_count = LessonAttempt.objects.filter(user=user).values('lesson').distinct().count()
+    perfect_scores = LessonAttempt.objects.filter(user=user, score=F('total')).count()
+    
+    # Define badge criteria
+    badge_criteria = {
+        'first_lesson': lesson_count >= 1,
+        'five_lessons': lesson_count >= 5,
+        'ten_lessons': lesson_count >= 10,
+        'perfect_score': perfect_scores >= 1,
+        'quiz_master': perfect_scores >= 5,
+    }
+    
+    # Check each badge
+    for badge_type, earned in badge_criteria.items():
+        if earned:
+            try:
+                badge = Badge.objects.get(badge_type=badge_type)
+                user_badge, created = UserBadge.objects.get_or_create(
+                    user=user,
+                    badge=badge
+                )
+                if created:
+                    newly_earned.append(badge)
+            except Badge.DoesNotExist:
+                pass
+    
+    return newly_earned
