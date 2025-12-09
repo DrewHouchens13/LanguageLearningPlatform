@@ -224,8 +224,7 @@ REMEMBER: You are a help assistant for a language learning platform. Nothing els
         except (RuntimeError, ValueError, TypeError, ConnectionError, OSError) as e:
             # Log error in production
             print(f"OpenAI API error: {e}")
-            return (f"I encountered an error while generating a response. "
-                   f"Error details: {str(e)}")
+            return "I encountered an error while generating a response. Please try again later or contact support."
 
     @staticmethod
     def _is_harmful_query(query: str) -> bool:
